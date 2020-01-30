@@ -1,0 +1,21 @@
+package main
+
+import (
+	"fmt"
+	"os"
+
+	"github.com/kindritskyiMax/lets/cmd"
+	"github.com/kindritskyiMax/lets/config"
+)
+
+func main() {
+	conf, err := config.Load("lets.yaml", "")
+	if err != nil {
+		fmt.Printf("Error: %s\n", err)
+		os.Exit(1)
+	}
+	rootCmd := cmd.CreateRootCommand()
+	if err := cmd.Execute(rootCmd, conf, os.Stdout); err != nil {
+		os.Exit(1)
+	}
+}
