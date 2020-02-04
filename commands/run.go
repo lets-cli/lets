@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/kindritskyiMax/lets/commands/command"
 	"github.com/kindritskyiMax/lets/config"
+	"github.com/kindritskyiMax/lets/logging"
 	"io"
 	"os/exec"
 )
@@ -13,8 +14,9 @@ type RunOptions struct {
 	RawArgs []string
 }
 
+// RunCommand runs parent command
 func RunCommand(cmdToRun command.Command, cfg *config.Config, out io.Writer) error {
-	return runCmd(cmdToRun, cfg, out)
+	return runCmd(cmdToRun, cfg, out, false)
 }
 
 func convertEnvForCmd(envMap map[string]string) []string {
@@ -45,7 +47,7 @@ func composeEnvs(envs ...[]string) []string {
 	return composed
 }
 
-func runCmd(cmdToRun command.Command, cfg *config.Config, out io.Writer) error {
+func runCmd(cmdToRun command.Command, cfg *config.Config, out io.Writer, isChild bool) error {
 	// TODO get user's current shell
 	cmd := exec.Command("sh", "-c", cmdToRun.Cmd)
 	// setup std out and err
@@ -64,11 +66,16 @@ func runCmd(cmdToRun command.Command, cfg *config.Config, out io.Writer) error {
 	optsEnv := convertOptsToEnvForCmd(cmdToRun.Options)
 	checksumEnv := convertChecksumToEnvForCmd(cmdToRun.Checksum)
 	cmd.Env = composeEnvs(env, optsEnv, checksumEnv)
+	if !isChild {
+		logging.Log.Debugf("Executing command %s with env:\n%s", cmdToRun.Name, cmd.Env)
+	} else {
+		logging.Log.Debugf("Executing depend command %s with env:\n%s", cmdToRun.Name, cmd.Env)
+	}
 
 	// run depends commands
 	for _, dependCmdName := range cmdToRun.Depends {
 		dependCmd, _ := cfg.Commands[dependCmdName]
-		err := runCmd(dependCmd, cfg, out)
+		err := runCmd(dependCmd, cfg, out, true)
 		if err != nil {
 			// must return error to root
 			return err

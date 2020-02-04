@@ -65,7 +65,7 @@ Yet there is no binaries
 - [ ] multiple checksums in one command (kv)
 - [x] depends on other commands
 - [ ] inherit configs
-- [ ] LETS_DEBUG
+- [x] LETS_DEBUG env for debugging logs
 - [ ] command to only calculate checksum
 - [ ] capture env from shell
 - [ ] env computing

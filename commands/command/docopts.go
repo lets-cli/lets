@@ -18,7 +18,12 @@ var DocoptParser = &docopt.Parser{
 // ParseDocopts parses docopts for command options with args from os.Args
 // TODO maybe this must be a struct method
 func ParseDocopts(cmd Command) (map[string]string, error) {
+	// just command name in args
 	if len(os.Args[1:]) == 1 && os.Args[1] == cmd.Name {
+		return make(map[string]string), nil
+	}
+	// no options at all
+	if cmd.RawOptions == "" {
 		return make(map[string]string), nil
 	}
 	opts, err := DocoptParser.ParseArgs(cmd.RawOptions, os.Args[1:], "")
