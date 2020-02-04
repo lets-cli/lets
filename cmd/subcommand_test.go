@@ -8,10 +8,9 @@ import (
 func TestSubCommandCmd(t *testing.T) {
 	t.Run("run test-options", func(t *testing.T) {
 		args := []string{"test-options"}
-		rootCmd, bufOut := newTestRootCmd(args)
-		conf := test.GetTestConfig()
+		rootCmd, bufOut := newTestRootCmd(args, test.GetTestConfig())
 		test.MockArgs(args)
-		err := Execute(rootCmd, conf, bufOut)
+		err := rootCmd.Execute()
 
 		if err != nil {
 			t.Fatalf("unexpected error: %s", err)
@@ -31,10 +30,9 @@ func TestSubCommandCmd(t *testing.T) {
 
 	t.Run("run test-options", func(t *testing.T) {
 		args := []string{"test-options", "--kv-opt"}
-		rootCmd, bufOut := newTestRootCmd(args)
-		conf := test.GetTestConfig()
+		rootCmd, _ := newTestRootCmd(args, test.GetTestConfig())
 		test.MockArgs(args)
-		err := Execute(rootCmd, conf, bufOut)
+		err := rootCmd.Execute()
 
 		if err == nil {
 			t.Fatalf("must fail in docopts parsing")
@@ -85,10 +83,9 @@ func TestSubCommandCmd(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			rootCmd, bufOut := newTestRootCmd(tt.args)
-			conf := test.GetTestConfig()
+			rootCmd, bufOut := newTestRootCmd(tt.args, test.GetTestConfig())
 			test.MockArgs(tt.args)
-			err := Execute(rootCmd, conf, bufOut)
+			err := rootCmd.Execute()
 
 			if err != nil {
 				t.Fatalf("unexpected error: %s", err)
