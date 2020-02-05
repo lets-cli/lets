@@ -41,8 +41,10 @@ commands:
 
 **Shell script**:
 
+This will install `lets` binary to `/usr/local/bin` directory. But you can change install location to any directory you want
+
 ```bash
-curl -sfL https://raw.githubusercontent.com/kindritskyiMax/lets/master/install.sh | sh - -b /usr/loca/bin
+curl -sfL https://raw.githubusercontent.com/kindritskyiMax/lets/master/install.sh | sudo sh -s -- -b /usr/local/bin
 ```
 
 **Binary (Cross-platform)**:
