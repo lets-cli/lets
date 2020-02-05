@@ -71,3 +71,4 @@ Yet there is no binaries
 - [ ] env computing
   - [ ] global env
   - [x] command env
+- [ ] dogfood on ci
