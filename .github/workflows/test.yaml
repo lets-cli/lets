@@ -16,3 +16,7 @@ jobs:
         uses: actions/checkout@v2
       - name: Test
         run: go test ./... -v
+      - name: Staticheck
+        run: |
+          go get -u honnef.co/go/tools/cmd/staticcheck
+          staticcheck ./...
