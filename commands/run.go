@@ -57,7 +57,7 @@ func runCmd(cmdToRun command.Command, cfg *config.Config, out io.Writer, isChild
 	// parse docopts
 	opts, err := command.ParseDocopts(cmdToRun)
 	if err != nil {
-		return fmt.Errorf("failed to parse docopt options for cmd %s: %s\n", cmdToRun.Name, err)
+		return fmt.Errorf("failed to parse docopt options for cmd %s: %s", cmdToRun.Name, err)
 	}
 	cmdToRun.Options = opts
 
@@ -74,7 +74,7 @@ func runCmd(cmdToRun command.Command, cfg *config.Config, out io.Writer, isChild
 
 	// run depends commands
 	for _, dependCmdName := range cmdToRun.Depends {
-		dependCmd, _ := cfg.Commands[dependCmdName]
+		dependCmd := cfg.Commands[dependCmdName]
 		err := runCmd(dependCmd, cfg, out, true)
 		if err != nil {
 			// must return error to root
