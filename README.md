@@ -72,3 +72,5 @@ Yet there is no binaries
   - [ ] global env
   - [x] command env
 - [ ] dogfood on ci
+- [ ] add version flag to lets
+- [ ] add verbose flag to lets
