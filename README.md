@@ -37,6 +37,22 @@ commands:
       cmd: string or array of strings
 ```
 
+## Install
+
+**Shell script**:
+
+```bash
+curl -sfL https://raw.githubusercontent.com/kindritskyiMax/lets/master/install.sh | sh - -b /usr/loca/bin
+```
+
+**Binary (Cross-platform)**:
+
+Download the version you need for your platform from [Lets Releases](https://github.com/kindritskyiMax/lets/releases). 
+
+Once downloaded, the binary can be run from anywhere.
+
+Ideally, you should install it somewhere in your PATH for easy use. `/usr/local/bin` is the most probable location.
+
 ## Build
 
 To build a binary:
