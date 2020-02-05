@@ -38,7 +38,7 @@ func TestSubCommandCmd(t *testing.T) {
 			t.Fatalf("must fail in docopts parsing")
 		}
 
-		expect := "failed to parse docopt options for cmd test-options: --kv-opt requires argument\n"
+		expect := "failed to parse docopt options for cmd test-options: --kv-opt requires argument"
 		if expect != err.Error() {
 			t.Errorf("must fail with error, exected: %s, got: %s", expect, err)
 		}

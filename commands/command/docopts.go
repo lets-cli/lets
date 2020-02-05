@@ -47,13 +47,13 @@ func normalizeOpts(opts map[string]interface{}) map[string]string {
 		key := normalizeKey(origKey)
 		envKey := fmt.Sprintf("LETSOPT_%s", key)
 		var strValue string
-		switch value.(type) {
+		switch value := value.(type) {
 		case string:
-			strValue = value.(string)
+			strValue = value
 		case bool:
-			strValue = strconv.FormatBool(value.(bool))
+			strValue = strconv.FormatBool(value)
 		case []string:
-			strValue = strings.Join(value.([]string), " ")
+			strValue = strings.Join(value, " ")
 		default:
 			strValue = ""
 		}

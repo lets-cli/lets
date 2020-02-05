@@ -1,14 +1,15 @@
 package command
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"testing"
 )
 
-func createTempFile(name string) *os.File {
-	file, err := ioutil.TempFile("", name)
+func createTempFile(dir string, name string) *os.File {
+	file, err := ioutil.TempFile(dir, name)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -16,8 +17,9 @@ func createTempFile(name string) *os.File {
 }
 
 func TestCalculateChecksumSimpleFilename(t *testing.T) {
-	file1 := createTempFile("lets_checksum_test_1")
-	file2 := createTempFile("lets_checksum_test_2")
+	tempDir := os.TempDir()
+	file1 := createTempFile(tempDir, "lets_checksum_test_1")
+	file2 := createTempFile(tempDir, "lets_checksum_test_2")
 
 	defer os.Remove(file1.Name())
 	defer os.Remove(file2.Name())
@@ -41,8 +43,9 @@ func TestCalculateChecksumSimpleFilename(t *testing.T) {
 }
 
 func TestCalculateChecksumGlobPattern(t *testing.T) {
-	file1 := createTempFile("lets_checksum_test_1")
-	file2 := createTempFile("lets_checksum_test_2")
+	tempDir := os.TempDir()
+	file1 := createTempFile(tempDir, "lets_checksum_test_1")
+	file2 := createTempFile(tempDir, "lets_checksum_test_2")
 
 	defer os.Remove(file1.Name())
 	defer os.Remove(file2.Name())
@@ -51,7 +54,7 @@ func TestCalculateChecksumGlobPattern(t *testing.T) {
 	file2.Write([]byte("asdfg2"))
 
 	checksum, err := calculateChecksum([]string{
-		"/tmp/lets_checksum_test_*",
+		fmt.Sprintf("%s/lets_checksum_test_*", tempDir),
 	})
 
 	if err != nil {
