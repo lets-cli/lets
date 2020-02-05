@@ -19,8 +19,10 @@ func calculateChecksum(patterns []string) (string, error) {
 		}
 		files = append(files, matches...)
 	}
+	fmt.Printf("files before sort: %s\n", files)
 	// sort files list
 	sort.Strings(files)
+	fmt.Printf("files after sort: %s\n", files)
 	hasher := sha1.New()
 	for _, filename := range files {
 		data, err := ioutil.ReadFile(filename)
