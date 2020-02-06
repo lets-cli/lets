@@ -15,6 +15,17 @@ commands:
       description: Echo text
       cmd: |
         echo "Hello"
+    
+    run:
+      description: Run some command
+      options: |
+        Usage: lets run [--debug] [--level=<level>]
+        
+        Options:
+          --debug, -d     Run with debug
+          --level=<level> Log level
+      cmd: |
+        env
 ```
 
 3. Run commands
@@ -22,6 +33,12 @@ commands:
 ```bash
 lets echo
 # will print Hello
+lets run --debug --level=info
+# will print
+# LETSOPT_DEBUG=true
+# LETSOPT_RUN=true
+# LETSOPT_LEVEL=info
+
 ```
 
 ## lets.yaml
@@ -44,7 +61,7 @@ commands:
 This will install `lets` binary to `/usr/local/bin` directory. But you can change install location to any directory you want
 
 ```bash
-curl -sfL https://raw.githubusercontent.com/kindritskyiMax/lets/master/install.sh | sudo sh -s -- -b /usr/local/bin
+sudo curl -sfL https://raw.githubusercontent.com/kindritskyiMax/lets/master/install.sh | sudo sh -s -- -b /usr/local/bin
 ```
 
 **Binary (Cross-platform)**:
