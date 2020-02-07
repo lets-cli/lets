@@ -50,3 +50,9 @@ commands:
     cmd:
       - echo
       - "${LETS_CHECKSUM}"
+
+  update-lets-version:
+    description: Update version.go file with latest tag
+    cmd: |
+      VERSION=$(git describe | cut -d "v" -f 2)
+      sed -i -E "s/var version = \".*\"/var version = \"${VERSION}\"/g" version.go

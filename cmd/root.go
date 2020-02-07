@@ -10,7 +10,7 @@ import (
 )
 
 // CreateRootCommand is where all the stuff begins
-func CreateRootCommand(conf *config.Config, out io.Writer) *cobra.Command {
+func CreateRootCommand(conf *config.Config, out io.Writer, version string) *cobra.Command {
 	// rootCmd represents the base command when called without any subcommands
 	var rootCmd = &cobra.Command{
 		Use:   "lets",
@@ -23,10 +23,11 @@ func CreateRootCommand(conf *config.Config, out io.Writer) *cobra.Command {
 			initLogging(os.Getenv("LETS_DEBUG") == "true")
 			return nil
 		},
+		Version: version,
 	}
 	// workaround to hide help sub command
 	rootCmd.SetHelpCommand(&cobra.Command{
-		Use:    "no-help",
+		Use:    "__lets-no-help",
 		Hidden: true,
 	})
 

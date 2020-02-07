@@ -14,7 +14,7 @@ func main() {
 		fmt.Printf("Error: %s\n", err)
 		os.Exit(1)
 	}
-	rootCmd := cmd.CreateRootCommand(conf, os.Stdout)
+	rootCmd := cmd.CreateRootCommand(conf, os.Stdout, GetVersion())
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
 	}
