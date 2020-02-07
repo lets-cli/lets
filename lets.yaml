@@ -1,3 +1,5 @@
+shell: bash
+
 env:
 
 eval_env:

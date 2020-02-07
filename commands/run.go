@@ -48,8 +48,7 @@ func composeEnvs(envs ...[]string) []string {
 }
 
 func runCmd(cmdToRun command.Command, cfg *config.Config, out io.Writer, isChild bool) error {
-	// TODO get user's current shell
-	cmd := exec.Command("sh", "-c", cmdToRun.Cmd)
+	cmd := exec.Command(cfg.Shell, "-c", cmdToRun.Cmd)
 	// setup std out and err
 	cmd.Stdout = out
 	cmd.Stderr = out

@@ -44,6 +44,7 @@ lets run --debug --level=info
 ## lets.yaml
 
 ```yaml
+shell: bash
 commands:
     [name]:
       description: string
@@ -96,7 +97,7 @@ Yet there is no binaries
 - [x] docopts as repeated flags, joined in string
 - [x] pass opts as is if cmd is an array
 - [x] file hashes (checksums)
-- [ ] global checksums
+- [ ] global checksums (check if some commands use checksum so we can skip its calculation)
 - [ ] multiple checksums in one command (kv)
 - [x] depends on other commands
 - [ ] inherit configs

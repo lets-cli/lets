@@ -12,6 +12,7 @@ import (
 var (
 	// COMMANDS is a top-level directive. Includes all commands to run
 	COMMANDS = "commands"
+	SHELL    = "shell"
 )
 
 // Config is a struct for loaded config file
@@ -19,6 +20,7 @@ type Config struct {
 	WorkDir  string
 	FilePath string
 	Commands map[string]command.Command
+	Shell    string
 }
 
 // Load a config from file
@@ -75,24 +77,30 @@ func newConfig() *Config {
 
 // UnmarshalYAML unmarshals a config
 func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	rawKeyValue := make(map[string]map[string]map[string]interface{})
+	rawKeyValue := make(map[string]interface{})
 
 	if err := unmarshal(&rawKeyValue); err != nil {
 		return err
 	}
 
 	if cmds, ok := rawKeyValue[COMMANDS]; ok {
-		if err := c.loadCommands(cmds); err != nil {
+		if err := c.loadCommands(cmds.(map[interface{}]interface{})); err != nil {
 			return err
 		}
 	}
+
+	if shell, ok := rawKeyValue[SHELL]; ok {
+		c.Shell = fmt.Sprintf("%s", shell)
+	}
+
 	return nil
 }
 
 // TODO refactor
-func (c *Config) loadCommands(cmds map[string]map[string]interface{}) error {
+func (c *Config) loadCommands(cmds map[interface{}]interface{}) error {
 	for key, value := range cmds {
-		c.Commands[key] = command.NewCommand(key, value)
+		keyStr := key.(string)
+		c.Commands[keyStr] = command.NewCommand(keyStr, value.(map[interface{}]interface{}))
 	}
 	return nil
 }

@@ -28,7 +28,7 @@ type Command struct {
 }
 
 // TODO interface{} must be replaced
-func NewCommand(name string, rawCommand map[string]interface{}) Command {
+func NewCommand(name string, rawCommand map[interface{}]interface{}) Command {
 	newCmd := Command{
 		Name: name,
 		Env:  make(map[string]string),
@@ -85,17 +85,19 @@ func NewCommand(name string, rawCommand map[string]interface{}) Command {
 	}
 
 	if checksum, ok := rawCommand[CHECKSUM]; ok {
-		var files []string
-		for _, value := range checksum.([]interface{}) {
-			// TODO validate if command is realy exists - in validate
-			files = append(files, value.(string))
-		}
-		checksum, err := calculateChecksum(files)
-		if err == nil {
-			newCmd.Checksum = checksum
-		} else {
-			// TODO return error or caclulate checksum upper in the code
-			fmt.Printf("error while checksum %s\n", err)
+		if patterns, ok := checksum.([]interface{}); ok {
+			var files []string
+			for _, value := range patterns {
+				// TODO validate if command is realy exists - in validate
+				files = append(files, value.(string))
+			}
+			checksum, err := calculateChecksum(files)
+			if err == nil {
+				newCmd.Checksum = checksum
+			} else {
+				// TODO return error or caclulate checksum upper in the code
+				fmt.Printf("error while checksum %s\n", err)
+			}
 		}
 	}
 	return newCmd
