@@ -100,7 +100,13 @@ func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 func (c *Config) loadCommands(cmds map[interface{}]interface{}) error {
 	for key, value := range cmds {
 		keyStr := key.(string)
-		c.Commands[keyStr] = command.NewCommand(keyStr, value.(map[interface{}]interface{}))
+		newCmd := command.NewCommand(keyStr)
+
+		err := command.DeserializeCommand(&newCmd, value.(map[interface{}]interface{}))
+		if err != nil {
+			return err
+		}
+		c.Commands[keyStr] = newCmd
 	}
 	return nil
 }

@@ -1,6 +1,7 @@
 package command
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -27,16 +28,49 @@ type Command struct {
 	Checksum    string
 }
 
+type CommandError struct {
+	Path struct {
+		Full  string
+		Field string
+	}
+	Err error
+}
+
+func (e *CommandError) Error() string {
+	return fmt.Sprintf("failed to parse command: %s", e.Err)
+}
+
+// env is not proper arg
+func newCommandError(msg string, name string, field string, env string) error {
+	fields := []string{name, field}
+	if env != "" {
+		fields = append(fields, env)
+	}
+	fullPath := strings.Join(fields, ".")
+	return &CommandError{
+		Path: struct {
+			Full  string
+			Field string
+		}{
+			Full:  fullPath,
+			Field: field,
+		},
+		Err: errors.New(fmt.Sprintf("field %s: %s", fullPath, msg)),
+	}
+}
+
 // TODO interface{} must be replaced
-func NewCommand(name string, rawCommand map[interface{}]interface{}) Command {
+func NewCommand(name string) Command {
 	newCmd := Command{
 		Name: name,
 		Env:  make(map[string]string),
 	}
+	return newCmd
+}
 
+func DeserializeCommand(newCmd *Command, rawCommand map[interface{}]interface{}) error {
 	if cmd, ok := rawCommand[CMD]; ok {
-		// TODO not safe, need validation
-		//  decide, validate here or top-level validate and return all errors at once
+		// TODO decide, validate here or top-level validate and return all errors at once
 		switch cmd := cmd.(type) {
 		case string:
 			newCmd.Cmd = cmd
@@ -48,24 +82,62 @@ func NewCommand(name string, rawCommand map[interface{}]interface{}) Command {
 			cmdList = append(cmdList, os.Args[1:]...)
 			newCmd.Cmd = strings.Join(cmdList, " ")
 		default:
-			fmt.Println("default, must raise an error")
+			return newCommandError(
+				"must be either string or list of string",
+				newCmd.Name,
+				CMD,
+				"",
+			)
 		}
-		// TODO here we need to validate if cmd is an array
 	}
 
 	if desc, ok := rawCommand[DESCRIPTION]; ok {
-		newCmd.Description = desc.(string)
+		if value, ok := desc.(string); ok {
+			newCmd.Description = value
+		} else {
+			return newCommandError(
+				"must be a string",
+				newCmd.Name,
+				DESCRIPTION,
+				"",
+			)
+		}
 	}
 
 	if env, ok := rawCommand[ENV]; ok {
 		// TODO dirty hacks
 		for name, value := range env.(map[interface{}]interface{}) {
-			newCmd.Env[name.(string)] = value.(string)
+			nameKey := name.(string)
+			if value, ok := value.(string); ok {
+				newCmd.Env[nameKey] = value
+			} else {
+				return newCommandError(
+					"must be a string",
+					newCmd.Name,
+					ENV,
+					nameKey,
+				)
+			}
 		}
 	}
 
 	if evalEnv, ok := rawCommand[EVAL_ENV]; ok {
 		for name, value := range evalEnv.(map[interface{}]interface{}) {
+			nameKey := name.(string)
+			if value, ok := value.(string); ok {
+				if computedVal, err := evalEnvVariable(value); err != nil {
+					return err
+				} else {
+					newCmd.Env[nameKey] = computedVal
+				}
+			} else {
+				return newCommandError(
+					"must be a string",
+					newCmd.Name,
+					EVAL_ENV,
+					nameKey,
+				)
+			}
 			if computedVal, err := evalEnvVariable(value.(string)); err != nil {
 				// TODO we have to fail here and log error for user
 			} else {
@@ -75,8 +147,18 @@ func NewCommand(name string, rawCommand map[interface{}]interface{}) Command {
 	}
 
 	if options, ok := rawCommand[OPTIONS]; ok {
-		newCmd.RawOptions = options.(string)
+		if value, ok := options.(string); ok {
+			newCmd.RawOptions = value
+		} else {
+			return newCommandError(
+				"must be a string",
+				newCmd.Name,
+				OPTIONS,
+				"",
+			)
+		}
 	}
+	// TODO continue validation
 	if depends, ok := rawCommand[DEPENDS]; ok {
 		for _, value := range depends.([]interface{}) {
 			// TODO validate if command is realy exists - in validate
@@ -100,5 +182,5 @@ func NewCommand(name string, rawCommand map[interface{}]interface{}) Command {
 			}
 		}
 	}
-	return newCmd
+	return nil
 }
