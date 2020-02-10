@@ -16,32 +16,17 @@ var DocoptParser = &docopt.Parser{
 }
 
 // ParseDocopts parses docopts for command options with args from os.Args
-// TODO maybe this must be a struct method
-func ParseDocopts(cmd Command) (map[string]string, error) {
-	// just command name in args
-	if len(os.Args[1:]) == 1 && os.Args[1] == cmd.Name {
-		return make(map[string]string), nil
-	}
+func ParseDocopts(cmd Command) (docopt.Opts, error) {
 	// no options at all
 	if cmd.RawOptions == "" {
-		return make(map[string]string), nil
+		return docopt.Opts{}, nil
 	}
-	opts, err := DocoptParser.ParseArgs(cmd.RawOptions, os.Args[1:], "")
 
-	if err != nil {
-		return nil, err
-	}
-	return normalizeOpts(opts), nil
+	return DocoptParser.ParseArgs(cmd.RawOptions, os.Args[1:], "")
+
 }
 
-func normalizeOpts(opts map[string]interface{}) map[string]string {
-	// TODO
-	// non-passed flags (counted 0)
-	// passed flags
-	// passed several times
-	// non-passed positional args
-	// passed positional args
-	// list (still not get it)
+func OptsToLetsOpt(opts docopt.Opts) map[string]string {
 	envMap := make(map[string]string, len(opts))
 	for origKey, value := range opts {
 		key := normalizeKey(origKey)
@@ -54,12 +39,70 @@ func normalizeOpts(opts map[string]interface{}) map[string]string {
 			strValue = strconv.FormatBool(value)
 		case []string:
 			strValue = strings.Join(value, " ")
+		case nil:
+			strValue = ""
 		default:
 			strValue = ""
 		}
 		envMap[envKey] = strValue
 	}
 	return envMap
+}
+
+func OptsToLetsCli(opts docopt.Opts) map[string]string {
+	cliMap := make(map[string]string, len(opts))
+	formatVal := func(k, v string) string {
+		return fmt.Sprintf("%s %s", k, v)
+	}
+	for origKey, value := range opts {
+		if !isOptKey(origKey) {
+			continue
+		}
+		key := normalizeKey(origKey)
+		cliKey := fmt.Sprintf("LETSCLI_%s", key)
+		var strValue string
+		switch value := value.(type) {
+		case string:
+			if value != "" {
+				fmt.Printf("value %s, key %s", value, origKey)
+				strValue = formatVal(origKey, value)
+			}
+		case bool:
+			if value {
+				strValue = origKey
+			}
+		case []string:
+			if len(value) == 0 {
+				strValue = ""
+			} else {
+				values := value
+				if strings.HasPrefix(origKey, "-") {
+					values = append([]string{origKey}, values...)
+				}
+				// TODO maybe we should escape each value
+				strValue = strings.Join(values, " ")
+			}
+		case nil:
+			strValue = ""
+		default:
+			strValue = ""
+		}
+		cliMap[cliKey] = strValue
+	}
+	return cliMap
+}
+
+func isOptKey(key string) bool {
+	if strings.HasPrefix(key, "--") {
+		return true
+	}
+	if strings.HasPrefix(key, "-") {
+		return true
+	}
+	if strings.HasPrefix(key, "<") && strings.HasSuffix(key, ">") {
+		return true
+	}
+	return false
 }
 
 func normalizeKey(origKey string) string {

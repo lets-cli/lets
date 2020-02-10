@@ -22,6 +22,7 @@ type Command struct {
 	Env         map[string]string
 	RawOptions  string
 	Options     map[string]string
+	CliOptions  map[string]string
 	Depends     []string
 	Checksum    string
 }

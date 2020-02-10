@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"github.com/docopt/docopt-go"
 	"github.com/kindritskyiMax/lets/commands/command"
 	"github.com/kindritskyiMax/lets/config"
 	"github.com/kindritskyiMax/lets/logging"
@@ -48,6 +49,16 @@ func composeEnvs(envs ...[]string) []string {
 	return composed
 }
 
+// format docopts error and adds usage string to output
+func formatOptsUsageError(err error, opts docopt.Opts, cmdToRun command.Command) error {
+	if opts == nil && err.Error() == "" {
+		err = fmt.Errorf("no such option")
+	}
+	errTpl := fmt.Sprintf("failed to parse docopt options for cmd %s: %s", cmdToRun.Name, err)
+
+	return fmt.Errorf("%s\n\n%s", errTpl, cmdToRun.RawOptions)
+}
+
 func runCmd(cmdToRun command.Command, cfg *config.Config, out io.Writer, isChild bool) error {
 	cmd := exec.Command(cfg.Shell, "-c", cmdToRun.Cmd)
 	// setup std out and err
@@ -57,15 +68,17 @@ func runCmd(cmdToRun command.Command, cfg *config.Config, out io.Writer, isChild
 	// parse docopts
 	opts, err := command.ParseDocopts(cmdToRun)
 	if err != nil {
-		return fmt.Errorf("failed to parse docopt options for cmd %s: %s", cmdToRun.Name, err)
+		return formatOptsUsageError(err, opts, cmdToRun)
 	}
-	cmdToRun.Options = opts
+	cmdToRun.Options = command.OptsToLetsOpt(opts)
+	cmdToRun.CliOptions = command.OptsToLetsCli(opts)
 
 	// setup env for command
 	env := convertEnvForCmd(cmdToRun.Env)
 	optsEnv := convertOptsToEnvForCmd(cmdToRun.Options)
+	cliOptsEnv := convertOptsToEnvForCmd(cmdToRun.CliOptions)
 	checksumEnv := convertChecksumToEnvForCmd(cmdToRun.Checksum)
-	cmd.Env = composeEnvs(os.Environ(), env, optsEnv, checksumEnv)
+	cmd.Env = composeEnvs(os.Environ(), env, optsEnv, cliOptsEnv, checksumEnv)
 	if !isChild {
 		logging.Log.Debugf("Executing command %s with env:\n%s", cmdToRun.Name, cmd.Env)
 	} else {
