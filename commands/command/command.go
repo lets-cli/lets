@@ -190,19 +190,34 @@ func DeserializeCommand(newCmd *Command, rawCommand map[interface{}]interface{})
 	}
 
 	if checksum, ok := rawCommand[CHECKSUM]; ok {
-		if patterns, ok := checksum.([]interface{}); ok {
-			var files []string
-			for _, value := range patterns {
-				// TODO validate if command is realy exists - in validate
-				files = append(files, value.(string))
-			}
-			checksum, err := calculateChecksum(files)
-			if err == nil {
-				newCmd.Checksum = checksum
+		patterns, ok := checksum.([]interface{})
+		if !ok {
+			return newCommandError(
+				"must be a list of string (files of glob patterns)",
+				newCmd.Name,
+				CHECKSUM,
+				"",
+			)
+		}
+
+		var files []string
+		for _, value := range patterns {
+			if value, ok := value.(string); ok {
+				files = append(files, value)
 			} else {
-				// TODO return error or caclulate checksum upper in the code
-				fmt.Printf("error while checksum %s\n", err)
+				return newCommandError(
+					"value of checksum list must be a string",
+					newCmd.Name,
+					CHECKSUM,
+					"",
+				)
 			}
+		}
+		checksum, err := calculateChecksum(files)
+		if err == nil {
+			newCmd.Checksum = checksum
+		} else {
+			return errors.New(fmt.Sprintf("failed to calculate checksum: %s", err))
 		}
 	}
 	return nil
