@@ -48,6 +48,11 @@ func composeEnvs(envs ...[]string) []string {
 	return composed
 }
 
+// format docopts error and adds usage string to output
+func formatOptsUsageError(err error, cmdToRun command.Command) error {
+	return fmt.Errorf("failed to parse docopt options for cmd %s: %s\n\n%s", cmdToRun.Name, err, cmdToRun.RawOptions)
+}
+
 func runCmd(cmdToRun command.Command, cfg *config.Config, out io.Writer, isChild bool) error {
 	cmd := exec.Command(cfg.Shell, "-c", cmdToRun.Cmd)
 	// setup std out and err
@@ -57,7 +62,7 @@ func runCmd(cmdToRun command.Command, cfg *config.Config, out io.Writer, isChild
 	// parse docopts
 	opts, err := command.ParseDocopts(cmdToRun)
 	if err != nil {
-		return fmt.Errorf("failed to parse docopt options for cmd %s: %s", cmdToRun.Name, err)
+		return formatOptsUsageError(err, cmdToRun)
 	}
 	cmdToRun.Options = command.OptsToLetsOpt(opts)
 	cmdToRun.CliOptions = command.OptsToLetsCli(opts)
