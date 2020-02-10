@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"github.com/docopt/docopt-go"
 	"github.com/kindritskyiMax/lets/commands/command"
 	"github.com/kindritskyiMax/lets/config"
 	"github.com/kindritskyiMax/lets/logging"
@@ -49,8 +50,13 @@ func composeEnvs(envs ...[]string) []string {
 }
 
 // format docopts error and adds usage string to output
-func formatOptsUsageError(err error, cmdToRun command.Command) error {
-	return fmt.Errorf("failed to parse docopt options for cmd %s: %s\n\n%s", cmdToRun.Name, err, cmdToRun.RawOptions)
+func formatOptsUsageError(err error, opts docopt.Opts, cmdToRun command.Command) error {
+	if opts == nil && err.Error() == "" {
+		err = fmt.Errorf("no such option")
+	}
+	errTpl := fmt.Sprintf("failed to parse docopt options for cmd %s: %s", cmdToRun.Name, err)
+
+	return fmt.Errorf("%s\n\n%s", errTpl, cmdToRun.RawOptions)
 }
 
 func runCmd(cmdToRun command.Command, cfg *config.Config, out io.Writer, isChild bool) error {
@@ -62,7 +68,7 @@ func runCmd(cmdToRun command.Command, cfg *config.Config, out io.Writer, isChild
 	// parse docopts
 	opts, err := command.ParseDocopts(cmdToRun)
 	if err != nil {
-		return formatOptsUsageError(err, cmdToRun)
+		return formatOptsUsageError(err, opts, cmdToRun)
 	}
 	cmdToRun.Options = command.OptsToLetsOpt(opts)
 	cmdToRun.CliOptions = command.OptsToLetsCli(opts)
