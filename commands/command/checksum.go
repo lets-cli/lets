@@ -2,7 +2,6 @@ package command
 
 import (
 	"crypto/sha1"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
@@ -63,7 +62,7 @@ func parseAndValidateChecksum(checksum interface{}, newCmd *Command) error {
 	if err == nil {
 		newCmd.Checksum = calcChecksum
 	} else {
-		return errors.New(fmt.Sprintf("failed to calculate checksum: %s", err))
+		return fmt.Errorf("failed to calculate checksum: %s", err)
 	}
 	return nil
 }

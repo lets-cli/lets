@@ -1,7 +1,6 @@
 package command
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 )
@@ -54,7 +53,7 @@ func newCommandError(msg string, name string, field string, env string) error {
 			Full:  fullPath,
 			Field: field,
 		},
-		Err: errors.New(fmt.Sprintf("field %s: %s", fullPath, msg)),
+		Err: fmt.Errorf("field %s: %s", fullPath, msg),
 	}
 }
 
