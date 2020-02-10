@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/kindritskyiMax/lets/test"
+	"strings"
 	"testing"
 )
 
@@ -41,9 +42,15 @@ func TestSubCommandCmd(t *testing.T) {
 			t.Fatalf("must fail in docopts parsing")
 		}
 
-		expect := "failed to parse docopt options for cmd test-options: --kv-opt requires argument"
-		if expect != err.Error() {
-			t.Errorf("must fail with error, exected: %s, got: %s", expect, err)
+		expectErr := "failed to parse docopt options for cmd test-options: --kv-opt requires argument"
+		if !strings.Contains(err.Error(), expectErr) {
+			t.Errorf("must fail with error, \nexect: %s, \ngot:   %s", expectErr, err)
+		}
+		if !strings.Contains(err.Error(), "Usage:") {
+			t.Errorf("must show Usage, \ngot:   %s", err)
+		}
+		if !strings.Contains(err.Error(), "Options:") {
+			t.Errorf("must show Options, \ngot:   %s", err)
 		}
 	})
 
