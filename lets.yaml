@@ -23,6 +23,9 @@ commands:
 
   test-env:
     description: Test env
+    env:
+      MY_ENV: "my env val"
+    cmd: echo ${LETSOPT_MY_ENV}
 
   test-eval_env:
     description: Test eval_env
@@ -59,3 +62,13 @@ commands:
         <version>   Set version
     cmd: |
       sed -i -E "s/var version = \".*\"/var version = \"${LETSOPT_VERSION}\"/g" version.go
+
+  test:
+    description: Run tests for lets
+    cmd:
+      docker-compose run --rm test
+
+  staticcheck:
+    description: Run staticcheck for lets
+    cmd:
+      docker-compose run --rm staticheck

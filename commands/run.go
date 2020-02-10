@@ -6,6 +6,7 @@ import (
 	"github.com/kindritskyiMax/lets/config"
 	"github.com/kindritskyiMax/lets/logging"
 	"io"
+	"os"
 	"os/exec"
 )
 
@@ -64,7 +65,7 @@ func runCmd(cmdToRun command.Command, cfg *config.Config, out io.Writer, isChild
 	env := convertEnvForCmd(cmdToRun.Env)
 	optsEnv := convertOptsToEnvForCmd(cmdToRun.Options)
 	checksumEnv := convertChecksumToEnvForCmd(cmdToRun.Checksum)
-	cmd.Env = composeEnvs(env, optsEnv, checksumEnv)
+	cmd.Env = composeEnvs(os.Environ(), env, optsEnv, checksumEnv)
 	if !isChild {
 		logging.Log.Debugf("Executing command %s with env:\n%s", cmdToRun.Name, cmd.Env)
 	} else {

@@ -103,10 +103,10 @@ Yet there is no binaries
 - [ ] inherit configs
 - [x] LETS_DEBUG env for debugging logs
 - [ ] command to only calculate checksum
-- [ ] capture env from shell
+- [x] capture env from shell
 - [ ] env computing
   - [ ] global env
   - [x] command env
 - [ ] dogfood on ci
-- [ ] add version flag to lets
+- [x] add version flag to lets
 - [ ] add verbose flag to lets
