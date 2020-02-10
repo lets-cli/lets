@@ -58,6 +58,7 @@ Config schema
     * [options](#options)
     * [env](#env)
     * [eval_env](#eval_env)
+    * [checksum](#checksum)
 
 
 ### Top-level directives:
@@ -274,6 +275,40 @@ commands:
             CURRENT_UID: echo "`id -u`:`id -g`"
             CURRENT_USER_NAME: echo "`id -un`"
         cmd: go build -o lets *.go
+```
+
+Value will be executed in shell and result will be saved in env.
+
+
+##### `checksum`
+`type: array of string`
+
+Checksum used for computing file hashed. It is useful when you depend on some files content changes.
+
+In `checksum` you can specify:
+
+- a list of file names 
+- a list of file regext patterns (parsed via go `path/filepath.Glob`)
+
+Each time a command runs, `lets` will calculate the checksum of all files specified in `checksum`.
+
+Result then can be accessed via `LETS_CHECKSUM` env variable.
+
+Checksum is calculated with `sha1`.
+
+If you specify patterns, `lets` will try to find all matches and will calculate checksum of that files.
+
+Example:
+
+```bash
+shell: bash
+commands:
+    app-build:
+        checksum: 
+            - requirements-*.txt
+        cmd: |
+            docker pull myrepo/app:${LETS_CHECKSUM}
+            docker run --rm myrepo/app${LETS_CHECKSUM} python -m app       
 ```
 
 Value will be executed in shell and result will be saved in env.
