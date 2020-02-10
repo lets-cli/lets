@@ -64,7 +64,6 @@ func OptsToLetsCli(opts docopt.Opts) map[string]string {
 		switch value := value.(type) {
 		case string:
 			if value != "" {
-				fmt.Printf("value %s, key %s", value, origKey)
 				strValue = formatVal(origKey, value)
 			}
 		case bool:
