@@ -110,3 +110,7 @@ Yet there is no binaries
 - [ ] dogfood on ci
 - [x] add version flag to lets
 - [ ] add verbose flag to lets
+- [x] add LETSCLI_OPTION - options as is
+- [ ] add all env vars event if no options were passed
+- [ ] BUG - when run git commit, lets complains that no config is found for git
+- [ ] Print usage if wrong opt passed for options

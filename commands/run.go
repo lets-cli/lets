@@ -59,13 +59,15 @@ func runCmd(cmdToRun command.Command, cfg *config.Config, out io.Writer, isChild
 	if err != nil {
 		return fmt.Errorf("failed to parse docopt options for cmd %s: %s", cmdToRun.Name, err)
 	}
-	cmdToRun.Options = opts
+	cmdToRun.Options = command.OptsToLetsOpt(opts)
+	cmdToRun.CliOptions = command.OptsToLetsCli(opts)
 
 	// setup env for command
 	env := convertEnvForCmd(cmdToRun.Env)
 	optsEnv := convertOptsToEnvForCmd(cmdToRun.Options)
+	cliOptsEnv := convertOptsToEnvForCmd(cmdToRun.CliOptions)
 	checksumEnv := convertChecksumToEnvForCmd(cmdToRun.Checksum)
-	cmd.Env = composeEnvs(os.Environ(), env, optsEnv, checksumEnv)
+	cmd.Env = composeEnvs(os.Environ(), env, optsEnv, cliOptsEnv, checksumEnv)
 	if !isChild {
 		logging.Log.Debugf("Executing command %s with env:\n%s", cmdToRun.Name, cmd.Env)
 	} else {

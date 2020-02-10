@@ -20,6 +20,9 @@ commands:
       echo LETSOPT_KV_OPT=${LETSOPT_KV_OPT}
       echo LETSOPT_BOOL_OPT=${LETSOPT_BOOL_OPT}
       echo LETSOPT_ARGS=${LETSOPT_ARGS}
+      echo LETSCLI_KV_OPT=${LETSCLI_KV_OPT}
+      echo LETSCLI_BOOL_OPT=${LETSCLI_BOOL_OPT}
+      echo LETSCLI_ARGS=${LETSCLI_ARGS}
 
   test-env:
     description: Test env
