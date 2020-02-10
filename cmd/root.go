@@ -36,10 +36,6 @@ func CreateRootCommand(conf *config.Config, out io.Writer, version string) *cobr
 	return rootCmd
 }
 
-func Execute(cmd *cobra.Command) error {
-	return cmd.Execute()
-}
-
 func runHelp(cmd *cobra.Command) error {
 	return cmd.Help()
 }

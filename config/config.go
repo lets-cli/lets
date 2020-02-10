@@ -96,13 +96,12 @@ func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
-// TODO refactor
 func (c *Config) loadCommands(cmds map[interface{}]interface{}) error {
 	for key, value := range cmds {
 		keyStr := key.(string)
 		newCmd := command.NewCommand(keyStr)
 
-		err := command.DeserializeCommand(&newCmd, value.(map[interface{}]interface{}))
+		err := command.ParseAndValidateCommand(&newCmd, value.(map[interface{}]interface{}))
 		if err != nil {
 			return err
 		}

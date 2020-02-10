@@ -1,12 +1,18 @@
 package command
 
-import "os/exec"
-
-func evalEnvVariable(rawCmd string) (string, error) {
-	cmd := exec.Command("sh", "-c", rawCmd)
-	out, err := cmd.Output()
-	if err != nil {
-		return "", err
+func parseAndValidateEnv(env interface{}, newCmd *Command) error {
+	for name, value := range env.(map[interface{}]interface{}) {
+		nameKey := name.(string)
+		if value, ok := value.(string); ok {
+			newCmd.Env[nameKey] = value
+		} else {
+			return newCommandError(
+				"must be a string",
+				newCmd.Name,
+				ENV,
+				nameKey,
+			)
+		}
 	}
-	return string(out), nil
+	return nil
 }
