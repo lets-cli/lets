@@ -311,8 +311,6 @@ commands:
             docker run --rm myrepo/app${LETS_CHECKSUM} python -m app       
 ```
 
-Value will be executed in shell and result will be saved in env.
-
 ## Install
 
 **Shell script**:
