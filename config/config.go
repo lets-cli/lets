@@ -90,7 +90,13 @@ func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 
 	if shell, ok := rawKeyValue[SHELL]; ok {
+		shell, ok := shell.(string)
+		if !ok {
+			return fmt.Errorf("shell must be a string")
+		}
 		c.Shell = fmt.Sprintf("%s", shell)
+	} else {
+		return fmt.Errorf("shell must be specified in config")
 	}
 
 	return nil
