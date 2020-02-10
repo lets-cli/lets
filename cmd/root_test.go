@@ -11,7 +11,7 @@ import (
 func newTestRootCmd(args []string, conf *config.Config) (rootCmd *cobra.Command, out *bytes.Buffer) {
 	bufOut := new(bytes.Buffer)
 
-	rootCommand := CreateRootCommand(conf, bufOut)
+	rootCommand := CreateRootCommand(conf, bufOut, "test-version")
 	rootCommand.SetOut(bufOut)
 	rootCommand.SetErr(bufOut)
 	rootCommand.SetArgs(args)

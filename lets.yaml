@@ -62,3 +62,8 @@ commands:
         <version>   Set version
     cmd: |
       sed -i -E "s/var version = \".*\"/var version = \"${LETSOPT_VERSION}\"/g" version.go
+
+  test:
+    description: Run tests for lets
+    cmd:
+      go test ./... -v
