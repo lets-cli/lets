@@ -94,7 +94,7 @@ func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		if !ok {
 			return fmt.Errorf("shell must be a string")
 		}
-		c.Shell = fmt.Sprintf("%s", shell)
+		c.Shell = shell
 	} else {
 		return fmt.Errorf("shell must be specified in config")
 	}
