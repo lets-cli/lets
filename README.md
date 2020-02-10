@@ -189,6 +189,8 @@ commands:
 One of the most cool things about `lets` than it has built in docopt parsing.
 All you need is to write a valid docopt for a command and lets will parse and inject all values for you.
 
+More info [http://docopt.org](http://docopt.org)
+
 When parsed, `lets` will provide two kind of env variabled:
 
 - `LETSOPT_<VAR>`
@@ -218,7 +220,9 @@ commands:
 So here we have:
 
 `args` - is a list of required positional args
+
 `--log-level` - is a key-value flag, must be provided with some value
+
 `--debug` - is a bool flag, if specified, means true, if no specified means false
 
 In the env of `cmd` command there will be available two types of env variables:

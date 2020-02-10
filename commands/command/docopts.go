@@ -36,7 +36,11 @@ func OptsToLetsOpt(opts docopt.Opts) map[string]string {
 		case string:
 			strValue = value
 		case bool:
-			strValue = strconv.FormatBool(value)
+			if value {
+				strValue = strconv.FormatBool(value)
+			} else {
+				strValue = ""
+			}
 		case []string:
 			strValue = strings.Join(value, " ")
 		case nil:
