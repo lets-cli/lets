@@ -374,4 +374,5 @@ Yet there is no binaries
 - [x] add LETSCLI_OPTION - options as is
 - [ ] add all env vars event if no options were passed
 - [ ] BUG - when run git commit, lets complains that no config is found for git
-- [ ] Print usage if wrong opt passed for options
+- [x] Print usage if wrong opt passed for options
+- [ ] Bash/zsh completion
