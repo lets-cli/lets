@@ -68,6 +68,11 @@ func NewCommand(name string) Command {
 	return newCmd
 }
 
+// TODO rename DeserializeCommand or make it command method
+// add readAndValidate func, with cmd, section name and return validated and error
+
+//TODO maybe add validate package and implement funcs such as read string, read list, or so
+// or create file per section and create read and validate functions with some piblic api like Parse or ReadAndValidate
 func DeserializeCommand(newCmd *Command, rawCommand map[interface{}]interface{}) error {
 	if cmd, ok := rawCommand[CMD]; ok {
 		// TODO decide, validate here or top-level validate and return all errors at once
@@ -160,9 +165,27 @@ func DeserializeCommand(newCmd *Command, rawCommand map[interface{}]interface{})
 	}
 	// TODO continue validation
 	if depends, ok := rawCommand[DEPENDS]; ok {
-		for _, value := range depends.([]interface{}) {
-			// TODO validate if command is realy exists - in validate
-			newCmd.Depends = append(newCmd.Depends, value.(string))
+		if depends, ok := depends.([]interface{}); ok {
+			for _, value := range depends {
+				if value, ok := value.(string); ok {
+					// TODO validate if command is really exists - in validate
+					newCmd.Depends = append(newCmd.Depends, value)
+				} else {
+					return newCommandError(
+						"value of depends list must be a string",
+						newCmd.Name,
+						DEPENDS,
+						"",
+					)
+				}
+			}
+		} else {
+			return newCommandError(
+				"must be a list of string (commands)",
+				newCmd.Name,
+				DEPENDS,
+				"",
+			)
 		}
 	}
 
