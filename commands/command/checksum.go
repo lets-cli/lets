@@ -58,6 +58,7 @@ func parseAndValidateChecksum(checksum interface{}, newCmd *Command) error {
 			)
 		}
 	}
+	// TODO make checksum calculation lazy
 	calcChecksum, err := calculateChecksum(files)
 	if err == nil {
 		newCmd.Checksum = calcChecksum

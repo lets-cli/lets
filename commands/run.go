@@ -63,12 +63,12 @@ func formatOptsUsageError(err error, opts docopt.Opts, cmdToRun command.Command)
 	return fmt.Errorf("%s\n\n%s", errTpl, cmdToRun.RawOptions)
 }
 
-
 func runCmd(cmdToRun command.Command, cfg *config.Config, out io.Writer, parentName string) error {
 	cmd := exec.Command(cfg.Shell, "-c", cmdToRun.Cmd)
 	// setup std out and err
 	cmd.Stdout = out
 	cmd.Stderr = out
+	cmd.Stdin = os.Stdin
 
 	// parse docopts
 	opts, err := command.ParseDocopts(cmdToRun)
