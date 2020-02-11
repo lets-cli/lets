@@ -7,6 +7,22 @@ import (
 )
 
 func TestCommandFieldCmd(t *testing.T) {
+	t.Run("so subcommand in os.Args", func(t *testing.T) {
+		testCmd := NewCommand("test-cmd")
+		cmdArgs := "echo Hello"
+		// mock args
+		os.Args = []string{"bin_to_run"}
+		err := parseAndValidateCmd(cmdArgs, &testCmd)
+
+		if err != nil {
+			t.Fatalf("unexpected error: %s", err)
+		}
+
+		if testCmd.Cmd != cmdArgs {
+			t.Errorf("wrong output. \nexpect %s \ngot:  %s", cmdArgs, testCmd.Cmd)
+		}
+	})
+
 	t.Run("as string", func(t *testing.T) {
 		testCmd := NewCommand("test-cmd")
 		cmdArgs := "echo Hello"
