@@ -127,7 +127,7 @@ func ParseAndValidateCommand(newCmd *Command, rawCommand map[interface{}]interfa
 }
 
 func validateCommandFields(rawKeyValue map[interface{}]interface{}, validFields string) error {
-	for k, _ := range rawKeyValue {
+	for k := range rawKeyValue {
 		if !strings.Contains(validFields, k.(string)) {
 			return fmt.Errorf("unknown command field '%s'", k)
 		}

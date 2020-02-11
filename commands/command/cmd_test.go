@@ -9,9 +9,7 @@ import (
 func TestCommandFieldCmd(t *testing.T) {
 	t.Run("as string", func(t *testing.T) {
 		testCmd := NewCommand("test-cmd")
-		var cmdArgs interface{}
-
-		cmdArgs = "echo Hello"
+		cmdArgs := "echo Hello"
 
 		err := parseAndValidateCmd(cmdArgs, &testCmd)
 
@@ -19,7 +17,7 @@ func TestCommandFieldCmd(t *testing.T) {
 			t.Fatalf("unexpected error: %s", err)
 		}
 
-		if testCmd.Cmd != cmdArgs{
+		if testCmd.Cmd != cmdArgs {
 			t.Errorf("wrong output. \nexpect %s \ngot:  %s", cmdArgs, testCmd.Cmd)
 		}
 	})
@@ -39,7 +37,7 @@ func TestCommandFieldCmd(t *testing.T) {
 			t.Fatalf("unexpected error: %s", err)
 		}
 		exp := strings.Join(append([]string{"echo", "Hello"}, appendArgs...), " ")
-		if testCmd.Cmd != exp{
+		if testCmd.Cmd != exp {
 			t.Errorf("wrong output. \nexpect: %s \ngot:    %s", exp, testCmd.Cmd)
 		}
 	})
