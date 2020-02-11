@@ -19,6 +19,9 @@ func validateCircularDepends(cfg *Config) error {
 		for _, cmdB := range cfg.Commands {
 			depsA := strings.Join(cmdA.Depends, " ")
 			depsB := strings.Join(cmdB.Depends, " ")
+			if cmdA.Name == cmdB.Name {
+				continue
+			}
 			if strings.Contains(depsB, cmdA.Name) &&
 				strings.Contains(depsA, cmdB.Name) {
 				return fmt.Errorf(
