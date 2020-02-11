@@ -376,3 +376,5 @@ Yet there is no binaries
 - [ ] BUG - when run git commit, lets complains that no config is found for git
 - [x] Print usage if wrong opt passed for options
 - [ ] Bash/zsh completion
+- [x] Validate circular depends
+- [x] Validate unknown fields in yaml

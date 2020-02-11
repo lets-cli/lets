@@ -1,9 +1,5 @@
 shell: bash
 
-env:
-
-eval_env:
-
 commands:
   test-options:
     description: Test options
@@ -78,3 +74,8 @@ commands:
     description: Run staticcheck for lets
     cmd:
       docker-compose run --rm staticheck
+
+  fmt:
+    description: Run sfmt
+    cmd:
+      go fmt ./...
