@@ -17,6 +17,7 @@ var (
 )
 
 var validFields = strings.Join([]string{COMMANDS, SHELL}, " ")
+
 // Config is a struct for loaded config file
 type Config struct {
 	WorkDir  string
