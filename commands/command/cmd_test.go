@@ -27,7 +27,7 @@ func TestCommandFieldCmd(t *testing.T) {
 		var cmdArgs []interface{}
 		cmdArgs = append(cmdArgs, "echo", "Hello")
 
-		appendArgs := []string{"one", "two", "--there", "--four=me"}
+		appendArgs := []string{"one", "two", "--there", `--four='{"age": 20}'`}
 		// mock args
 		os.Args = append([]string{"bin_to_run", "test-cmd"}, appendArgs...)
 
@@ -36,9 +36,19 @@ func TestCommandFieldCmd(t *testing.T) {
 		if err != nil {
 			t.Fatalf("unexpected error: %s", err)
 		}
-		exp := strings.Join(append([]string{"echo", "Hello"}, appendArgs...), " ")
+		exp := strings.Join(append([]string{"echo", "Hello"}, "one", "two", "--there", `--four=''{"age": 20}''`), " ")
 		if testCmd.Cmd != exp {
 			t.Errorf("wrong output. \nexpect: %s \ngot:    %s", exp, testCmd.Cmd)
+		}
+	})
+}
+
+func TestEscapeKeyValueFlagValue(t *testing.T) {
+	t.Run("escape value if json", func(t *testing.T) {
+		escaped := escapeFlagValue(`--kwargs='{"age": 20}'`)
+		exp := `--kwargs=''{"age": 20}''`
+		if escaped != exp {
+			t.Errorf("wrong output. \nexpect: %s \ngot:    %s", exp, escaped)
 		}
 	})
 }

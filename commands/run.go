@@ -11,6 +11,10 @@ import (
 	"os/exec"
 )
 
+const (
+	NoticeColor = "\033[1;36m%s\033[0m"
+)
+
 type RunOptions struct {
 	Config  *config.Config
 	RawArgs []string
@@ -18,7 +22,7 @@ type RunOptions struct {
 
 // RunCommand runs parent command
 func RunCommand(cmdToRun command.Command, cfg *config.Config, out io.Writer) error {
-	return runCmd(cmdToRun, cfg, out, false)
+	return runCmd(cmdToRun, cfg, out, "")
 }
 
 func convertEnvForCmd(envMap map[string]string) []string {
@@ -59,7 +63,8 @@ func formatOptsUsageError(err error, opts docopt.Opts, cmdToRun command.Command)
 	return fmt.Errorf("%s\n\n%s", errTpl, cmdToRun.RawOptions)
 }
 
-func runCmd(cmdToRun command.Command, cfg *config.Config, out io.Writer, isChild bool) error {
+
+func runCmd(cmdToRun command.Command, cfg *config.Config, out io.Writer, parentName string) error {
 	cmd := exec.Command(cfg.Shell, "-c", cmdToRun.Cmd)
 	// setup std out and err
 	cmd.Stdout = out
@@ -79,16 +84,27 @@ func runCmd(cmdToRun command.Command, cfg *config.Config, out io.Writer, isChild
 	cliOptsEnv := convertOptsToEnvForCmd(cmdToRun.CliOptions)
 	checksumEnv := convertChecksumToEnvForCmd(cmdToRun.Checksum)
 	cmd.Env = composeEnvs(os.Environ(), env, optsEnv, cliOptsEnv, checksumEnv)
-	if !isChild {
-		logging.Log.Debugf("Executing command %s with env:\n%s", cmdToRun.Name, cmd.Env)
+	if parentName == "" {
+		logging.Log.Debugf(
+			"Executing command\nname: %s\ncmd: %s\nenv:\n%s",
+			fmt.Sprintf(NoticeColor, cmdToRun.Name),
+			fmt.Sprintf(NoticeColor, cmdToRun.Cmd),
+			cmd.Env,
+		)
 	} else {
-		logging.Log.Debugf("Executing depend command %s with env:\n%s", cmdToRun.Name, cmd.Env)
+		logging.Log.Debugf(
+			"Executing child command\nparent name: %s\nname: %s\ncmd: %s\nenv:\n%s",
+			fmt.Sprintf(NoticeColor, parentName),
+			fmt.Sprintf(NoticeColor, cmdToRun.Name),
+			fmt.Sprintf(NoticeColor, cmdToRun.Cmd),
+			cmd.Env,
+		)
 	}
 
 	// run depends commands
 	for _, dependCmdName := range cmdToRun.Depends {
 		dependCmd := cfg.Commands[dependCmdName]
-		err := runCmd(dependCmd, cfg, out, true)
+		err := runCmd(dependCmd, cfg, out, cmdToRun.Name)
 		if err != nil {
 			// must return error to root
 			return err
