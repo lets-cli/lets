@@ -33,7 +33,15 @@ func parseAndValidateCmd(cmd interface{}, newCmd *Command) error {
 	case []interface{}:
 		cmdList := make([]string, len(cmd))
 		for _, v := range cmd {
-			cmdList = append(cmdList, v.(string))
+			if v == nil {
+				return newCommandError(
+					"got nil in cmd list",
+					newCmd.Name,
+					CMD,
+					"",
+				)
+			}
+			cmdList = append(cmdList, fmt.Sprintf("%s", v))
 		}
 		// cut binary path and command name
 		cmdList = append(cmdList, os.Args[2:]...)
