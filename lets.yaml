@@ -1,9 +1,5 @@
 shell: bash
 
-env:
-
-eval_env:
-
 commands:
   test-options:
     description: Test options

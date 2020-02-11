@@ -15,6 +15,16 @@ var (
 	CHECKSUM    = "checksum"
 )
 
+var validFields = strings.Join([]string{
+	CMD,
+	DESCRIPTION,
+	ENV,
+	EVAL_ENV,
+	OPTIONS,
+	DEPENDS,
+	CHECKSUM,
+}, " ")
+
 type Command struct {
 	Name        string
 	Cmd         string
@@ -69,6 +79,9 @@ func NewCommand(name string) Command {
 
 // ParseAndValidateCommand parses and validates unmarshaled yaml
 func ParseAndValidateCommand(newCmd *Command, rawCommand map[interface{}]interface{}) error {
+	if err := validateCommandFields(rawCommand, validFields); err != nil {
+		return err
+	}
 	if cmd, ok := rawCommand[CMD]; ok {
 		if err := parseAndValidateCmd(cmd, newCmd); err != nil {
 			return err
@@ -108,6 +121,15 @@ func ParseAndValidateCommand(newCmd *Command, rawCommand map[interface{}]interfa
 	if checksum, ok := rawCommand[CHECKSUM]; ok {
 		if err := parseAndValidateChecksum(checksum, newCmd); err != nil {
 			return err
+		}
+	}
+	return nil
+}
+
+func validateCommandFields(rawKeyValue map[interface{}]interface{}, validFields string) error {
+	for k, _ := range rawKeyValue {
+		if !strings.Contains(validFields, k.(string)) {
+			return fmt.Errorf("unknown command field '%s'", k)
 		}
 	}
 	return nil

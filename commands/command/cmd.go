@@ -14,8 +14,9 @@ func parseAndValidateCmd(cmd interface{}, newCmd *Command) error {
 		for _, v := range cmd {
 			cmdList = append(cmdList, v.(string))
 		}
-		cmdList = append(cmdList, os.Args[1:]...)
-		newCmd.Cmd = strings.Join(cmdList, " ")
+		// cut binary path and command name
+		cmdList = append(cmdList, os.Args[2:]...)
+		newCmd.Cmd = strings.TrimSpace(strings.Join(cmdList, " "))
 	default:
 		return newCommandError(
 			"must be either string or list of string",

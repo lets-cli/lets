@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 var (
@@ -15,6 +16,7 @@ var (
 	SHELL    = "shell"
 )
 
+var validFields = strings.Join([]string{COMMANDS, SHELL}, " ")
 // Config is a struct for loaded config file
 type Config struct {
 	WorkDir  string
@@ -83,6 +85,9 @@ func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return err
 	}
 
+	if err := validateTopLevelFields(rawKeyValue, validFields); err != nil {
+		return err
+	}
 	if cmds, ok := rawKeyValue[COMMANDS]; ok {
 		if err := c.loadCommands(cmds.(map[interface{}]interface{})); err != nil {
 			return err
