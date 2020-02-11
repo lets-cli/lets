@@ -44,7 +44,12 @@ func parseAndValidateCmd(cmd interface{}, newCmd *Command) error {
 			cmdList = append(cmdList, fmt.Sprintf("%s", v))
 		}
 		// cut binary path and command name
-		cmdList = append(cmdList, os.Args[2:]...)
+		if len(os.Args) > 1 {
+			cmdList = append(cmdList, os.Args[2:]...)
+		} else if len(os.Args) == 1 {
+			cmdList = append(cmdList, os.Args[1:]...)
+		}
+
 		var escapedCmdList []string
 		for _, val := range cmdList {
 			escapedCmdList = append(escapedCmdList, escapeFlagValue(val))
