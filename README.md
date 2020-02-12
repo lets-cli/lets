@@ -51,6 +51,8 @@ lets run --debug --level=info
 Config schema
 
 * [shell](#shell)
+* [mixins](#mixins)
+* [env](#global-env)
 * [commands](#commands)
     * [description](#description)
     * [cmd](#cmd)
@@ -64,6 +66,8 @@ Config schema
 ### Top-level directives:
 
 #### `shell` 
+`key: shell`
+
 `type: string`
 
 Specify shell to use when running commands
@@ -74,7 +78,55 @@ Example:
 shell: bash
 ```
 
+#### `global env` 
+`key: env`
+
+`type: string`
+
+Specify global env for all commands.
+
+Example:
+
+```sh
+shell: bash
+env:
+    MY_GLOBAL_ENV: "123"
+```
+
+#### `mixins` 
+`key: mixins`
+
+`type: list of string`
+
+Allows to split `lets.yaml` into mixins (mixin config files).
+
+To make `lets.yaml` small and readable its convenient to split main config into many smaller ones and include them
+
+Example:
+
+```sh
+# in lets.yaml
+...
+shell: bash
+mixins:
+    - test.yaml
+
+commands:
+    echo:
+        cmd: echo Hi
+    
+# in test.yaml
+...
+commands:
+    test:
+        cmd: echo Testing...
+```
+
+And `lets test` works fine.
+
 #### `commands`
+`key: commands`
+
 `type: mapping`
 
 Mapping of all available commands
@@ -90,6 +142,8 @@ commands:
 ### Command directives:
 
 ##### `description`
+`key: description`
+
 `type: string`
 
 Short description of command - shown in help message
@@ -103,6 +157,8 @@ commands:
 ```
 
 ##### `cmd`
+`key: cmd`
+
 `type: string or array of strings`
 
 Actual command to run in shell.
@@ -156,6 +212,8 @@ lets test -v
 the `-v` will be appended, so the resulting command to run will be `go test ./... -v`
 
 ##### `depends`
+`key: depends`
+
 `type: array of string`
 
 Specify what commands to run before the actual command. May be useful, when have one shared command.
@@ -184,6 +242,8 @@ commands:
 
 
 ##### `options`
+`key: options`
+
 `type: string (multiline string)`
 
 One of the most cool things about `lets` than it has built in docopt parsing.
@@ -247,6 +307,8 @@ echo LETSCLI_DEBUG=${LETSCLI_DEBUG} # LETSCLI_DEBUG=--debug
 
 
 ##### `env`
+`key: env`
+
 `type: mapping string => string`
 
 Env is as simple as it sounds. Define additional env for a commmand: 
@@ -265,6 +327,8 @@ commands:
 
 
 ##### `eval_env`
+`key: eval_env`
+
 `type: mapping string => string`
 
 Same as env but allows you to dynamically compute env:
@@ -285,6 +349,8 @@ Value will be executed in shell and result will be saved in env.
 
 
 ##### `checksum`
+`key: checksum`
+
 `type: array of string`
 
 Checksum used for computing file hashed. It is useful when you depend on some files content changes.
@@ -360,7 +426,7 @@ Yet there is no binaries
 - [ ] global checksums (check if some commands use checksum so we can skip its calculation)
 - [ ] multiple checksums in one command (kv)
 - [x] depends on other commands
-- [ ] inherit configs
+- [x] inherit configs
 - [x] LETS_DEBUG env for debugging logs
 - [ ] command to only calculate checksum
 - [x] capture env from shell
@@ -373,7 +439,7 @@ Yet there is no binaries
 - [x] add version flag to lets
 - [ ] add verbose flag to lets
 - [x] add LETSCLI_OPTION - options as is
-- [ ] add all env vars event if no options were passed
+- [x] add all env vars event if no options were passed
 - [ ] BUG - when run git commit, lets complains that no config is found for git
 - [x] Print usage if wrong opt passed for options
 - [ ] Bash/zsh completion

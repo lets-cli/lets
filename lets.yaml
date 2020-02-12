@@ -1,7 +1,7 @@
 shell: bash
 
-env:
-  DOCKER_BUILDKIT: "1"
+mixins:
+  - build.yaml
 
 commands:
   version:
@@ -12,9 +12,6 @@ commands:
         <version>   Set version
     cmd: |
       sed -i -E "s/var version = \".*\"/var version = \"${LETSOPT_VERSION}\"/g" version.go
-
-  build-docker:
-    cmd: docker build -t lets -f docker/Dockerfile .
 
   test:
     description: Run tests for lets

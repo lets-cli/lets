@@ -1,0 +1,6 @@
+env:
+  DOCKER_BUILDKIT: "1"
+
+commands:
+  build-docker:
+    cmd: docker build -t lets -f docker/Dockerfile .
