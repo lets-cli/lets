@@ -366,7 +366,8 @@ Yet there is no binaries
 - [x] capture env from shell
 - [ ] env as a list of strings `- key=val`
 - [ ] env computing
-  - [ ] global env
+  - [ ] global eval_env
+  - [x] global env
   - [x] command env
 - [ ] dogfood on ci
 - [x] add version flag to lets

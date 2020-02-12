@@ -25,17 +25,9 @@ func RunCommand(cmdToRun command.Command, cfg *config.Config, out io.Writer) err
 	return runCmd(cmdToRun, cfg, out, "")
 }
 
-func convertEnvForCmd(envMap map[string]string) []string {
-	envList := make([]string, len(envMap))
+func convertEnvMapToList(envMap map[string]string) []string {
+	var envList []string
 	for name, value := range envMap {
-		envList = append(envList, fmt.Sprintf("%s=%s", name, value))
-	}
-	return envList
-}
-
-func convertOptsToEnvForCmd(opts map[string]string) []string {
-	envList := make([]string, len(opts))
-	for name, value := range opts {
 		envList = append(envList, fmt.Sprintf("%s=%s", name, value))
 	}
 	return envList
@@ -79,11 +71,14 @@ func runCmd(cmdToRun command.Command, cfg *config.Config, out io.Writer, parentN
 	cmdToRun.CliOptions = command.OptsToLetsCli(opts)
 
 	// setup env for command
-	env := convertEnvForCmd(cmdToRun.Env)
-	optsEnv := convertOptsToEnvForCmd(cmdToRun.Options)
-	cliOptsEnv := convertOptsToEnvForCmd(cmdToRun.CliOptions)
-	checksumEnv := convertChecksumToEnvForCmd(cmdToRun.Checksum)
-	cmd.Env = composeEnvs(os.Environ(), env, optsEnv, cliOptsEnv, checksumEnv)
+	cmd.Env = composeEnvs(
+		os.Environ(),
+		convertEnvMapToList(cfg.Env),
+		convertEnvMapToList(cmdToRun.Env),
+		convertEnvMapToList(cmdToRun.Options),
+		convertEnvMapToList(cmdToRun.CliOptions),
+		convertChecksumToEnvForCmd(cmdToRun.Checksum),
+	)
 	if parentName == "" {
 		logging.Log.Debugf(
 			"Executing command\nname: %s\ncmd: %s\nenv:\n%s",

@@ -14,9 +14,10 @@ var (
 	// COMMANDS is a top-level directive. Includes all commands to run
 	COMMANDS = "commands"
 	SHELL    = "shell"
+	ENV    = "env"
 )
 
-var validFields = strings.Join([]string{COMMANDS, SHELL}, " ")
+var validFields = strings.Join([]string{COMMANDS, SHELL, ENV}, " ")
 
 // Config is a struct for loaded config file
 type Config struct {
@@ -24,6 +25,34 @@ type Config struct {
 	FilePath string
 	Commands map[string]command.Command
 	Shell    string
+	Env map[string]string
+}
+
+type ParseError struct {
+	Path struct {
+		Full  string
+		Field string
+	}
+	Err error
+}
+
+func (e *ParseError) Error() string {
+	return fmt.Sprintf("failed to parse config: %s", e.Err)
+}
+
+func newConfigParseError(msg string, name string, field string) error {
+	fields := []string{name, field}
+	fullPath := strings.Join(fields, ".")
+	return &ParseError{
+		Path: struct {
+			Full  string
+			Field string
+		}{
+			Full:  fullPath,
+			Field: field,
+		},
+		Err: fmt.Errorf("field %s: %s", fullPath, msg),
+	}
 }
 
 // Load a config from file
@@ -75,6 +104,7 @@ func loadConfig(filename string) (*Config, error) {
 func newConfig() *Config {
 	return &Config{
 		Commands: make(map[string]command.Command),
+		Env: make(map[string]string),
 	}
 }
 
@@ -105,6 +135,33 @@ func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return fmt.Errorf("shell must be specified in config")
 	}
 
+	if env, ok := rawKeyValue[ENV]; ok {
+		env, ok := env.(map[interface{}]interface{})
+		if !ok {
+			return fmt.Errorf("env must be a mapping")
+		}
+		err := parseAndValidateEnv(env, c)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func parseAndValidateEnv(env map[interface{}]interface{}, cfg *Config) error {
+	for name, value := range env {
+		nameKey := name.(string)
+		if value, ok := value.(string); ok {
+			cfg.Env[nameKey] = value
+		} else {
+			return newConfigParseError(
+				"must be a string",
+				ENV,
+				nameKey,
+			)
+		}
+	}
 	return nil
 }
 
