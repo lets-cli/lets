@@ -1,14 +1,19 @@
 package command
 
-import "os/exec"
+import (
+	"os/exec"
+	"strings"
+)
 
+// eval env value and trim result string
 func evalEnvVariable(rawCmd string) (string, error) {
 	cmd := exec.Command("sh", "-c", rawCmd)
 	out, err := cmd.Output()
 	if err != nil {
 		return "", err
 	}
-	return string(out), nil
+	res := string(out)
+	return strings.TrimSpace(res), nil
 }
 
 func parseAndValidateEvalEnv(evalEnv interface{}, newCmd *Command) error {
