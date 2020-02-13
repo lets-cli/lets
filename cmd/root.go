@@ -7,7 +7,16 @@ import (
 	"github.com/spf13/cobra"
 	"io"
 	"os"
+	"strconv"
 )
+
+func isDebug() bool {
+	debug, err := strconv.ParseBool(os.Getenv("LETS_DEBUG"))
+	if err != nil {
+		return false
+	}
+	return debug
+}
 
 // CreateRootCommand is where all the stuff begins
 func CreateRootCommand(conf *config.Config, out io.Writer, version string) *cobra.Command {
@@ -20,7 +29,7 @@ func CreateRootCommand(conf *config.Config, out io.Writer, version string) *cobr
 			return runHelp(cmd)
 		},
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			initLogging(os.Getenv("LETS_DEBUG") == "true")
+			initLogging(isDebug())
 			return nil
 		},
 		Version: version,

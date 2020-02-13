@@ -4,7 +4,6 @@ import (
 	"testing"
 )
 
-
 func TestConvertEnvMapToList(t *testing.T) {
 	t.Run("should convert map to list of key=val", func(t *testing.T) {
 		env := make(map[string]string)
