@@ -62,13 +62,17 @@ func runCmd(cmdToRun command.Command, cfg *config.Config, out io.Writer, parentN
 	cmd.Stderr = out
 	cmd.Stdin = os.Stdin
 
-	// parse docopts
-	opts, err := command.ParseDocopts(cmdToRun)
-	if err != nil {
-		return formatOptsUsageError(err, opts, cmdToRun)
+	isChildCmd := parentName != ""
+
+	// parse docopts - only for parent
+	if !isChildCmd {
+		opts, err := command.ParseDocopts(cmdToRun)
+		if err != nil {
+			return formatOptsUsageError(err, opts, cmdToRun)
+		}
+		cmdToRun.Options = command.OptsToLetsOpt(opts)
+		cmdToRun.CliOptions = command.OptsToLetsCli(opts)
 	}
-	cmdToRun.Options = command.OptsToLetsOpt(opts)
-	cmdToRun.CliOptions = command.OptsToLetsCli(opts)
 
 	// setup env for command
 	cmd.Env = composeEnvs(
@@ -79,7 +83,7 @@ func runCmd(cmdToRun command.Command, cfg *config.Config, out io.Writer, parentN
 		convertEnvMapToList(cmdToRun.CliOptions),
 		convertChecksumToEnvForCmd(cmdToRun.Checksum),
 	)
-	if parentName == "" {
+	if !isChildCmd {
 		logging.Log.Debugf(
 			"Executing command\nname: %s\ncmd: %s\nenv:\n%s",
 			fmt.Sprintf(NoticeColor, cmdToRun.Name),

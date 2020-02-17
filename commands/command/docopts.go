@@ -16,6 +16,7 @@ var DocoptParser = &docopt.Parser{
 }
 
 // ParseDocopts parses docopts for command options with args from os.Args
+// TODO pass os.Argv explicitly
 func ParseDocopts(cmd Command) (docopt.Opts, error) {
 	// no options at all
 	if cmd.RawOptions == "" {
