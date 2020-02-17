@@ -9,7 +9,11 @@ import (
 )
 
 func main() {
-	conf, err := config.Load("lets.yaml", "")
+	configPath := config.GetConfigPathFromEnv()
+	if configPath == "" {
+		configPath = config.GetDefaultConfigPath()
+	}
+	conf, err := config.Load(configPath, "")
 	if err != nil {
 		fmt.Printf("Error: %s\n", err)
 		os.Exit(1)

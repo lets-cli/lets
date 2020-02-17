@@ -18,6 +18,8 @@ var (
 	MIXINS   = "mixins"
 )
 
+const defaultConfigPath = "lets.yaml"
+
 var validConfigFields = strings.Join([]string{COMMANDS, SHELL, ENV, MIXINS}, " ")
 var validMixinConfigFields = strings.Join([]string{COMMANDS, ENV}, " ")
 
@@ -71,31 +73,44 @@ func newMixinConfig() *Config {
 	return cfg
 }
 
+func GetConfigPathFromEnv() string {
+	return os.Getenv("LETS_CONFIG")
+}
+
+func GetDefaultConfigPath() string {
+	return defaultConfigPath
+}
+
 // Load a config from file
 func Load(filename string, rootDir string) (*Config, error) {
 	failedLoadErr := func(err error) error {
 		return fmt.Errorf("failed to load config file %s: %s", filename, err)
 	}
 
-	workDir, err := os.Getwd()
-	if err != nil {
-		return nil, failedLoadErr(err)
+	configAbsPath := ""
+	if filepath.IsAbs(filename) {
+		configAbsPath = filename
+	} else {
+		workDir, err := os.Getwd()
+		if err != nil {
+			return nil, failedLoadErr(err)
+		}
+		if rootDir != "" {
+			workDir = rootDir
+		}
+		configAbsPath, err = filepath.Abs(filepath.Join(workDir, filename))
+		if err != nil {
+			return nil, failedLoadErr(err)
+		}
 	}
-	if rootDir != "" {
-		workDir = rootDir
-	}
-	absPath, err := filepath.Abs(filepath.Join(workDir, filename))
+
+	config, err := loadConfig(configAbsPath)
 	if err != nil {
 		return nil, failedLoadErr(err)
 	}
 
-	config, err := loadConfig(absPath)
-	if err != nil {
-		return nil, failedLoadErr(err)
-	}
-
-	config.WorkDir = filepath.Dir(absPath)
-	config.FilePath = absPath
+	config.WorkDir = filepath.Dir(configAbsPath)
+	config.FilePath = configAbsPath
 
 	if err = Validate(config); err != nil {
 		return nil, failedLoadErr(err)
