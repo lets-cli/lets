@@ -7,6 +7,11 @@ Just describe your commands in `lets.yaml` and lets will do the rest.
 
 > Very alpha software. Things may and will change/break
 
+* [Install](#install)
+* [Usage](#usage)
+* [Config](#letsyaml)
+* [Build](#build)
+* [Todo](#todo)
 
 ## Usage
 
