@@ -3,4 +3,5 @@ env:
 
 commands:
   build-docker:
+    description: Build lets docker image
     cmd: docker build -t lets -f docker/Dockerfile .

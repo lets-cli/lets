@@ -7,7 +7,7 @@ import (
 )
 
 func GetTestConfig() *config.Config {
-	conf, err := config.Load("lets-test.yaml", "..")
+	conf, err := config.Load("lets.yaml", "..")
 	if err != nil {
 		fmt.Printf("can not read test config: %s", err)
 		os.Exit(1)
