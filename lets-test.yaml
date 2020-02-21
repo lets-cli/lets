@@ -59,9 +59,9 @@ commands:
     checksum:
       compose:
         - docker-compose
-      misc:
+      misc-files:
         - README.md
         - LICENSE
     cmd:
       - echo
-      - "${LETS_CHECKSUM} ${LETS_CHECKSUM_COMPOSE} ${LETS_CHECKSUM_MISC}"
+      - "${LETS_CHECKSUM} ${LETS_CHECKSUM_COMPOSE} ${LETS_CHECKSUM_MISC_FILES}"

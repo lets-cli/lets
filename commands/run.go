@@ -39,10 +39,16 @@ func convertChecksumToEnvForCmd(checksum string) []string {
 }
 
 func convertChecksumMapToEnvForCmd(checksumMap map[string]string) []string {
+	normalizeKey := func(origKey string) string {
+		key := strings.ReplaceAll(origKey, "-", "_")
+		key = strings.ToUpper(key)
+		return key
+	}
+
 	var envList []string
 	for name, value := range checksumMap {
 		if name != "" {
-			envList = append(envList, fmt.Sprintf("LETS_CHECKSUM_%s=%s", strings.ToUpper(name), value))
+			envList = append(envList, fmt.Sprintf("LETS_CHECKSUM_%s=%s", normalizeKey(name), value))
 		}
 	}
 	return envList
