@@ -428,8 +428,8 @@ Yet there is no binaries
 - [x] docopts as repeated flags, joined in string
 - [x] pass opts as is if cmd is an array
 - [x] file hashes (checksums)
-- [ ] global checksums (check if some commands use checksum so we can skip its calculation)
-- [ ] multiple checksums in one command (kv)
+- [x] global checksums (check if some commands use checksum so we can skip its calculation)
+- [x] multiple checksums in one command (kv)
 - [x] depends on other commands
 - [x] inherit configs
 - [x] LETS_DEBUG env for debugging logs
@@ -442,7 +442,6 @@ Yet there is no binaries
   - [x] command env
 - [ ] dogfood on ci
 - [x] add version flag to lets
-- [ ] add verbose flag to lets
 - [x] add LETSCLI_OPTION - options as is
 - [x] add all env vars event if no options were passed
 - [ ] BUG - when run git commit, lets complains that no config is found for git

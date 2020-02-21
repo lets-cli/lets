@@ -35,6 +35,7 @@ type Command struct {
 	CliOptions  map[string]string
 	Depends     []string
 	Checksum    string
+	ChecksumMap map[string]string
 }
 
 type CommandError struct {

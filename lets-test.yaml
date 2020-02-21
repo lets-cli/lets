@@ -55,3 +55,15 @@ commands:
     cmd:
       - echo
       - "${LETS_CHECKSUM}"
+
+  test-checksum-map:
+    description: test checksum
+    checksum:
+      compose:
+        - docker-compose
+      misc:
+        - README.md
+        - LICENSE
+    cmd:
+      - echo
+      - "${LETS_CHECKSUM} ${LETS_CHECKSUM_COMPOSE} ${LETS_CHECKSUM_MISC}"
