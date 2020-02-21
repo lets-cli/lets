@@ -26,17 +26,18 @@ var validFields = strings.Join([]string{
 }, " ")
 
 type Command struct {
-	Name               string
-	Cmd                string
-	Description        string
-	Env                map[string]string
-	RawOptions         string
-	Options            map[string]string
-	CliOptions         map[string]string
-	Depends            []string
-	ChecksumCalculator func() error
-	Checksum           string
-	ChecksumMap        map[string]string
+	Name        string
+	Cmd         string
+	Description string
+	Env         map[string]string
+	RawOptions  string
+	Options     map[string]string
+	CliOptions  map[string]string
+	Depends     []string
+	Checksum    string
+	ChecksumMap map[string]string
+
+	checksumSource map[string][]string
 }
 
 type CommandError struct {
@@ -77,6 +78,13 @@ func NewCommand(name string) Command {
 		Env:  make(map[string]string),
 	}
 	return newCmd
+}
+
+func (cmd *Command) ChecksumCalculator() error {
+	if len(cmd.checksumSource) == 0 {
+		return nil
+	}
+	return calculateChecksumFromSource(cmd)
 }
 
 // ParseAndValidateCommand parses and validates unmarshaled yaml

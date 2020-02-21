@@ -11,6 +11,8 @@ import (
 var checksumCache map[string][]byte = make(map[string][]byte)
 
 // calculate sha1 hash from files content and return hex digest
+// It calculates sha1 for each file, cache checksum for each file.
+// Resulting checksum is sha1 from all files sha1's
 func calculateChecksum(patterns []string) (string, error) {
 	// read filenames from patterns
 	var files []string
@@ -103,16 +105,25 @@ func parseAndValidateChecksum(checksum interface{}, newCmd *Command) error {
 			"",
 		)
 	}
-	newCmd.ChecksumCalculator = func() error {
-		return calculateChecksumFromSource(newCmd, checksumSource)
-	}
+	newCmd.checksumSource = checksumSource
 	return nil
 }
 
-func calculateChecksumFromSource(newCmd *Command, checksumSource map[string][]string) error {
+func calculateChecksumFromSource(newCmd *Command) error {
 	newCmd.ChecksumMap = make(map[string]string)
+	// if checksum is a list of patterns
+	if patterns, ok := newCmd.checksumSource[""]; ok {
+		calcChecksum, err := calculateChecksum(patterns)
+		if err != nil {
+			return fmt.Errorf("failed to calculate checksum: %s", err)
+		}
+		newCmd.Checksum = calcChecksum
+		return nil
+	}
+
+	// if checksum is a map of key: patterns
 	hasher := sha1.New()
-	for key, patterns := range checksumSource {
+	for key, patterns := range newCmd.checksumSource {
 		calcChecksum, err := calculateChecksum(patterns)
 		if err != nil {
 			return fmt.Errorf("failed to calculate checksum: %s", err)

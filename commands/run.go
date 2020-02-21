@@ -41,7 +41,9 @@ func convertChecksumToEnvForCmd(checksum string) []string {
 func convertChecksumMapToEnvForCmd(checksumMap map[string]string) []string {
 	var envList []string
 	for name, value := range checksumMap {
-		envList = append(envList, fmt.Sprintf("LETS_CHECKSUM_%s=%s", strings.ToUpper(name), value))
+		if name != "" {
+			envList = append(envList, fmt.Sprintf("LETS_CHECKSUM_%s=%s", strings.ToUpper(name), value))
+		}
 	}
 	return envList
 }
@@ -87,11 +89,8 @@ func runCmd(cmdToRun command.Command, cfg *config.Config, out io.Writer, parentN
 	}
 
 	//calculate checksum if needed
-	if cmdToRun.ChecksumCalculator != nil {
-		err := cmdToRun.ChecksumCalculator()
-		if err != nil {
-			return err
-		}
+	if err := cmdToRun.ChecksumCalculator(); err != nil {
+		return err
 	}
 
 	// setup env for command
