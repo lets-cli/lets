@@ -66,3 +66,43 @@ func TestCalculateChecksumGlobPattern(t *testing.T) {
 		t.Errorf("Checksum is not correct. Expect: %s, got: %s", expected, checksum)
 	}
 }
+
+func TestCalculateChecksumFromListOrMap(t *testing.T) {
+	tempDir := os.TempDir()
+	file1 := createTempFile(tempDir, "lets_checksum_test_1")
+	file2 := createTempFile(tempDir, "lets_checksum_test_2")
+
+	expected := "da39a3ee5e6b4b0d3255bfef95601890afd80709"
+
+	defer os.Remove(file1.Name())
+	defer os.Remove(file2.Name())
+
+	file1.Write([]byte("qwerty1"))
+	file2.Write([]byte("asdfg2"))
+
+	// declare command with checksum as list
+	cmdChAsList := NewCommand("checksum-as-list")
+	cmdChAsList.checksumSource = map[string][]string{
+		"": {"lets_checksum_test_1", "lets_checksum_test_2"},
+	}
+	err := calculateChecksumFromSource(&cmdChAsList)
+	if err != nil {
+		t.Errorf("Checksum is not correct. Error: %s", err)
+	}
+	if cmdChAsList.Checksum != expected {
+		t.Errorf("Checksum is not correct for command with checksum as list. Expect: %s, got: %s", expected, cmdChAsList.Checksum)
+	}
+
+	// declare command with checksum as map but with same files
+	cmdChAsMap := NewCommand("checksum-as-map")
+	cmdChAsMap.checksumSource = map[string][]string{
+		"misc": {"lets_checksum_test_1", "lets_checksum_test_2"},
+	}
+	err = calculateChecksumFromSource(&cmdChAsMap)
+	if err != nil {
+		t.Errorf("Checksum is not correct. Error: %s", err)
+	}
+	if cmdChAsMap.ChecksumMap["misc"] != expected {
+		t.Errorf("Checksum is not correct for command with checksum as map. Expect: %s, got: %s", expected, cmdChAsMap.ChecksumMap["misc"])
+	}
+}
