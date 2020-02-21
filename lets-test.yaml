@@ -1,5 +1,3 @@
-shell: bash
-
 commands:
   test-options:
     description: Test options

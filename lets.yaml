@@ -2,6 +2,7 @@ shell: bash
 
 mixins:
   - build.yaml
+  - lets-test.yaml
 
 commands:
   version:
@@ -17,7 +18,22 @@ commands:
     description: Run tests for lets
     depends: [build-docker]
     cmd:
-      docker-compose run --rm test
+      - docker-compose
+      - run
+      - --rm
+      - test
+
+  coverage:
+    description: Run tests for lets
+    options: |
+      Usage: lets coverage [--html]
+      Options: --html
+    cmd: |
+      if [[ -n ${LETSOPT_HTML} ]]; then
+        go tool cover -html=coverage.out
+      else
+        go tool cover -func=coverage.out
+      fi
 
   staticcheck:
     description: Run staticcheck for lets

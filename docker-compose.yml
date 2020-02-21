@@ -16,4 +16,4 @@ services:
 
   test:
     <<: *base
-    command: go test ./... -v
+    entrypoint: [go, test, ./..., -v, -coverprofile=coverage.out]
