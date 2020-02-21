@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"strings"
 )
 
 const (
@@ -35,6 +36,14 @@ func convertEnvMapToList(envMap map[string]string) []string {
 
 func convertChecksumToEnvForCmd(checksum string) []string {
 	return []string{fmt.Sprintf("LETS_CHECKSUM=%s", checksum)}
+}
+
+func convertChecksumMapToEnvForCmd(checksumMap map[string]string) []string {
+	var envList []string
+	for name, value := range checksumMap {
+		envList = append(envList, fmt.Sprintf("LETS_CHECKSUM_%s=%s", strings.ToUpper(name), value))
+	}
+	return envList
 }
 
 func composeEnvs(envs ...[]string) []string {
@@ -74,6 +83,14 @@ func runCmd(cmdToRun command.Command, cfg *config.Config, out io.Writer, parentN
 		cmdToRun.CliOptions = command.OptsToLetsCli(opts)
 	}
 
+	//calculate checksum if needed
+	if cmdToRun.ChecksumCalculator != nil {
+		err := cmdToRun.ChecksumCalculator()
+		if err != nil {
+			return err
+		}
+	}
+
 	// setup env for command
 	cmd.Env = composeEnvs(
 		os.Environ(),
@@ -82,6 +99,7 @@ func runCmd(cmdToRun command.Command, cfg *config.Config, out io.Writer, parentN
 		convertEnvMapToList(cmdToRun.Options),
 		convertEnvMapToList(cmdToRun.CliOptions),
 		convertChecksumToEnvForCmd(cmdToRun.Checksum),
+		convertChecksumMapToEnvForCmd(cmdToRun.ChecksumMap),
 	)
 	if !isChildCmd {
 		logging.Log.Debugf(

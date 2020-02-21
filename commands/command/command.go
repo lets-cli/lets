@@ -26,15 +26,17 @@ var validFields = strings.Join([]string{
 }, " ")
 
 type Command struct {
-	Name        string
-	Cmd         string
-	Description string
-	Env         map[string]string
-	RawOptions  string
-	Options     map[string]string
-	CliOptions  map[string]string
-	Depends     []string
-	Checksum    string
+	Name               string
+	Cmd                string
+	Description        string
+	Env                map[string]string
+	RawOptions         string
+	Options            map[string]string
+	CliOptions         map[string]string
+	Depends            []string
+	ChecksumCalculator func() error
+	Checksum           string
+	ChecksumMap        map[string]string
 }
 
 type CommandError struct {
