@@ -36,7 +36,7 @@ func TestCalculateChecksumSimpleFilename(t *testing.T) {
 		t.Errorf("Checksum is not correct. Error: %s", err)
 	}
 
-	expected := "56a89c168888554d9cafa50c2f37c249dde6e37d"
+	expected := "da39a3ee5e6b4b0d3255bfef95601890afd80709"
 	if expected != checksum {
 		t.Errorf("Checksum is not correct. Expect: %s, got: %s", expected, checksum)
 	}
@@ -61,7 +61,7 @@ func TestCalculateChecksumGlobPattern(t *testing.T) {
 		t.Errorf("Checksum is not correct. Error: %s", err)
 	}
 
-	expected := "56a89c168888554d9cafa50c2f37c249dde6e37d"
+	expected := "da39a3ee5e6b4b0d3255bfef95601890afd80709"
 	if expected != checksum {
 		t.Errorf("Checksum is not correct. Expect: %s, got: %s", expected, checksum)
 	}

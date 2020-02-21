@@ -75,10 +75,6 @@ func newMixinConfig(workDir string, configAbsPath string) *Config {
 	return cfg
 }
 
-func GetConfigPathFromEnv() string {
-	return os.Getenv("LETS_CONFIG")
-}
-
 func GetDefaultConfigPath() string {
 	return defaultConfigPath
 }

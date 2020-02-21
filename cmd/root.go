@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"fmt"
 	"github.com/kindritskyiMax/lets/config"
+	"github.com/kindritskyiMax/lets/env"
 	"github.com/kindritskyiMax/lets/logging"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -19,7 +21,7 @@ func isDebug() bool {
 }
 
 // CreateRootCommand is where all the stuff begins
-func CreateRootCommand(conf *config.Config, out io.Writer, version string) *cobra.Command {
+func CreateRootCommand(out io.Writer, version string) *cobra.Command {
 	// rootCmd represents the base command when called without any subcommands
 	var rootCmd = &cobra.Command{
 		Use:   "lets",
@@ -40,9 +42,33 @@ func CreateRootCommand(conf *config.Config, out io.Writer, version string) *cobr
 		Hidden: true,
 	})
 
-	initSubCommands(rootCmd, conf, out)
+	configPath, workDir := env.GetConfigPathFromEnv()
+
+	if configPath == "" {
+		configPath = config.GetDefaultConfigPath()
+	}
+
+	conf, err := config.Load(configPath, workDir)
+
+	if err != nil {
+		InitConfigErrCheck(rootCmd, err)
+	} else {
+		initSubCommands(rootCmd, conf, out)
+	}
 
 	return rootCmd
+}
+
+// InitConfigErrCheck check if config load failed with error, if so, print error and exit
+// Doing it in PreRun allows us run root cmd as usual, parse help flags
+// and only if no command were run and config load has failed - we print error
+func InitConfigErrCheck(rootCmd *cobra.Command, cfgErr error) {
+	rootCmd.PreRun = func(cmd *cobra.Command, args []string) {
+		if cfgErr != nil {
+			fmt.Printf("Error: %s\n", cfgErr)
+			os.Exit(1)
+		}
+	}
 }
 
 func runHelp(cmd *cobra.Command) error {

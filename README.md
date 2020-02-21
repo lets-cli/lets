@@ -433,7 +433,6 @@ Yet there is no binaries
 - [x] depends on other commands
 - [x] inherit configs
 - [x] LETS_DEBUG env for debugging logs
-- [ ] command to only calculate checksum
 - [x] capture env from shell
 - [ ] env as a list of strings `- key=val`
 - [ ] env computing
