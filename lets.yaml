@@ -45,3 +45,7 @@ commands:
     description: Run sfmt
     cmd:
       go fmt ./...
+
+  build-and-install:
+    description: Build and install lets from source code to /usr/local/bin/lets
+    cmd: go build -o lets *.go && sudo mv ./lets /usr/local/bin/lets

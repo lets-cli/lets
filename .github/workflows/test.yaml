@@ -18,6 +18,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
       - name: Test
+        env:
+          LETS_CONFIG_DIR: ..
         run: go test ./... -v
       - name: Staticheck
         run: |

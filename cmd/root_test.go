@@ -2,16 +2,15 @@ package cmd
 
 import (
 	"bytes"
-	"github.com/kindritskyiMax/lets/config"
 	"github.com/kindritskyiMax/lets/test"
 	"github.com/spf13/cobra"
 	"testing"
 )
 
-func newTestRootCmd(args []string, conf *config.Config) (rootCmd *cobra.Command, out *bytes.Buffer) {
+func newTestRootCmd(args []string) (rootCmd *cobra.Command, out *bytes.Buffer) {
 	bufOut := new(bytes.Buffer)
 
-	rootCommand := CreateRootCommand(conf, bufOut, "test-version")
+	rootCommand := CreateRootCommand(bufOut, "test-version")
 	rootCommand.SetOut(bufOut)
 	rootCommand.SetErr(bufOut)
 	rootCommand.SetArgs(args)
@@ -22,7 +21,7 @@ func TestRootCmd(t *testing.T) {
 
 	t.Run("run root cmd w/o args", func(t *testing.T) {
 		var args []string
-		rootCmd, bufOut := newTestRootCmd(args, test.GetTestConfig())
+		rootCmd, bufOut := newTestRootCmd(args)
 		err := rootCmd.Execute()
 		if err != nil {
 			t.Fatalf("unexpected error: %s", err)

@@ -71,6 +71,9 @@ func runCmd(cmdToRun command.Command, cfg *config.Config, out io.Writer, parentN
 	cmd.Stderr = out
 	cmd.Stdin = os.Stdin
 
+	// set working directory for command
+	cmd.Dir = cfg.WorkDir
+
 	isChildCmd := parentName != ""
 
 	// parse docopts - only for parent
