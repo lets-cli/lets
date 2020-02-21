@@ -1,6 +1,6 @@
 package main
 
-var version = "true"
+var version = "0.0.14"
 
 func GetVersion() string {
 	return version
