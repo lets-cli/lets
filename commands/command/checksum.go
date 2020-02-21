@@ -18,10 +18,11 @@ func readFilesFromPatterns(patterns []string) ([]string, error) {
 
 	var files []string
 	for _, pattern := range patterns {
+		absPatternPath := pattern
 		if filepath.IsAbs(pattern) {
-			return []string{}, fmt.Errorf("abssolute path in checksum is forbidden %s", pattern)
+			absPatternPath = filepath.Join(workDir, pattern)
 		}
-		matches, err := filepath.Glob(filepath.Join(workDir, pattern))
+		matches, err := filepath.Glob(absPatternPath)
 		if err != nil {
 			return []string{}, err
 		}
