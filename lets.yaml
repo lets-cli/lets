@@ -18,7 +18,23 @@ commands:
     description: Run tests for lets
     depends: [build-docker]
     cmd:
-      docker-compose run --rm test
+      - docker-compose
+      - run
+      - --rm
+      - test
+
+  coverage:
+    description: Run tests for lets
+    depends: [build-docker]
+    cmd:
+      - docker-compose
+      - run
+      - --rm
+      - base
+      - go
+      - tool
+      - cover
+      - -func=coverage.out
 
   staticcheck:
     description: Run staticcheck for lets
