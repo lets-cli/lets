@@ -60,15 +60,17 @@ func newConfigParseError(msg string, name string, field string) error {
 	}
 }
 
-func newConfig() *Config {
+func newConfig(workDir string, configAbsPath string) *Config {
 	return &Config{
 		Commands: make(map[string]command.Command),
 		Env:      make(map[string]string),
+		WorkDir:  workDir,
+		FilePath: configAbsPath,
 	}
 }
 
-func newMixinConfig() *Config {
-	cfg := newConfig()
+func newMixinConfig(workDir string, configAbsPath string) *Config {
+	cfg := newConfig(workDir, configAbsPath)
 	cfg.isMixin = true
 	return cfg
 }
@@ -81,36 +83,46 @@ func GetDefaultConfigPath() string {
 	return defaultConfigPath
 }
 
+func getFullConfigPath(filename string, workDir string) (string, error) {
+	return filepath.Abs(filepath.Join(workDir, filename))
+}
+
+func getWorkDir(filename string, rootDir string) (string, error) {
+	workDir, err := os.Getwd()
+	if err != nil {
+		return "", fmt.Errorf("failed to get workdir for config %s: %s", filename, err)
+	}
+	if rootDir != "" {
+		workDir = rootDir
+	}
+	return workDir, nil
+}
+
 // Load a config from file
 func Load(filename string, rootDir string) (*Config, error) {
 	failedLoadErr := func(err error) error {
 		return fmt.Errorf("failed to load config file %s: %s", filename, err)
 	}
 
+	workDir, err := getWorkDir(filename, rootDir)
+	if err != nil {
+		return nil, err
+	}
 	configAbsPath := ""
 	if filepath.IsAbs(filename) {
 		configAbsPath = filename
 	} else {
-		workDir, err := os.Getwd()
-		if err != nil {
-			return nil, failedLoadErr(err)
-		}
-		if rootDir != "" {
-			workDir = rootDir
-		}
-		configAbsPath, err = filepath.Abs(filepath.Join(workDir, filename))
+		configAbsPath, err = getFullConfigPath(filename, workDir)
 		if err != nil {
 			return nil, failedLoadErr(err)
 		}
 	}
+	config := newConfig(workDir, configAbsPath)
 
-	config, err := loadConfig(configAbsPath)
+	err = loadConfig(configAbsPath, config)
 	if err != nil {
 		return nil, failedLoadErr(err)
 	}
-
-	config.WorkDir = filepath.Dir(configAbsPath)
-	config.FilePath = configAbsPath
 
 	if err = Validate(config); err != nil {
 		return nil, failedLoadErr(err)
@@ -118,27 +130,26 @@ func Load(filename string, rootDir string) (*Config, error) {
 	return config, nil
 }
 
-func loadConfig(filename string) (*Config, error) {
+func loadConfig(filename string, cfg *Config) error {
 	fileData, err := ioutil.ReadFile(filename)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	config := newConfig()
-	err = yaml.Unmarshal(fileData, config)
+	err = yaml.Unmarshal(fileData, cfg)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return config, nil
+	return nil
 }
 
-func loadMixinConfig(filename string) (*Config, error) {
+func loadMixinConfig(filename string, rootCfg *Config) (*Config, error) {
 	fileData, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
 
-	config := newMixinConfig()
+	config := newMixinConfig(rootCfg.WorkDir, filename)
 	err = yaml.Unmarshal(fileData, config)
 	if err != nil {
 		return nil, err
@@ -221,7 +232,11 @@ func unmarshalMixinConfig(rawKeyValue map[string]interface{}, cfg *Config) error
 func readAndValidateMixins(mixins []interface{}, cfg *Config) error {
 	for _, filename := range mixins {
 		if filename, ok := filename.(string); ok {
-			mixinCfg, err := loadMixinConfig(filename)
+			configAbsPath, err := getFullConfigPath(filename, cfg.WorkDir)
+			if err != nil {
+				return fmt.Errorf("failed to read mixin config: %s", err)
+			}
+			mixinCfg, err := loadMixinConfig(configAbsPath, cfg)
 			if err != nil {
 				return fmt.Errorf("failed to load mixin config: %s", err)
 			}
