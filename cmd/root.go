@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"github.com/kindritskyiMax/lets/config"
+	"github.com/kindritskyiMax/lets/env"
 	"github.com/kindritskyiMax/lets/logging"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -41,7 +42,7 @@ func CreateRootCommand(out io.Writer, version string) *cobra.Command {
 		Hidden: true,
 	})
 
-	configPath, workDir := config.GetConfigPathFromEnv()
+	configPath, workDir := env.GetConfigPathFromEnv()
 
 	if configPath == "" {
 		configPath = config.GetDefaultConfigPath()

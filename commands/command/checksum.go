@@ -6,25 +6,41 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"sort"
+
+	"github.com/kindritskyiMax/lets/env"
 )
 
 var checksumCache map[string][]byte = make(map[string][]byte)
+
+// return sorted list of files read by glob patterns
+func readFilesFromPatterns(patterns []string) ([]string, error) {
+	_, workDir := env.GetConfigPathFromEnv()
+
+	var files []string
+	for _, pattern := range patterns {
+		if filepath.IsAbs(pattern) {
+			return []string{}, fmt.Errorf("abssolute path in checksum is forbidden %s", pattern)
+		}
+		matches, err := filepath.Glob(filepath.Join(workDir, pattern))
+		if err != nil {
+			return []string{}, err
+		}
+		files = append(files, matches...)
+	}
+	// sort files list
+	sort.Strings(files)
+	return files, nil
+}
 
 // calculate sha1 hash from files content and return hex digest
 // It calculates sha1 for each file, cache checksum for each file.
 // Resulting checksum is sha1 from all files sha1's
 func calculateChecksum(patterns []string) (string, error) {
 	// read filenames from patterns
-	var files []string
-	for _, pattern := range patterns {
-		matches, err := filepath.Glob(pattern)
-		if err != nil {
-			return "", err
-		}
-		files = append(files, matches...)
+	files, err := readFilesFromPatterns(patterns)
+	if err != nil {
+		return "", err
 	}
-	// sort files list
-	sort.Strings(files)
 	hasher := sha1.New()
 	fileHasher := sha1.New()
 	for _, filename := range files {
