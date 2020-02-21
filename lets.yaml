@@ -25,16 +25,15 @@ commands:
 
   coverage:
     description: Run tests for lets
-    depends: [build-docker]
-    cmd:
-      - docker-compose
-      - run
-      - --rm
-      - base
-      - go
-      - tool
-      - cover
-      - -func=coverage.out
+    options: |
+      Usage: lets coverage [--html]
+      Options: --html
+    cmd: |
+      if [[ -n ${LETSOPT_HTML} ]]; then
+        go tool cover -html=coverage.out
+      else
+        go tool cover -func=coverage.out
+      fi
 
   staticcheck:
     description: Run staticcheck for lets
