@@ -83,6 +83,14 @@ func runCmd(cmdToRun command.Command, cfg *config.Config, out io.Writer, parentN
 		cmdToRun.CliOptions = command.OptsToLetsCli(opts)
 	}
 
+	//calculate checksum if needed
+	if cmdToRun.ChecksumCalculator != nil {
+		err := cmdToRun.ChecksumCalculator()
+		if err != nil {
+			return err
+		}
+	}
+
 	// setup env for command
 	cmd.Env = composeEnvs(
 		os.Environ(),
