@@ -26,23 +26,33 @@ func RunCommand(cmdToRun command.Command, cfg *config.Config, out io.Writer) err
 	return runCmd(cmdToRun, cfg, out, "")
 }
 
+func makeEnvEntry(k, v string) string {
+	return fmt.Sprintf("%s=%s", k, v)
+}
+
 func convertEnvMapToList(envMap map[string]string) []string {
 	var envList []string
 	for name, value := range envMap {
-		envList = append(envList, fmt.Sprintf("%s=%s", name, value))
+		envList = append(envList, makeEnvEntry(name, value))
 	}
 	return envList
 }
 
 func convertChecksumToEnvForCmd(checksum string) []string {
-	return []string{fmt.Sprintf("LETS_CHECKSUM=%s", checksum)}
+	return []string{makeEnvEntry("LETS_CHECKSUM", checksum)}
 }
 
 func convertChecksumMapToEnvForCmd(checksumMap map[string]string) []string {
+	normalizeKey := func(origKey string) string {
+		key := strings.ReplaceAll(origKey, "-", "_")
+		key = strings.ToUpper(key)
+		return key
+	}
+
 	var envList []string
 	for name, value := range checksumMap {
 		if name != "" {
-			envList = append(envList, fmt.Sprintf("LETS_CHECKSUM_%s=%s", strings.ToUpper(name), value))
+			envList = append(envList, makeEnvEntry(fmt.Sprintf("LETS_CHECKSUM_%s", normalizeKey(name)), value))
 		}
 	}
 	return envList
