@@ -122,6 +122,14 @@ func TestSubCommandCmd(t *testing.T) {
             LETSCLI_BOOL_OPT=
             LETSCLI_ARGS=
 			LETSCLI_ATTR=--attr myarg1 myarg2`,
+		}, {
+			name:   "should eval global eval_env",
+			args:   []string{"test-global-eval_env"},
+			expect: "computed_env",
+		}, {
+			name:   "should parse global env",
+			args:   []string{"test-global-env"},
+			expect: "static_env",
 		},
 	}
 

@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -18,6 +19,15 @@ func TestConvertEnvMapToList(t *testing.T) {
 }
 
 func TestConvertChecksumMapToEnvList(t *testing.T) {
+	findEnv := func(key string, list []string) bool {
+		found := false
+		for _, item := range list {
+			if item == key {
+				found = true
+			}
+		}
+		return found
+	}
 	t.Run("should convert map to list of key=val", func(t *testing.T) {
 		env := make(map[string]string)
 		env["one"] = "111"
@@ -25,16 +35,17 @@ func TestConvertChecksumMapToEnvList(t *testing.T) {
 		env["three_three"] = "333"
 		envList := convertChecksumMapToEnvForCmd(env)
 
-		if envList[0] != "LETS_CHECKSUM_ONE=111" {
-			t.Errorf("failed to convert env map to list. \nexp: %s\ngot: %s", "LETS_CHECKSUM_ONE=1", envList[0])
+		joinedEnv := strings.Join(envList, ";")
+		if !findEnv("LETS_CHECKSUM_ONE=111", envList) {
+			t.Errorf("failed to convert env map to list. \nexp: %s\ngot: %s", "LETS_CHECKSUM_ONE=1", joinedEnv)
 		}
 
-		if envList[1] != "LETS_CHECKSUM_TWO_TWO=222" {
-			t.Errorf("failed to convert env map to list. \nexp: %s\ngot: %s", "LETS_CHECKSUM_TWO_TWO=222", envList[1])
+		if !findEnv("LETS_CHECKSUM_TWO_TWO=222", envList) {
+			t.Errorf("failed to convert env map to list. \nexp: %s\ngot: %s", "LETS_CHECKSUM_TWO_TWO=222", joinedEnv)
 		}
 
-		if envList[2] != "LETS_CHECKSUM_THREE_THREE=333" {
-			t.Errorf("failed to convert env map to list. \nexp: %s\ngot: %s", "LETS_CHECKSUM_THREE_THREE=333", envList[2])
+		if !findEnv("LETS_CHECKSUM_THREE_THREE=333", envList) {
+			t.Errorf("failed to convert env map to list. \nexp: %s\ngot: %s", "LETS_CHECKSUM_THREE_THREE=333", joinedEnv)
 		}
 
 	})

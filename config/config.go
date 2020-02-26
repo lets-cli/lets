@@ -15,13 +15,14 @@ var (
 	COMMANDS = "commands"
 	SHELL    = "shell"
 	ENV      = "env"
+	EVAL_ENV = "eval_env"
 	MIXINS   = "mixins"
 )
 
 const defaultConfigPath = "lets.yaml"
 
-var validConfigFields = strings.Join([]string{COMMANDS, SHELL, ENV, MIXINS}, " ")
-var validMixinConfigFields = strings.Join([]string{COMMANDS, ENV}, " ")
+var validConfigFields = strings.Join([]string{COMMANDS, SHELL, ENV, EVAL_ENV, MIXINS}, " ")
+var validMixinConfigFields = strings.Join([]string{COMMANDS, ENV, EVAL_ENV}, " ")
 
 // Config is a struct for loaded config file
 type Config struct {
@@ -182,6 +183,17 @@ func unmarshalConfigGeneral(rawKeyValue map[string]interface{}, cfg *Config) err
 			return err
 		}
 	}
+
+	if evalEnv, ok := rawKeyValue[EVAL_ENV]; ok {
+		evalEnv, ok := evalEnv.(map[interface{}]interface{})
+		if !ok {
+			return fmt.Errorf("eval_env must be a mapping")
+		}
+		err := parseAndValidateEvalEnv(evalEnv, cfg)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -277,6 +289,26 @@ func parseAndValidateEnv(env map[interface{}]interface{}, cfg *Config) error {
 			return newConfigParseError(
 				"must be a string",
 				ENV,
+				nameKey,
+			)
+		}
+	}
+	return nil
+}
+
+func parseAndValidateEvalEnv(evalEnv map[interface{}]interface{}, cfg *Config) error {
+	for name, value := range evalEnv {
+		nameKey := name.(string)
+		if value, ok := value.(string); ok {
+			if computedVal, err := command.EvalEnvVariable(value); err != nil {
+				return err
+			} else {
+				cfg.Env[nameKey] = computedVal
+			}
+		} else {
+			return newConfigParseError(
+				"must be a string",
+				EVAL_ENV,
 				nameKey,
 			)
 		}
