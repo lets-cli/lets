@@ -77,7 +77,7 @@ Config schema
 * [shell](#shell)
 * [mixins](#mixins)
 * [env](#global-env)
-* [eval_env](#global-eval-env)
+* [eval_env](#global-eval_env)
 * [commands](#commands)
     * [description](#description)
     * [cmd](#cmd)
