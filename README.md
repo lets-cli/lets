@@ -13,6 +13,25 @@ Just describe your commands in `lets.yaml` and lets will do the rest.
 * [Build](#build)
 * [Todo](#todo)
 
+## Install
+
+**Shell script**:
+
+This will install `lets` binary to `/usr/local/bin` directory. But you can change install location to any directory you want
+
+```bash
+sudo curl -sfL https://raw.githubusercontent.com/lets-cli/lets/master/install.sh | sudo sh -s -- -b /usr/local/bin
+```
+
+**Binary (Cross-platform)**:
+
+Download the version you need for your platform from [Lets Releases](https://github.com/lets-cli/lets/releases). 
+
+Once downloaded, the binary can be run from anywhere.
+
+Ideally, you should install it somewhere in your PATH for easy use. `/usr/local/bin` is the most probable location.
+
+
 ## Usage
 
 1. Create `lets.yaml` file in your project directory
@@ -58,6 +77,7 @@ Config schema
 * [shell](#shell)
 * [mixins](#mixins)
 * [env](#global-env)
+* [eval_env](#global-eval-env)
 * [commands](#commands)
     * [description](#description)
     * [cmd](#cmd)
@@ -79,7 +99,7 @@ Specify shell to use when running commands
 
 Example:
 
-```sh
+```yaml
 shell: bash
 ```
 
@@ -92,10 +112,25 @@ Specify global env for all commands.
 
 Example:
 
-```sh
+```yaml
 shell: bash
 env:
     MY_GLOBAL_ENV: "123"
+```
+
+#### `global eval_env` 
+`key: env`
+
+`type: string`
+
+Specify global eval_env for all commands.
+
+Example:
+
+```yaml
+shell: bash
+eval_env:
+    CURRENT_UID: echo "`id -u`:`id -g`"
 ```
 
 #### `mixins` 
@@ -109,7 +144,7 @@ To make `lets.yaml` small and readable its convenient to split main config into 
 
 Example:
 
-```sh
+```yaml
 # in lets.yaml
 ...
 shell: bash
@@ -138,7 +173,7 @@ Mapping of all available commands
 
 Example:
 
-```sh
+```yaml
 commands:
     test:
         description: Test something
@@ -155,7 +190,7 @@ Short description of command - shown in help message
 
 Example:
 
-```sh
+```yaml
 commands:
     test:
         description: Test something
@@ -174,7 +209,7 @@ The main difference is that when specifying an array, all args, specified in ter
 
 Example single string:
 
-```sh
+```yaml
 commands:
     test:
         description: Test something
@@ -185,7 +220,7 @@ commands:
 
 Example multiline string:
 
-```sh
+```yaml
 commands:
     test:
         description: Test something
@@ -197,7 +232,7 @@ commands:
 
 Example array of strings:
 
-```sh
+```yaml
 commands:
     test:
         description: Test something
@@ -226,7 +261,7 @@ For example, lets say you have command `build`, which builds docker image.
 
 Example:
 
-```sh
+```yaml
 commands:
     build:
         description: Build docker image
@@ -265,7 +300,7 @@ How does it work?
 
 Lets see an example:
 
-```sh
+```yaml
 commands:
     echo-env:
         description: Echo env vars
@@ -320,7 +355,7 @@ Env is as simple as it sounds. Define additional env for a commmand:
 
 Example:
 
-```sh
+```yaml
 commands:
     test:
         description: Test something
@@ -340,7 +375,7 @@ Same as env but allows you to dynamically compute env:
 
 Example:
 
-```sh
+```yaml
 commands:
     test:
         description: Test something
@@ -356,7 +391,7 @@ Value will be executed in shell and result will be saved in env.
 ##### `checksum`
 `key: checksum`
 
-`type: array of string`
+`type: array of string | mapping string => array of string`
 
 Checksum used for computing file hashed. It is useful when you depend on some files content changes.
 
@@ -365,9 +400,33 @@ In `checksum` you can specify:
 - a list of file names 
 - a list of file regext patterns (parsed via go `path/filepath.Glob`)
 
+or
+
+- a mapping where key is name of env variable and value is:
+    - a list of file names 
+    - a list of file regext patterns (parsed via go `path/filepath.Glob`)
+
 Each time a command runs, `lets` will calculate the checksum of all files specified in `checksum`.
 
 Result then can be accessed via `LETS_CHECKSUM` env variable.
+
+If checksum is a mapping, e.g:
+
+```yaml
+commands:
+    build:
+    checksum:
+      deps:
+        - package.json
+      doc:
+        - Readme.md
+```
+
+Resulting env will be:
+
+* `LETS_CHECKSUM_DEPS` - checksum of deps files
+* `LETS_CHECKSUM_DOC` - checksum of doc files
+* `LETS_CHECKSUM` - checksum of all checksums (deps and doc)
 
 Checksum is calculated with `sha1`.
 
@@ -375,7 +434,7 @@ If you specify patterns, `lets` will try to find all matches and will calculate 
 
 Example:
 
-```bash
+```yaml
 shell: bash
 commands:
     app-build:
@@ -385,24 +444,6 @@ commands:
             docker pull myrepo/app:${LETS_CHECKSUM}
             docker run --rm myrepo/app${LETS_CHECKSUM} python -m app       
 ```
-
-## Install
-
-**Shell script**:
-
-This will install `lets` binary to `/usr/local/bin` directory. But you can change install location to any directory you want
-
-```bash
-sudo curl -sfL https://raw.githubusercontent.com/lets-cli/lets/master/install.sh | sudo sh -s -- -b /usr/local/bin
-```
-
-**Binary (Cross-platform)**:
-
-Download the version you need for your platform from [Lets Releases](https://github.com/lets-cli/lets/releases). 
-
-Once downloaded, the binary can be run from anywhere.
-
-Ideally, you should install it somewhere in your PATH for easy use. `/usr/local/bin` is the most probable location.
 
 ## Build
 
@@ -435,8 +476,8 @@ Yet there is no binaries
 - [x] LETS_DEBUG env for debugging logs
 - [x] capture env from shell
 - [ ] env as a list of strings `- key=val`
-- [ ] env computing
-  - [ ] global eval_env
+- [x] env computing
+  - [x] global eval_env
   - [x] global env
   - [x] command env
 - [ ] dogfood on ci
