@@ -393,12 +393,12 @@ commands:
 This will install `lets` binary to `/usr/local/bin` directory. But you can change install location to any directory you want
 
 ```bash
-sudo curl -sfL https://raw.githubusercontent.com/kindritskyiMax/lets/master/install.sh | sudo sh -s -- -b /usr/local/bin
+sudo curl -sfL https://raw.githubusercontent.com/lets-cli/lets/master/install.sh | sudo sh -s -- -b /usr/local/bin
 ```
 
 **Binary (Cross-platform)**:
 
-Download the version you need for your platform from [Lets Releases](https://github.com/kindritskyiMax/lets/releases). 
+Download the version you need for your platform from [Lets Releases](https://github.com/lets-cli/lets/releases). 
 
 Once downloaded, the binary can be run from anywhere.
 
