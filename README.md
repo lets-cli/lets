@@ -31,6 +31,15 @@ Once downloaded, the binary can be run from anywhere.
 
 Ideally, you should install it somewhere in your PATH for easy use. `/usr/local/bin` is the most probable location.
 
+**Arch Linux**:
+
+You can get binary release from https://aur.archlinux.org/packages/lets-bin/
+
+If you are using `yay` as package manager:
+
+```bash
+yay -S lets-bin
+```
 
 ## Usage
 
