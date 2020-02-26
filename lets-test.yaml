@@ -1,3 +1,9 @@
+env:
+  STATIC_ENV: static_env
+
+eval_env:
+  COMPUTED: echo "computed_env"
+
 commands:
   test-options:
     description: Test options
@@ -31,6 +37,15 @@ commands:
     description: Test eval_env
     eval_env:
       CHECKSUM: echo "evaled_checksum"
+    cmd: echo ${CHECKSUM}
+
+  test-global-env:
+    description: Test global env
+    cmd: echo ${STATIC_ENV}
+
+  test-global-eval_env:
+    description: Test global eval_env
+    cmd: echo ${COMPUTED}
 
   test-depends:
     description: Test depends
