@@ -83,6 +83,9 @@ func initCompletionCmd(rootCmd *cobra.Command) {
 		Long:   tmpl,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			shellType, err := cmd.Flags().GetString("shell")
+			if err != nil {
+				return err
+			}
 			short, err := cmd.Flags().GetBool("short")
 			if err != nil {
 				return err
