@@ -56,6 +56,8 @@ func CreateRootCommand(out io.Writer, version string) *cobra.Command {
 		initSubCommands(rootCmd, conf, out)
 	}
 
+	initCompletionCmd(rootCmd)
+
 	return rootCmd
 }
 

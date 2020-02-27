@@ -11,7 +11,7 @@ Just describe your commands in `lets.yaml` and lets will do the rest.
 * [Usage](#usage)
 * [Config](#letsyaml)
 * [Build](#build)
-* [Todo](#todo)
+* [Completion](#completion)
 
 ## Install
 
@@ -468,33 +468,14 @@ To install in system
 go build -o lets *.go && sudo mv ./lets /usr/local/bin/lets
 ```
 
-### TODO
+### Completion
 
-Yet there is no binaries
+You can use Bash/Zsh/Oh-My-Zsh completion in you terminal
 
-- [x] yaml config
-- [x] cobra
-- [x] docopts as just strings
-- [x] docopts as repeated flags, joined in string
-- [x] pass opts as is if cmd is an array
-- [x] file hashes (checksums)
-- [x] global checksums (check if some commands use checksum so we can skip its calculation)
-- [x] multiple checksums in one command (kv)
-- [x] depends on other commands
-- [x] inherit configs
-- [x] LETS_DEBUG env for debugging logs
-- [x] capture env from shell
-- [ ] env as a list of strings `- key=val`
-- [x] env computing
-  - [x] global eval_env
-  - [x] global env
-  - [x] command env
-- [ ] dogfood on ci
-- [x] add version flag to lets
-- [x] add LETSCLI_OPTION - options as is
-- [x] add all env vars event if no options were passed
-- [ ] BUG - when run git commit, lets complains that no config is found for git
-- [x] Print usage if wrong opt passed for options
-- [ ] Bash/zsh completion
-- [x] Validate circular depends
-- [x] Validate unknown fields in yaml
+* **Bash**
+
+    Add `source <(lets completion -s bash)` to your `~/.bashrc` or `~/.bash_profile`
+
+* **Zsh/Oh-My-Zsh**
+
+    There is a [repo](https://github.com/lets-cli/lets-zsh-plugin) with zsh plugin with instructions
