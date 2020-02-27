@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"bytes"
+	"fmt"
 	"github.com/kindritskyiMax/lets/commands"
 	"github.com/kindritskyiMax/lets/commands/command"
 	"github.com/kindritskyiMax/lets/config"
@@ -8,9 +10,9 @@ import (
 	"io"
 )
 
-// NewCmdVersion returns a cobra command for fetching versions
+// newCmdGeneric creates new cobra root sub command from Command
 func newCmdGeneric(cmdToRun command.Command, conf *config.Config, out io.Writer) *cobra.Command {
-	cobraCmd := &cobra.Command{
+	subCmd := &cobra.Command{
 		Use:   cmdToRun.Name,
 		Short: cmdToRun.Description,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -19,7 +21,19 @@ func newCmdGeneric(cmdToRun command.Command, conf *config.Config, out io.Writer)
 		DisableFlagParsing: true, // we use docopt to parse flags
 		SilenceUsage:       true,
 	}
-	return cobraCmd
+	subCmd.SetHelpFunc(func(c *cobra.Command, strings []string) {
+		buf := new(bytes.Buffer)
+		if cmdToRun.Description != "" {
+			buf.WriteString(fmt.Sprintf("%s\n\n", cmdToRun.Description))
+		}
+		buf.WriteString(cmdToRun.RawOptions)
+
+		_, err := buf.WriteTo(c.OutOrStdout())
+		if err != nil {
+			c.Println(err)
+		}
+	})
+	return subCmd
 }
 
 // initialize all commands dynamically from config

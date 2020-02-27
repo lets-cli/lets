@@ -36,11 +36,6 @@ func CreateRootCommand(out io.Writer, version string) *cobra.Command {
 		},
 		Version: version,
 	}
-	// workaround to hide help sub command
-	rootCmd.SetHelpCommand(&cobra.Command{
-		Use:    "__lets-no-help",
-		Hidden: true,
-	})
 
 	configPath, workDir := env.GetConfigPathFromEnv()
 
