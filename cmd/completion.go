@@ -61,17 +61,14 @@ _lets
 `
 )
 
-func genZshCompletion(rootCmd *cobra.Command, w io.Writer) error {
-	tmpl, err := template.New("Main").Parse(zshCompletionText)
-	if err != nil {
-		return fmt.Errorf("error creating zsh completion template: %v", err)
+// generate zsh completion script.
+// if short passed - generate completion without description
+func genZshCompletion(rootCmd *cobra.Command, w io.Writer, short bool) error {
+	textTmpl := zshCompletionText
+	if short {
+		textTmpl = zshCompletionShortText
 	}
-	return tmpl.Execute(w, rootCmd)
-}
-
-// same as genZshCompletion but without description
-func genZshCompletionShort(rootCmd *cobra.Command, w io.Writer) error {
-	tmpl, err := template.New("Main").Parse(zshCompletionShortText)
+	tmpl, err := template.New("Main").Parse(textTmpl)
 	if err != nil {
 		return fmt.Errorf("error creating zsh completion template: %v", err)
 	}
@@ -95,10 +92,7 @@ func initCompletionCmd(rootCmd *cobra.Command) {
 			case "bash":
 				return rootCmd.GenBashCompletion(cmd.OutOrStdout())
 			case "zsh":
-				if short {
-					return genZshCompletionShort(rootCmd, cmd.OutOrStdout())
-				}
-				return genZshCompletion(rootCmd, cmd.OutOrStdout())
+				return genZshCompletion(rootCmd, cmd.OutOrStdout(), short)
 			default:
 				return fmt.Errorf("unsupported shell type %q", shellType)
 			}
