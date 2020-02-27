@@ -38,7 +38,7 @@ _lets
 )
 
 var (
-	zshCompletionSimpleText = `
+	zshCompletionShortText = `
 #compdef lets
 function _lets {
   local -a commands
@@ -70,8 +70,8 @@ func genZshCompletion(rootCmd *cobra.Command, w io.Writer) error {
 }
 
 // same as genZshCompletion but without description
-func genZshCompletionSimple(rootCmd *cobra.Command, w io.Writer) error {
-	tmpl, err := template.New("Main").Parse(zshCompletionSimpleText)
+func genZshCompletionShort(rootCmd *cobra.Command, w io.Writer) error {
+	tmpl, err := template.New("Main").Parse(zshCompletionShortText)
 	if err != nil {
 		return fmt.Errorf("error creating zsh completion template: %v", err)
 	}
@@ -86,7 +86,7 @@ func initCompletionCmd(rootCmd *cobra.Command) {
 		Long:   tmpl,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			shellType, err := cmd.Flags().GetString("shell")
-			simple, err := cmd.Flags().GetBool("simple")
+			short, err := cmd.Flags().GetBool("short")
 			if err != nil {
 				return err
 			}
@@ -95,8 +95,8 @@ func initCompletionCmd(rootCmd *cobra.Command) {
 			case "bash":
 				return rootCmd.GenBashCompletion(cmd.OutOrStdout())
 			case "zsh":
-				if simple {
-					return genZshCompletionSimple(rootCmd, cmd.OutOrStdout())
+				if short {
+					return genZshCompletionShort(rootCmd, cmd.OutOrStdout())
 				}
 				return genZshCompletion(rootCmd, cmd.OutOrStdout())
 			default:
@@ -106,5 +106,5 @@ func initCompletionCmd(rootCmd *cobra.Command) {
 	}
 	rootCmd.AddCommand(completionCmd)
 	completionCmd.Flags().StringP("shell", "s", "bash", "The type of shell")
-	completionCmd.Flags().Bool("simple", false, "Simple completion or with description (only for zsh)")
+	completionCmd.Flags().Bool("short", false, "Short completion without description (only for zsh)")
 }
