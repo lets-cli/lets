@@ -13,6 +13,7 @@ var (
 	OPTIONS     = "options"
 	DEPENDS     = "depends"
 	CHECKSUM    = "checksum"
+	PROPAGATE_ENV    = "propagate_env"
 )
 
 var validFields = strings.Join([]string{
@@ -23,6 +24,7 @@ var validFields = strings.Join([]string{
 	OPTIONS,
 	DEPENDS,
 	CHECKSUM,
+	PROPAGATE_ENV,
 }, " ")
 
 type Command struct {
@@ -36,6 +38,7 @@ type Command struct {
 	Depends     []string
 	Checksum    string
 	ChecksumMap map[string]string
+	PropagateEnv bool
 
 	checksumSource map[string][]string
 }
@@ -130,6 +133,12 @@ func ParseAndValidateCommand(newCmd *Command, rawCommand map[interface{}]interfa
 
 	if checksum, ok := rawCommand[CHECKSUM]; ok {
 		if err := parseAndValidateChecksum(checksum, newCmd); err != nil {
+			return err
+		}
+	}
+
+	if propagateEnv, ok := rawCommand[PROPAGATE_ENV]; ok {
+		if err := parseAndValidatePropagateEnv(propagateEnv, newCmd); err != nil {
 			return err
 		}
 	}

@@ -47,6 +47,18 @@ commands:
     description: Test global eval_env
     cmd: echo ${COMPUTED}
 
+  test-env-propagation-parent:
+    propagate_env: true
+    eval_env:
+      PROPAGATED: echo "propagated_env"
+    depends:
+      - test-env-propagation
+
+  test-env-propagation:
+    eval_env:
+      PROPAGATED: echo "own_env"
+    cmd: echo ${PROPAGATED}
+
   test-depends:
     description: Test depends
     depends:

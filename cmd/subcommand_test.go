@@ -130,6 +130,14 @@ func TestSubCommandCmd(t *testing.T) {
 			name:   "should parse global env",
 			args:   []string{"test-global-env"},
 			expect: "static_env",
+		}, {
+			name:   "should not propagate env when runned on its own",
+			args:   []string{"test-env-propagation"},
+			expect: "own_env",
+		}, {
+			name:   "should propagate env to depends commands",
+			args:   []string{"test-env-propagation-parent"},
+			expect: "propagated_env", // we got a child output as we do not print anything in parent
 		},
 	}
 
