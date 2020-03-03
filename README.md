@@ -35,10 +35,16 @@ Ideally, you should install it somewhere in your PATH for easy use. `/usr/local/
 
 You can get binary release from https://aur.archlinux.org/packages/lets-bin/
 
-If you are using `yay` as package manager:
+If you are using `yay` as AUR helper:
 
 ```bash
 yay -S lets-bin
+```
+
+Also you can get bleeding edge version from https://aur.archlinux.org/packages/lets-git/
+
+```bash
+yay -S lets-git
 ```
 
 ## Usage
