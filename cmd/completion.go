@@ -34,6 +34,28 @@ _list () {
 _arguments -C -s "1: :{_list}" '*::arg:->args' --
 `
 
+const bashCompletionText = `
+_lets_completion() {
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    COMPREPLY=( $(lets completion --list --short "${COMP_WORDS[@]:1:$((COMP_CWORD-1))}" -- ${cur} 2>/dev/null) )
+    if [[ ${COMPREPLY} == "" ]]; then
+        COMPREPLY=( $(compgen -f -- ${cur}) )
+    fi
+    return 0
+}
+
+complete -o filenames -F _lets_completion lets
+`
+
+// generate bash completion script.
+func genBashCompletion(w io.Writer) error {
+	tmpl, err := template.New("Main").Parse(bashCompletionText)
+	if err != nil {
+		return fmt.Errorf("error creating zsh completion template: %v", err)
+	}
+	return tmpl.Execute(w, nil)
+}
+
 // generate zsh completion script.
 // if short passed - generate completion without description
 func genZshCompletion(w io.Writer, short bool) error {
@@ -98,7 +120,7 @@ func initCompletionCmd(rootCmd *cobra.Command) {
 
 			switch shellType {
 			case "bash":
-				return rootCmd.GenBashCompletion(cmd.OutOrStdout())
+				return genBashCompletion(cmd.OutOrStdout())
 			case "zsh":
 				return genZshCompletion(cmd.OutOrStdout(), short)
 			default:
