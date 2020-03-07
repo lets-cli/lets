@@ -1,107 +1,129 @@
 package cmd
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/spf13/cobra"
 	"io"
+	"strings"
 	"text/template"
 )
 
-var tmpl = `To enable completion in your shell, run:
-  eval "$(lets completion -s <shell>)"
-You can add that to your '~/.bash_profile' to enable completion whenever you
-start a new shell.
-`
+const zshCompletionText = `#compdef lets
 
-var (
-	zshCompletionText = `
-#compdef lets
-function _lets {
-  local -a commands
+_list () {
+	local cmds
 
-  _arguments -C \
-    "1: :->cmnds" \
-    "*::arg:->args"
-
-  case $state in
-  cmnds)
-    commands=({{range .Commands}}{{if not .Hidden}}
-	{{if .Short}}"{{.Name}}:{{.Short}}"{{else}}"{{.Name}}:No description for command {{.Name}}"{{end}}{{end}}{{end}}
-    )
-    _describe "command" commands
-    ;;
-  esac
+	# Check if in folder with correct lets.yaml file
+	lets 1>/dev/null 2>/dev/null
+	if [ $? -eq 0 ]; then
+		IFS=$'\n' cmds=($(lets completion --list {{.Verbose}}))
+	else
+		cmds=()
+	fi
+	_describe -t commands 'Available commands' cmds
 }
 
-_lets
+_arguments -C -s "1: :{_list}" '*::arg:->args' --
 `
-)
 
-var (
-	zshCompletionShortText = `
-#compdef lets
-function _lets {
-  local -a commands
-
-  _arguments -C \
-    "1: :->cmnds" \
-    "*::arg:->args"
-
-  case $state in
-  cmnds)
-    commands=({{range .Commands}}{{if not .Hidden}}
-	"{{.Name}}{{end}}{{end}}
-    )
-    _describe "command" commands
-    ;;
-  esac
+const bashCompletionText = `_lets_completion() {
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    COMPREPLY=( $(lets completion --list "${COMP_WORDS[@]:1:$((COMP_CWORD-1))}" -- ${cur} 2>/dev/null) )
+    if [[ ${COMPREPLY} == "" ]]; then
+        COMPREPLY=( $(compgen -f -- ${cur}) )
+    fi
+    return 0
 }
 
-_lets
+complete -o filenames -F _lets_completion lets
 `
-)
 
-// generate zsh completion script.
-// if short passed - generate completion without description
-func genZshCompletion(rootCmd *cobra.Command, w io.Writer, short bool) error {
-	textTmpl := zshCompletionText
-	if short {
-		textTmpl = zshCompletionShortText
-	}
-	tmpl, err := template.New("Main").Parse(textTmpl)
+// generate bash completion script.
+func genBashCompletion(w io.Writer) error {
+	tmpl, err := template.New("Main").Parse(bashCompletionText)
 	if err != nil {
 		return fmt.Errorf("error creating zsh completion template: %v", err)
 	}
-	return tmpl.Execute(w, rootCmd)
+	return tmpl.Execute(w, nil)
+}
+
+// generate zsh completion script.
+// if verbose passed - generate completion with description
+func genZshCompletion(w io.Writer, verbose bool) error {
+	tmpl, err := template.New("Main").Parse(zshCompletionText)
+	if err != nil {
+		return fmt.Errorf("error creating zsh completion template: %v", err)
+	}
+	data := struct {
+		Verbose string
+	}{Verbose: ""}
+	if verbose {
+		data.Verbose = "--verbose"
+	}
+	return tmpl.Execute(w, data)
+}
+
+// generate string of commands joined with \n
+func getCommandsList(rootCmd *cobra.Command, w io.Writer, verbose bool) error {
+	var buf = new(bytes.Buffer)
+	for _, cmd := range rootCmd.Commands() {
+		if !cmd.Hidden && cmd.Name() != "help" {
+			if verbose {
+				descr := fmt.Sprintf("No description for command %s", cmd.Name())
+				if cmd.Short != "" {
+					descr = cmd.Short
+					descr = strings.TrimSpace(descr)
+				}
+				buf.WriteString(fmt.Sprintf("%s:%s\n", cmd.Name(), descr))
+			} else {
+				buf.WriteString(fmt.Sprintf("%s\n", cmd.Name()))
+			}
+		}
+	}
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 func initCompletionCmd(rootCmd *cobra.Command) {
 	var completionCmd = &cobra.Command{
 		Use:    "completion",
 		Hidden: true,
-		Short:  "Generates completion scripts",
-		Long:   tmpl,
+		Short:  "Generates completion scripts for bash, zsh",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			shellType, err := cmd.Flags().GetString("shell")
 			if err != nil {
 				return err
 			}
-			short, err := cmd.Flags().GetBool("short")
+			verbose, err := cmd.Flags().GetBool("verbose")
+			if err != nil {
+				return err
+			}
+			list, err := cmd.Flags().GetBool("list")
 			if err != nil {
 				return err
 			}
 
+			if list {
+				return getCommandsList(rootCmd, cmd.OutOrStdout(), verbose)
+			}
+
+			if shellType == "" {
+				return cmd.Help()
+			}
+
 			switch shellType {
 			case "bash":
-				return rootCmd.GenBashCompletion(cmd.OutOrStdout())
+				return genBashCompletion(cmd.OutOrStdout())
 			case "zsh":
-				return genZshCompletion(rootCmd, cmd.OutOrStdout(), short)
+				return genZshCompletion(cmd.OutOrStdout(), verbose)
 			default:
 				return fmt.Errorf("unsupported shell type %q", shellType)
 			}
 		},
 	}
 	rootCmd.AddCommand(completionCmd)
-	completionCmd.Flags().StringP("shell", "s", "bash", "The type of shell")
-	completionCmd.Flags().Bool("short", false, "Short completion without description (only for zsh)")
+	completionCmd.Flags().StringP("shell", "s", "", "The type of shell (bash or zsh)")
+	completionCmd.Flags().Bool("list", false, "Show list of commands")
+	completionCmd.Flags().Bool("verbose", false, "Verbose list of commands (with description) (only for zsh)")
 }
