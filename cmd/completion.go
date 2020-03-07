@@ -9,8 +9,7 @@ import (
 	"text/template"
 )
 
-const zshCompletionText = `
-#compdef lets
+const zshCompletionText = `#compdef lets
 
 _list () {
 	local cmds
@@ -28,8 +27,7 @@ _list () {
 _arguments -C -s "1: :{_list}" '*::arg:->args' --
 `
 
-const bashCompletionText = `
-_lets_completion() {
+const bashCompletionText = `_lets_completion() {
     cur="${COMP_WORDS[COMP_CWORD]}"
     COMPREPLY=( $(lets completion --list "${COMP_WORDS[@]:1:$((COMP_CWORD-1))}" -- ${cur} 2>/dev/null) )
     if [[ ${COMPREPLY} == "" ]]; then
