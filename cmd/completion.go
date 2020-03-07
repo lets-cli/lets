@@ -73,7 +73,6 @@ func getCommandsList(rootCmd *cobra.Command, w io.Writer, verbose bool) error {
 				descr := fmt.Sprintf("No description for command %s", cmd.Name())
 				if cmd.Short != "" {
 					descr = cmd.Short
-					descr = strings.ReplaceAll(descr, ":", " ")
 					descr = strings.TrimSpace(descr)
 				}
 				buf.WriteString(fmt.Sprintf("%s:%s\n", cmd.Name(), descr))
