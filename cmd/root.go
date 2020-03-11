@@ -2,9 +2,9 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/kindritskyiMax/lets/config"
-	"github.com/kindritskyiMax/lets/env"
-	"github.com/kindritskyiMax/lets/logging"
+	"github.com/lets-cli/lets/config"
+	"github.com/lets-cli/lets/env"
+	"github.com/lets-cli/lets/logging"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"io"

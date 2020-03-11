@@ -2,7 +2,7 @@ package config
 
 import (
 	"fmt"
-	"github.com/kindritskyiMax/lets/commands/command"
+	"github.com/lets-cli/lets/commands/command"
 	"strings"
 )
 

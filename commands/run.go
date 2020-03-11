@@ -3,9 +3,9 @@ package commands
 import (
 	"fmt"
 	"github.com/docopt/docopt-go"
-	"github.com/kindritskyiMax/lets/commands/command"
-	"github.com/kindritskyiMax/lets/config"
-	"github.com/kindritskyiMax/lets/logging"
+	"github.com/lets-cli/lets/commands/command"
+	"github.com/lets-cli/lets/config"
+	"github.com/lets-cli/lets/logging"
 	"io"
 	"os"
 	"os/exec"

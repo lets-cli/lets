@@ -1,4 +1,4 @@
-module github.com/kindritskyiMax/lets
+module github.com/lets-cli/lets
 
 go 1.13
 

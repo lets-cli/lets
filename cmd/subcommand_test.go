@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/kindritskyiMax/lets/test"
+	"github.com/lets-cli/lets/test"
 	"strings"
 	"testing"
 )

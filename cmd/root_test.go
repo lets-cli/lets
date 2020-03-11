@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"bytes"
-	"github.com/kindritskyiMax/lets/test"
+	"github.com/lets-cli/lets/test"
 	"github.com/spf13/cobra"
 	"testing"
 )

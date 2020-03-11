@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/kindritskyiMax/lets/commands/command"
+	"github.com/lets-cli/lets/commands/command"
 	"testing"
 )
 
