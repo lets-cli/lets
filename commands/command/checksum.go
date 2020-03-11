@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/kindritskyiMax/lets/env"
+	"github.com/lets-cli/lets/env"
 )
 
 var checksumCache map[string][]byte = make(map[string][]byte)

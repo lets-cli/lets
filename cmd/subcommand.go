@@ -3,9 +3,9 @@ package cmd
 import (
 	"bytes"
 	"fmt"
-	"github.com/kindritskyiMax/lets/commands"
-	"github.com/kindritskyiMax/lets/commands/command"
-	"github.com/kindritskyiMax/lets/config"
+	"github.com/lets-cli/lets/commands"
+	"github.com/lets-cli/lets/commands/command"
+	"github.com/lets-cli/lets/config"
 	"github.com/spf13/cobra"
 	"io"
 )
