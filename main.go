@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/kindritskyiMax/lets/cmd"
+	"github.com/lets-cli/lets/cmd"
 )
 
 func main() {
