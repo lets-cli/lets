@@ -493,16 +493,16 @@ You can use Bash/Zsh/Oh-My-Zsh completion in you terminal
 
 You can use this bash scripts in your own `lets.yaml` in case, if you wish to implement some functionality, that does not implemented yet in Lets
 
-- run cmd only if checksum was changed:
-
-```yaml
-# lets.yaml
-cmd:
-  build:
-    cmd: scripts/run-if-checksum-changed.sh "docker build ."
-  #           |-------path to bash script------|---cmd to run---|
-  run:
-    depends:
-      - build
-    cmd: docker-compose up
-```
+- run cmd only if checksum was changed
+    > Do't forget to add `.lets/` into your `.gitignore `
+    ```yaml
+    # lets.yaml
+    commands:
+      build:
+        cmd: scripts/run-if-checksum-changed.sh "docker build ."
+      #           |-------path to bash script------|---cmd to run---|
+      run:
+        depends:
+          - build
+        cmd: docker-compose up
+    ```
