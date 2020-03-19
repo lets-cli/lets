@@ -112,7 +112,7 @@ func runCmd(cmdToRun command.Command, cfg *config.Config, out io.Writer, parentN
 		convertEnvMapToList(cmdToRun.CliOptions),
 		convertChecksumToEnvForCmd(cmdToRun.Checksum),
 		convertChecksumMapToEnvForCmd(cmdToRun.ChecksumMap),
-		makeEnvEntry("LETS_CMD", cmdToRun.name),
+		makeEnvEntry("LETS_CMD", cmdToRun.Name),
 	)
 	if !isChildCmd {
 		logging.Log.Debugf(
