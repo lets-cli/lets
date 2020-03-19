@@ -2,14 +2,15 @@ package commands
 
 import (
 	"fmt"
-	"github.com/docopt/docopt-go"
-	"github.com/lets-cli/lets/commands/command"
-	"github.com/lets-cli/lets/config"
-	"github.com/lets-cli/lets/logging"
 	"io"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/docopt/docopt-go"
+	"github.com/lets-cli/lets/commands/command"
+	"github.com/lets-cli/lets/config"
+	"github.com/lets-cli/lets/logging"
 )
 
 const (
@@ -112,7 +113,7 @@ func runCmd(cmdToRun command.Command, cfg *config.Config, out io.Writer, parentN
 		convertEnvMapToList(cmdToRun.CliOptions),
 		convertChecksumToEnvForCmd(cmdToRun.Checksum),
 		convertChecksumMapToEnvForCmd(cmdToRun.ChecksumMap),
-		makeEnvEntry("LETS_CMD", cmdToRun.Name),
+		[]string{makeEnvEntry("LETS_CMD", cmdToRun.Name)},
 	)
 	if !isChildCmd {
 		logging.Log.Debugf(
