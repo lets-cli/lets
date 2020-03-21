@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bytes"
+	"context"
 	"github.com/lets-cli/lets/test"
 	"github.com/spf13/cobra"
 	"testing"
@@ -10,7 +11,7 @@ import (
 func newTestRootCmd(args []string) (rootCmd *cobra.Command, out *bytes.Buffer) {
 	bufOut := new(bytes.Buffer)
 
-	rootCommand := CreateRootCommand(bufOut, "test-version")
+	rootCommand := CreateRootCommand(context.Background(), bufOut, "test-version")
 	rootCommand.SetOut(bufOut)
 	rootCommand.SetErr(bufOut)
 	rootCommand.SetArgs(args)
