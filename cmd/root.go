@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"github.com/lets-cli/lets/config"
 	"github.com/lets-cli/lets/env"
 	"github.com/lets-cli/lets/logging"
@@ -10,7 +11,7 @@ import (
 )
 
 // CreateRootCommand is where all the stuff begins
-func CreateRootCommand(out io.Writer, version string) *cobra.Command {
+func CreateRootCommand(_ context.Context, out io.Writer, version string) *cobra.Command {
 	// rootCmd represents the base command when called without any subcommands
 	var rootCmd = &cobra.Command{
 		Use:   "lets",

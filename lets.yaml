@@ -36,7 +36,7 @@ commands:
       fi
 
   staticcheck:
-    description: Run staticcheck for lets
+    description: Run staticcheck for lets. Staticcheck is go vet on steroids
     depends: [build-docker]
     cmd:
       docker-compose run --rm staticheck
