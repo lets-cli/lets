@@ -14,7 +14,7 @@ var (
 func InitLogging(verbose bool) {
 	logger := Log
 
-	logger.Level = log.WarnLevel
+	logger.Level = log.InfoLevel
 
 	if verbose {
 		logger.Level = log.DebugLevel

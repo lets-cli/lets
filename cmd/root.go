@@ -1,9 +1,9 @@
 package cmd
 
 import (
-	"fmt"
 	"github.com/lets-cli/lets/config"
 	"github.com/lets-cli/lets/env"
+	"github.com/lets-cli/lets/logging"
 	"github.com/spf13/cobra"
 	"io"
 	"os"
@@ -47,7 +47,7 @@ func CreateRootCommand(out io.Writer, version string) *cobra.Command {
 func InitConfigErrCheck(rootCmd *cobra.Command, cfgErr error) {
 	rootCmd.PreRun = func(cmd *cobra.Command, args []string) {
 		if cfgErr != nil {
-			fmt.Printf("Error: %s\n", cfgErr)
+			logging.Log.Errorf("error: %s\n", cfgErr)
 			os.Exit(1)
 		}
 	}

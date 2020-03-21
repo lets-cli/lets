@@ -12,7 +12,6 @@ func main() {
 	rootCmd := cmd.CreateRootCommand(os.Stdout, GetVersion())
 
 	logging.InitLogging(env.IsDebug())
-
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
 	}
