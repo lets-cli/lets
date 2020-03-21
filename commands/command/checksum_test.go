@@ -24,8 +24,14 @@ func TestCalculateChecksumSimpleFilename(t *testing.T) {
 	defer os.Remove(file1.Name())
 	defer os.Remove(file2.Name())
 
-	file1.Write([]byte("qwerty1"))
-	file2.Write([]byte("asdfg2"))
+	_, err := file1.Write([]byte("qwerty1"))
+	if err != nil {
+		t.Errorf("Can not write test file. Error: %s", err)
+	}
+	_, err = file2.Write([]byte("asdfg2"))
+	if err != nil {
+		t.Errorf("Can not write test file. Error: %s", err)
+	}
 
 	checksum, err := calculateChecksum([]string{
 		file1.Name(),
@@ -50,8 +56,14 @@ func TestCalculateChecksumGlobPattern(t *testing.T) {
 	defer os.Remove(file1.Name())
 	defer os.Remove(file2.Name())
 
-	file1.Write([]byte("qwerty1"))
-	file2.Write([]byte("asdfg2"))
+	_, err := file1.Write([]byte("qwerty1"))
+	if err != nil {
+		t.Errorf("Can not write test file. Error: %s", err)
+	}
+	_, err = file2.Write([]byte("asdfg2"))
+	if err != nil {
+		t.Errorf("Can not write test file. Error: %s", err)
+	}
 
 	checksum, err := calculateChecksum([]string{
 		fmt.Sprintf("%s/lets_checksum_test_*", tempDir),
@@ -77,15 +89,21 @@ func TestCalculateChecksumFromListOrMap(t *testing.T) {
 	defer os.Remove(file1.Name())
 	defer os.Remove(file2.Name())
 
-	file1.Write([]byte("qwerty1"))
-	file2.Write([]byte("asdfg2"))
+	_, err := file1.Write([]byte("qwerty1"))
+	if err != nil {
+		t.Errorf("Can not write test file. Error: %s", err)
+	}
+	_, err = file2.Write([]byte("asdfg2"))
+	if err != nil {
+		t.Errorf("Can not write test file. Error: %s", err)
+	}
 
 	// declare command with checksum as list
 	cmdChAsList := NewCommand("checksum-as-list")
 	cmdChAsList.checksumSource = map[string][]string{
 		"": {"lets_checksum_test_1", "lets_checksum_test_2"},
 	}
-	err := calculateChecksumFromSource(&cmdChAsList)
+	err = calculateChecksumFromSource(&cmdChAsList)
 	if err != nil {
 		t.Errorf("Checksum is not correct. Error: %s", err)
 	}

@@ -46,7 +46,10 @@ func calculateChecksum(patterns []string) (string, error) {
 	fileHasher := sha1.New()
 	for _, filename := range files {
 		if cachedSum, found := checksumCache[filename]; found {
-			hasher.Write(cachedSum)
+			_, err = hasher.Write(cachedSum)
+			if err != nil {
+				return "", err
+			}
 		} else {
 			data, err := ioutil.ReadFile(filename)
 			if err != nil {
@@ -54,7 +57,10 @@ func calculateChecksum(patterns []string) (string, error) {
 			}
 			cachedSum = fileHasher.Sum(data)
 			checksumCache[filename] = cachedSum
-			hasher.Write(cachedSum)
+			_, err = hasher.Write(cachedSum)
+			if err != nil {
+				return "", err
+			}
 			fileHasher.Reset()
 		}
 
@@ -147,7 +153,10 @@ func calculateChecksumFromSource(newCmd *Command) error {
 		} else {
 			newCmd.ChecksumMap[key] = calcChecksum
 		}
-		hasher.Write([]byte(calcChecksum))
+		_, err = hasher.Write([]byte(calcChecksum))
+		if err != nil {
+			return err
+		}
 	}
 	newCmd.Checksum = fmt.Sprintf("%x", hasher.Sum(nil))
 
