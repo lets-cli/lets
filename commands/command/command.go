@@ -9,7 +9,7 @@ var (
 	CMD         = "cmd"
 	DESCRIPTION = "description"
 	ENV         = "env"
-	EVAL_ENV    = "eval_env"
+	EvalEnv     = "eval_env"
 	OPTIONS     = "options"
 	DEPENDS     = "depends"
 	CHECKSUM    = "checksum"
@@ -19,7 +19,7 @@ var validFields = strings.Join([]string{
 	CMD,
 	DESCRIPTION,
 	ENV,
-	EVAL_ENV,
+	EvalEnv,
 	OPTIONS,
 	DEPENDS,
 	CHECKSUM,
@@ -40,7 +40,7 @@ type Command struct {
 	checksumSource map[string][]string
 }
 
-type CommandError struct {
+type ParseCommandError struct {
 	Path struct {
 		Full  string
 		Field string
@@ -48,18 +48,20 @@ type CommandError struct {
 	Err error
 }
 
-func (e *CommandError) Error() string {
+func (e *ParseCommandError) Error() string {
 	return fmt.Sprintf("failed to parse command: %s", e.Err)
 }
 
 // env is not proper arg
-func newCommandError(msg string, name string, field string, env string) error {
+func newParseCommandError(msg string, name string, field string, env string) error {
 	fields := []string{name, field}
 	if env != "" {
 		fields = append(fields, env)
 	}
+
 	fullPath := strings.Join(fields, ".")
-	return &CommandError{
+
+	return &ParseCommandError{
 		Path: struct {
 			Full  string
 			Field string
@@ -73,17 +75,17 @@ func newCommandError(msg string, name string, field string, env string) error {
 
 // NewCommand creates new command struct
 func NewCommand(name string) Command {
-	newCmd := Command{
+	return Command{
 		Name: name,
 		Env:  make(map[string]string),
 	}
-	return newCmd
 }
 
 func (cmd *Command) ChecksumCalculator() error {
 	if len(cmd.checksumSource) == 0 {
 		return nil
 	}
+
 	return calculateChecksumFromSource(cmd)
 }
 
@@ -92,6 +94,7 @@ func ParseAndValidateCommand(newCmd *Command, rawCommand map[interface{}]interfa
 	if err := validateCommandFields(rawCommand, validFields); err != nil {
 		return err
 	}
+
 	if cmd, ok := rawCommand[CMD]; ok {
 		if err := parseAndValidateCmd(cmd, newCmd); err != nil {
 			return err
@@ -110,7 +113,7 @@ func ParseAndValidateCommand(newCmd *Command, rawCommand map[interface{}]interfa
 		}
 	}
 
-	if evalEnv, ok := rawCommand[EVAL_ENV]; ok {
+	if evalEnv, ok := rawCommand[EvalEnv]; ok {
 		if err := parseAndValidateEvalEnv(evalEnv, newCmd); err != nil {
 			return err
 		}
@@ -133,6 +136,7 @@ func ParseAndValidateCommand(newCmd *Command, rawCommand map[interface{}]interfa
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -142,5 +146,6 @@ func validateCommandFields(rawKeyValue map[interface{}]interface{}, validFields 
 			return fmt.Errorf("unknown command field '%s'", k)
 		}
 	}
+
 	return nil
 }

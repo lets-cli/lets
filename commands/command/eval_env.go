@@ -11,9 +11,11 @@ import (
 func EvalEnvVariable(rawCmd string) (string, error) {
 	cmd := exec.Command("sh", "-c", rawCmd)
 	out, err := cmd.Output()
+
 	if err != nil {
 		return "", err
 	}
+
 	res := string(out)
 	// TODO get rid of TrimSpace
 	return strings.TrimSpace(res), nil
@@ -22,20 +24,23 @@ func EvalEnvVariable(rawCmd string) (string, error) {
 func parseAndValidateEvalEnv(evalEnv interface{}, newCmd *Command) error {
 	for name, value := range evalEnv.(map[interface{}]interface{}) {
 		nameKey := name.(string)
+
 		if value, ok := value.(string); ok {
-			if computedVal, err := EvalEnvVariable(value); err != nil {
+			computedVal, err := EvalEnvVariable(value)
+			if err != nil {
 				return err
-			} else {
-				newCmd.Env[nameKey] = computedVal
 			}
+
+			newCmd.Env[nameKey] = computedVal
 		} else {
-			return newCommandError(
+			return newParseCommandError(
 				"must be a string",
 				newCmd.Name,
-				EVAL_ENV,
+				EvalEnv,
 				nameKey,
 			)
 		}
 	}
+
 	return nil
 }

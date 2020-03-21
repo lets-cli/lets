@@ -8,10 +8,12 @@ import (
 
 func stringPartition(s, sep string) (string, string, string) {
 	sepPos := strings.Index(s, sep)
-	if sepPos == -1 { // no seperator found
+	if sepPos == -1 { // no separator found
 		return s, "", ""
 	}
+
 	split := strings.SplitN(s, sep, 2)
+
 	return split[0], sep, split[1]
 }
 
@@ -23,6 +25,7 @@ func escapeFlagValue(str string) string {
 		key, sep, val := stringPartition(str, "=")
 		str = strings.Join([]string{key, fmt.Sprintf("'%s'", val)}, sep)
 	}
+
 	return str
 }
 
@@ -32,15 +35,17 @@ func parseAndValidateCmd(cmd interface{}, newCmd *Command) error {
 		newCmd.Cmd = cmd
 	case []interface{}:
 		cmdList := make([]string, len(cmd))
+
 		for _, v := range cmd {
 			if v == nil {
-				return newCommandError(
+				return newParseCommandError(
 					"got nil in cmd list",
 					newCmd.Name,
 					CMD,
 					"",
 				)
 			}
+
 			cmdList = append(cmdList, fmt.Sprintf("%s", v))
 		}
 		// cut binary path and command name
@@ -54,14 +59,16 @@ func parseAndValidateCmd(cmd interface{}, newCmd *Command) error {
 		for _, val := range cmdList {
 			escapedCmdList = append(escapedCmdList, escapeFlagValue(val))
 		}
+
 		newCmd.Cmd = strings.TrimSpace(strings.Join(escapedCmdList, " "))
 	default:
-		return newCommandError(
+		return newParseCommandError(
 			"must be either string or list of string",
 			newCmd.Name,
 			CMD,
 			"",
 		)
 	}
+
 	return nil
 }

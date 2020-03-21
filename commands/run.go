@@ -35,6 +35,7 @@ func convertEnvMapToList(envMap map[string]string) []string {
 	for name, value := range envMap {
 		envList = append(envList, makeEnvEntry(name, value))
 	}
+
 	return envList
 }
 
@@ -46,15 +47,18 @@ func convertChecksumMapToEnvForCmd(checksumMap map[string]string) []string {
 	normalizeKey := func(origKey string) string {
 		key := strings.ReplaceAll(origKey, "-", "_")
 		key = strings.ToUpper(key)
+
 		return key
 	}
 
 	var envList []string
+
 	for name, value := range checksumMap {
 		if name != "" {
 			envList = append(envList, makeEnvEntry(fmt.Sprintf("LETS_CHECKSUM_%s", normalizeKey(name)), value))
 		}
 	}
+
 	return envList
 }
 
@@ -63,6 +67,7 @@ func composeEnvs(envs ...[]string) []string {
 	for _, env := range envs {
 		composed = append(composed, env...)
 	}
+
 	return composed
 }
 
@@ -71,13 +76,14 @@ func formatOptsUsageError(err error, opts docopt.Opts, cmdToRun command.Command)
 	if opts == nil && err.Error() == "" {
 		err = fmt.Errorf("no such option")
 	}
+
 	errTpl := fmt.Sprintf("failed to parse docopt options for cmd %s: %s", cmdToRun.Name, err)
 
 	return fmt.Errorf("%s\n\n%s", errTpl, cmdToRun.RawOptions)
 }
 
 func runCmd(cmdToRun command.Command, cfg *config.Config, out io.Writer, parentName string) error {
-	cmd := exec.Command(cfg.Shell, "-c", cmdToRun.Cmd)
+	cmd := exec.Command(cfg.Shell, "-c", cmdToRun.Cmd) // #nosec G204
 	// setup std out and err
 	cmd.Stdout = out
 	cmd.Stderr = out
@@ -94,6 +100,7 @@ func runCmd(cmdToRun command.Command, cfg *config.Config, out io.Writer, parentN
 		if err != nil {
 			return formatOptsUsageError(err, opts, cmdToRun)
 		}
+
 		cmdToRun.Options = command.OptsToLetsOpt(opts)
 		cmdToRun.CliOptions = command.OptsToLetsCli(opts)
 	}
@@ -113,6 +120,7 @@ func runCmd(cmdToRun command.Command, cfg *config.Config, out io.Writer, parentN
 		convertChecksumToEnvForCmd(cmdToRun.Checksum),
 		convertChecksumMapToEnvForCmd(cmdToRun.ChecksumMap),
 	)
+
 	if !isChildCmd {
 		logging.Log.Debugf(
 			"Executing command\nname: %s\ncmd: %s\nenv:\n%s",
@@ -133,6 +141,7 @@ func runCmd(cmdToRun command.Command, cfg *config.Config, out io.Writer, parentN
 	// run depends commands
 	for _, dependCmdName := range cmdToRun.Depends {
 		dependCmd := cfg.Commands[dependCmdName]
+
 		err := runCmd(dependCmd, cfg, out, cmdToRun.Name)
 		if err != nil {
 			// must return error to root

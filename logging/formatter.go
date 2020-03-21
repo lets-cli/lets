@@ -30,6 +30,7 @@ func (f *Formatter) Format(entry *log.Entry) ([]byte, error) {
 	buff.WriteString(writeData(entry.Data))
 	buff.WriteString(entry.Message)
 	buff.WriteString("\n")
+
 	return buff.Bytes(), nil
 }
 
@@ -52,6 +53,7 @@ func writeLevel(level log.Level) string {
 
 func writeData(fields log.Fields) string {
 	var buff []string
+
 	for key, value := range fields {
 		switch value := value.(type) {
 		case LogRepresenter:
@@ -60,8 +62,10 @@ func writeData(fields log.Fields) string {
 			buff = append(buff, fmt.Sprintf("%v=%v", key, value))
 		}
 	}
+
 	if len(buff) > 0 {
 		buff = append(buff, "")
 	}
+
 	return strings.Join(buff, " ")
 }

@@ -45,6 +45,7 @@ func genBashCompletion(w io.Writer) error {
 	if err != nil {
 		return fmt.Errorf("error creating zsh completion template: %v", err)
 	}
+
 	return tmpl.Execute(w, nil)
 }
 
@@ -55,18 +56,22 @@ func genZshCompletion(w io.Writer, verbose bool) error {
 	if err != nil {
 		return fmt.Errorf("error creating zsh completion template: %v", err)
 	}
+
 	data := struct {
 		Verbose string
 	}{Verbose: ""}
+
 	if verbose {
 		data.Verbose = "--verbose"
 	}
+
 	return tmpl.Execute(w, data)
 }
 
 // generate string of commands joined with \n
 func getCommandsList(rootCmd *cobra.Command, w io.Writer, verbose bool) error {
 	var buf = new(bytes.Buffer)
+
 	for _, cmd := range rootCmd.Commands() {
 		if !cmd.Hidden && cmd.Name() != "help" {
 			if verbose {
@@ -75,13 +80,16 @@ func getCommandsList(rootCmd *cobra.Command, w io.Writer, verbose bool) error {
 					descr = cmd.Short
 					descr = strings.TrimSpace(descr)
 				}
+
 				buf.WriteString(fmt.Sprintf("%s:%s\n", cmd.Name(), descr))
 			} else {
 				buf.WriteString(fmt.Sprintf("%s\n", cmd.Name()))
 			}
 		}
 	}
+
 	_, err := buf.WriteTo(w)
+
 	return err
 }
 
@@ -122,8 +130,10 @@ func initCompletionCmd(rootCmd *cobra.Command) {
 			}
 		},
 	}
-	rootCmd.AddCommand(completionCmd)
+
 	completionCmd.Flags().StringP("shell", "s", "", "The type of shell (bash or zsh)")
 	completionCmd.Flags().Bool("list", false, "Show list of commands")
 	completionCmd.Flags().Bool("verbose", false, "Verbose list of commands (with description) (only for zsh)")
+
+	rootCmd.AddCommand(completionCmd)
 }

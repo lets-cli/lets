@@ -19,6 +19,7 @@ func InitLogging(verbose bool) {
 	if verbose {
 		logger.Level = log.DebugLevel
 	}
+
 	logger.Out = os.Stderr
 
 	formatter := &Formatter{}

@@ -23,6 +23,7 @@ func validateCircularDepends(cfg *Config) error {
 			if cmdA.Name == cmdB.Name {
 				continue
 			}
+
 			if yes := depsIntersect(cmdA, cmdB); yes {
 				return fmt.Errorf(
 					"command '%s' have circular depends on command '%s'",
@@ -32,6 +33,7 @@ func validateCircularDepends(cfg *Config) error {
 			}
 		}
 	}
+
 	return nil
 }
 
@@ -42,8 +44,10 @@ func depsIntersect(cmdA command.Command, cmdB command.Command) bool {
 				return true
 			}
 		}
+
 		return false
 	}
+
 	return isNameInDeps(cmdA.Name, cmdB.Depends) && isNameInDeps(cmdB.Name, cmdA.Depends)
 }
 
@@ -53,5 +57,6 @@ func validateTopLevelFields(rawKeyValue map[string]interface{}, validFields stri
 			return fmt.Errorf("unknown top-level field '%s'", k)
 		}
 	}
+
 	return nil
 }
