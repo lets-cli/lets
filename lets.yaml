@@ -41,6 +41,11 @@ commands:
     cmd:
       docker-compose run --rm staticheck
 
+  lint:
+    description: Run golint-ci
+    cmd:
+      docker-compose run --rm lint
+
   fmt:
     description: Run sfmt
     cmd:

@@ -10,9 +10,12 @@ services:
     volumes:
       - ./:/app
 
-  staticheck:
-    <<: *base
-    command: staticcheck ./...
+  lint:
+    image: golangci/golangci-lint:v1.24.0
+    working_dir: /app
+    volumes:
+      - ./:/app
+    command: golangci-lint run -v
 
   test:
     <<: *base
