@@ -22,3 +22,11 @@ services:
     environment:
       LETS_CONFIG_DIR: ..
     entrypoint: [go, test, ./..., -v, -coverprofile=coverage.out]
+
+  test-bats:
+    <<: *base
+    command: |
+      sh -c "
+        go build -o /usr/bin/lets *.go
+        bats tests
+      "

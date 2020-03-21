@@ -3,7 +3,6 @@ package cmd
 import (
 	"bytes"
 	"context"
-	"github.com/lets-cli/lets/test"
 	"github.com/spf13/cobra"
 	"testing"
 )
@@ -20,16 +19,18 @@ func newTestRootCmd(args []string) (rootCmd *cobra.Command, out *bytes.Buffer) {
 }
 
 func TestRootCmd(t *testing.T) {
-	t.Run("run root cmd w/o args", func(t *testing.T) {
+	t.Run("should init sub commands", func(t *testing.T) {
 		var args []string
-		rootCmd, bufOut := newTestRootCmd(args)
-		err := rootCmd.Execute()
-		if err != nil {
-			t.Fatalf("unexpected error: %s", err)
+		rootCmd, _ := newTestRootCmd(args)
+
+		comp, _, _ := rootCmd.Find([]string{"completion"})
+		if comp.Name() != "completion" {
+			t.Errorf("no '%s' subcommand in the root command", "completion")
 		}
-		outStr := bufOut.String()
-		if !test.CheckIsDefaultOutput(outStr) {
-			t.Errorf("not default output. got: %s", outStr)
+		if len(rootCmd.Commands()) != 1 {
+			t.Errorf("root cmd has different number of subcommands than expected. Exp: %d, Got: %d", 1, len(rootCmd.Commands()))
 		}
+
+		// TODO add all other subcommands
 	})
 }

@@ -15,3 +15,6 @@
 # vendor/
 .idea
 dist
+
+# lets binary
+lets
