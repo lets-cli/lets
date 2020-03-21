@@ -1,5 +1,5 @@
 setup() {
-    cd /app/tests/help
+    cd ./tests/help
 }
 
 @test "help: run 'lets' as is" {

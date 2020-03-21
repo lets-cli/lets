@@ -18,10 +18,19 @@ jobs:
           go-version: ${{ matrix.go }}
       - name: Checkout code
         uses: actions/checkout@v2
-      - name: Test
+      - name: Test unit
         env:
           LETS_CONFIG_DIR: ..
         run: go test ./... -v
+      - name: Test bats
+        run: |
+          git clone https://github.com/sstephenson/bats.git bats-repo
+          cd bats-repo
+          ./install.sh ../
+          cd ..
+          PATH=${PATH}:$(pwd)
+          go build -o lets *.go
+          ./bin/bats tests
 
   lint:
     runs-on: ubuntu-latest
