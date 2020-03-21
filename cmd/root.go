@@ -4,21 +4,10 @@ import (
 	"fmt"
 	"github.com/lets-cli/lets/config"
 	"github.com/lets-cli/lets/env"
-	"github.com/lets-cli/lets/logging"
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"io"
 	"os"
-	"strconv"
 )
-
-func isDebug() bool {
-	debug, err := strconv.ParseBool(os.Getenv("LETS_DEBUG"))
-	if err != nil {
-		return false
-	}
-	return debug
-}
 
 // CreateRootCommand is where all the stuff begins
 func CreateRootCommand(out io.Writer, version string) *cobra.Command {
@@ -29,10 +18,6 @@ func CreateRootCommand(out io.Writer, version string) *cobra.Command {
 		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runHelp(cmd)
-		},
-		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			initLogging(isDebug())
-			return nil
 		},
 		Version: version,
 	}
@@ -70,19 +55,4 @@ func InitConfigErrCheck(rootCmd *cobra.Command, cfgErr error) {
 
 func runHelp(cmd *cobra.Command) error {
 	return cmd.Help()
-}
-
-func initLogging(verbose bool) {
-	logger := logging.Log
-
-	logger.Level = log.WarnLevel
-
-	if verbose {
-		logger.Level = log.DebugLevel
-	}
-	logger.Out = os.Stderr
-
-	formatter := &logging.Formatter{}
-	log.SetFormatter(formatter)
-	logger.Formatter = formatter
 }
