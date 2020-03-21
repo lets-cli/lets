@@ -15,11 +15,11 @@ func newTestRootCmd(args []string) (rootCmd *cobra.Command, out *bytes.Buffer) {
 	rootCommand.SetOut(bufOut)
 	rootCommand.SetErr(bufOut)
 	rootCommand.SetArgs(args)
+
 	return rootCommand, bufOut
 }
 
 func TestRootCmd(t *testing.T) {
-
 	t.Run("run root cmd w/o args", func(t *testing.T) {
 		var args []string
 		rootCmd, bufOut := newTestRootCmd(args)
@@ -31,6 +31,5 @@ func TestRootCmd(t *testing.T) {
 		if !test.CheckIsDefaultOutput(outStr) {
 			t.Errorf("not default output. got: %s", outStr)
 		}
-
 	})
 }

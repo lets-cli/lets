@@ -15,14 +15,14 @@ var (
 	COMMANDS = "commands"
 	SHELL    = "shell"
 	ENV      = "env"
-	EVAL_ENV = "eval_env"
+	EvalEnv  = "eval_env"
 	MIXINS   = "mixins"
 )
 
 const defaultConfigPath = "lets.yaml"
 
-var validConfigFields = strings.Join([]string{COMMANDS, SHELL, ENV, EVAL_ENV, MIXINS}, " ")
-var validMixinConfigFields = strings.Join([]string{COMMANDS, ENV, EVAL_ENV}, " ")
+var validConfigFields = strings.Join([]string{COMMANDS, SHELL, ENV, EvalEnv, MIXINS}, " ")
+var validMixinConfigFields = strings.Join([]string{COMMANDS, ENV, EvalEnv}, " ")
 
 // Config is a struct for loaded config file
 type Config struct {
@@ -49,6 +49,7 @@ func (e *ParseError) Error() string {
 func newConfigParseError(msg string, name string, field string) error {
 	fields := []string{name, field}
 	fullPath := strings.Join(fields, ".")
+
 	return &ParseError{
 		Path: struct {
 			Full  string
@@ -73,6 +74,7 @@ func newConfig(workDir string, configAbsPath string) *Config {
 func newMixinConfig(workDir string, configAbsPath string) *Config {
 	cfg := newConfig(workDir, configAbsPath)
 	cfg.isMixin = true
+
 	return cfg
 }
 
@@ -89,9 +91,11 @@ func getWorkDir(filename string, rootDir string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to get workdir for config %s: %s", filename, err)
 	}
+
 	if rootDir != "" {
 		workDir = rootDir
 	}
+
 	return workDir, nil
 }
 
@@ -105,7 +109,9 @@ func Load(filename string, rootDir string) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	configAbsPath := ""
+
 	if filepath.IsAbs(filename) {
 		configAbsPath = filename
 	} else {
@@ -114,6 +120,7 @@ func Load(filename string, rootDir string) (*Config, error) {
 			return nil, failedLoadErr(err)
 		}
 	}
+
 	config := newConfig(workDir, configAbsPath)
 
 	err = loadConfig(configAbsPath, config)
@@ -124,6 +131,7 @@ func Load(filename string, rootDir string) (*Config, error) {
 	if err = Validate(config); err != nil {
 		return nil, failedLoadErr(err)
 	}
+
 	return config, nil
 }
 
@@ -137,6 +145,7 @@ func loadConfig(filename string, cfg *Config) error {
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -147,10 +156,12 @@ func loadMixinConfig(filename string, rootCfg *Config) (*Config, error) {
 	}
 
 	config := newMixinConfig(rootCfg.WorkDir, filename)
+
 	err = yaml.Unmarshal(fileData, config)
 	if err != nil {
 		return nil, err
 	}
+
 	return config, nil
 }
 
@@ -161,9 +172,11 @@ func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err := unmarshal(&rawKeyValue); err != nil {
 		return err
 	}
+
 	if c.isMixin {
 		return unmarshalMixinConfig(rawKeyValue, c)
 	}
+
 	return unmarshalConfig(rawKeyValue, c)
 }
 
@@ -173,27 +186,31 @@ func unmarshalConfigGeneral(rawKeyValue map[string]interface{}, cfg *Config) err
 			return err
 		}
 	}
+
 	if env, ok := rawKeyValue[ENV]; ok {
 		env, ok := env.(map[interface{}]interface{})
 		if !ok {
 			return fmt.Errorf("env must be a mapping")
 		}
+
 		err := parseAndValidateEnv(env, cfg)
 		if err != nil {
 			return err
 		}
 	}
 
-	if evalEnv, ok := rawKeyValue[EVAL_ENV]; ok {
+	if evalEnv, ok := rawKeyValue[EvalEnv]; ok {
 		evalEnv, ok := evalEnv.(map[interface{}]interface{})
 		if !ok {
 			return fmt.Errorf("eval_env must be a mapping")
 		}
+
 		err := parseAndValidateEvalEnv(evalEnv, cfg)
 		if err != nil {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -211,6 +228,7 @@ func unmarshalConfig(rawKeyValue map[string]interface{}, cfg *Config) error {
 		if !ok {
 			return fmt.Errorf("shell must be a string")
 		}
+
 		cfg.Shell = shell
 	} else {
 		return fmt.Errorf("'shell' field is required")
@@ -221,6 +239,7 @@ func unmarshalConfig(rawKeyValue map[string]interface{}, cfg *Config) error {
 		if !ok {
 			return fmt.Errorf("mixins must be a list of string")
 		}
+
 		err := readAndValidateMixins(mixins, cfg)
 		if err != nil {
 			return err
@@ -234,6 +253,7 @@ func unmarshalMixinConfig(rawKeyValue map[string]interface{}, cfg *Config) error
 	if err := validateTopLevelFields(rawKeyValue, validMixinConfigFields); err != nil {
 		return err
 	}
+
 	return unmarshalConfigGeneral(rawKeyValue, cfg)
 }
 
@@ -244,10 +264,12 @@ func readAndValidateMixins(mixins []interface{}, cfg *Config) error {
 			if err != nil {
 				return fmt.Errorf("failed to read mixin config: %s", err)
 			}
+
 			mixinCfg, err := loadMixinConfig(configAbsPath, cfg)
 			if err != nil {
 				return fmt.Errorf("failed to load mixin config: %s", err)
 			}
+
 			if err := mergeConfigs(cfg, mixinCfg); err != nil {
 				return fmt.Errorf("failed to merge mixin config %s with main config: %s", filename, err)
 			}
@@ -259,6 +281,7 @@ func readAndValidateMixins(mixins []interface{}, cfg *Config) error {
 			)
 		}
 	}
+
 	return nil
 }
 
@@ -269,20 +292,25 @@ func mergeConfigs(mainCfg *Config, mixinCfg *Config) error {
 		if _, conflict := mainCfg.Commands[mixinCmd.Name]; conflict {
 			return fmt.Errorf("command %s from mixin is already declared in main config's commands", mixinCmd.Name)
 		}
+
 		mainCfg.Commands[mixinCmd.Name] = mixinCmd
 	}
+
 	for mixinEnvKey, mixinEnvVal := range mixinCfg.Env {
 		if _, conflict := mainCfg.Env[mixinEnvKey]; conflict {
 			return fmt.Errorf("env %s from mixin is already declared in main config's env", mixinEnvKey)
 		}
+
 		mainCfg.Env[mixinEnvKey] = mixinEnvVal
 	}
+
 	return nil
 }
 
 func parseAndValidateEnv(env map[interface{}]interface{}, cfg *Config) error {
 	for name, value := range env {
 		nameKey := name.(string)
+
 		if value, ok := value.(string); ok {
 			cfg.Env[nameKey] = value
 		} else {
@@ -293,26 +321,30 @@ func parseAndValidateEnv(env map[interface{}]interface{}, cfg *Config) error {
 			)
 		}
 	}
+
 	return nil
 }
 
 func parseAndValidateEvalEnv(evalEnv map[interface{}]interface{}, cfg *Config) error {
 	for name, value := range evalEnv {
 		nameKey := name.(string)
+
 		if value, ok := value.(string); ok {
-			if computedVal, err := command.EvalEnvVariable(value); err != nil {
+			computedVal, err := command.EvalEnvVariable(value)
+			if err != nil {
 				return err
-			} else {
-				cfg.Env[nameKey] = computedVal
 			}
+
+			cfg.Env[nameKey] = computedVal
 		} else {
 			return newConfigParseError(
 				"must be a string",
-				EVAL_ENV,
+				EvalEnv,
 				nameKey,
 			)
 		}
 	}
+
 	return nil
 }
 
@@ -321,10 +353,13 @@ func (c *Config) loadCommands(cmds map[interface{}]interface{}) error {
 		keyStr := key.(string)
 		newCmd := command.NewCommand(keyStr)
 		err := command.ParseAndValidateCommand(&newCmd, value.(map[interface{}]interface{}))
+
 		if err != nil {
 			return err
 		}
+
 		c.Commands[keyStr] = newCmd
 	}
+
 	return nil
 }

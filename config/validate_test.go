@@ -7,7 +7,6 @@ import (
 
 func TestValidateCircularDeps(t *testing.T) {
 	t.Run("command skip itself", func(t *testing.T) {
-
 		testCfg := &Config{
 			Commands: make(map[string]command.Command),
 		}
@@ -27,7 +26,6 @@ func TestValidateCircularDeps(t *testing.T) {
 	})
 
 	t.Run("command with similar name should not fail validation", func(t *testing.T) {
-
 		testCfg := &Config{
 			Commands: make(map[string]command.Command),
 		}
@@ -51,7 +49,6 @@ func TestValidateCircularDeps(t *testing.T) {
 	})
 
 	t.Run("validation should fail", func(t *testing.T) {
-
 		testCfg := &Config{
 			Commands: make(map[string]command.Command),
 		}

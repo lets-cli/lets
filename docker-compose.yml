@@ -15,7 +15,7 @@ services:
     working_dir: /app
     volumes:
       - ./:/app
-    command: golangci-lint run -v
+    command: golangci-lint run -v -c .golang-ci.yaml
 
   test:
     <<: *base

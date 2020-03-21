@@ -7,7 +7,7 @@ func parseAndValidateDepends(depends interface{}, newCmd *Command) error {
 				// TODO validate if command is really exists - in validate
 				newCmd.Depends = append(newCmd.Depends, value)
 			} else {
-				return newCommandError(
+				return newParseCommandError(
 					"value of depends list must be a string",
 					newCmd.Name,
 					DEPENDS,
@@ -16,12 +16,13 @@ func parseAndValidateDepends(depends interface{}, newCmd *Command) error {
 			}
 		}
 	} else {
-		return newCommandError(
+		return newParseCommandError(
 			"must be a list of string (commands)",
 			newCmd.Name,
 			DEPENDS,
 			"",
 		)
 	}
+
 	return nil
 }

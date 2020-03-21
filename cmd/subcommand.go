@@ -33,6 +33,7 @@ func newCmdGeneric(cmdToRun command.Command, conf *config.Config, out io.Writer)
 			c.Println(err)
 		}
 	})
+
 	return subCmd
 }
 

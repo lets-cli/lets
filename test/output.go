@@ -13,6 +13,7 @@ func CompareCmdOutput(one string, another string) (bool, string, string) {
 	}
 	oneNorm := normalize(one)
 	anotherNorm := normalize(another)
+
 	return oneNorm == anotherNorm, oneNorm, anotherNorm
 }
 
@@ -22,11 +23,14 @@ func CheckIsDefaultOutput(output string) bool {
 	if !strings.Contains(output, "Available Commands") {
 		return false
 	}
+
 	if !strings.Contains(output, "test-checksum") {
 		return false
 	}
+
 	if !strings.Contains(output, "test-options") {
 		return false
 	}
+
 	return true
 }

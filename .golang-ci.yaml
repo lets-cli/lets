@@ -1,0 +1,20 @@
+linters:
+  enable-all: true
+  disable:
+    - gochecknoglobals
+    - goimports
+    - funlen
+    - godox
+    - prealloc # enable it sometimes
+
+linters-settings:
+  gomnd:
+    settings:
+      mnd:
+        checks: case,condition,return
+
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - gomnd

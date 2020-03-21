@@ -24,14 +24,15 @@ func ParseDocopts(cmd Command) (docopt.Opts, error) {
 	}
 
 	return DocoptParser.ParseArgs(cmd.RawOptions, os.Args[1:], "")
-
 }
 
 func OptsToLetsOpt(opts docopt.Opts) map[string]string {
 	envMap := make(map[string]string, len(opts))
+
 	for origKey, value := range opts {
 		key := normalizeKey(origKey)
 		envKey := fmt.Sprintf("LETSOPT_%s", key)
+
 		var strValue string
 		switch value := value.(type) {
 		case string:
@@ -49,8 +50,10 @@ func OptsToLetsOpt(opts docopt.Opts) map[string]string {
 		default:
 			strValue = ""
 		}
+
 		envMap[envKey] = strValue
 	}
+
 	return envMap
 }
 
@@ -59,13 +62,17 @@ func OptsToLetsCli(opts docopt.Opts) map[string]string {
 	formatVal := func(k, v string) string {
 		return fmt.Sprintf("%s %s", k, v)
 	}
+
 	for origKey, value := range opts {
 		if !isOptKey(origKey) {
 			continue
 		}
+
 		key := normalizeKey(origKey)
 		cliKey := fmt.Sprintf("LETSCLI_%s", key)
+
 		var strValue string
+
 		switch value := value.(type) {
 		case string:
 			if value != "" {
@@ -91,8 +98,10 @@ func OptsToLetsCli(opts docopt.Opts) map[string]string {
 		default:
 			strValue = ""
 		}
+
 		cliMap[cliKey] = strValue
 	}
+
 	return cliMap
 }
 
@@ -100,12 +109,15 @@ func isOptKey(key string) bool {
 	if strings.HasPrefix(key, "--") {
 		return true
 	}
+
 	if strings.HasPrefix(key, "-") {
 		return true
 	}
+
 	if strings.HasPrefix(key, "<") && strings.HasSuffix(key, ">") {
 		return true
 	}
+
 	return false
 }
 
@@ -115,5 +127,6 @@ func normalizeKey(origKey string) string {
 	key = strings.TrimRight(key, ">")
 	key = strings.ReplaceAll(key, "-", "_")
 	key = strings.ToUpper(key)
+
 	return key
 }

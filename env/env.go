@@ -17,5 +17,6 @@ func IsDebug() bool {
 	if err != nil {
 		return false
 	}
+
 	return debug
 }
