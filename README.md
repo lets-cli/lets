@@ -11,6 +11,7 @@ Just describe your commands in `lets.yaml` and lets will do the rest.
 * [Usage](#usage)
 * [Config](#letsyaml)
 * [Build](#build)
+* [Test](#test)
 * [Completion](#completion)
 
 ## Install
@@ -472,6 +473,32 @@ To install in system
 
 ```bash
 go build -o lets *.go && sudo mv ./lets /usr/local/bin/lets
+```
+
+## Test
+
+To run all tests:
+
+```shell script
+lets test
+```
+
+To run unit tests:
+
+```shell script
+lets test-unit
+```
+
+To get coverage:
+
+```shell script
+lets coverage
+```
+
+To test `lets` output we using `bats` - bash automated testing:
+
+```shell script
+lets test-bats
 ```
 
 ### Completion

@@ -1,0 +1,14 @@
+shell: bash
+
+commands:
+  eval-env:
+    description: Test command env
+    env:
+      ONE: "1"
+      TWO: two
+    eval_env:
+      COMPUTED: echo "Computed env"
+    cmd: |
+      echo ONE=${ONE}
+      echo TWO=${TWO}
+      echo COMPUTED=${COMPUTED}

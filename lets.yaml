@@ -14,14 +14,29 @@ commands:
     cmd: |
       sed -i -E "s/var version = \".*\"/var version = \"${LETSOPT_VERSION}\"/g" version.go
 
-  test:
-    description: Run tests for lets
+  test-unit:
+    description: Run unit tests
     depends: [build-docker]
     cmd:
       - docker-compose
       - run
       - --rm
       - test
+
+  test-bats:
+    description: Run bats tests
+    depends: [build-docker]
+    cmd:
+      - docker-compose
+      - run
+      - --rm
+      - test-bats
+
+  test:
+    description: Run unit and bats tests
+    depends:
+      - test-unit
+      - test-bats
 
   coverage:
     description: Run tests for lets

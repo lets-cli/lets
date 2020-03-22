@@ -1,0 +1,15 @@
+shell: bash
+
+env:
+  TWO: two
+  THREE: "3"
+
+commands:
+  global-env:
+    description: Test global env
+    env:
+      ONE: "1"
+    cmd: |
+      echo ONE=${ONE}
+      echo TWO=${TWO}
+      echo THREE=${THREE}

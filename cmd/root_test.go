@@ -3,9 +3,11 @@ package cmd
 import (
 	"bytes"
 	"context"
-	"github.com/lets-cli/lets/test"
-	"github.com/spf13/cobra"
 	"testing"
+
+	"github.com/spf13/cobra"
+
+	"github.com/lets-cli/lets/test"
 )
 
 func newTestRootCmd(args []string) (rootCmd *cobra.Command, out *bytes.Buffer) {
@@ -20,16 +22,37 @@ func newTestRootCmd(args []string) (rootCmd *cobra.Command, out *bytes.Buffer) {
 }
 
 func TestRootCmd(t *testing.T) {
-	t.Run("run root cmd w/o args", func(t *testing.T) {
-		var args []string
-		rootCmd, bufOut := newTestRootCmd(args)
-		err := rootCmd.Execute()
-		if err != nil {
-			t.Fatalf("unexpected error: %s", err)
+	t.Run("should init sub commands", func(t *testing.T) {
+		configRaw := &test.SerializableTestConfig{
+			Shell: "bash",
+			Commands: map[string]map[string]string{
+				"foo": {
+					"cmd": "echo foo",
+				},
+				"bar": {
+					"cmd": "echo bar",
+				},
+			},
 		}
-		outStr := bufOut.String()
-		if !test.CheckIsDefaultOutput(outStr) {
-			t.Errorf("not default output. got: %s", outStr)
+		cleanupConfig := test.NewTestConfig(configRaw)
+		defer cleanupConfig()
+
+		var args []string
+		rootCmd, _ := newTestRootCmd(args)
+
+		expectedTotal := 3 // foo, bar, completion
+
+		comp, _, _ := rootCmd.Find([]string{"completion"})
+		if comp.Name() != "completion" {
+			t.Errorf("no '%s' subcommand in the root command", "completion")
+		}
+		totalCommands := len(rootCmd.Commands())
+		if totalCommands != expectedTotal {
+			t.Errorf(
+				"root cmd has different number of subcommands than expected. Exp: %d, Got: %d",
+				expectedTotal,
+				totalCommands,
+			)
 		}
 	})
 }
