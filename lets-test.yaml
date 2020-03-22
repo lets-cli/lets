@@ -1,52 +1,6 @@
-env:
-  STATIC_ENV: static_env
 
-eval_env:
-  COMPUTED: echo "computed_env"
 
 commands:
-  test-options:
-    description: Test options
-    options: |
-      Usage:
-        lets test-options [--kv-opt=<kv-opt>] [--bool-opt] [--attr=<attr>...] [<args>...]
-
-      Options:
-        <args>...                Positional args in the end
-        --bool-opt, -b           Boolean opt
-        --kv-opt=<kv-opt>, -K    Key value opt
-        --attr=<attr>...         Repeated kv args
-    cmd: |
-      echo "Flags command"
-      echo LETSOPT_KV_OPT=${LETSOPT_KV_OPT}
-      echo LETSOPT_BOOL_OPT=${LETSOPT_BOOL_OPT}
-      echo LETSOPT_ARGS=${LETSOPT_ARGS}
-      echo LETSOPT_ATTR=${LETSOPT_ATTR}
-      echo LETSCLI_KV_OPT=${LETSCLI_KV_OPT}
-      echo LETSCLI_BOOL_OPT=${LETSCLI_BOOL_OPT}
-      echo LETSCLI_ARGS=${LETSCLI_ARGS}
-      echo LETSCLI_ATTR=${LETSCLI_ATTR}
-
-  test-env:
-    description: Test env
-    env:
-      MY_ENV: "my env val"
-    cmd: echo ${LETSOPT_MY_ENV}
-
-  test-eval_env:
-    description: Test eval_env
-    eval_env:
-      CHECKSUM: echo "evaled_checksum"
-    cmd: echo ${CHECKSUM}
-
-  test-global-env:
-    description: Test global env
-    cmd: echo ${STATIC_ENV}
-
-  test-global-eval_env:
-    description: Test global eval_env
-    cmd: echo ${COMPUTED}
-
   test-depends:
     description: Test depends
     depends:

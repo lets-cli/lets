@@ -1,0 +1,19 @@
+shell: bash
+
+env:
+  TWO: two
+  THREE: "3"
+
+eval_env:
+  FROM_EVAL_ENV: echo "computed in eval env"
+
+commands:
+  global-eval_env:
+    description: Test global env
+    env:
+      ONE: "1"
+    cmd: |
+      echo ONE=${ONE}
+      echo TWO=${TWO}
+      echo THREE=${THREE}
+      echo FROM_EVAL_ENV=${FROM_EVAL_ENV}
