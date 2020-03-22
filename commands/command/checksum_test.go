@@ -2,27 +2,18 @@ package command
 
 import (
 	"fmt"
-	"io/ioutil"
-	"log"
 	"os"
 	"testing"
+
+	"github.com/lets-cli/lets/test"
 )
 
 const defaultChecksum = "da39a3ee5e6b4b0d3255bfef95601890afd80709"
 
-func createTempFile(dir string, name string) *os.File {
-	file, err := ioutil.TempFile(dir, name)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return file
-}
-
 func TestCalculateChecksumSimpleFilename(t *testing.T) {
 	tempDir := os.TempDir()
-	file1 := createTempFile(tempDir, "lets_checksum_test_1")
-	file2 := createTempFile(tempDir, "lets_checksum_test_2")
+	file1 := test.CreateTempFile(tempDir, "lets_checksum_test_1")
+	file2 := test.CreateTempFile(tempDir, "lets_checksum_test_2")
 
 	defer os.Remove(file1.Name())
 	defer os.Remove(file2.Name())
@@ -53,8 +44,8 @@ func TestCalculateChecksumSimpleFilename(t *testing.T) {
 
 func TestCalculateChecksumGlobPattern(t *testing.T) {
 	tempDir := os.TempDir()
-	file1 := createTempFile(tempDir, "lets_checksum_test_1")
-	file2 := createTempFile(tempDir, "lets_checksum_test_2")
+	file1 := test.CreateTempFile(tempDir, "lets_checksum_test_1")
+	file2 := test.CreateTempFile(tempDir, "lets_checksum_test_2")
 
 	defer os.Remove(file1.Name())
 	defer os.Remove(file2.Name())
@@ -84,8 +75,8 @@ func TestCalculateChecksumGlobPattern(t *testing.T) {
 
 func TestCalculateChecksumFromListOrMap(t *testing.T) {
 	tempDir := os.TempDir()
-	file1 := createTempFile(tempDir, "lets_checksum_test_1")
-	file2 := createTempFile(tempDir, "lets_checksum_test_2")
+	file1 := test.CreateTempFile(tempDir, "lets_checksum_test_1")
+	file2 := test.CreateTempFile(tempDir, "lets_checksum_test_2")
 
 	defer os.Remove(file1.Name())
 	defer os.Remove(file2.Name())

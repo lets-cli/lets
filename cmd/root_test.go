@@ -3,8 +3,11 @@ package cmd
 import (
 	"bytes"
 	"context"
-	"github.com/spf13/cobra"
 	"testing"
+
+	"github.com/spf13/cobra"
+
+	"github.com/lets-cli/lets/test"
 )
 
 func newTestRootCmd(args []string) (rootCmd *cobra.Command, out *bytes.Buffer) {
@@ -19,12 +22,25 @@ func newTestRootCmd(args []string) (rootCmd *cobra.Command, out *bytes.Buffer) {
 }
 
 func TestRootCmd(t *testing.T) {
-	// TODO create test file in mem or to /tmp and read it from there
 	t.Run("should init sub commands", func(t *testing.T) {
+		configRaw := &test.SerializableTestConfig{
+			Shell: "bash",
+			Commands: map[string]map[string]string{
+				"foo": {
+					"cmd": "echo foo",
+				},
+				"bar": {
+					"cmd": "echo bar",
+				},
+			},
+		}
+		cleanupConfig := test.NewTestConfig(configRaw)
+		defer cleanupConfig()
+
 		var args []string
 		rootCmd, _ := newTestRootCmd(args)
 
-		expectedTotal := 20
+		expectedTotal := 3 // foo, bar, completion
 
 		comp, _, _ := rootCmd.Find([]string{"completion"})
 		if comp.Name() != "completion" {
