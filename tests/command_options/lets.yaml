@@ -1,0 +1,29 @@
+shell: bash
+
+commands:
+  test-options:
+    description: Test options
+    options: |
+      Usage:
+        lets test-options [--kv-opt=<kv-opt>] [--bool-opt] [--attr=<attr>...] [<args>...]
+
+      Options:
+        <args>...                Positional args in the end
+        --bool-opt, -b           Boolean opt
+        --kv-opt=<kv-opt>, -K    Key value opt
+        --attr=<attr>...         Repeated kv args
+    cmd: |
+      echo "Flags command"
+      echo LETSOPT_KV_OPT=${LETSOPT_KV_OPT}
+      echo LETSOPT_BOOL_OPT=${LETSOPT_BOOL_OPT}
+      echo LETSOPT_ARGS=${LETSOPT_ARGS}
+      echo LETSOPT_ATTR=${LETSOPT_ATTR}
+      echo LETSCLI_KV_OPT=${LETSCLI_KV_OPT}
+      echo LETSCLI_BOOL_OPT=${LETSCLI_BOOL_OPT}
+      echo LETSCLI_ARGS=${LETSCLI_ARGS}
+      echo LETSCLI_ATTR=${LETSCLI_ATTR}
+
+  options-wrong-usage:
+    options: |
+      Usage: lets options-wrong-usage-xxx
+    cmd: echo "Wrong"

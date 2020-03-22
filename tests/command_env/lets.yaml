@@ -1,0 +1,11 @@
+shell: bash
+
+commands:
+  env:
+    description: Test command env
+    env:
+      ONE: "1"
+      TWO: two
+    cmd: |
+      echo ONE=${ONE}
+      echo TWO=${TWO}
