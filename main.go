@@ -13,9 +13,10 @@ import (
 
 func main() {
 	ctx := getContext()
-	rootCmd := cmd.CreateRootCommand(ctx, os.Stdout, GetVersion())
 
 	logging.InitLogging(env.IsDebug())
+
+	rootCmd := cmd.CreateRootCommand(ctx, os.Stdout, GetVersion())
 
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)

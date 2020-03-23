@@ -499,6 +499,10 @@ To test `lets` output we using `bats` - bash automated testing:
 
 ```shell script
 lets test-bats
+
+# or run one test
+
+lets test-bats global_env.bats
 ```
 
 ### Completion
