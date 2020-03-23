@@ -2,9 +2,9 @@ package config
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/lets-cli/lets/commands/command"
+	"github.com/lets-cli/lets/util"
 )
 
 const (
@@ -39,23 +39,13 @@ func validateCircularDepends(cfg *Config) error {
 }
 
 func depsIntersect(cmdA command.Command, cmdB command.Command) bool {
-	isNameInDeps := func(name string, deps []string) bool {
-		for _, dep := range deps {
-			if dep == name {
-				return true
-			}
-		}
-
-		return false
-	}
-
-	return isNameInDeps(cmdA.Name, cmdB.Depends) && isNameInDeps(cmdB.Name, cmdA.Depends)
+	return util.IsStringInList(cmdA.Name, cmdB.Depends) && util.IsStringInList(cmdB.Name, cmdA.Depends)
 }
 
-func validateTopLevelFields(rawKeyValue map[string]interface{}, validFields string) error {
-	for k := range rawKeyValue {
-		if !strings.Contains(validFields, k) {
-			return fmt.Errorf("unknown top-level field '%s'", k)
+func validateTopLevelFields(rawKeyValue map[string]interface{}, validFields []string) error {
+	for key := range rawKeyValue {
+		if !util.IsStringInList(key, validFields) {
+			return fmt.Errorf("unknown top-level field '%s'", key)
 		}
 	}
 
