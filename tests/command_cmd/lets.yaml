@@ -1,0 +1,17 @@
+shell: bash
+
+commands:
+  cmd-as-string:
+    description: Test cmd as string
+    cmd: echo "Main"
+
+  cmd-as-multiline-string:
+    description: Test cmd as multiline string
+    cmd: |
+      echo "Main 1 line"
+      echo "Main 2 line"
+
+  cmd-as-array:
+    description: Test cmd as array
+    cmd:
+      - echo

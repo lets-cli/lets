@@ -1,0 +1,52 @@
+shell: bash
+
+commands:
+  as-list-of-files:
+    description: Test checksum
+    checksum:
+      - foo_1.txt
+      - foo_2.txt
+      - bar_1.txt
+    cmd: echo "${LETS_CHECKSUM}"
+
+  as-list-of-globs:
+    description: Test checksum
+    checksum:
+      - foo*.txt
+      - bar_1.txt
+    cmd: echo "${LETS_CHECKSUM}"
+
+  as-map-of-list-of-files:
+    description: Test checksum
+    checksum:
+      foo:
+        - foo_1.txt
+        - foo_2.txt
+      bar:
+        - bar_1.txt
+    cmd: |
+      echo LETS_CHECKSUM_FOO="${LETS_CHECKSUM_FOO}"
+      echo LETS_CHECKSUM_BAR="${LETS_CHECKSUM_BAR}"
+      echo LETS_CHECKSUM="${LETS_CHECKSUM}"
+
+  as-map-of-list-of-globs:
+    description: Test checksum
+    checksum:
+      foo:
+        - foo*.txt
+      bar:
+        - bar_1.txt
+    cmd: |
+      echo LETS_CHECKSUM_FOO="${LETS_CHECKSUM_FOO}"
+      echo LETS_CHECKSUM_BAR="${LETS_CHECKSUM_BAR}"
+      echo LETS_CHECKSUM="${LETS_CHECKSUM}"
+
+  as-map-all-in-one:
+    description: Test checksum
+    checksum:
+      all:
+        - foo*.txt
+        - bar_1.txt
+    cmd: |
+      echo LETS_CHECKSUM_ALL="${LETS_CHECKSUM_ALL}"
+      echo LETS_CHECKSUM="${LETS_CHECKSUM}"

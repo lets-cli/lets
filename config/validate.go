@@ -2,8 +2,9 @@ package config
 
 import (
 	"fmt"
-	"github.com/lets-cli/lets/commands/command"
 	"strings"
+
+	"github.com/lets-cli/lets/commands/command"
 )
 
 const (

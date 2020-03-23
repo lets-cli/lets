@@ -2,7 +2,6 @@ shell: bash
 
 mixins:
   - build.yaml
-  - lets-test.yaml
 
 commands:
   version:
