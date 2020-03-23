@@ -26,7 +26,11 @@ services:
   test-bats:
     <<: *base
     command: |
-      sh -c "
+      bash -c '
         go build -o /usr/bin/lets *.go
-        bats tests
-      "
+        if [[ -n "${LETSOPT_TEST}" ]]; then
+          bats tests/"${LETSOPT_TEST}"
+        else
+          bats tests
+        fi
+      '

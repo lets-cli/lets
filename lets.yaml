@@ -25,11 +25,10 @@ commands:
   test-bats:
     description: Run bats tests
     depends: [build-docker]
-    cmd:
-      - docker-compose
-      - run
-      - --rm
-      - test-bats
+    options: |
+      Usage: lets test-bats [<test>]
+    cmd: |
+      docker-compose run --rm test-bats
 
   test:
     description: Run unit and bats tests
