@@ -1,0 +1,14 @@
+shell: bash
+
+commands:
+  run-with-depends:
+    description: Test command depends
+    depends: [foo, bar]
+    cmd: |
+      echo "Main"
+
+  foo:
+    cmd: echo Foo
+
+  bar:
+    cmd: echo Bar
