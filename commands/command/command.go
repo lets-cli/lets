@@ -3,19 +3,22 @@ package command
 import (
 	"fmt"
 	"strings"
+
+	"github.com/lets-cli/lets/util"
 )
 
 var (
-	CMD         = "cmd"
-	DESCRIPTION = "description"
-	ENV         = "env"
-	EvalEnv     = "eval_env"
-	OPTIONS     = "options"
-	DEPENDS     = "depends"
-	CHECKSUM    = "checksum"
+	CMD             = "cmd"
+	DESCRIPTION     = "description"
+	ENV             = "env"
+	EvalEnv         = "eval_env"
+	OPTIONS         = "options"
+	DEPENDS         = "depends"
+	CHECKSUM        = "checksum"
+	PersistChecksum = "persist_checksum"
 )
 
-var validFields = strings.Join([]string{
+var validFields = []string{
 	CMD,
 	DESCRIPTION,
 	ENV,
@@ -23,7 +26,8 @@ var validFields = strings.Join([]string{
 	OPTIONS,
 	DEPENDS,
 	CHECKSUM,
-}, " ")
+	PersistChecksum,
+}
 
 type Command struct {
 	Name        string
@@ -37,7 +41,8 @@ type Command struct {
 	Checksum    string
 	ChecksumMap map[string]string
 
-	checksumSource map[string][]string
+	checksumSource  map[string][]string
+	persistChecksum bool
 }
 
 type ParseCommandError struct {
@@ -137,13 +142,19 @@ func ParseAndValidateCommand(newCmd *Command, rawCommand map[interface{}]interfa
 		}
 	}
 
+	if persistChecksum, ok := rawCommand[PersistChecksum]; ok {
+		if err := parseAndValidatePersistChecksum(persistChecksum, newCmd); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
-func validateCommandFields(rawKeyValue map[interface{}]interface{}, validFields string) error {
-	for k := range rawKeyValue {
-		if !strings.Contains(validFields, k.(string)) {
-			return fmt.Errorf("unknown command field '%s'", k)
+func validateCommandFields(rawKeyValue map[interface{}]interface{}, validFields []string) error {
+	for key := range rawKeyValue {
+		if !util.IsStringInList(key.(string), validFields) {
+			return fmt.Errorf("unknown command field '%s'", key)
 		}
 	}
 
