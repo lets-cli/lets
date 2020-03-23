@@ -151,5 +151,18 @@ func runCmd(cmdToRun command.Command, cfg *config.Config, out io.Writer, parentN
 		}
 	}
 
-	return cmd.Run()
+	runErr := cmd.Run()
+	if runErr != nil {
+		return runErr
+	}
+
+	// persist checksum only if exit code 0
+	if cmdToRun.PersistChecksum {
+		err := command.PersistCommandsChecksumToDisk(cmdToRun)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

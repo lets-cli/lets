@@ -9,7 +9,7 @@ import (
 	"github.com/lets-cli/lets/config"
 	"github.com/lets-cli/lets/env"
 	"github.com/lets-cli/lets/logging"
-	"github.com/lets-cli/lets/util"
+	"github.com/lets-cli/lets/workdir"
 )
 
 // CreateRootCommand is where all the stuff begins
@@ -44,7 +44,7 @@ func initRootCommand(rootCmd *cobra.Command, out io.Writer) {
 		initSubCommands(rootCmd, conf, out)
 	}
 
-	createDirErr := util.CreateDotLetsDir()
+	createDirErr := workdir.CreateDotLetsDir()
 	if createDirErr != nil {
 		initErrCheck(rootCmd, createDirErr)
 	}
