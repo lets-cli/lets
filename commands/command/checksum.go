@@ -168,6 +168,7 @@ func calculateChecksumFromSource(newCmd *Command) error {
 
 	for _, key := range keys {
 		patterns := newCmd.checksumSource[key]
+
 		calcChecksum, err := calculateChecksum(patterns)
 		if err != nil {
 			return fmt.Errorf("failed to calculate checksum: %s", err)
@@ -189,9 +190,11 @@ func calculateChecksumFromSource(newCmd *Command) error {
 func getChecksumsKeys(mapping map[string][]string) []string {
 	keys := make([]string, len(mapping))
 	idx := 0
+
 	for key := range mapping {
 		keys[idx] = key
 		idx++
 	}
+
 	return keys
 }
