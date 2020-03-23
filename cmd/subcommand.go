@@ -3,11 +3,13 @@ package cmd
 import (
 	"bytes"
 	"fmt"
+	"io"
+
+	"github.com/spf13/cobra"
+
 	"github.com/lets-cli/lets/commands"
 	"github.com/lets-cli/lets/commands/command"
 	"github.com/lets-cli/lets/config"
-	"github.com/spf13/cobra"
-	"io"
 )
 
 // newCmdGeneric creates new cobra root sub command from Command

@@ -1,8 +1,9 @@
 package config
 
 import (
-	"github.com/lets-cli/lets/commands/command"
 	"testing"
+
+	"github.com/lets-cli/lets/commands/command"
 )
 
 func TestValidateCircularDeps(t *testing.T) {

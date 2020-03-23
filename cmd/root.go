@@ -2,12 +2,14 @@ package cmd
 
 import (
 	"context"
+	"io"
+	"os"
+
+	"github.com/spf13/cobra"
+
 	"github.com/lets-cli/lets/config"
 	"github.com/lets-cli/lets/env"
 	"github.com/lets-cli/lets/logging"
-	"github.com/spf13/cobra"
-	"io"
-	"os"
 )
 
 // CreateRootCommand is where all the stuff begins

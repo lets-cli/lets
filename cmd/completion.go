@@ -3,10 +3,11 @@ package cmd
 import (
 	"bytes"
 	"fmt"
-	"github.com/spf13/cobra"
 	"io"
 	"strings"
 	"text/template"
+
+	"github.com/spf13/cobra"
 )
 
 const zshCompletionText = `#compdef lets
