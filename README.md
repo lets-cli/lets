@@ -534,6 +534,14 @@ To install in system
 go build -o lets *.go && sudo mv ./lets /usr/local/bin/lets
 ```
 
+Or if you already have `lets` installed in your system:
+
+After install - check version of lets - `lets --version` - it should be development
+
+```bash
+lets build-and-install
+```
+
 ## Test
 
 To run all tests:
