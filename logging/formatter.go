@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
+
+	"github.com/lets-cli/lets/env"
 )
 
 const (
@@ -35,6 +37,10 @@ func (f *Formatter) Format(entry *log.Entry) ([]byte, error) {
 }
 
 func withColor(color int, msg string) string {
+	if env.IsNotColorOutput() {
+		return msg
+	}
+
 	return fmt.Sprintf("\x1b[%dm%s\x1b[0m", color, msg)
 }
 

@@ -42,9 +42,9 @@ type Command struct {
 	ChecksumMap     map[string]string
 	PersistChecksum bool
 
+	// if command has declared checksum
 	hasChecksum    bool
 	checksumSource map[string][]string
-	// if command has declared checksum
 }
 
 type ParseCommandError struct {

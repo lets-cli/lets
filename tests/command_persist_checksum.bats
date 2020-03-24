@@ -82,6 +82,5 @@ TEMP_FILE=foo_test.txt
 
     [[ $status = 1 ]]
 
-    line0=$(strip_color "${lines[0]}")
-    [[ "${line0}" = "[ERROR] failed to load config file lets.yaml: failed to parse command: field use-persist-without-checksum.persist_checksum: you must declare 'checksum' for command to use 'persist_checksum'" ]]
+    [[ "${lines[0]}" = "[ERROR] failed to load config file lets.yaml: failed to parse command: field use-persist-without-checksum.persist_checksum: you must declare 'checksum' for command to use 'persist_checksum'" ]]
 }

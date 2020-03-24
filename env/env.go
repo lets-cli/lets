@@ -20,3 +20,12 @@ func IsDebug() bool {
 
 	return debug
 }
+
+func IsNotColorOutput() bool {
+	notColored, err := strconv.ParseBool(os.Getenv("LETS_NO_COLOR_OUTPUT"))
+	if err != nil {
+		return false
+	}
+
+	return notColored
+}

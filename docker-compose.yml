@@ -26,6 +26,8 @@ services:
 
   test-bats:
     <<: *base
+    environment:
+      LETS_NO_COLOR_OUTPUT: 1
     command: |
       bash -c '
         go build -o /usr/bin/lets *.go

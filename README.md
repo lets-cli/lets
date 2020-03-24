@@ -10,6 +10,7 @@ Just describe your commands in `lets.yaml` and lets will do the rest.
 * [Install](#install)
 * [Usage](#usage)
 * [Config](#letsyaml)
+* [Env](#environment)
 * [Build](#build)
 * [Test](#test)
 * [Completion](#completion)
@@ -102,6 +103,7 @@ Config schema
     * [env](#env)
     * [eval_env](#eval_env)
     * [checksum](#checksum)
+    * [persist_checksum](#persist_checksum)
 
 
 ### Top-level directives:
@@ -110,6 +112,8 @@ Config schema
 `key: shell`
 
 `type: string`
+
+`required: true`
 
 Specify shell to use when running commands
 
@@ -131,7 +135,7 @@ Example:
 ```yaml
 shell: bash
 env:
-    MY_GLOBAL_ENV: "123"
+  MY_GLOBAL_ENV: "123"
 ```
 
 #### `global eval_env` 
@@ -146,7 +150,7 @@ Example:
 ```yaml
 shell: bash
 eval_env:
-    CURRENT_UID: echo "`id -u`:`id -g`"
+  CURRENT_UID: echo "`id -u`:`id -g`"
 ```
 
 #### `mixins` 
@@ -165,17 +169,17 @@ Example:
 ...
 shell: bash
 mixins:
-    - test.yaml
+  - test.yaml
 
 commands:
-    echo:
-        cmd: echo Hi
+  echo:
+    cmd: echo Hi
     
 # in test.yaml
 ...
 commands:
-    test:
-        cmd: echo Testing...
+  test:
+    cmd: echo Testing...
 ```
 
 And `lets test` works fine.
@@ -185,14 +189,16 @@ And `lets test` works fine.
 
 `type: mapping`
 
+`required: true`
+
 Mapping of all available commands
 
 Example:
 
 ```yaml
 commands:
-    test:
-        description: Test something
+  test:
+    description: Test something
 ```
 
 ### Command directives:
@@ -208,8 +214,8 @@ Example:
 
 ```yaml
 commands:
-    test:
-        description: Test something
+  test:
+    description: Test something
 ```
 
 ##### `cmd`
@@ -227,10 +233,9 @@ Example single string:
 
 ```yaml
 commands:
-    test:
-        description: Test something
-        cmd: go test ./... -v
-
+  test:
+    description: Test something
+    cmd: go test ./... -v
 ```
 
 
@@ -238,24 +243,23 @@ Example multiline string:
 
 ```yaml
 commands:
-    test:
-        description: Test something
-        cmd: |
-            echo "Running go tests..."
-            go test ./... -v
-
+  test:
+    description: Test something
+    cmd: |
+      echo "Running go tests..."
+      go test ./... -v
 ```
 
 Example array of strings:
 
 ```yaml
 commands:
-    test:
-        description: Test something
-        cmd: 
-            - go
-            - test
-            - ./...
+  test:
+    description: Test something
+    cmd: 
+      - go
+      - test
+      - ./...
 ```
 
 
@@ -279,19 +283,19 @@ Example:
 
 ```yaml
 commands:
-    build:
-        description: Build docker image
-        cmd: docker build -t myimg . -f Dockerfile
+  build:
+    description: Build docker image
+    cmd: docker build -t myimg . -f Dockerfile
 
-    test:
-        description: Test something
-        depends: [build]
-        cmd: go test ./... -v
+  test:
+    description: Test something
+    depends: [build]
+    cmd: go test ./... -v
 
-    fmt:
-        description: Format the code
-        depends: [build]
-        cmd: go fmt
+  fmt:
+    description: Format the code
+    depends: [build]
+    cmd: go fmt
 ```
 
 `build` command will be executed each time you run `lets test` or `lets fmt`
@@ -318,19 +322,17 @@ Lets see an example:
 
 ```yaml
 commands:
-    echo-env:
-        description: Echo env vars
-        options:
-            Usage: lets [--log-level=<level>] [--debug] <args>...
-
-            Options:
-                <args>...       List of required positional args
-                --log-level,-l      Log level
-                --debug,-d      Run with debug
-        cmd: |
-            echo ${LETSOPT_ARGS}
-            app ${LETSCLI_DEBUG}
-
+  echo-env:
+    description: Echo env vars
+    options:
+      Usage: lets [--log-level=<level>] [--debug] <args>...
+      Options:
+        <args>...       List of required positional args
+        --log-level,-l      Log level
+        --debug,-d      Run with debug
+    cmd: |
+      echo ${LETSOPT_ARGS}
+      app ${LETSCLI_DEBUG}
 ```
 
 So here we have:
@@ -373,12 +375,12 @@ Example:
 
 ```yaml
 commands:
-    test:
-        description: Test something
-        env:
-            GO111MODULE: "on"
-            GOPROXY: https://goproxy.io
-        cmd: go build -o lets *.go
+  test:
+    description: Test something
+    env:
+      GO111MODULE: "on"
+      GOPROXY: https://goproxy.io
+    cmd: go build -o lets *.go
 ```
 
 
@@ -393,12 +395,12 @@ Example:
 
 ```yaml
 commands:
-    test:
-        description: Test something
-        eval_env:
-            CURRENT_UID: echo "`id -u`:`id -g`"
-            CURRENT_USER_NAME: echo "`id -un`"
-        cmd: go build -o lets *.go
+  test:
+    description: Test something
+    eval_env:
+      CURRENT_UID: echo "`id -u`:`id -g`"
+      CURRENT_USER_NAME: echo "`id -un`"
+    cmd: go build -o lets *.go
 ```
 
 Value will be executed in shell and result will be saved in env.
@@ -430,7 +432,7 @@ If checksum is a mapping, e.g:
 
 ```yaml
 commands:
-    build:
+  build:
     checksum:
       deps:
         - package.json
@@ -453,13 +455,61 @@ Example:
 ```yaml
 shell: bash
 commands:
-    app-build:
-        checksum: 
-            - requirements-*.txt
-        cmd: |
-            docker pull myrepo/app:${LETS_CHECKSUM}
-            docker run --rm myrepo/app${LETS_CHECKSUM} python -m app       
+  app-build:
+    checksum: 
+      - requirements-*.txt
+    cmd: |
+      docker pull myrepo/app:${LETS_CHECKSUM}
+      docker run --rm myrepo/app${LETS_CHECKSUM} python -m app       
 ```
+
+
+##### `persist_checksum`
+`key: persist_checksum`
+
+`type: bool`
+
+This feature is useful when you want to know that something has changed between two executions of a command.
+
+`persist_checksum` can be used only if `checksum` declared for command.
+
+If set to true, each run all calculated checksums will be stored to disk.
+
+After each subsequent run `lets` will check if new checksum and stored checksum are different.
+
+Result of that check will be exposed via `LETS_CHECKSUM_CHANGED` and `LETS_CHECKSUM_[checksum-name]_CHANGED` env variables. 
+
+Example:
+
+```yaml
+commands:
+  build:
+    persist_checksum: true
+    checksum:
+      deps:
+        - package.json
+      doc:
+        - Readme.md
+```
+
+Resulting env will be:
+
+* `LETS_CHECKSUM_DEPS` - checksum of deps files
+* `LETS_CHECKSUM_DOC` - checksum of doc files
+* `LETS_CHECKSUM` - checksum of all checksums (deps and doc)
+
+* `LETS_CHECKSUM_DEPS_CHANGED` - is checksum of deps files changed
+* `LETS_CHECKSUM_DOC_CHANGED` - is checksum of doc files changed
+* `LETS_CHECKSUM_CHANGED` - is checksum of all checksums (deps and doc) changed
+
+## Environment
+
+`lets` has builtin environ variables.
+
+* `LETS_DEBUG` - enable debug messages
+* `LETS_CONFIG` - changes default `lets.yaml` file path (e.g. LETS_CONFIG=lets.my.yaml)
+* `LETS_CONFIG_DIR` - changes path to dir where `lets.yaml` file placed
+* `LETS_NO_COLOR_OUTPUT` - disables colored output
 
 ## Build
 

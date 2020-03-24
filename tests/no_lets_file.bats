@@ -18,8 +18,7 @@ setup() {
     printf "%s\n" "${lines[@]}"
 
     [[ $status != 0 ]]
-    line0=$(strip_color "${lines[0]}")
-    [[ "${line0}" = "[ERROR] failed to load config file lets.yaml: open $(pwd)/lets.yaml: no such file or directory" ]]
+    [[ "${lines[0]}" = "[ERROR] failed to load config file lets.yaml: open $(pwd)/lets.yaml: no such file or directory" ]]
 }
 
 @test "no_lets_file: show help for 'lets help' even if no config file" {
