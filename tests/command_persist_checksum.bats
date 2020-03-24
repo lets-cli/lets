@@ -1,5 +1,7 @@
+load test_helpers
+
 clean_test_files() {
-    rm -rf .lets
+    cleanup
     rm -f foo_test.txt
 }
 
@@ -10,11 +12,6 @@ setup() {
 
 teardown() {
     clean_test_files
-}
-
-# if we getting colored string we want to replace all color related symbols to get just string
-strip_color() {
-    echo $(echo "$1" | sed 's/\x1b\[[0-9;]*m//g')
 }
 
 FIRST_CHECKSUM=833330f14e30e3ce1907f1e126e1ea4db1ec349f

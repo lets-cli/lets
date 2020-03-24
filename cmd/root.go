@@ -41,12 +41,12 @@ func initRootCommand(rootCmd *cobra.Command, out io.Writer) {
 	if cfgErr != nil {
 		initErrCheck(rootCmd, cfgErr)
 	} else {
-		initSubCommands(rootCmd, conf, out)
-	}
+		// create .lets only when there is valid config in work dir
+		if createDirErr := workdir.CreateDotLetsDir(); createDirErr != nil {
+			initErrCheck(rootCmd, createDirErr)
+		}
 
-	createDirErr := workdir.CreateDotLetsDir()
-	if createDirErr != nil {
-		initErrCheck(rootCmd, createDirErr)
+		initSubCommands(rootCmd, conf, out)
 	}
 
 	initCompletionCmd(rootCmd)

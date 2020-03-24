@@ -33,7 +33,6 @@ func convertChecksumToEnvForCmd(checksum string) []string {
 }
 
 func convertChecksumMapToEnvForCmd(checksumMap map[string]string) []string {
-
 	var envList []string
 
 	for name, value := range checksumMap {
@@ -61,6 +60,7 @@ func convertChangedChecksumMapToEnvForCmd(cmdToRun command.Command, persistedChe
 		normalizedKey := normalizeEnvKey(name)
 		persistedValue, ok := persistedChecksumMap[name]
 		checksumChanged := false
+
 		if ok {
 			checksumChanged = value != persistedValue
 		}
@@ -80,7 +80,7 @@ func convertChangedChecksumMapToEnvForCmd(cmdToRun command.Command, persistedChe
 
 	envList = append(
 		envList,
-		makeEnvEntry(fmt.Sprintf("LETS_CHECKSUM_CHANGED"), strconv.FormatBool(defaultChecksumChanged)),
+		makeEnvEntry("LETS_CHECKSUM_CHANGED", strconv.FormatBool(defaultChecksumChanged)),
 	)
 
 	return envList

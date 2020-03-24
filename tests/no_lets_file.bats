@@ -1,10 +1,8 @@
+load test_helpers
+
 setup() {
     cd ./tests/no_lets_file
-}
-
-# if we getting colored string we want to replace all color related symbols to get just string
-strip_color() {
-    echo $(echo "$1" | sed 's/\x1b\[[0-9;]*m//g')
+    cleanup
 }
 
 @test "no_lets_file: should not create .lets dir" {
@@ -21,7 +19,7 @@ strip_color() {
 
     [[ $status != 0 ]]
     line0=$(strip_color "${lines[0]}")
-    [[ "${line0}" = "[ERROR] failed to load config file lets.yaml: open /app/tests/no_lets_file/lets.yaml: no such file or directory" ]]
+    [[ "${line0}" = "[ERROR] failed to load config file lets.yaml: open $(pwd)/lets.yaml: no such file or directory" ]]
 }
 
 @test "no_lets_file: show help for 'lets help' even if no config file" {

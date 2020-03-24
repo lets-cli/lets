@@ -11,11 +11,12 @@ services:
       - ./:/app
 
   lint:
-    image: golangci/golangci-lint:v1.24.0
+    image: lets-lint
     working_dir: /app
+    user: ${CURRENT_UID}
     volumes:
       - ./:/app
-    command: golangci-lint run -v -c .golang-ci.yaml
+    entrypoint: golangci-lint run -v -c .golang-ci.yaml
 
   test:
     <<: *base

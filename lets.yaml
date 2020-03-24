@@ -3,6 +3,9 @@ shell: bash
 mixins:
   - build.yaml
 
+eval_env:
+  CURRENT_UID: echo "`id -u`:`id -g`"
+
 commands:
   version:
     description: Update version.go file with latest tag
@@ -15,7 +18,7 @@ commands:
 
   test-unit:
     description: Run unit tests
-    depends: [build-docker]
+    depends: [build-lets-image]
     cmd:
       - docker-compose
       - run
@@ -24,7 +27,7 @@ commands:
 
   test-bats:
     description: Run bats tests
-    depends: [build-docker]
+    depends: [build-lets-image]
     options: |
       Usage: lets test-bats [<test>]
     cmd: |
@@ -50,14 +53,15 @@ commands:
 
   staticcheck:
     description: Run staticcheck for lets. Staticcheck is go vet on steroids
-    depends: [build-docker]
+    depends: [build-lets-image]
     cmd:
       docker-compose run --rm staticheck
 
   lint:
     description: Run golint-ci
+    depends: [build-lint-image]
     cmd:
-      docker-compose run --rm lint
+      - docker-compose run --rm lint
 
   fmt:
     description: Run sfmt

@@ -1,12 +1,14 @@
+load test_helpers
+
 setup() {
     cd ./tests/help
 }
 
-@test "no_lets_file: should create .lets dir" {
+@test "help: should create .lets dir" {
     run lets
     printf "%s\n" "${lines[@]}"
 
-    [[ $status != 0 ]]
+    [[ $status == 0 ]]
     [[ -d .lets ]]
 }
 
