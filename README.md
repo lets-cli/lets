@@ -14,6 +14,7 @@ Just describe your commands in `lets.yaml` and lets will do the rest.
 * [Env](#environment)
 * [Build](#build)
 * [Test](#test)
+* [Release](#release)
 * [Completion](#completion)
 
 ## Install
@@ -573,6 +574,21 @@ lets test-bats
 
 lets test-bats global_env.bats
 ```
+
+## Release
+
+To release new version:
+
+```bash
+lets release 0.0.<n> -m "implement some new feature"
+```
+
+This will:
+
+- update `version.go`
+- commit change
+- create tag with 0.0.<n>
+- git push --tags
 
 ### Completion
 

@@ -7,14 +7,19 @@ eval_env:
   CURRENT_UID: echo "`id -u`:`id -g`"
 
 commands:
-  version:
-    description: Update version.go file with latest tag
+  release:
+    description: Update version.go file with latest tag, create commit, create tag and push
     options: |
-      Usage: lets version <version>
+      Usage: lets release <version> --message=<message>
       Options:
-        <version>   Set version
+        <version>       Set version
+        --message=<message>, -m    Release message
     cmd: |
       sed -i -E "s/var version = \".*\"/var version = \"${LETSOPT_VERSION}\"/g" version.go
+      git add version.go
+      git commit -m "bump lets to version ${LETSOPT_VERSION}"
+      git tag -a v${LETSOPT_VERSION} -m "${LETSOPT_MESSAGE}"
+      git push --tags
 
   test-unit:
     description: Run unit tests
