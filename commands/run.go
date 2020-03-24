@@ -5,7 +5,6 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"strings"
 
 	"github.com/docopt/docopt-go"
 
@@ -26,51 +25,6 @@ type RunOptions struct {
 // RunCommand runs parent command
 func RunCommand(cmdToRun command.Command, cfg *config.Config, out io.Writer) error {
 	return runCmd(cmdToRun, cfg, out, "")
-}
-
-func makeEnvEntry(k, v string) string {
-	return fmt.Sprintf("%s=%s", k, v)
-}
-
-func convertEnvMapToList(envMap map[string]string) []string {
-	var envList []string
-	for name, value := range envMap {
-		envList = append(envList, makeEnvEntry(name, value))
-	}
-
-	return envList
-}
-
-func convertChecksumToEnvForCmd(checksum string) []string {
-	return []string{makeEnvEntry("LETS_CHECKSUM", checksum)}
-}
-
-func convertChecksumMapToEnvForCmd(checksumMap map[string]string) []string {
-	normalizeKey := func(origKey string) string {
-		key := strings.ReplaceAll(origKey, "-", "_")
-		key = strings.ToUpper(key)
-
-		return key
-	}
-
-	var envList []string
-
-	for name, value := range checksumMap {
-		if name != "" {
-			envList = append(envList, makeEnvEntry(fmt.Sprintf("LETS_CHECKSUM_%s", normalizeKey(name)), value))
-		}
-	}
-
-	return envList
-}
-
-func composeEnvs(envs ...[]string) []string {
-	var composed []string
-	for _, env := range envs {
-		composed = append(composed, env...)
-	}
-
-	return composed
 }
 
 // format docopts error and adds usage string to output
@@ -112,6 +66,20 @@ func runCmd(cmdToRun command.Command, cfg *config.Config, out io.Writer, parentN
 		return err
 	}
 
+	// if command declared as persist_checksum we must read current persisted checksums into memory
+	var persistedChecksums map[string]string
+
+	if cmdToRun.PersistChecksum {
+		if command.ChecksumForCmdPersisted(cmdToRun) {
+			checksums, err := command.ReadChecksumsFromDisk(cmdToRun)
+			if err != nil {
+				return err
+			}
+
+			persistedChecksums = checksums
+		}
+	}
+
 	// setup env for command
 	cmd.Env = composeEnvs(
 		os.Environ(),
@@ -121,6 +89,7 @@ func runCmd(cmdToRun command.Command, cfg *config.Config, out io.Writer, parentN
 		convertEnvMapToList(cmdToRun.CliOptions),
 		convertChecksumToEnvForCmd(cmdToRun.Checksum),
 		convertChecksumMapToEnvForCmd(cmdToRun.ChecksumMap),
+		convertChangedChecksumMapToEnvForCmd(cmdToRun, persistedChecksums),
 	)
 
 	if !isChildCmd {

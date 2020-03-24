@@ -30,17 +30,16 @@ var validFields = []string{
 }
 
 type Command struct {
-	Name        string
-	Cmd         string
-	Description string
-	Env         map[string]string
-	RawOptions  string
-	Options     map[string]string
-	CliOptions  map[string]string
-	Depends     []string
-	Checksum    string
-	ChecksumMap map[string]string
-
+	Name            string
+	Cmd             string
+	Description     string
+	Env             map[string]string
+	RawOptions      string
+	Options         map[string]string
+	CliOptions      map[string]string
+	Depends         []string
+	Checksum        string
+	ChecksumMap     map[string]string
 	PersistChecksum bool
 
 	checksumSource map[string][]string

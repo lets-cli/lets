@@ -7,6 +7,14 @@ strip_color() {
     echo $(echo "$1" | sed 's/\x1b\[[0-9;]*m//g')
 }
 
+@test "no_lets_file: should not create .lets dir" {
+    run lets
+    printf "%s\n" "${lines[@]}"
+
+    [[ $status != 0 ]]
+    [[ ! -d .lets ]]
+}
+
 @test "no_lets_file: show config read error" {
     run lets
     printf "%s\n" "${lines[@]}"

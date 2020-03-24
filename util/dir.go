@@ -11,6 +11,7 @@ func SafeCreateDir(dirPath string) error {
 			// its ok if we already have a dir, just return
 			return nil
 		}
+
 		return fmt.Errorf("failed to create %s dir: %s", dirPath, err)
 	}
 

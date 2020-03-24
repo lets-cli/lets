@@ -39,10 +39,14 @@ func parseAndValidatePersistChecksum(persistChecksum interface{}, newCmd *Comman
 	return nil
 }
 
+func getCmdChecksumPath(cmdName string) string {
+	return filepath.Join(workdir.DotLetsDir, checksumsDir, cmdName)
+}
+
 // returns dir path and full file path to checksum
 // (.lets/checksums/[command_name]/, .lets/checksums/[command_name]/[checksum_name])
 func getChecksumPath(cmdName string, checksumName string) (string, string) {
-	dirPath := filepath.Join(workdir.DotLetsDir, checksumsDir, cmdName)
+	dirPath := getCmdChecksumPath(cmdName)
 	return dirPath, filepath.Join(dirPath, checksumName)
 }
 
@@ -86,6 +90,17 @@ func persistOneChecksum(cmdName string, checksumName string, checksum string) er
 	return nil
 }
 
+// ChecksumForCmdPersisted checks if checksums for cmd exists and persisted
+func ChecksumForCmdPersisted(cmd Command) bool {
+	// check if checksums for cmd exists
+	if _, err := os.Stat(getCmdChecksumPath(cmd.Name)); err != nil {
+		return !os.IsNotExist(err)
+	}
+
+	return true
+}
+
+// ReadChecksumsFromDisk reads all checksums for cmd into map
 func ReadChecksumsFromDisk(cmd Command) (map[string]string, error) {
 	checksums := make(map[string]string, len(cmd.ChecksumMap)+1)
 
@@ -94,6 +109,7 @@ func ReadChecksumsFromDisk(cmd Command) (map[string]string, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		checksums[checksumName] = checksum
 	}
 

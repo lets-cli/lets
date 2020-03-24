@@ -1,0 +1,6 @@
+shell: bash
+
+commands:
+  use-persist-without-checksum:
+    persist_checksum: true
+    cmd: echo I'll fail

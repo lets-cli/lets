@@ -2,6 +2,14 @@ setup() {
     cd ./tests/help
 }
 
+@test "no_lets_file: should create .lets dir" {
+    run lets
+    printf "%s\n" "${lines[@]}"
+
+    [[ $status != 0 ]]
+    [[ -d .lets ]]
+}
+
 @test "help: run 'lets' as is" {
     run lets
     printf "%s\n" "${lines[@]}"
