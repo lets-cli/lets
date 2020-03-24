@@ -536,11 +536,13 @@ go build -o lets *.go && sudo mv ./lets /usr/local/bin/lets
 
 Or if you already have `lets` installed in your system:
 
-After install - check version of lets - `lets --version` - it should be development
-
 ```bash
 lets build-and-install
 ```
+
+After install - check version of lets - `lets --version` - it should be development
+
+It will install `lets` to /usr/local/bin/lets and set version to development with current tag and timestamp
 
 ## Test
 

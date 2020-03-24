@@ -69,6 +69,7 @@ commands:
       go fmt ./...
 
   build-and-install:
-    description: Build and install lets from source code to /usr/local/bin/lets
+    description: Build and install lets development version from source code to /usr/local/bin/lets
     cmd: |
-      go build -ldflags="-X main.version=development" -o lets *.go && sudo mv ./lets /usr/local/bin/lets
+      current_v=$(git describe)
+      go build -ldflags="-X main.version=development_${current_v}_$(date +%s)" -o lets *.go && sudo mv ./lets /usr/local/bin/lets
