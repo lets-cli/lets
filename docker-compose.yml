@@ -11,11 +11,12 @@ services:
       - ./:/app
 
   lint:
-    image: golangci/golangci-lint:v1.24.0
+    image: lets-lint
     working_dir: /app
+    user: ${CURRENT_UID}
     volumes:
       - ./:/app
-    command: golangci-lint run -v -c .golang-ci.yaml
+    entrypoint: golangci-lint run -v -c .golang-ci.yaml
 
   test:
     <<: *base
@@ -25,8 +26,14 @@ services:
 
   test-bats:
     <<: *base
+    environment:
+      LETS_NO_COLOR_OUTPUT: 1
     command: |
-      sh -c "
+      bash -c '
         go build -o /usr/bin/lets *.go
-        bats tests
-      "
+        if [[ -n "${LETSOPT_TEST}" ]]; then
+          bats tests/"${LETSOPT_TEST}"
+        else
+          bats tests
+        fi
+      '

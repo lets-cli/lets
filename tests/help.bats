@@ -1,5 +1,15 @@
+load test_helpers
+
 setup() {
     cd ./tests/help
+}
+
+@test "help: should create .lets dir" {
+    run lets
+    printf "%s\n" "${lines[@]}"
+
+    [[ $status == 0 ]]
+    [[ -d .lets ]]
 }
 
 @test "help: run 'lets' as is" {

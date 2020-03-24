@@ -23,6 +23,8 @@ jobs:
           LETS_CONFIG_DIR: ..
         run: go test ./... -v
       - name: Test bats
+        env:
+          LETS_NO_COLOR_OUTPUT: 1
         run: |
           git clone https://github.com/sstephenson/bats.git bats-repo
           cd bats-repo

@@ -1,3 +1,5 @@
+load test_helpers
+
 setup() {
     cd ./tests/command_checksum
 }

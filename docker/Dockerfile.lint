@@ -1,0 +1,3 @@
+FROM golangci/golangci-lint:v1.24.0
+
+RUN mkdir -p /.cache && chmod -R 777 /.cache

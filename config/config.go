@@ -23,8 +23,8 @@ var (
 
 const defaultConfigPath = "lets.yaml"
 
-var validConfigFields = strings.Join([]string{COMMANDS, SHELL, ENV, EvalEnv, MIXINS}, " ")
-var validMixinConfigFields = strings.Join([]string{COMMANDS, ENV, EvalEnv}, " ")
+var validConfigFields = []string{COMMANDS, SHELL, ENV, EvalEnv, MIXINS}
+var validMixinConfigFields = []string{COMMANDS, ENV, EvalEnv}
 
 // Config is a struct for loaded config file
 type Config struct {

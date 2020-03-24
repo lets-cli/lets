@@ -3,13 +3,13 @@ package cmd
 import (
 	"context"
 	"io"
-	"os"
 
 	"github.com/spf13/cobra"
 
 	"github.com/lets-cli/lets/config"
 	"github.com/lets-cli/lets/env"
 	"github.com/lets-cli/lets/logging"
+	"github.com/lets-cli/lets/workdir"
 )
 
 // CreateRootCommand is where all the stuff begins
@@ -25,33 +25,42 @@ func CreateRootCommand(_ context.Context, out io.Writer, version string) *cobra.
 		Version: version,
 	}
 
+	initRootCommand(rootCmd, out)
+
+	return rootCmd
+}
+
+func initRootCommand(rootCmd *cobra.Command, out io.Writer) {
 	configPath, workDir := env.GetConfigPathFromEnv()
 
 	if configPath == "" {
 		configPath = config.GetDefaultConfigPath()
 	}
 
-	conf, err := config.Load(configPath, workDir)
-
-	if err != nil {
-		InitConfigErrCheck(rootCmd, err)
+	conf, cfgErr := config.Load(configPath, workDir)
+	if cfgErr != nil {
+		initErrCheck(rootCmd, cfgErr)
 	} else {
+		// create .lets only when there is valid config in work dir
+		if createDirErr := workdir.CreateDotLetsDir(); createDirErr != nil {
+			initErrCheck(rootCmd, createDirErr)
+		}
+
 		initSubCommands(rootCmd, conf, out)
 	}
 
 	initCompletionCmd(rootCmd)
-
-	return rootCmd
 }
 
-// InitConfigErrCheck check if config load failed with error, if so, print error and exit
-// Doing it in PreRun allows us run root cmd as usual, parse help flags
-// and only if no command were run and config load has failed - we print error
-func InitConfigErrCheck(rootCmd *cobra.Command, cfgErr error) {
+// InitErrCheck check if error occurred before root cmd execution.
+// Main reason to do it in PreRun allows us to run root cmd as usual,
+//	parse help flags if any provided or check if its help command.
+//
+// For example if config load failed with error (no lets.yaml in current dir) - print error and exit.
+func initErrCheck(rootCmd *cobra.Command, err error) {
 	rootCmd.PreRun = func(cmd *cobra.Command, args []string) {
-		if cfgErr != nil {
-			logging.Log.Errorf("error: %s\n", cfgErr)
-			os.Exit(1)
+		if err != nil {
+			logging.Log.Fatal(err)
 		}
 	}
 }

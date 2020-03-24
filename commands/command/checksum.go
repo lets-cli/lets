@@ -141,6 +141,7 @@ func parseAndValidateChecksum(checksum interface{}, newCmd *Command) error {
 	}
 
 	newCmd.checksumSource = checksumSource
+	newCmd.hasChecksum = true
 
 	return nil
 }

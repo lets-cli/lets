@@ -1,0 +1,3 @@
+cleanup() {
+    rm -rf .lets
+}
