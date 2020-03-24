@@ -9,6 +9,7 @@ Just describe your commands in `lets.yaml` and lets will do the rest.
 
 * [Install](#install)
 * [Usage](#usage)
+* [Lets directory](#lets-directory)
 * [Config](#letsyaml)
 * [Env](#environment)
 * [Build](#build)
@@ -86,6 +87,14 @@ lets run --debug --level=info
 # LETSCLI_LEVEL=--level info
 
 ```
+
+## Lets directory
+
+At first run `lets` will create `.lets` directory in the current directory.
+
+`lets` uses `.lets` to store some specific data such as checksums, etc.
+
+It's better to add `.lets` to your `.gitignore` end exclude it in your favorite ide.
 
 ## lets.yaml
 
