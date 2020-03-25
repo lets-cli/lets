@@ -16,6 +16,7 @@ func withColor(msg string) string {
 	if env.IsNotColorOutput() {
 		return msg
 	}
+
 	return fmt.Sprintf(NoticeColor, msg)
 }
 

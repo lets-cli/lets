@@ -230,14 +230,17 @@ func unmarshalConfig(rawKeyValue map[string]interface{}, cfg *Config) error {
 
 	if version, ok := rawKeyValue[VERSION]; ok {
 		versionParseErr := fmt.Errorf("version must be a valid semver string")
+
 		version, ok := version.(string)
 		if !ok {
 			return versionParseErr
 		}
+
 		_, err := util.ParseVersion(version)
 		if err != nil {
 			return versionParseErr
 		}
+
 		cfg.Version = version
 	}
 
