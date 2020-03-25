@@ -10,6 +10,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/lets-cli/lets/commands/command"
+	"github.com/lets-cli/lets/util"
 )
 
 var (
@@ -19,11 +20,12 @@ var (
 	ENV      = "env"
 	EvalEnv  = "eval_env"
 	MIXINS   = "mixins"
+	VERSION  = "version"
 )
 
 const defaultConfigPath = "lets.yaml"
 
-var validConfigFields = []string{COMMANDS, SHELL, ENV, EvalEnv, MIXINS}
+var validConfigFields = []string{COMMANDS, SHELL, ENV, EvalEnv, MIXINS, VERSION}
 var validMixinConfigFields = []string{COMMANDS, ENV, EvalEnv}
 
 // Config is a struct for loaded config file
@@ -33,6 +35,7 @@ type Config struct {
 	Commands map[string]command.Command
 	Shell    string
 	Env      map[string]string
+	Version  string
 	isMixin  bool // if true, we consider config as mixin and apply different parsing and validation
 }
 
@@ -102,7 +105,7 @@ func getWorkDir(filename string, rootDir string) (string, error) {
 }
 
 // Load a config from file
-func Load(filename string, rootDir string) (*Config, error) {
+func Load(filename string, rootDir string, letsVersion string) (*Config, error) {
 	failedLoadErr := func(err error) error {
 		return fmt.Errorf("failed to load config file %s: %s", filename, err)
 	}
@@ -130,7 +133,7 @@ func Load(filename string, rootDir string) (*Config, error) {
 		return nil, failedLoadErr(err)
 	}
 
-	if err = Validate(config); err != nil {
+	if err = Validate(config, letsVersion); err != nil {
 		return nil, failedLoadErr(err)
 	}
 
@@ -223,6 +226,19 @@ func unmarshalConfig(rawKeyValue map[string]interface{}, cfg *Config) error {
 
 	if err := unmarshalConfigGeneral(rawKeyValue, cfg); err != nil {
 		return err
+	}
+
+	if version, ok := rawKeyValue[VERSION]; ok {
+		versionParseErr := fmt.Errorf("version must be a valid semver string")
+		version, ok := version.(string)
+		if !ok {
+			return versionParseErr
+		}
+		_, err := util.ParseVersion(version)
+		if err != nil {
+			return versionParseErr
+		}
+		cfg.Version = version
 	}
 
 	if shell, ok := rawKeyValue[SHELL]; ok {
