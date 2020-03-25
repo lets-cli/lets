@@ -15,6 +15,7 @@ Just describe your commands in `lets.yaml` and lets will do the rest.
 * [Build](#build)
 * [Test](#test)
 * [Release](#release)
+* [Versioning](#versioning)
 * [Completion](#completion)
 
 ## Install
@@ -117,6 +118,20 @@ Config schema
 
 
 ### Top-level directives:
+
+#### `version` 
+`key: version`
+
+`type: semver string`
+
+Specify **minimum required** `lets` version to run this config.
+
+Example:
+
+```yaml
+version: '0.0.20'
+```
+
 
 #### `shell` 
 `key: shell`
@@ -577,18 +592,22 @@ lets test-bats global_env.bats
 
 ## Release
 
-To release new version:
+To release a new version:
 
 ```bash
 lets release 0.0.<n> -m "implement some new feature"
 ```
 
-This will:
+This will create annotated tag with 0.0.<n> and run `git push --tags`
 
-- update `version.go`
-- commit change
-- create tag with 0.0.<n>
-- git push --tags
+
+## Versioning
+
+`lets` releases must be backward compatible. That means every new `lets` release must work with old configs.
+
+For situations like e.g. new functionality, there is a `version` in `lets.yaml` which specifies **minimum required** `lets` version.
+
+If `lets` version installed on user machine is less than the one specified in config it will show and error and ask user to upgrade `lets` version.
 
 ### Completion
 
