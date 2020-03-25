@@ -1,6 +1,7 @@
 package command
 
 import (
+	"fmt"
 	"os/exec"
 	"strings"
 )
@@ -28,7 +29,12 @@ func parseAndValidateEvalEnv(evalEnv interface{}, newCmd *Command) error {
 		if value, ok := value.(string); ok {
 			computedVal, err := EvalEnvVariable(value)
 			if err != nil {
-				return err
+				return newParseCommandError(
+					fmt.Sprintf("failed to eval: %s", err),
+					newCmd.Name,
+					EvalEnv,
+					nameKey,
+				)
 			}
 
 			newCmd.Env[nameKey] = computedVal

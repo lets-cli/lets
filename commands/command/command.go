@@ -48,6 +48,7 @@ type Command struct {
 }
 
 type ParseCommandError struct {
+	Name string
 	Path struct {
 		Full  string
 		Field string
@@ -56,19 +57,20 @@ type ParseCommandError struct {
 }
 
 func (e *ParseCommandError) Error() string {
-	return fmt.Sprintf("failed to parse command: %s", e.Err)
+	return fmt.Sprintf("failed to parse '%s' command: %s", e.Name, e.Err)
 }
 
 // env is not proper arg
-func newParseCommandError(msg string, name string, field string, env string) error {
-	fields := []string{name, field}
-	if env != "" {
-		fields = append(fields, env)
+func newParseCommandError(msg string, name string, field string, meta string) error {
+	fields := []string{field}
+	if meta != "" {
+		fields = append(fields, meta)
 	}
 
 	fullPath := strings.Join(fields, ".")
 
 	return &ParseCommandError{
+		Name: name,
 		Path: struct {
 			Full  string
 			Field string
