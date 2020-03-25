@@ -11,12 +11,14 @@ import (
 	"github.com/lets-cli/lets/logging"
 )
 
+var version = ""
+
 func main() {
 	ctx := getContext()
 
 	logging.InitLogging(env.IsDebug())
 
-	rootCmd := cmd.CreateRootCommand(ctx, os.Stdout, GetVersion())
+	rootCmd := cmd.CreateRootCommand(ctx, os.Stdout, version)
 
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)

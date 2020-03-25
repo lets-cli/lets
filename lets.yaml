@@ -8,16 +8,13 @@ eval_env:
 
 commands:
   release:
-    description: Update version.go file with latest tag, create commit, create tag and push
+    description: Create tag and push
     options: |
       Usage: lets release <version> --message=<message>
       Options:
         <version>       Set version
         --message=<message>, -m    Release message
     cmd: |
-      sed -i -E "s/var version = \".*\"/var version = \"${LETSOPT_VERSION}\"/g" version.go
-      git add version.go
-      git commit -m "bump lets to version ${LETSOPT_VERSION}"
       git tag -a v${LETSOPT_VERSION} -m "${LETSOPT_MESSAGE}"
       git push --tags
 
@@ -76,5 +73,4 @@ commands:
   build-and-install:
     description: Build and install lets development version from source code to /usr/local/bin/lets
     cmd: |
-      current_v=$(git describe)
-      go build -ldflags="-X main.version=development_${current_v}_$(date +%s)" -o lets *.go && sudo mv ./lets /usr/local/bin/lets
+      go build -ldflags="-X main.version=development_$(git describe)" -o lets *.go && sudo mv ./lets /usr/local/bin/lets

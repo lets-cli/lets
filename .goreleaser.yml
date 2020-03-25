@@ -1,10 +1,16 @@
+project_name: lets
+
 before:
   hooks:
     # you may remove this if you don't use vgo
     - go mod tidy
+
+release:
+  prerelease: auto
+
 builds:
 - env:
-  - CGO_ENABLED=0
+    - CGO_ENABLED=0
   goos:
     - linux
     - darwin
@@ -14,6 +20,9 @@ builds:
   ignore:
     - goos: darwin
       goarch: 386
+  ldflags:
+    - -X main.version={{.Version}}
+
 archives:
 - name_template: '{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}'
   replacements:
@@ -22,10 +31,13 @@ archives:
     windows: Windows
     386: i386
     amd64: x86_64
+
 checksum:
   name_template: '{{ .ProjectName }}_checksums.txt'
+
 snapshot:
-  name_template: "{{ .Tag }}-next"
+  name_template: "{{ .Tag }}-{{ .ShortCommit }}"
+
 changelog:
   sort: asc
   filters:
@@ -34,3 +46,17 @@ changelog:
       - '^test:'
       - Merge pull request
       - Merge branch
+
+# Homebrews
+brews:
+  - name: lets
+    github:
+      owner: lets-cli
+      name: homebrew-tap
+    commit_author:
+      email: kindritskiy.m@gmail.com
+    folder: Formula
+    homepage: https://github.com/lets-cli/lets
+    description: CLI task runner for developers
+    test: |
+      system "#{bin}/lets --version"
