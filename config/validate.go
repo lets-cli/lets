@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/lets-cli/lets/commands/command"
+	"github.com/lets-cli/lets/env"
 	"github.com/lets-cli/lets/util"
 )
 
@@ -11,9 +12,53 @@ const (
 	NoticeColor = "\033[1;36m%s\033[0m"
 )
 
+func withColor(msg string) string {
+	if env.IsNotColorOutput() {
+		return msg
+	}
+	return fmt.Sprintf(NoticeColor, msg)
+}
+
 // Validate loaded config
-func Validate(config *Config) error {
-	return validateCircularDepends(config)
+func Validate(config *Config, letsVersion string) error {
+	if err := validateCircularDepends(config); err != nil {
+		return err
+	}
+
+	if err := validateVersion(config, letsVersion); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func validateVersion(cfg *Config, letsVersion string) error {
+	// no version specified on config
+	if cfg.Version == "" {
+		return nil
+	}
+
+	cfgVersionParsed, err := util.ParseVersion(cfg.Version)
+	if err != nil {
+		return err
+	}
+
+	letsVersionParsed, err := util.ParseVersion(letsVersion)
+	if err != nil {
+		return err
+	}
+
+	// in dev (where version is 0.0.0-dev) this predicate will be always false
+	if letsVersionParsed.LessThan(*cfgVersionParsed) {
+		return fmt.Errorf(
+			"config version '%s' is not compatible with 'lets' version '%s'. Please upgrade 'lets' to '%s'",
+			cfgVersionParsed,
+			letsVersionParsed,
+			cfgVersionParsed,
+		)
+	}
+
+	return nil
 }
 
 // if any two commands have each other command in deps, raise error
@@ -28,8 +73,8 @@ func validateCircularDepends(cfg *Config) error {
 			if yes := depsIntersect(cmdA, cmdB); yes {
 				return fmt.Errorf(
 					"command '%s' have circular depends on command '%s'",
-					fmt.Sprintf(NoticeColor, cmdA.Name),
-					fmt.Sprintf(NoticeColor, cmdB.Name),
+					withColor(cmdA.Name),
+					withColor(cmdB.Name),
 				)
 			}
 		}
