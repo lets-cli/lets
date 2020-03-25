@@ -73,4 +73,4 @@ commands:
   build-and-install:
     description: Build and install lets development version from source code to /usr/local/bin/lets
     cmd: |
-      go build -ldflags="-X main.version=development_$(git describe)" -o lets *.go && sudo mv ./lets /usr/local/bin/lets
+      go build -ldflags="-X main.version=dev-$(git describe)" -o lets *.go && sudo mv ./lets /usr/local/bin/lets

@@ -27,7 +27,7 @@ setup() {
     [[ "${lines[7]}" = "  help        Help about any command" ]]
     [[ "${lines[8]}" = "Flags:" ]]
     [[ "${lines[9]}" = "  -h, --help      help for lets" ]]
-    [[ "${lines[10]}" = "      --version   version for lets" ]]
+    [[ "${lines[10]}" = "  -v, --version   version for lets" ]]
     [[ "${lines[11]}" = 'Use "lets [command] --help" for more information about a command.' ]]
 }
 
@@ -46,6 +46,6 @@ setup() {
     [[ "${lines[7]}" = "  help        Help about any command" ]]
     [[ "${lines[8]}" = "Flags:" ]]
     [[ "${lines[9]}" = "  -h, --help      help for lets" ]]
-    [[ "${lines[10]}" = "      --version   version for lets" ]]
+    [[ "${lines[10]}" = "  -v, --version   version for lets" ]]
     [[ "${lines[11]}" = 'Use "lets [command] --help" for more information about a command.' ]]
 }

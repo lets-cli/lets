@@ -20,7 +20,7 @@ func CreateRootCommand(_ context.Context, out io.Writer, version string) *cobra.
 		Short: "A CLI command runner",
 		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runHelp(cmd)
+			return runRoot(cmd)
 		},
 		Version: version,
 	}
@@ -50,6 +50,7 @@ func initRootCommand(rootCmd *cobra.Command, out io.Writer) {
 	}
 
 	initCompletionCmd(rootCmd)
+	initVersionFlag(rootCmd)
 }
 
 // InitErrCheck check if error occurred before root cmd execution.
@@ -65,6 +66,10 @@ func initErrCheck(rootCmd *cobra.Command, err error) {
 	}
 }
 
-func runHelp(cmd *cobra.Command) error {
+func initVersionFlag(rootCmd *cobra.Command) {
+	rootCmd.Flags().BoolP("version", "v", false, "version for lets")
+}
+
+func runRoot(cmd *cobra.Command) error {
 	return cmd.Help()
 }

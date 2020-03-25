@@ -30,10 +30,10 @@ setup() {
     [[ "${lines[1]}" = "Usage:" ]]
     [[ "${lines[2]}" = "  lets [flags]" ]]
     [[ "${lines[3]}" = "Flags:" ]]
-    [[ "${lines[4]}" = "  -h, --help   help for lets" ]]
+    [[ "${lines[4]}" = "  -h, --help      help for lets" ]]
+    [[ "${lines[5]}" = "  -v, --version   version for lets" ]]
 }
 
-# TODO why there is different outputs for lets help and lets --help
 @test "no_lets_file: show help for 'lets -h' even if no config file" {
     run lets -h
     printf "%s\n" "${lines[@]}"
@@ -44,5 +44,5 @@ setup() {
     [[ "${lines[2]}" = "  lets [flags]" ]]
     [[ "${lines[3]}" = "Flags:" ]]
     [[ "${lines[4]}" = "  -h, --help      help for lets" ]]
-    [[ "${lines[5]}" = "      --version   version for lets" ]]
+    [[ "${lines[5]}" = "  -v, --version   version for lets" ]]
 }
