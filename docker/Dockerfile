@@ -5,12 +5,12 @@ WORKDIR /app
 
 RUN apt-get update && apt-get install git gcc
 
-COPY go.mod .
-COPY go.sum .
-
 RUN cd /tmp && \
     git clone https://github.com/sstephenson/bats.git && \
     cd bats && \
     ./install.sh /usr
 
-RUN go get ./...
+COPY go.mod .
+COPY go.sum .
+
+RUN go mod download
