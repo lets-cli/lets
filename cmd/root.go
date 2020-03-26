@@ -25,19 +25,19 @@ func CreateRootCommand(_ context.Context, out io.Writer, version string) *cobra.
 		Version: version,
 	}
 
-	initRootCommand(rootCmd, out)
+	initRootCommand(rootCmd, out, version)
 
 	return rootCmd
 }
 
-func initRootCommand(rootCmd *cobra.Command, out io.Writer) {
+func initRootCommand(rootCmd *cobra.Command, out io.Writer, version string) {
 	configPath, workDir := env.GetConfigPathFromEnv()
 
 	if configPath == "" {
 		configPath = config.GetDefaultConfigPath()
 	}
 
-	conf, cfgErr := config.Load(configPath, workDir)
+	conf, cfgErr := config.Load(configPath, workDir, version)
 	if cfgErr != nil {
 		initErrCheck(rootCmd, cfgErr)
 	} else {

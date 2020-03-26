@@ -1,0 +1,8 @@
+version: '0.0.1'
+
+shell: bash
+
+commands:
+  foo:
+    description: Print foo
+    cmd: echo "Foo"

@@ -3,6 +3,7 @@ module github.com/lets-cli/lets
 go 1.13
 
 require (
+	github.com/coreos/go-semver v0.2.0
 	github.com/docopt/docopt-go v0.0.0-20180111231733-ee0de3bc6815
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/sirupsen/logrus v1.4.2

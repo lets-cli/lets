@@ -11,7 +11,7 @@ import (
 	"github.com/lets-cli/lets/logging"
 )
 
-var version = "dev"
+var version = "0.0.0-dev"
 
 func main() {
 	ctx := getContext()
