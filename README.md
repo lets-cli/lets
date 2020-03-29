@@ -504,6 +504,8 @@ After each subsequent run `lets` will check if new checksum and stored checksum 
 
 Result of that check will be exposed via `LETS_CHECKSUM_CHANGED` and `LETS_CHECKSUM_[checksum-name]_CHANGED` env variables. 
 
+**IMPORTANT**: New checksum will override old checksum only if cmd has exit code **0** 
+
 Example:
 
 ```yaml
