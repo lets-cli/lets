@@ -27,3 +27,8 @@ commands:
     options: |
       Usage: lets options-wrong-usage-xxx
     cmd: echo "Wrong"
+
+  test-proxy-options:
+    description: Test passthrough options (lets must append them to ./echoArgs.sh)
+    cmd: 
+      - ./echoArgs.sh
