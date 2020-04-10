@@ -6,27 +6,26 @@ import (
 	"strings"
 )
 
-func stringPartition(s, sep string) (string, string, string) {
-	sepPos := strings.Index(s, sep)
-	if sepPos == -1 { // no separator found
-		return s, "", ""
+// A workaround function which helps to prevent breaking
+// strings with special symbols (' ', '*', '$', '#'...)
+// When you run a command with an argument containing one of these, you put it into quotation marks:
+// lets alembic -n dev revision --autogenerate -m "revision message"
+// which makes shell understand that "revision message" is a single argument, but not two args
+// The problem is, lets constructs a script string
+// and then passes it to an appropriate interpreter (sh -c $SCRIPT)
+// so we need to wrap args with quotation marks to prevent breaking
+// This also solves problem with json params: --key='{"value": 1}' => '--key={"value": 1}'
+func escapeArgs(args []string) []string {
+	var escapedArgs []string
+
+	for _, arg := range args {
+		// wraps every argument with quotation marks to avoid ambiguity
+		// TODO: maybe use some kind of blacklist symbols to wrap only necessary args
+		escapedArg := fmt.Sprintf("'%s'", arg)
+		escapedArgs = append(escapedArgs, escapedArg)
 	}
 
-	split := strings.SplitN(s, sep, 2)
-
-	return split[0], sep, split[1]
-}
-
-// e.g if value is a json --key='{"value": 1}'
-// it will wrap value in '' - --key=''{"value": 1}''
-// and when escaped it become --key='{"value": 1}'
-func escapeFlagValue(str string) string {
-	if strings.Contains(str, "=") {
-		key, sep, val := stringPartition(str, "=")
-		str = strings.Join([]string{key, fmt.Sprintf("'%s'", val)}, sep)
-	}
-
-	return str
+	return escapedArgs
 }
 
 func parseAndValidateCmd(cmd interface{}, newCmd *Command) error {
@@ -48,19 +47,18 @@ func parseAndValidateCmd(cmd interface{}, newCmd *Command) error {
 
 			cmdList = append(cmdList, fmt.Sprintf("%s", v))
 		}
+
+		// a list of arguments to be appended to commands in lets.yaml
+		var proxyArgs []string
 		// cut binary path and command name
 		if len(os.Args) > 1 {
-			cmdList = append(cmdList, os.Args[2:]...)
+			proxyArgs = os.Args[2:]
 		} else if len(os.Args) == 1 {
-			cmdList = append(cmdList, os.Args[1:]...)
+			proxyArgs = os.Args[1:]
 		}
 
-		var escapedCmdList []string
-		for _, val := range cmdList {
-			escapedCmdList = append(escapedCmdList, escapeFlagValue(val))
-		}
-
-		newCmd.Cmd = strings.TrimSpace(strings.Join(escapedCmdList, " "))
+		fullCommandList := append(cmdList, escapeArgs(proxyArgs)...)
+		newCmd.Cmd = strings.TrimSpace(strings.Join(fullCommandList, " "))
 	default:
 		return newParseCommandError(
 			"must be either string or list of string",
