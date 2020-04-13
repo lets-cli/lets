@@ -140,3 +140,32 @@ setup() {
     [[ "${lines[1]}" = "Usage: lets options-wrong-usage-xxx" ]]
 }
 
+@test "command_options: should not break json argument" {
+    run lets test-proxy-options \
+        start \
+        path.to.pythonModule.py \
+        --kwargs='{"sobaka": true}' \
+        '--json={"x": 25, "y": [1, 2, 3]}'
+    printf "%s\n" "${lines[@]}"
+
+    [[ $status = 0 ]]
+    linesLen="${#lines[@]}"
+    [[ $linesLen = 4 ]]
+    [[ "${lines[0]}" = 'start' ]]
+    [[ "${lines[1]}" = 'path.to.pythonModule.py' ]]
+    [[ "${lines[2]}" = '--kwargs={"sobaka": true}' ]]
+    [[ "${lines[3]}" = '--json={"x": 25, "y": [1, 2, 3]}' ]]
+}
+
+@test "command_options: should not break string argument with whitespace" {
+    run lets test-proxy-options generate somethingUseful -m "my message contains whitespace!!"
+    printf "%s\n" "${lines[@]}"
+
+    [[ $status = 0 ]]
+    linesLen="${#lines[@]}"
+    [[ $linesLen = 4 ]]
+    [[ "${lines[0]}" = "generate" ]]
+    [[ "${lines[1]}" = "somethingUseful" ]]
+    [[ "${lines[2]}" = "-m" ]]
+    [[ "${lines[3]}" = "my message contains whitespace!!" ]]
+}
