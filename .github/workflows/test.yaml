@@ -1,7 +1,12 @@
 on:
-  push:
   pull_request:
-    types: [assigned, opened, synchronize, reopened]
+    branches:
+      - master
+    types:
+      - assigned
+      - opened
+      - synchronize
+      - reopened
 
 name: Test
 jobs:
