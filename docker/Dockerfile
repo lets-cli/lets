@@ -1,4 +1,4 @@
-FROM golang:1.13.7
+FROM golang:1.14.2-buster
 
 ENV GOPROXY https://proxy.golang.org
 WORKDIR /app
