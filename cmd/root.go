@@ -13,7 +13,7 @@ import (
 )
 
 // CreateRootCommand is where all the stuff begins
-func CreateRootCommand(_ context.Context, out io.Writer, version string) *cobra.Command {
+func CreateRootCommand(ctx context.Context, out io.Writer, version string) *cobra.Command {
 	// rootCmd represents the base command when called without any subcommands
 	var rootCmd = &cobra.Command{
 		Use:   "lets",
@@ -25,12 +25,12 @@ func CreateRootCommand(_ context.Context, out io.Writer, version string) *cobra.
 		Version: version,
 	}
 
-	initRootCommand(rootCmd, out, version)
+	initRootCommand(ctx, rootCmd, out, version)
 
 	return rootCmd
 }
 
-func initRootCommand(rootCmd *cobra.Command, out io.Writer, version string) {
+func initRootCommand(ctx context.Context, rootCmd *cobra.Command, out io.Writer, version string) {
 	configPath, workDir := env.GetConfigPathFromEnv()
 
 	if configPath == "" {
@@ -46,7 +46,7 @@ func initRootCommand(rootCmd *cobra.Command, out io.Writer, version string) {
 			initErrCheck(rootCmd, createDirErr)
 		}
 
-		initSubCommands(rootCmd, conf, out)
+		initSubCommands(ctx, rootCmd, conf, out)
 	}
 
 	initCompletionCmd(rootCmd)

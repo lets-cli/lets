@@ -1,4 +1,4 @@
-package commands
+package runner
 
 import (
 	"fmt"
@@ -45,14 +45,14 @@ func convertChecksumMapToEnvForCmd(checksumMap map[string]string) []string {
 }
 
 // persistedChecksumMap can be empty, and if so, we set env var LETS_CHECKSUM_[NAME]_CHANGED to false for all checksums
-func convertChangedChecksumMapToEnvForCmd(cmdToRun command.Command, persistedChecksumMap map[string]string) []string {
-	if !cmdToRun.PersistChecksum {
-		return []string{}
-	}
-
+func convertChangedChecksumMapToEnvForCmd(
+	defaultChecksum string,
+	checksumMap map[string]string,
+	persistedChecksumMap map[string]string,
+) []string {
 	var envList []string
 
-	for name, value := range cmdToRun.ChecksumMap {
+	for name, value := range checksumMap {
 		if name == "" { // TODO do we still have this empty key
 			continue
 		}
@@ -75,7 +75,7 @@ func convertChangedChecksumMapToEnvForCmd(cmdToRun command.Command, persistedChe
 
 	defaultChecksumChanged := false
 	if ok {
-		defaultChecksumChanged = cmdToRun.Checksum != persistedValue
+		defaultChecksumChanged = defaultChecksum != persistedValue
 	}
 
 	envList = append(

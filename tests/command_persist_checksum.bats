@@ -20,8 +20,10 @@ CHANGED_CHECKSUM=95d4080082937fe50b8db90f0c21acc597c9d176
 TEMP_FILE=foo_test.txt
 
 @test "command_persist_checksum: should check if checksum has changed" {
-    run lets persist-checksum
-    printf "%s\n" "${lines[@]}"
+    export CMD_NAME=persist-checksum
+
+    run lets ${CMD_NAME}
+    printf "first run: %s\n" "${lines[@]}"
 
     # first run, no stored checksum
     # 1. check checksum value
@@ -32,14 +34,18 @@ TEMP_FILE=foo_test.txt
     [[ "${lines[0]}" = "LETS_CHECKSUM=${FIRST_CHECKSUM}" ]]
     [[ "${lines[1]}" = "LETS_CHECKSUM_CHANGED=false" ]]
 
+    # it creates .lets
     [[ -d .lets ]]
+    # it creates checksums folder in .lets for storing commands checksums
     [[ -d .lets/checksums ]]
-    [[ -d .lets/checksums/persist-checksum ]]
-    [[ -f .lets/checksums/persist-checksum/lets_default_checksum ]]
+    # it creates "persist-checksum" folder - a folder with name of a command
+    [[ -d .lets/checksums/${CMD_NAME} ]]
+    # it creates "lets_default_checksum" file - a file with an actual checksum persisted after command has finished
+    [[ -f .lets/checksums/${CMD_NAME}/lets_default_checksum ]]
 
     # second run, previous checksum persisted. lets must read it and check that its not changed
-    run lets persist-checksum
-    printf "%s\n" "${lines[@]}"
+    run lets ${CMD_NAME}
+    printf "second run: %s\n" "${lines[@]}"
 
     [[ $status = 0 ]]
     [[ "${lines[0]}" = "LETS_CHECKSUM=${FIRST_CHECKSUM}" ]]
@@ -53,12 +59,71 @@ TEMP_FILE=foo_test.txt
     # 1. check checksum value has changed
     # 2. check LETS_CHECKSUM_CHANGED has changed to true
     # 2. check new checksum persisted
-    run lets persist-checksum
-    printf "%s\n" "${lines[@]}"
+    run lets ${CMD_NAME}
+    printf "third run: %s\n" "${lines[@]}"
 
     [[ $status = 0 ]]
     [[ "${lines[0]}" = "LETS_CHECKSUM=${CHANGED_CHECKSUM}" ]]
     [[ "${lines[1]}" = "LETS_CHECKSUM_CHANGED=true" ]]
+}
+
+@test "command_persist_checksum: should persist checksum for cmd-as-map" {
+    export CMD_NAME=persist-checksum-for-cmd-as-map
+
+    run lets ${CMD_NAME}
+    printf "%s\n" "${lines[@]}"
+
+    # first run, no stored checksum
+    # 1. check checksum value
+    # 2. check LETS_CHECKSUM_CHANGED has not changed
+    # 3. check checksum persisted
+
+    [[ $status = 0 ]]
+
+    # there is no guarantee in which order cmds will finish, so we sort output on our own
+    sort_array lines
+
+    [[ "${lines[0]}" = "1 LETS_CHECKSUM=${FIRST_CHECKSUM}" ]]
+    [[ "${lines[1]}" = "2 LETS_CHECKSUM_CHANGED=false" ]]
+
+    # it creates .lets
+    [[ -d .lets ]]
+    # it creates checksums folder in .lets for storing commands checksums
+    [[ -d .lets/checksums ]]
+    # it creates "persist-checksum" folder - a folder with name of a command
+    [[ -d .lets/checksums/${CMD_NAME} ]]
+    # it creates "lets_default_checksum" file - a file with an actual checksum persisted after command has finished
+    [[ -f .lets/checksums/${CMD_NAME}/lets_default_checksum ]]
+
+    # second run, previous checksum persisted. lets must read it and check that its not changed
+    run lets ${CMD_NAME}
+    printf "%s\n" "${lines[@]}"
+
+    [[ $status = 0 ]]
+
+    # there is no guarantee in which order cmds will finish, so we sort output on our own
+    sort_array lines
+
+    [[ "${lines[0]}" = "1 LETS_CHECKSUM=${FIRST_CHECKSUM}" ]]
+    [[ "${lines[1]}" = "2 LETS_CHECKSUM_CHANGED=false" ]]
+
+    # third run, there is stored checksum and we creating new file. checksum must be changed now
+
+    # create file suiting glob pattern foo_*.txt
+    touch ${TEMP_FILE} && printf "footemp" > ${TEMP_FILE}
+
+    # 1. check checksum value has changed
+    # 2. check LETS_CHECKSUM_CHANGED has changed to true
+    # 2. check new checksum persisted
+    run lets ${CMD_NAME}
+    printf "%s\n" "${lines[@]}"
+
+    # there is no guarantee in which order cmds will finish, so we sort output on our own
+    [[ $status = 0 ]]
+
+    sort_array lines
+    [[ "${lines[0]}" = "1 LETS_CHECKSUM=${CHANGED_CHECKSUM}" ]]
+    [[ "${lines[1]}" = "2 LETS_CHECKSUM_CHANGED=true" ]]
 }
 
 @test "command_persist_checksum: should persist checksum only if exit code = 0" {

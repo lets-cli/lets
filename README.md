@@ -246,13 +246,19 @@ commands:
 ##### `cmd`
 `key: cmd`
 
-`type: string or array of strings`
+```
+type: 
+  - string
+  - array of strings
+  - map of string => string
+```
 
 Actual command to run in shell.
 
-Can be either a string (also a multiline string) or an array of strings.
-
-The main difference is that when specifying an array, all args, specified in terminal will be appended to cmd array 
+Can be either:
+ - a string (also a multiline string)
+ - an array of strings - it will allow to append all arguments passed to command as is (see bellow)
+ - a map of string => string - this will allow run commands in parallel
 
 Example single string:
 
@@ -295,6 +301,18 @@ lets test -v
 ```
 
 the `-v` will be appended, so the resulting command to run will be `go test ./... -v`
+
+Example of map of string => string
+
+```yaml
+commands:
+  app:
+    description: Test something
+    cmd: 
+      app: npm run app
+      nginx: docker-compose up nginx
+      redis: docker-compsoe up redis
+```
 
 ##### `depends`
 `key: depends`

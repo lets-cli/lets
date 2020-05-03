@@ -59,6 +59,34 @@ func parseAndValidateCmd(cmd interface{}, newCmd *Command) error {
 
 		fullCommandList := append(cmdList, escapeArgs(proxyArgs)...)
 		newCmd.Cmd = strings.TrimSpace(strings.Join(fullCommandList, " "))
+	case map[interface{}]interface{}:
+		cmdMap := make(map[string]string, len(cmd))
+
+		for cmdName, cmdScript := range cmd {
+			cmdName, cmdNameOk := cmdName.(string)
+			if !cmdNameOk {
+				return newParseCommandError(
+					"cmd name must be string",
+					newCmd.Name,
+					CMD,
+					cmdName,
+				)
+			}
+
+			cmdScript, cmdScriptOK := cmdScript.(string)
+			if !cmdScriptOK {
+				return newParseCommandError(
+					"cmd name must be string",
+					newCmd.Name,
+					CMD,
+					cmdScript,
+				)
+			}
+
+			cmdMap[cmdName] = cmdScript
+		}
+
+		newCmd.CmdMap = cmdMap
 	default:
 		return newParseCommandError(
 			"must be either string or list of string",

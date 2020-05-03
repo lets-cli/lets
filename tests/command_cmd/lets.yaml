@@ -15,3 +15,23 @@ commands:
     description: Test cmd as array
     cmd:
       - echo
+
+  cmd-as-map:
+    description: Test cmd as map
+    cmd:
+      one: echo "1"
+      two: echo "2"
+
+  cmd-as-map-error:
+    description: Test cmd as map with error
+    cmd:
+      one: echo "1"
+      two: exit 2
+
+  cmd-as-map-env-propagated:
+    description: Test cmd as map - env propagated to all commands
+    env:
+      TEST_ENV: hello
+    cmd:
+      one: echo "1 ${TEST_ENV}"
+      two: echo "2 ${TEST_ENV}"

@@ -32,6 +32,7 @@ var validFields = []string{
 type Command struct {
 	Name            string
 	Cmd             string
+	CmdMap          map[string]string
 	Description     string
 	Env             map[string]string
 	RawOptions      string
