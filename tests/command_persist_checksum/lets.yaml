@@ -18,3 +18,12 @@ commands:
       echo LETS_CHECKSUM=${LETS_CHECKSUM}
       echo LETS_CHECKSUM_CHANGED=${LETS_CHECKSUM_CHANGED}
       exit 1
+
+  persist-checksum-for-cmd-as-map:
+    description: Persist checksum for cmd-as-map
+    persist_checksum: true
+    checksum:
+      - foo_*.txt
+    cmd:
+      checksum: echo 1 LETS_CHECKSUM=${LETS_CHECKSUM}
+      checksum_changed: echo 2 LETS_CHECKSUM_CHANGED=${LETS_CHECKSUM_CHANGED}

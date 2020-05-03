@@ -91,9 +91,9 @@ func persistOneChecksum(cmdName string, checksumName string, checksum string) er
 }
 
 // ChecksumForCmdPersisted checks if checksums for cmd exists and persisted
-func ChecksumForCmdPersisted(cmd Command) bool {
+func ChecksumForCmdPersisted(cmdName string) bool {
 	// check if checksums for cmd exists
-	if _, err := os.Stat(getCmdChecksumPath(cmd.Name)); err != nil {
+	if _, err := os.Stat(getCmdChecksumPath(cmdName)); err != nil {
 		return !os.IsNotExist(err)
 	}
 
@@ -101,11 +101,11 @@ func ChecksumForCmdPersisted(cmd Command) bool {
 }
 
 // ReadChecksumsFromDisk reads all checksums for cmd into map
-func ReadChecksumsFromDisk(cmd Command) (map[string]string, error) {
-	checksums := make(map[string]string, len(cmd.ChecksumMap)+1)
+func ReadChecksumsFromDisk(cmdName string, checksumMap map[string]string) (map[string]string, error) {
+	checksums := make(map[string]string, len(checksumMap)+1)
 
-	for checksumName := range cmd.ChecksumMap {
-		checksum, err := readOneChecksum(cmd.Name, checksumName)
+	for checksumName := range checksumMap {
+		checksum, err := readOneChecksum(cmdName, checksumName)
 		if err != nil {
 			return nil, err
 		}
@@ -113,7 +113,7 @@ func ReadChecksumsFromDisk(cmd Command) (map[string]string, error) {
 		checksums[checksumName] = checksum
 	}
 
-	checksum, err := readOneChecksum(cmd.Name, DefaultChecksumName)
+	checksum, err := readOneChecksum(cmdName, DefaultChecksumName)
 	if err != nil {
 		return nil, err
 	}

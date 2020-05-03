@@ -28,3 +28,40 @@ setup() {
     [[ $status = 0 ]]
     [[ "${lines[0]}" = "Hello" ]]
 }
+
+@test "command_cmd: should run as map" {
+    run lets cmd-as-map
+    printf "%s\n" "${lines[@]}"
+
+    [[ $status = 0 ]]
+
+    # there is no guarantee in which order cmds will finish, so we sort output on our own
+    sort_array lines
+
+    [[ "${lines[0]}" = "1" ]]
+    [[ "${lines[1]}" = "2" ]]
+}
+
+@test "command_cmd: cmd-as-map must exit with error if any of cmd exits with error" {
+    run lets cmd-as-map-error
+    printf "%s\n" "${lines[@]}"
+
+    [[ $status != 0 ]]
+    # as there is no guarantee in which order cmds runs
+    # we can not guarantee that all commands will run and complete.
+    # But error message must be in the output.
+    [[ "${lines[@]}" =~ "Error: exit status 2" ]]
+}
+
+@test "command_cmd: cmd-as-map must propagate env" {
+    run lets cmd-as-map-env-propagated
+    printf "%s\n" "${lines[@]}"
+
+    [[ $status == 0 ]]
+
+    # there is no guarantee in which order cmds will finish, so we sort output on our own
+    sort_array lines
+
+    [[ "${lines[0]}" = "1 hello" ]]
+    [[ "${lines[1]}" = "2 hello" ]]
+}

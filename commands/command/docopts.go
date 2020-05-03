@@ -17,13 +17,13 @@ var DocoptParser = &docopt.Parser{
 
 // ParseDocopts parses docopts for command options with args from os.Args
 // TODO pass os.Argv explicitly
-func ParseDocopts(cmd Command) (docopt.Opts, error) {
+func ParseDocopts(rawOptions string) (docopt.Opts, error) {
 	// no options at all
-	if cmd.RawOptions == "" {
+	if rawOptions == "" {
 		return docopt.Opts{}, nil
 	}
 
-	return DocoptParser.ParseArgs(cmd.RawOptions, os.Args[1:], "")
+	return DocoptParser.ParseArgs(rawOptions, os.Args[1:], "")
 }
 
 func OptsToLetsOpt(opts docopt.Opts) map[string]string {
