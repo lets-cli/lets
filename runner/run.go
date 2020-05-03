@@ -33,7 +33,7 @@ func RunCommand(ctx context.Context, cmdToRun command.Command, cfg *config.Confi
 		return runCmdAsMap(ctx, &cmdToRun, cfg, out)
 	}
 
-	return runCmdWait(ctx, &cmdToRun, cfg, out, noParent)
+	return runCmd(&cmdToRun, cfg, out, noParent)
 }
 
 // format docopts error and adds usage string to output
@@ -53,15 +53,18 @@ func formatOptsUsageError(err error, opts docopt.Opts, cmdName string, rawOption
 // - parse docopt
 // - calculate checksum
 // - prepare environment
+//
+// NOTE: We intentionally do not passing ctx to exec.Command because we want to wait for process end.
+// Passing ctx will change behavior of program drastically - it will kill process if context will be canceled.
+//
 func prepareCmdForRun(
-	ctx context.Context,
 	cmdToRun *command.Command,
 	cmdScript string,
 	cfg *config.Config,
 	out io.Writer,
 	parentName string,
 ) (*exec.Cmd, error) {
-	cmd := exec.CommandContext(ctx, cfg.Shell, "-c", cmdScript) // #nosec G204
+	cmd := exec.Command(cfg.Shell, "-c", cmdScript) // #nosec G204
 	// setup std out and err
 	cmd.Stdout = out
 	cmd.Stderr = out
@@ -141,11 +144,11 @@ func prepareCmdForRun(
 }
 
 // Run all commands from Depends in sequential order
-func runDepends(ctx context.Context, cmdToRun *command.Command, cfg *config.Config, out io.Writer) error {
+func runDepends(cmdToRun *command.Command, cfg *config.Config, out io.Writer) error {
 	for _, dependCmdName := range cmdToRun.Depends {
 		dependCmd := cfg.Commands[dependCmdName]
 
-		err := runCmdWait(ctx, &dependCmd, cfg, out, cmdToRun.Name)
+		err := runCmd(&dependCmd, cfg, out, cmdToRun.Name)
 		if err != nil {
 			// must return error to root
 			return err
@@ -168,26 +171,20 @@ func persistChecksum(cmdToRun command.Command) error {
 	return nil
 }
 
-// Run command and wait for result
-func runCmdWait(
-	ctx context.Context,
+// Run command and wait for result.
+// Must be used only when Command.Cmd is string or []string
+func runCmd(
 	cmdToRun *command.Command,
 	cfg *config.Config,
 	out io.Writer,
 	parentName string,
 ) error {
-	cmd, err := prepareCmdForRun(ctx, cmdToRun, cmdToRun.Cmd, cfg, out, parentName)
-	if err != nil {
+	if err := runDepends(cmdToRun, cfg, out); err != nil {
 		return err
 	}
 
-	if err := runDepends(ctx, cmdToRun, cfg, out); err != nil {
+	if err := runCmdScript(cmdToRun, cmdToRun.Cmd, cfg, out, parentName); err != nil {
 		return err
-	}
-
-	runErr := cmd.Run()
-	if runErr != nil {
-		return fmt.Errorf("failed to run cmd: %s", runErr)
 	}
 
 	// persist checksum only if exit code 0
@@ -198,45 +195,47 @@ func runCmdWait(
 	return nil
 }
 
-// Start cmd and return without waiting for result.
-// Cmd must be waited by caller.
-func runCmdNoWait(
-	ctx context.Context,
+func runCmdScript(
 	cmdToRun *command.Command,
 	cmdScript string,
 	cfg *config.Config,
 	out io.Writer,
-) (*exec.Cmd, error) {
-	cmd, err := prepareCmdForRun(ctx, cmdToRun, cmdScript, cfg, out, noParent)
+	parentName string,
+) error {
+	isChildCmd := parentName != ""
+
+	cmd, err := prepareCmdForRun(cmdToRun, cmdScript, cfg, out, parentName)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	if err := runDepends(ctx, cmdToRun, cfg, out); err != nil {
-		return nil, err
-	}
-
-	startErr := cmd.Start()
-	if startErr != nil {
-		return nil, fmt.Errorf("failed to start cmd: %s", startErr)
-	}
-
-	return cmd, nil
-}
-
-func runCmdAsMap(ctx context.Context, cmdToRun *command.Command, cfg *config.Config, out io.Writer) error {
-	g, ctx := errgroup.WithContext(ctx)
-
-	// TODO how do we use cmdName ???
-	for _, cmdExecScript := range cmdToRun.CmdMap {
-		cmdStarted, err := runCmdNoWait(ctx, cmdToRun, cmdExecScript, cfg, out)
-
-		if err != nil {
-			return err
+	runErr := cmd.Run()
+	if runErr != nil {
+		if isChildCmd {
+			return fmt.Errorf("failed to run child command '%s' from 'depends': %s", cmdToRun.Name, runErr)
 		}
 
+		return fmt.Errorf("failed to run command '%s': %s", cmdToRun.Name, runErr)
+	}
+
+	return nil
+}
+
+// Run all commands from Command.CmdMap in parallel and wait for results.
+// Must be used only when Command.Cmd is map[string]string
+func runCmdAsMap(ctx context.Context, cmdToRun *command.Command, cfg *config.Config, out io.Writer) error {
+	if err := runDepends(cmdToRun, cfg, out); err != nil {
+		return err
+	}
+
+	g, _ := errgroup.WithContext(ctx)
+
+	for _, cmdExecScript := range cmdToRun.CmdMap {
+		cmdExecScript := cmdExecScript
 		// wait for cmd to end in a goroutine with error propagation
-		g.Go(cmdStarted.Wait)
+		g.Go(func() error {
+			return runCmdScript(cmdToRun, cmdExecScript, cfg, out, noParent)
+		})
 	}
 
 	if err := g.Wait(); err != nil {
