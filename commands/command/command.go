@@ -30,8 +30,10 @@ var validFields = []string{
 }
 
 type Command struct {
-	Name            string
-	Cmd             string
+	Name string
+	// script to run
+	Cmd string
+	// map of named scripts to run in parallel
 	CmdMap          map[string]string
 	Description     string
 	Env             map[string]string

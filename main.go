@@ -18,9 +18,9 @@ func main() {
 
 	logging.InitLogging(env.IsDebug())
 
-	rootCmd := cmd.CreateRootCommand(ctx, os.Stdout, version)
+	rootCmd := cmd.CreateRootCommand(os.Stdout, version)
 
-	if err := rootCmd.Execute(); err != nil {
+	if err := rootCmd.ExecuteContext(ctx); err != nil {
 		os.Exit(1)
 	}
 }

@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"io"
 
@@ -14,12 +13,12 @@ import (
 )
 
 // newCmdGeneric creates new cobra root sub command from Command
-func newCmdGeneric(ctx context.Context, cmdToRun command.Command, conf *config.Config, out io.Writer) *cobra.Command {
+func newCmdGeneric(cmdToRun command.Command, conf *config.Config, out io.Writer) *cobra.Command {
 	subCmd := &cobra.Command{
 		Use:   cmdToRun.Name,
 		Short: cmdToRun.Description,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runner.RunCommand(ctx, cmdToRun, conf, out)
+			return runner.RunCommand(cmd.Context(), cmdToRun, conf, out)
 		},
 		DisableFlagParsing: true, // we use docopt to parse flags
 		SilenceUsage:       true,
@@ -43,8 +42,8 @@ func newCmdGeneric(ctx context.Context, cmdToRun command.Command, conf *config.C
 }
 
 // initialize all commands dynamically from config
-func initSubCommands(ctx context.Context, rootCmd *cobra.Command, conf *config.Config, out io.Writer) {
+func initSubCommands(rootCmd *cobra.Command, conf *config.Config, out io.Writer) {
 	for _, cmdToRun := range conf.Commands {
-		rootCmd.AddCommand(newCmdGeneric(ctx, cmdToRun, conf, out))
+		rootCmd.AddCommand(newCmdGeneric(cmdToRun, conf, out))
 	}
 }

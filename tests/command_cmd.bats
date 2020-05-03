@@ -50,7 +50,7 @@ setup() {
     # as there is no guarantee in which order cmds runs
     # we can not guarantee that all commands will run and complete.
     # But error message must be in the output.
-    [[ "${lines[@]}" =~ "Error: exit status 2" ]]
+    [[ "${lines[@]}" =~ "Error: failed to run command 'cmd-as-map-error': exit status 2" ]]
 }
 
 @test "command_cmd: cmd-as-map must propagate env" {

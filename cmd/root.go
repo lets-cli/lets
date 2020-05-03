@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"io"
 
 	"github.com/spf13/cobra"
@@ -13,7 +12,7 @@ import (
 )
 
 // CreateRootCommand is where all the stuff begins
-func CreateRootCommand(ctx context.Context, out io.Writer, version string) *cobra.Command {
+func CreateRootCommand(out io.Writer, version string) *cobra.Command {
 	// rootCmd represents the base command when called without any subcommands
 	var rootCmd = &cobra.Command{
 		Use:   "lets",
@@ -25,12 +24,12 @@ func CreateRootCommand(ctx context.Context, out io.Writer, version string) *cobr
 		Version: version,
 	}
 
-	initRootCommand(ctx, rootCmd, out, version)
+	initRootCommand(rootCmd, out, version)
 
 	return rootCmd
 }
 
-func initRootCommand(ctx context.Context, rootCmd *cobra.Command, out io.Writer, version string) {
+func initRootCommand(rootCmd *cobra.Command, out io.Writer, version string) {
 	configPath, workDir := env.GetConfigPathFromEnv()
 
 	if configPath == "" {
@@ -46,7 +45,7 @@ func initRootCommand(ctx context.Context, rootCmd *cobra.Command, out io.Writer,
 			initErrCheck(rootCmd, createDirErr)
 		}
 
-		initSubCommands(ctx, rootCmd, conf, out)
+		initSubCommands(rootCmd, conf, out)
 	}
 
 	initCompletionCmd(rootCmd)
