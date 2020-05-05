@@ -2,7 +2,6 @@ package command
 
 import (
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 
@@ -17,13 +16,12 @@ var DocoptParser = &docopt.Parser{
 
 // ParseDocopts parses docopts for command options with args from os.Args
 // TODO pass os.Argv explicitly
-func ParseDocopts(rawOptions string) (docopt.Opts, error) {
+func ParseDocopts(args []string, rawOptions string) (docopt.Opts, error) {
 	// no options at all
 	if rawOptions == "" {
 		return docopt.Opts{}, nil
 	}
-
-	return DocoptParser.ParseArgs(rawOptions, os.Args[1:], "")
+	return DocoptParser.ParseArgs(rawOptions, args, "")
 }
 
 func OptsToLetsOpt(opts docopt.Opts) map[string]string {

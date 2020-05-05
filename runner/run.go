@@ -77,7 +77,7 @@ func prepareCmdForRun(
 
 	// parse docopts - only for parent
 	if !isChildCmd {
-		opts, err := command.ParseDocopts(cmdToRun.RawOptions)
+		opts, err := command.ParseDocopts(cmdToRun.Args, cmdToRun.RawOptions)
 		if err != nil {
 			return nil, formatOptsUsageError(err, opts, cmdToRun.Name, cmdToRun.RawOptions)
 		}
@@ -221,6 +221,42 @@ func runCmdScript(
 	return nil
 }
 
+func filterCmdMap(parentCmdName string, cmdMap map[string]string, only []string, exclude []string) (map[string]string, error) {
+	hasOnly := len(only) > 0
+	hasExclude := len(exclude) > 0
+
+	if !hasOnly && !hasExclude {
+		return cmdMap, nil
+	}
+
+	filteredCmdMap := make(map[string]string)
+
+	if hasOnly {
+		// put only commands which in `only` list
+		for _, cmdName := range only {
+			cmdScript, ok := cmdMap[cmdName]
+			if !ok {
+				return nil, fmt.Errorf("no such sub-command '%s' in command '%s' used in 'only' flag", cmdName, parentCmdName)
+			}
+			filteredCmdMap[cmdName] = cmdScript
+		}
+	}
+
+	if hasExclude {
+		filteredCmdMap = cmdMap
+		// delete all commands which in `exclude` list
+		for _, cmdName := range exclude {
+			_, ok := cmdMap[cmdName]
+			if !ok {
+				return nil, fmt.Errorf("no such sub-command '%s' in command '%s' used in 'exclude' flag", cmdName, parentCmdName)
+			}
+			delete(filteredCmdMap, cmdName)
+		}
+	}
+
+	return filteredCmdMap, nil
+}
+
 // Run all commands from Command.CmdMap in parallel and wait for results.
 // Must be used only when Command.Cmd is map[string]string
 func runCmdAsMap(ctx context.Context, cmdToRun *command.Command, cfg *config.Config, out io.Writer) error {
@@ -230,7 +266,11 @@ func runCmdAsMap(ctx context.Context, cmdToRun *command.Command, cfg *config.Con
 
 	g, _ := errgroup.WithContext(ctx)
 
-	for _, cmdExecScript := range cmdToRun.CmdMap {
+	cmdMap, err := filterCmdMap(cmdToRun.Name, cmdToRun.CmdMap, cmdToRun.Only, cmdToRun.Exclude)
+	if err != nil {
+		return err
+	}
+	for _, cmdExecScript := range cmdMap {
 		cmdExecScript := cmdExecScript
 		// wait for cmd to end in a goroutine with error propagation
 		g.Go(func() error {

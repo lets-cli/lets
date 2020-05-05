@@ -31,6 +31,7 @@ func escapeArgs(args []string) []string {
 func parseAndValidateCmd(cmd interface{}, newCmd *Command) error {
 	switch cmd := cmd.(type) {
 	case string:
+		// TODO pass args to command as is if option accepts_arguments: true
 		newCmd.Cmd = cmd
 	case []interface{}:
 		cmdList := make([]string, len(cmd))
