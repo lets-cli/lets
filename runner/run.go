@@ -52,6 +52,7 @@ func formatOptsUsageError(err error, opts docopt.Opts, cmdName string, rawOption
 // - calculate checksum
 func initCmd(
 	cmdToRun *command.Command,
+	cfg *config.Config,
 	isChildCmd bool,
 ) error {
 	// parse docopts - only for parent
@@ -66,14 +67,14 @@ func initCmd(
 	}
 
 	// calculate checksum if needed
-	if err := cmdToRun.ChecksumCalculator(); err != nil {
+	if err := cmdToRun.ChecksumCalculator(cfg.WorkDir); err != nil {
 		return err
 	}
 
 	// if command declared as persist_checksum we must read current persisted checksums into memory
 	if cmdToRun.PersistChecksum {
-		if command.ChecksumForCmdPersisted(cmdToRun.DotLetsDir, cmdToRun.Name) {
-			err := cmdToRun.ReadChecksumsFromDisk(cmdToRun.DotLetsDir, cmdToRun.Name, cmdToRun.ChecksumMap)
+		if command.ChecksumForCmdPersisted(cfg.DotLetsDir, cmdToRun.Name) {
+			err := cmdToRun.ReadChecksumsFromDisk(cfg.DotLetsDir, cmdToRun.Name, cmdToRun.ChecksumMap)
 			if err != nil {
 				return err
 			}
@@ -168,9 +169,9 @@ func runDepends(cmdToRun *command.Command, cfg *config.Config, out io.Writer) er
 
 // Persist new calculated checksum to disk.
 // This function mus be called only after command finished(exited) with status 0
-func persistChecksum(cmdToRun command.Command) error {
+func persistChecksum(cmdToRun command.Command, cfg *config.Config) error {
 	if cmdToRun.PersistChecksum {
-		err := command.PersistCommandsChecksumToDisk(cmdToRun)
+		err := command.PersistCommandsChecksumToDisk(cfg.DotLetsDir, cmdToRun)
 		if err != nil {
 			return err
 		}
@@ -187,7 +188,7 @@ func runCmd(
 	out io.Writer,
 	parentName string,
 ) error {
-	if err := initCmd(cmdToRun, parentName != noParent); err != nil {
+	if err := initCmd(cmdToRun, cfg, parentName != noParent); err != nil {
 		return err
 	}
 
@@ -200,7 +201,7 @@ func runCmd(
 	}
 
 	// persist checksum only if exit code 0
-	if err := persistChecksum(*cmdToRun); err != nil {
+	if err := persistChecksum(*cmdToRun, cfg); err != nil {
 		return err
 	}
 
@@ -276,7 +277,7 @@ func filterCmdMap(
 // Run all commands from Command.CmdMap in parallel and wait for results.
 // Must be used only when Command.Cmd is map[string]string
 func runCmdAsMap(ctx context.Context, cmdToRun *command.Command, cfg *config.Config, out io.Writer) error {
-	if err := initCmd(cmdToRun, false); err != nil {
+	if err := initCmd(cmdToRun, cfg, false); err != nil {
 		return err
 	}
 
@@ -304,7 +305,7 @@ func runCmdAsMap(ctx context.Context, cmdToRun *command.Command, cfg *config.Con
 	}
 
 	// persist checksum only if exit code 0
-	if err := persistChecksum(*cmdToRun); err != nil {
+	if err := persistChecksum(*cmdToRun, cfg); err != nil {
 		return err
 	}
 

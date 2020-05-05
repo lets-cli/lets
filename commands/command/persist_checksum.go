@@ -49,20 +49,20 @@ func getChecksumPath(dotLetsDir string, cmdName string, checksumName string) (st
 	return dirPath, filepath.Join(dirPath, checksumName)
 }
 
-func PersistCommandsChecksumToDisk(cmd Command) error {
-	if err := util.SafeCreateDir(filepath.Join(cmd.DotLetsDir, checksumsDir)); err != nil {
+func PersistCommandsChecksumToDisk(dotLetsDir string, cmd Command) error {
+	if err := util.SafeCreateDir(filepath.Join(dotLetsDir, checksumsDir)); err != nil {
 		return err
 	}
 
 	// TODO if at least one write failed do we have to revert all writes ???
 	for checksumName, checksum := range cmd.ChecksumMap {
-		err := persistOneChecksum(cmd.DotLetsDir, cmd.Name, checksumName, checksum)
+		err := persistOneChecksum(dotLetsDir, cmd.Name, checksumName, checksum)
 		if err != nil {
 			return err
 		}
 	}
 
-	err := persistOneChecksum(cmd.DotLetsDir, cmd.Name, DefaultChecksumName, cmd.Checksum)
+	err := persistOneChecksum(dotLetsDir, cmd.Name, DefaultChecksumName, cmd.Checksum)
 	if err != nil {
 		return err
 	}

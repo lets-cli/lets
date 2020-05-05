@@ -53,10 +53,6 @@ type Command struct {
 	// run all but excluded commands from cmd map
 	Exclude []string
 
-	// absolute path to work dir - where config is placed
-	WorkDir string
-	// absolute path to .lets
-	DotLetsDir string
 	// if command has declared checksum
 	hasChecksum    bool
 	checksumSource map[string][]string
@@ -107,12 +103,12 @@ func NewCommand(name string) Command {
 	}
 }
 
-func (cmd *Command) ChecksumCalculator() error {
+func (cmd *Command) ChecksumCalculator(workDir string) error {
 	if len(cmd.checksumSource) == 0 {
 		return nil
 	}
 
-	return calculateChecksumFromSource(cmd)
+	return calculateChecksumFromSource(workDir, cmd)
 }
 
 func (cmd *Command) GetPersistedChecksums() map[string]string {
