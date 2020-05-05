@@ -306,12 +306,20 @@ Example of map of string => string
 
 ```yaml
 commands:
-  app:
+  run:
     description: Test something
     cmd: 
       app: npm run app
       nginx: docker-compose up nginx
       redis: docker-compsoe up redis
+```
+
+There are two flags `--only` and `--exclude` you can use with cmd map.
+
+There must be used before command name:
+
+```bash
+lets --only app run
 ```
 
 ##### `depends`
