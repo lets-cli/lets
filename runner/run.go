@@ -72,8 +72,8 @@ func initCmd(
 
 	// if command declared as persist_checksum we must read current persisted checksums into memory
 	if cmdToRun.PersistChecksum {
-		if command.ChecksumForCmdPersisted(cmdToRun.Name) {
-			err := cmdToRun.ReadChecksumsFromDisk(cmdToRun.Name, cmdToRun.ChecksumMap)
+		if command.ChecksumForCmdPersisted(cmdToRun.DotLetsDir, cmdToRun.Name) {
+			err := cmdToRun.ReadChecksumsFromDisk(cmdToRun.DotLetsDir, cmdToRun.Name, cmdToRun.ChecksumMap)
 			if err != nil {
 				return err
 			}

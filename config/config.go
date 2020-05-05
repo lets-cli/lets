@@ -28,6 +28,12 @@ const defaultConfigPath = "lets.yaml"
 var validConfigFields = []string{COMMANDS, SHELL, ENV, EvalEnv, MIXINS, VERSION}
 var validMixinConfigFields = []string{COMMANDS, ENV, EvalEnv}
 
+type PathInfo struct {
+	Filename string
+	AbsPath  string
+	WorkDir  string
+}
+
 // Config is a struct for loaded config file
 type Config struct {
 	WorkDir  string
@@ -53,7 +59,13 @@ func (e *ParseError) Error() string {
 
 func newConfigParseError(msg string, name string, field string) error {
 	fields := []string{name, field}
-	fullPath := strings.Join(fields, ".")
+	sep := "."
+
+	if field == "" {
+		sep = ""
+	}
+
+	fullPath := strings.Join(fields, sep)
 
 	return &ParseError{
 		Path: struct {
@@ -63,7 +75,7 @@ func newConfigParseError(msg string, name string, field string) error {
 			Full:  fullPath,
 			Field: field,
 		},
-		Err: fmt.Errorf("field %s: %s", fullPath, msg),
+		Err: fmt.Errorf("field '%s': %s", fullPath, msg),
 	}
 }
 
@@ -87,10 +99,43 @@ func GetDefaultConfigPath() string {
 	return defaultConfigPath
 }
 
-func getFullConfigPath(filename string, workDir string) (string, error) {
-	return filepath.Abs(filepath.Join(workDir, filename))
+// find config file recursively
+// filename is a file to find and work dir is where to start.
+func getFullConfigPathRecursive(filename string, workDir string) (string, error) {
+	fileAbsPath, err := filepath.Abs(filepath.Join(workDir, filename))
+	if err != nil {
+		return "", err
+	}
+
+	if util.FileExists(fileAbsPath) {
+		return fileAbsPath, nil
+	}
+
+	// else we get parent and try again up until we reach roof of fs
+	parentDir := filepath.Dir(workDir)
+	if parentDir == "/" {
+		return "", fmt.Errorf("can not find config")
+	}
+
+	return getFullConfigPathRecursive(filename, parentDir)
 }
 
+// find config file non-recursively
+// filename is a file to find and work dir is where to start.
+func getFullConfigPath(filename string, workDir string) (string, error) {
+	fileAbsPath, err := filepath.Abs(filepath.Join(workDir, filename))
+	if err != nil {
+		return "", err
+	}
+
+	if !util.FileExists(fileAbsPath) {
+		return "", nil
+	}
+
+	return fileAbsPath, nil
+}
+
+// workDir is where lets.yaml found or rootDir points to
 func getWorkDir(filename string, rootDir string) (string, error) {
 	workDir, err := os.Getwd()
 	if err != nil {
@@ -105,30 +150,14 @@ func getWorkDir(filename string, rootDir string) (string, error) {
 }
 
 // Load a config from file
-func Load(filename string, rootDir string, letsVersion string) (*Config, error) {
+func Load(pathInfo PathInfo, letsVersion string) (*Config, error) {
 	failedLoadErr := func(err error) error {
-		return fmt.Errorf("failed to load config file %s: %s", filename, err)
+		return fmt.Errorf("failed to load config file %s: %s", pathInfo.Filename, err)
 	}
 
-	workDir, err := getWorkDir(filename, rootDir)
-	if err != nil {
-		return nil, err
-	}
+	config := newConfig(pathInfo.WorkDir, pathInfo.AbsPath)
 
-	configAbsPath := ""
-
-	if filepath.IsAbs(filename) {
-		configAbsPath = filename
-	} else {
-		configAbsPath, err = getFullConfigPath(filename, workDir)
-		if err != nil {
-			return nil, failedLoadErr(err)
-		}
-	}
-
-	config := newConfig(workDir, configAbsPath)
-
-	err = loadConfig(configAbsPath, config)
+	err := loadConfig(pathInfo.AbsPath, config)
 	if err != nil {
 		return nil, failedLoadErr(err)
 	}
@@ -187,7 +216,16 @@ func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 func unmarshalConfigGeneral(rawKeyValue map[string]interface{}, cfg *Config) error {
 	if cmds, ok := rawKeyValue[COMMANDS]; ok {
-		if err := cfg.loadCommands(cmds.(map[interface{}]interface{})); err != nil {
+		cmdsMap, ok := cmds.(map[interface{}]interface{})
+		if !ok {
+			return newConfigParseError(
+				"must be a mapping",
+				COMMANDS,
+				"",
+			)
+		}
+
+		if err := cfg.loadCommands(cmdsMap); err != nil {
 			return err
 		}
 	}
@@ -371,7 +409,15 @@ func parseAndValidateEvalEnv(evalEnv map[interface{}]interface{}, cfg *Config) e
 
 func (c *Config) loadCommands(cmds map[interface{}]interface{}) error {
 	for key, value := range cmds {
-		keyStr := key.(string)
+		keyStr, ok := key.(string)
+		if !ok {
+			return newConfigParseError(
+				"command name must be a string",
+				COMMANDS,
+				"",
+			)
+		}
+
 		newCmd := command.NewCommand(keyStr)
 		err := command.ParseAndValidateCommand(&newCmd, value.(map[interface{}]interface{}))
 

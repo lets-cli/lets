@@ -5,24 +5,34 @@ setup() {
     cleanup
 }
 
+NOT_EXISTED_LETS_FILE="lets-not-existed.yaml"
+
 @test "no_lets_file: should not create .lets dir" {
-    run lets
+    LETS_CONFIG=${NOT_EXISTED_LETS_FILE} run lets
     printf "%s\n" "${lines[@]}"
 
     [[ $status != 0 ]]
     [[ ! -d .lets ]]
 }
 
-@test "no_lets_file: show config read error" {
-    run lets
+@test "no_lets_file: show find config error" {
+    LETS_CONFIG=${NOT_EXISTED_LETS_FILE} run lets
     printf "%s\n" "${lines[@]}"
 
     [[ $status != 0 ]]
-    [[ "${lines[0]}" = "[ERROR] failed to load config file lets.yaml: open $(pwd)/lets.yaml: no such file or directory" ]]
+    [[ "${lines[0]}" = "[ERROR] failed to find config file ${NOT_EXISTED_LETS_FILE}: can not find config" ]]
+}
+
+@test "no_lets_file: show config read error (broken config)" {
+    LETS_CONFIG=broken_lets.yaml run lets
+    printf "%s\n" "${lines[@]}"
+
+    [[ $status != 0 ]]
+    [[ "${lines[0]}" = "[ERROR] failed to load config file broken_lets.yaml: failed to parse config: field 'commands': must be a mapping" ]]
 }
 
 @test "no_lets_file: show help for 'lets help' even if no config file" {
-    run lets help
+    LETS_CONFIG=${NOT_EXISTED_LETS_FILE} run lets help
     printf "%s\n" "${lines[@]}"
 
     [[ $status = 0 ]]
@@ -35,7 +45,7 @@ setup() {
 }
 
 @test "no_lets_file: show help for 'lets -h' even if no config file" {
-    run lets -h
+    LETS_CONFIG=${NOT_EXISTED_LETS_FILE} run lets -h
     printf "%s\n" "${lines[@]}"
 
     [[ $status = 0 ]]

@@ -6,7 +6,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/lets-cli/lets/config"
-	"github.com/lets-cli/lets/env"
 	"github.com/lets-cli/lets/logging"
 	"github.com/lets-cli/lets/workdir"
 )
@@ -30,18 +29,22 @@ func CreateRootCommand(out io.Writer, version string) *cobra.Command {
 }
 
 func initRootCommand(rootCmd *cobra.Command, out io.Writer, version string) {
-	configPath, workDir := env.GetConfigPathFromEnv()
+	var conf *config.Config
 
-	if configPath == "" {
-		configPath = config.GetDefaultConfigPath()
+	configPath, findCfgErr := config.FindConfig()
+	if findCfgErr != nil {
+		initErrCheck(rootCmd, findCfgErr)
+	} else {
+		cfg, cfgErr := config.Load(configPath, version)
+		if cfgErr != nil {
+			initErrCheck(rootCmd, cfgErr)
+		}
+		conf = cfg
 	}
 
-	conf, cfgErr := config.Load(configPath, workDir, version)
-	if cfgErr != nil {
-		initErrCheck(rootCmd, cfgErr)
-	} else {
+	if conf != nil {
 		// create .lets only when there is valid config in work dir
-		if createDirErr := workdir.CreateDotLetsDir(); createDirErr != nil {
+		if createDirErr := workdir.CreateDotLetsDir(configPath.WorkDir); createDirErr != nil {
 			initErrCheck(rootCmd, createDirErr)
 		}
 

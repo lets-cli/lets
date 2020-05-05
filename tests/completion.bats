@@ -9,7 +9,7 @@ setup() {
     cd ./no_lets_file
     cleanup
 
-    run lets completion
+    LETS_CONFIG_DIR="no_lets_file" run lets completion
     printf "%s\n" "${lines[@]}"
 
     [[ $status == 0 ]]

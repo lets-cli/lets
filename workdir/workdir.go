@@ -1,11 +1,24 @@
 package workdir
 
-import "github.com/lets-cli/lets/util"
+import (
+	"path/filepath"
 
-const DotLetsDir = ".lets"
+	"github.com/lets-cli/lets/util"
+)
+
+const dotLetsDir = ".lets"
 
 // CreateDotLetsDir creates .lets dir where lets.yaml located.
 // If directory already exists - skip creation.
-func CreateDotLetsDir() error {
-	return util.SafeCreateDir(DotLetsDir)
+func CreateDotLetsDir(workDir string) error {
+	fullPath, err := GetDotLetsDir(workDir)
+	if err != nil {
+		return err
+	}
+
+	return util.SafeCreateDir(fullPath)
+}
+
+func GetDotLetsDir(workDir string) (string, error) {
+	return filepath.Abs(filepath.Join(workDir, dotLetsDir))
 }

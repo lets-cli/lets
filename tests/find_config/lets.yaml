@@ -1,0 +1,6 @@
+shell: bash
+
+commands:
+  foo:
+    description: Print foo
+    cmd: echo "foo"

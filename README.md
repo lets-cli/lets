@@ -8,7 +8,8 @@ Just describe your commands in `lets.yaml` and lets will do the rest.
 > Very alpha software. Things may and will change/break
 
 * [Install](#install)
-* [Usage](#usage)
+* [Getting Started](#getting-started)
+* [Creating new config](#creating-new-config)
 * [Lets directory](#lets-directory)
 * [Config](#letsyaml)
 * [Env](#environment)
@@ -52,7 +53,33 @@ Also you can get bleeding edge version from https://aur.archlinux.org/packages/l
 yay -S lets-git
 ```
 
-## Usage
+## Getting Started
+
+If you already have `lets.yaml` then just go to that directory and run `lets` to see all available commands.
+
+If you start from scratch and want to create a new `lets.yaml` see [Creating new config](#creating-new-config)
+
+#### Config lookup
+
+`lets` will be looking for a config starting from where you call `lets` and all the way up to the `/`.
+
+For example:
+
+```bash
+cd /home/me
+touch lets.yaml
+
+mkdir ./project
+cd ./project
+
+lets # it will use lets.yaml at /home/me/lets.yaml
+
+touch lets.yaml
+
+lets # it will use lets.yaml right here (at /home/me/project/lets.yaml)
+```
+
+## Creating new config
 
 1. Create `lets.yaml` file in your project directory
 2. Add commands to `lets.yaml` config. [Config reference](#letsyaml)
