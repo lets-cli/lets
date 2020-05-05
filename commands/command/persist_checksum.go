@@ -101,13 +101,13 @@ func ChecksumForCmdPersisted(cmdName string) bool {
 }
 
 // ReadChecksumsFromDisk reads all checksums for cmd into map
-func ReadChecksumsFromDisk(cmdName string, checksumMap map[string]string) (map[string]string, error) {
+func (cmd *Command) ReadChecksumsFromDisk(cmdName string, checksumMap map[string]string) error {
 	checksums := make(map[string]string, len(checksumMap)+1)
 
 	for checksumName := range checksumMap {
 		checksum, err := readOneChecksum(cmdName, checksumName)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		checksums[checksumName] = checksum
@@ -115,12 +115,14 @@ func ReadChecksumsFromDisk(cmdName string, checksumMap map[string]string) (map[s
 
 	checksum, err := readOneChecksum(cmdName, DefaultChecksumName)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	checksums[DefaultChecksumName] = checksum
 
-	return checksums, nil
+	cmd.persistedChecksums = checksums
+
+	return nil
 }
 
 func readOneChecksum(cmdName, checksumName string) (string, error) {

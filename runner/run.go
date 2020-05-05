@@ -47,11 +47,45 @@ func formatOptsUsageError(err error, opts docopt.Opts, cmdName string, rawOption
 	return fmt.Errorf("%s\n\n%s", errTpl, rawOptions)
 }
 
+// Init Command before run:
+// - parse docopt
+// - calculate checksum
+func initCmd(
+	cmdToRun *command.Command,
+	isChildCmd bool,
+) error {
+	// parse docopts - only for parent
+	if !isChildCmd {
+		opts, err := command.ParseDocopts(cmdToRun.Args, cmdToRun.RawOptions)
+		if err != nil {
+			return formatOptsUsageError(err, opts, cmdToRun.Name, cmdToRun.RawOptions)
+		}
+
+		cmdToRun.Options = command.OptsToLetsOpt(opts)
+		cmdToRun.CliOptions = command.OptsToLetsCli(opts)
+	}
+
+	// calculate checksum if needed
+	if err := cmdToRun.ChecksumCalculator(); err != nil {
+		return err
+	}
+
+	// if command declared as persist_checksum we must read current persisted checksums into memory
+	if cmdToRun.PersistChecksum {
+		if command.ChecksumForCmdPersisted(cmdToRun.Name) {
+			err := cmdToRun.ReadChecksumsFromDisk(cmdToRun.Name, cmdToRun.ChecksumMap)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
 // Prepare cmd to be run:
 // - set in/out
 // - set dir
-// - parse docopt
-// - calculate checksum
 // - prepare environment
 //
 // NOTE: We intentionally do not passing ctx to exec.Command because we want to wait for process end.
@@ -63,7 +97,7 @@ func prepareCmdForRun(
 	cfg *config.Config,
 	out io.Writer,
 	parentName string,
-) (*exec.Cmd, error) {
+) *exec.Cmd {
 	cmd := exec.Command(cfg.Shell, "-c", cmdScript) // #nosec G204
 	// setup std out and err
 	cmd.Stdout = out
@@ -72,38 +106,6 @@ func prepareCmdForRun(
 
 	// set working directory for command
 	cmd.Dir = cfg.WorkDir
-
-	isChildCmd := parentName != ""
-
-	// parse docopts - only for parent
-	if !isChildCmd {
-		opts, err := command.ParseDocopts(cmdToRun.Args, cmdToRun.RawOptions)
-		if err != nil {
-			return nil, formatOptsUsageError(err, opts, cmdToRun.Name, cmdToRun.RawOptions)
-		}
-
-		cmdToRun.Options = command.OptsToLetsOpt(opts)
-		cmdToRun.CliOptions = command.OptsToLetsCli(opts)
-	}
-
-	// calculate checksum if needed
-	if err := cmdToRun.ChecksumCalculator(); err != nil {
-		return nil, err
-	}
-
-	// if command declared as persist_checksum we must read current persisted checksums into memory
-	var persistedChecksums map[string]string
-
-	if cmdToRun.PersistChecksum {
-		if command.ChecksumForCmdPersisted(cmdToRun.Name) {
-			checksums, err := command.ReadChecksumsFromDisk(cmdToRun.Name, cmdToRun.ChecksumMap)
-			if err != nil {
-				return nil, err
-			}
-
-			persistedChecksums = checksums
-		}
-	}
 
 	// setup env for command
 	cmd.Env = composeEnvs(
@@ -119,9 +121,15 @@ func prepareCmdForRun(
 	if cmdToRun.PersistChecksum {
 		cmd.Env = composeEnvs(
 			cmd.Env,
-			convertChangedChecksumMapToEnvForCmd(cmdToRun.Checksum, cmdToRun.ChecksumMap, persistedChecksums),
+			convertChangedChecksumMapToEnvForCmd(
+				cmdToRun.Checksum,
+				cmdToRun.ChecksumMap,
+				cmdToRun.GetPersistedChecksums(),
+			),
 		)
 	}
+
+	isChildCmd := parentName != ""
 
 	if !isChildCmd {
 		logging.Log.Debugf(
@@ -140,7 +148,7 @@ func prepareCmdForRun(
 		)
 	}
 
-	return cmd, nil
+	return cmd
 }
 
 // Run all commands from Depends in sequential order
@@ -179,6 +187,10 @@ func runCmd(
 	out io.Writer,
 	parentName string,
 ) error {
+	if err := initCmd(cmdToRun, parentName != noParent); err != nil {
+		return err
+	}
+
 	if err := runDepends(cmdToRun, cfg, out); err != nil {
 		return err
 	}
@@ -204,10 +216,7 @@ func runCmdScript(
 ) error {
 	isChildCmd := parentName != ""
 
-	cmd, err := prepareCmdForRun(cmdToRun, cmdScript, cfg, out, parentName)
-	if err != nil {
-		return err
-	}
+	cmd := prepareCmdForRun(cmdToRun, cmdScript, cfg, out, parentName)
 
 	runErr := cmd.Run()
 	if runErr != nil {
@@ -221,7 +230,12 @@ func runCmdScript(
 	return nil
 }
 
-func filterCmdMap(parentCmdName string, cmdMap map[string]string, only []string, exclude []string) (map[string]string, error) {
+func filterCmdMap(
+	parentCmdName string,
+	cmdMap map[string]string,
+	only []string,
+	exclude []string,
+) (map[string]string, error) {
 	hasOnly := len(only) > 0
 	hasExclude := len(exclude) > 0
 
@@ -238,6 +252,7 @@ func filterCmdMap(parentCmdName string, cmdMap map[string]string, only []string,
 			if !ok {
 				return nil, fmt.Errorf("no such sub-command '%s' in command '%s' used in 'only' flag", cmdName, parentCmdName)
 			}
+
 			filteredCmdMap[cmdName] = cmdScript
 		}
 	}
@@ -250,6 +265,7 @@ func filterCmdMap(parentCmdName string, cmdMap map[string]string, only []string,
 			if !ok {
 				return nil, fmt.Errorf("no such sub-command '%s' in command '%s' used in 'exclude' flag", cmdName, parentCmdName)
 			}
+
 			delete(filteredCmdMap, cmdName)
 		}
 	}
@@ -260,6 +276,10 @@ func filterCmdMap(parentCmdName string, cmdMap map[string]string, only []string,
 // Run all commands from Command.CmdMap in parallel and wait for results.
 // Must be used only when Command.Cmd is map[string]string
 func runCmdAsMap(ctx context.Context, cmdToRun *command.Command, cfg *config.Config, out io.Writer) error {
+	if err := initCmd(cmdToRun, false); err != nil {
+		return err
+	}
+
 	if err := runDepends(cmdToRun, cfg, out); err != nil {
 		return err
 	}
@@ -270,6 +290,7 @@ func runCmdAsMap(ctx context.Context, cmdToRun *command.Command, cfg *config.Con
 	if err != nil {
 		return err
 	}
+
 	for _, cmdExecScript := range cmdMap {
 		cmdExecScript := cmdExecScript
 		// wait for cmd to end in a goroutine with error propagation

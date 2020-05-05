@@ -21,6 +21,7 @@ func ParseDocopts(args []string, rawOptions string) (docopt.Opts, error) {
 	if rawOptions == "" {
 		return docopt.Opts{}, nil
 	}
+
 	return DocoptParser.ParseArgs(rawOptions, args, "")
 }
 

@@ -5,6 +5,7 @@ linters:
     - goimports
     - funlen
     - godox
+    - maligned
     - prealloc # enable it sometimes
 
 linters-settings:

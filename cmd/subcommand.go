@@ -16,6 +16,7 @@ import (
 // cut all elements before command name
 func prepareArgs(cmd command.Command, originalArgs []string) []string {
 	nameIdx := 0
+
 	for idx, arg := range originalArgs {
 		if arg == cmd.Name {
 			nameIdx = idx
@@ -23,7 +24,6 @@ func prepareArgs(cmd command.Command, originalArgs []string) []string {
 	}
 
 	return originalArgs[nameIdx:]
-
 }
 
 // newCmdGeneric creates new cobra root sub command from Command
