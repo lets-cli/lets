@@ -28,6 +28,12 @@ const defaultConfigPath = "lets.yaml"
 var validConfigFields = []string{COMMANDS, SHELL, ENV, EvalEnv, MIXINS, VERSION}
 var validMixinConfigFields = []string{COMMANDS, ENV, EvalEnv}
 
+type ConfigPath struct {
+	Filename string
+	AbsPath string
+	WorkDir string
+}
+
 // Config is a struct for loaded config file
 type Config struct {
 	WorkDir  string
@@ -87,10 +93,24 @@ func GetDefaultConfigPath() string {
 	return defaultConfigPath
 }
 
+// find config file recursively
+// filename is a file to find and work dir is where to start.
 func getFullConfigPath(filename string, workDir string) (string, error) {
-	return filepath.Abs(filepath.Join(workDir, filename))
+	fileAbsPath, err := filepath.Abs(filepath.Join(workDir, filename))
+	if err != nil {
+		return "", err
+	}
+
+	if util.FileExists(fileAbsPath) {
+		return fileAbsPath, nil
+	}
+
+	// else we get parent and try again up until we reach roof of fs
+	parentDir := filepath.Dir(workDir)
+	return getFullConfigPath(filename, parentDir)
 }
 
+// workDir is where lets.yaml found or rootDir points to
 func getWorkDir(filename string, rootDir string) (string, error) {
 	workDir, err := os.Getwd()
 	if err != nil {
@@ -105,30 +125,14 @@ func getWorkDir(filename string, rootDir string) (string, error) {
 }
 
 // Load a config from file
-func Load(filename string, rootDir string, letsVersion string) (*Config, error) {
+func Load(configPath ConfigPath, letsVersion string) (*Config, error) {
 	failedLoadErr := func(err error) error {
-		return fmt.Errorf("failed to load config file %s: %s", filename, err)
+		return fmt.Errorf("failed to load config file %s: %s", configPath.Filename, err)
 	}
 
-	workDir, err := getWorkDir(filename, rootDir)
-	if err != nil {
-		return nil, err
-	}
+	config := newConfig(configPath.WorkDir, configPath.AbsPath)
 
-	configAbsPath := ""
-
-	if filepath.IsAbs(filename) {
-		configAbsPath = filename
-	} else {
-		configAbsPath, err = getFullConfigPath(filename, workDir)
-		if err != nil {
-			return nil, failedLoadErr(err)
-		}
-	}
-
-	config := newConfig(workDir, configAbsPath)
-
-	err = loadConfig(configAbsPath, config)
+	err := loadConfig(configPath.AbsPath, config)
 	if err != nil {
 		return nil, failedLoadErr(err)
 	}

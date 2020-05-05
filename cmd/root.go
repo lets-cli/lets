@@ -6,7 +6,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/lets-cli/lets/config"
-	"github.com/lets-cli/lets/env"
 	"github.com/lets-cli/lets/logging"
 	"github.com/lets-cli/lets/workdir"
 )
@@ -30,13 +29,12 @@ func CreateRootCommand(out io.Writer, version string) *cobra.Command {
 }
 
 func initRootCommand(rootCmd *cobra.Command, out io.Writer, version string) {
-	configPath, workDir := env.GetConfigPathFromEnv()
-
-	if configPath == "" {
-		configPath = config.GetDefaultConfigPath()
+	configPath, err := config.FindConfig()
+	if err != nil {
+		return
 	}
 
-	conf, cfgErr := config.Load(configPath, workDir, version)
+	conf, cfgErr := config.Load(configPath, version)
 	if cfgErr != nil {
 		initErrCheck(rootCmd, cfgErr)
 	} else {
