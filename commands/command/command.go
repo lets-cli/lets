@@ -45,9 +45,19 @@ type Command struct {
 	ChecksumMap     map[string]string
 	PersistChecksum bool
 
+	// prepared args - started from command name
+	Args []string
+
+	// run only specified commands from cmd map
+	Only []string
+	// run all but excluded commands from cmd map
+	Exclude []string
+
 	// if command has declared checksum
 	hasChecksum    bool
 	checksumSource map[string][]string
+	// store loaded persisted checksums here
+	persistedChecksums map[string]string
 }
 
 type ParseCommandError struct {
@@ -99,6 +109,10 @@ func (cmd *Command) ChecksumCalculator() error {
 	}
 
 	return calculateChecksumFromSource(cmd)
+}
+
+func (cmd *Command) GetPersistedChecksums() map[string]string {
+	return cmd.persistedChecksums
 }
 
 // ParseAndValidateCommand parses and validates unmarshaled yaml

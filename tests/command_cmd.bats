@@ -65,3 +65,40 @@ setup() {
     [[ "${lines[0]}" = "1 hello" ]]
     [[ "${lines[1]}" = "2 hello" ]]
 }
+
+@test "command_cmd: cmd-as-map run with --only" {
+    run lets --only two cmd-as-map
+    printf "%s\n" "${lines[@]}"
+
+    [[ $status = 0 ]]
+
+    # there is no guarantee in which order cmds will finish, so we sort output on our own
+    sort_array lines
+
+    [[ "${lines[0]}" = "2" ]]
+}
+
+@test "command_cmd: cmd-as-map run with --exclude" {
+    run lets --exclude one cmd-as-map
+    printf "%s\n" "${lines[@]}"
+
+    [[ $status = 0 ]]
+
+    # there is no guarantee in which order cmds will finish, so we sort output on our own
+    sort_array lines
+
+    [[ "${lines[0]}" = "2" ]]
+}
+
+
+@test "command_cmd: cmd-as-map run with --only and command own flags" {
+    run lets --only two cmd-as-map-with-options --hello
+    printf "%s\n" "${lines[@]}"
+
+    [[ $status = 0 ]]
+
+    # there is no guarantee in which order cmds will finish, so we sort output on our own
+    sort_array lines
+
+    [[ "${lines[0]}" = "2 --hello" ]]
+}

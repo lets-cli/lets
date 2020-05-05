@@ -22,6 +22,14 @@ commands:
       one: echo "1"
       two: echo "2"
 
+  cmd-as-map-with-options:
+    description: Test cmd as map with options
+    options: |
+      Usage: lets cmd-as-map-with-options [--hello]
+    cmd:
+      one: echo "1 ${LETSCLI_HELLO}"
+      two: echo "2 ${LETSCLI_HELLO}"
+
   cmd-as-map-error:
     description: Test cmd as map with error
     cmd:
