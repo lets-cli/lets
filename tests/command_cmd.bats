@@ -92,7 +92,6 @@ setup() {
 
 
 @test "command_cmd: cmd-as-map run with --only and command own flags" {
-    cd ./no_lets_file
     run lets --only two cmd-as-map-with-options --hello
     printf "%s\n" "${lines[@]}"
 

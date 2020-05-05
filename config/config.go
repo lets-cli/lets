@@ -174,6 +174,7 @@ func Load(pathInfo PathInfo, letsVersion string) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	config.DotLetsDir = dotLetsDir
 
 	return config, nil

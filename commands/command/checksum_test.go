@@ -8,7 +8,12 @@ import (
 	"github.com/lets-cli/lets/test"
 )
 
-const defaultChecksum = "da39a3ee5e6b4b0d3255bfef95601890afd80709"
+// get filename without last 4 chars - to make tests more predictable
+func getFilePrefix(filename string) string {
+	return fmt.Sprintf("%s*", filename[:len(filename)-4])
+}
+
+const expectChecksum = "56a89c168888554d9cafa50c2f37c249dde6e37d"
 
 func TestCalculateChecksumSimpleFilename(t *testing.T) {
 	tempDir := os.TempDir()
@@ -28,7 +33,7 @@ func TestCalculateChecksumSimpleFilename(t *testing.T) {
 		t.Errorf("Can not write test file. Error: %s", err)
 	}
 
-	checksum, err := calculateChecksum([]string{
+	checksum, err := calculateChecksum(tempDir, []string{
 		file1.Name(),
 		file2.Name(),
 	})
@@ -37,8 +42,8 @@ func TestCalculateChecksumSimpleFilename(t *testing.T) {
 		t.Errorf("Checksum is not correct. Error: %s", err)
 	}
 
-	if defaultChecksum != checksum {
-		t.Errorf("Checksum is not correct. Expect: %s, got: %s", defaultChecksum, checksum)
+	if expectChecksum != checksum {
+		t.Errorf("Checksum is not correct. Expect: %s, got: %s", expectChecksum, checksum)
 	}
 }
 
@@ -60,16 +65,19 @@ func TestCalculateChecksumGlobPattern(t *testing.T) {
 		t.Errorf("Can not write test file. Error: %s", err)
 	}
 
-	checksum, err := calculateChecksum([]string{
-		fmt.Sprintf("%s/lets_checksum_test_*", tempDir),
+	f1Prefix := getFilePrefix(file1.Name())
+	f2Prefix := getFilePrefix(file2.Name())
+	checksum, err := calculateChecksum(tempDir, []string{
+		f1Prefix,
+		f2Prefix,
 	})
 
 	if err != nil {
 		t.Errorf("Checksum is not correct. Error: %s", err)
 	}
 
-	if defaultChecksum != checksum {
-		t.Errorf("Checksum is not correct. Expect: %s, got: %s", defaultChecksum, checksum)
+	if expectChecksum != checksum {
+		t.Errorf("Checksum is not correct. Expect: %s, got: %s", expectChecksum, checksum)
 	}
 }
 
@@ -93,19 +101,21 @@ func TestCalculateChecksumFromListOrMap(t *testing.T) {
 
 	// declare command with checksum as list
 	cmdChAsList := NewCommand("checksum-as-list")
+	f1Prefix := getFilePrefix(file1.Name())
+	f2Prefix := getFilePrefix(file2.Name())
 	cmdChAsList.checksumSource = map[string][]string{
-		"": {"lets_checksum_test_1", "lets_checksum_test_2"},
+		"": {f1Prefix, f2Prefix},
 	}
 
-	err = calculateChecksumFromSource(&cmdChAsList)
+	err = calculateChecksumFromSource(tempDir, &cmdChAsList)
 	if err != nil {
 		t.Errorf("Checksum is not correct. Error: %s", err)
 	}
 
-	if cmdChAsList.Checksum != defaultChecksum {
+	if cmdChAsList.Checksum != expectChecksum {
 		t.Errorf(
 			"Checksum is not correct for command with checksum as list. Expect: %s, got: %s",
-			defaultChecksum,
+			expectChecksum,
 			cmdChAsList.Checksum,
 		)
 	}
@@ -113,18 +123,18 @@ func TestCalculateChecksumFromListOrMap(t *testing.T) {
 	// declare command with checksum as map but with same files
 	cmdChAsMap := NewCommand("checksum-as-map")
 	cmdChAsMap.checksumSource = map[string][]string{
-		"misc": {"lets_checksum_test_1", "lets_checksum_test_2"},
+		"misc": {f1Prefix, f2Prefix},
 	}
 
-	err = calculateChecksumFromSource(&cmdChAsMap)
+	err = calculateChecksumFromSource(tempDir, &cmdChAsMap)
 	if err != nil {
 		t.Errorf("Checksum is not correct. Error: %s", err)
 	}
 
-	if cmdChAsMap.ChecksumMap["misc"] != defaultChecksum {
+	if cmdChAsMap.ChecksumMap["misc"] != expectChecksum {
 		t.Errorf(
 			"Checksum is not correct for command with checksum as map. Expect: %s, got: %s",
-			defaultChecksum,
+			expectChecksum,
 			cmdChAsMap.ChecksumMap["misc"],
 		)
 	}
