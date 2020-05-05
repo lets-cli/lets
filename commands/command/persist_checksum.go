@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 
 	"github.com/lets-cli/lets/util"
-	"github.com/lets-cli/lets/workdir"
 )
 
 const DefaultChecksumName = "lets_default_checksum"
@@ -39,31 +38,31 @@ func parseAndValidatePersistChecksum(persistChecksum interface{}, newCmd *Comman
 	return nil
 }
 
-func getCmdChecksumPath(cmdName string) string {
-	return filepath.Join(workdir.DotLetsDir, checksumsDir, cmdName)
+func getCmdChecksumPath(dotLetsDir string, cmdName string) string {
+	return filepath.Join(dotLetsDir, checksumsDir, cmdName)
 }
 
 // returns dir path and full file path to checksum
 // (.lets/checksums/[command_name]/, .lets/checksums/[command_name]/[checksum_name])
-func getChecksumPath(cmdName string, checksumName string) (string, string) {
-	dirPath := getCmdChecksumPath(cmdName)
+func getChecksumPath(dotLetsDir string, cmdName string, checksumName string) (string, string) {
+	dirPath := getCmdChecksumPath(dotLetsDir, cmdName)
 	return dirPath, filepath.Join(dirPath, checksumName)
 }
 
 func PersistCommandsChecksumToDisk(cmd Command) error {
-	if err := util.SafeCreateDir(filepath.Join(workdir.DotLetsDir, checksumsDir)); err != nil {
+	if err := util.SafeCreateDir(filepath.Join(cmd.DotLetsDir, checksumsDir)); err != nil {
 		return err
 	}
 
 	// TODO if at least one write failed do we have to revert all writes ???
 	for checksumName, checksum := range cmd.ChecksumMap {
-		err := persistOneChecksum(cmd.Name, checksumName, checksum)
+		err := persistOneChecksum(cmd.DotLetsDir, cmd.Name, checksumName, checksum)
 		if err != nil {
 			return err
 		}
 	}
 
-	err := persistOneChecksum(cmd.Name, DefaultChecksumName, cmd.Checksum)
+	err := persistOneChecksum(cmd.DotLetsDir, cmd.Name, DefaultChecksumName, cmd.Checksum)
 	if err != nil {
 		return err
 	}
@@ -71,8 +70,8 @@ func PersistCommandsChecksumToDisk(cmd Command) error {
 	return nil
 }
 
-func persistOneChecksum(cmdName string, checksumName string, checksum string) error {
-	checksumDirPath, checksumFilePath := getChecksumPath(cmdName, checksumName)
+func persistOneChecksum(dotLetsDir string, cmdName string, checksumName string, checksum string) error {
+	checksumDirPath, checksumFilePath := getChecksumPath(dotLetsDir, cmdName, checksumName)
 	if err := util.SafeCreateDir(checksumDirPath); err != nil {
 		return err
 	}
@@ -91,9 +90,9 @@ func persistOneChecksum(cmdName string, checksumName string, checksum string) er
 }
 
 // ChecksumForCmdPersisted checks if checksums for cmd exists and persisted
-func ChecksumForCmdPersisted(cmdName string) bool {
+func ChecksumForCmdPersisted(dotLetsDir string, cmdName string) bool {
 	// check if checksums for cmd exists
-	if _, err := os.Stat(getCmdChecksumPath(cmdName)); err != nil {
+	if _, err := os.Stat(getCmdChecksumPath(dotLetsDir, cmdName)); err != nil {
 		return !os.IsNotExist(err)
 	}
 
@@ -101,11 +100,11 @@ func ChecksumForCmdPersisted(cmdName string) bool {
 }
 
 // ReadChecksumsFromDisk reads all checksums for cmd into map
-func (cmd *Command) ReadChecksumsFromDisk(cmdName string, checksumMap map[string]string) error {
+func (cmd *Command) ReadChecksumsFromDisk(dotLetsDir string, cmdName string, checksumMap map[string]string) error {
 	checksums := make(map[string]string, len(checksumMap)+1)
 
 	for checksumName := range checksumMap {
-		checksum, err := readOneChecksum(cmdName, checksumName)
+		checksum, err := readOneChecksum(dotLetsDir, cmdName, checksumName)
 		if err != nil {
 			return err
 		}
@@ -113,7 +112,7 @@ func (cmd *Command) ReadChecksumsFromDisk(cmdName string, checksumMap map[string
 		checksums[checksumName] = checksum
 	}
 
-	checksum, err := readOneChecksum(cmdName, DefaultChecksumName)
+	checksum, err := readOneChecksum(dotLetsDir, cmdName, DefaultChecksumName)
 	if err != nil {
 		return err
 	}
@@ -125,8 +124,8 @@ func (cmd *Command) ReadChecksumsFromDisk(cmdName string, checksumMap map[string
 	return nil
 }
 
-func readOneChecksum(cmdName, checksumName string) (string, error) {
-	_, checksumFilePath := getChecksumPath(cmdName, checksumName)
+func readOneChecksum(dotLetsDir, cmdName, checksumName string) (string, error) {
+	_, checksumFilePath := getChecksumPath(dotLetsDir, cmdName, checksumName)
 
 	fileData, err := ioutil.ReadFile(checksumFilePath)
 	if err != nil {

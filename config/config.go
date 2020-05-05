@@ -28,10 +28,10 @@ const defaultConfigPath = "lets.yaml"
 var validConfigFields = []string{COMMANDS, SHELL, ENV, EvalEnv, MIXINS, VERSION}
 var validMixinConfigFields = []string{COMMANDS, ENV, EvalEnv}
 
-type ConfigPath struct {
+type PathInfo struct {
 	Filename string
-	AbsPath string
-	WorkDir string
+	AbsPath  string
+	WorkDir  string
 }
 
 // Config is a struct for loaded config file
@@ -59,7 +59,13 @@ func (e *ParseError) Error() string {
 
 func newConfigParseError(msg string, name string, field string) error {
 	fields := []string{name, field}
-	fullPath := strings.Join(fields, ".")
+	sep := "."
+
+	if field == "" {
+		sep = ""
+	}
+
+	fullPath := strings.Join(fields, sep)
 
 	return &ParseError{
 		Path: struct {
@@ -69,7 +75,7 @@ func newConfigParseError(msg string, name string, field string) error {
 			Full:  fullPath,
 			Field: field,
 		},
-		Err: fmt.Errorf("field %s: %s", fullPath, msg),
+		Err: fmt.Errorf("field '%s': %s", fullPath, msg),
 	}
 }
 
@@ -95,7 +101,7 @@ func GetDefaultConfigPath() string {
 
 // find config file recursively
 // filename is a file to find and work dir is where to start.
-func getFullConfigPath(filename string, workDir string) (string, error) {
+func getFullConfigPathRecursive(filename string, workDir string) (string, error) {
 	fileAbsPath, err := filepath.Abs(filepath.Join(workDir, filename))
 	if err != nil {
 		return "", err
@@ -107,7 +113,26 @@ func getFullConfigPath(filename string, workDir string) (string, error) {
 
 	// else we get parent and try again up until we reach roof of fs
 	parentDir := filepath.Dir(workDir)
-	return getFullConfigPath(filename, parentDir)
+	if parentDir == "/" {
+		return "", fmt.Errorf("can not find config")
+	}
+
+	return getFullConfigPathRecursive(filename, parentDir)
+}
+
+// find config file non-recursively
+// filename is a file to find and work dir is where to start.
+func getFullConfigPath(filename string, workDir string) (string, error) {
+	fileAbsPath, err := filepath.Abs(filepath.Join(workDir, filename))
+	if err != nil {
+		return "", err
+	}
+
+	if !util.FileExists(fileAbsPath) {
+		return "", nil
+	}
+
+	return fileAbsPath, nil
 }
 
 // workDir is where lets.yaml found or rootDir points to
@@ -125,14 +150,14 @@ func getWorkDir(filename string, rootDir string) (string, error) {
 }
 
 // Load a config from file
-func Load(configPath ConfigPath, letsVersion string) (*Config, error) {
+func Load(pathInfo PathInfo, letsVersion string) (*Config, error) {
 	failedLoadErr := func(err error) error {
-		return fmt.Errorf("failed to load config file %s: %s", configPath.Filename, err)
+		return fmt.Errorf("failed to load config file %s: %s", pathInfo.Filename, err)
 	}
 
-	config := newConfig(configPath.WorkDir, configPath.AbsPath)
+	config := newConfig(pathInfo.WorkDir, pathInfo.AbsPath)
 
-	err := loadConfig(configPath.AbsPath, config)
+	err := loadConfig(pathInfo.AbsPath, config)
 	if err != nil {
 		return nil, failedLoadErr(err)
 	}
@@ -191,7 +216,16 @@ func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 func unmarshalConfigGeneral(rawKeyValue map[string]interface{}, cfg *Config) error {
 	if cmds, ok := rawKeyValue[COMMANDS]; ok {
-		if err := cfg.loadCommands(cmds.(map[interface{}]interface{})); err != nil {
+		cmdsMap, ok := cmds.(map[interface{}]interface{})
+		if !ok {
+			return newConfigParseError(
+				"must be a mapping",
+				COMMANDS,
+				"",
+			)
+		}
+
+		if err := cfg.loadCommands(cmdsMap); err != nil {
 			return err
 		}
 	}
@@ -375,7 +409,15 @@ func parseAndValidateEvalEnv(evalEnv map[interface{}]interface{}, cfg *Config) e
 
 func (c *Config) loadCommands(cmds map[interface{}]interface{}) error {
 	for key, value := range cmds {
-		keyStr := key.(string)
+		keyStr, ok := key.(string)
+		if !ok {
+			return newConfigParseError(
+				"command name must be a string",
+				COMMANDS,
+				"",
+			)
+		}
+
 		newCmd := command.NewCommand(keyStr)
 		err := command.ParseAndValidateCommand(&newCmd, value.(map[interface{}]interface{}))
 

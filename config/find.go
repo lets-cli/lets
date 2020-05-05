@@ -7,21 +7,27 @@ import (
 	"github.com/lets-cli/lets/env"
 )
 
-func FindConfig() (ConfigPath, error) {
+// FindConfig will try to find best match for config file.
+// Rules are:
+// - if specified LETS_CONFIG - try to load only that file
+// - if specified LETS_CONFIG_DIR - try to look for a config only in that dir - don't do recursion
+// - if not specified any of env vars above - try to find config recursively
+func FindConfig() (PathInfo, error) {
 	configFilename, workDir := env.GetConfigPathFromEnv()
+	configDirFromEnv := workDir != ""
 
 	if configFilename == "" {
 		configFilename = GetDefaultConfigPath()
 	}
 
-	failedFindErr := func(err error) error {
-		return fmt.Errorf("failed to find config file %s: %s", configFilename, err)
+	failedFindErr := func(err error, filename string) error {
+		return fmt.Errorf("failed to find config file %s: %s", filename, err)
 	}
 
 	// work dir is where to start looking for lets.yaml
 	workDir, err := getWorkDir(configFilename, workDir)
 	if err != nil {
-		return ConfigPath{}, err
+		return PathInfo{}, err
 	}
 
 	configAbsPath := ""
@@ -30,21 +36,28 @@ func FindConfig() (ConfigPath, error) {
 	if filepath.IsAbs(configFilename) {
 		configAbsPath = configFilename
 	} else {
-		// try to find abs config path up in parent dir tree
-		configAbsPath, err = getFullConfigPath(configFilename, workDir)
-		if err != nil {
-			return ConfigPath{}, failedFindErr(err)
+		if configDirFromEnv {
+			configAbsPath, err = getFullConfigPath(configFilename, workDir)
+			if err != nil {
+				return PathInfo{}, failedFindErr(err, configFilename)
+			}
+		} else {
+			// try to find abs config path up in parent dir tree
+			configAbsPath, err = getFullConfigPathRecursive(configFilename, workDir)
+			if err != nil {
+				return PathInfo{}, failedFindErr(err, configFilename)
+			}
 		}
 	}
 
 	// just to be sure that work dir is correct
 	workDir = filepath.Dir(configAbsPath)
 
-	cp := ConfigPath{
-		AbsPath: configAbsPath,
-		WorkDir: workDir,
+	pathInfo := PathInfo{
+		AbsPath:  configAbsPath,
+		WorkDir:  workDir,
 		Filename: configFilename,
 	}
 
-	return cp, nil
+	return pathInfo, nil
 }
