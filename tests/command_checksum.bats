@@ -54,3 +54,13 @@ CHECKSUM_FROM_FOO_AND_BAR_CHECKSUMS="b778d48759ad4e6e9a755bd595d23eeaa2f7ff65"
     [[ "${lines[0]}" = "LETS_CHECKSUM_ALL=${ALL_CHECKSUM}" ]]
     [[ "${lines[1]}" = "LETS_CHECKSUM=794b73672fd1259d6fc742cb86713e769d723920" ]]
 }
+
+
+@test "command_checksum: should calculate checksum from sub-dir" {
+    cd ./subdir
+    run lets as-list-of-files
+    printf "%s\n" "${lines[@]}"
+
+    [[ $status = 0 ]]
+    [[ "${lines[0]}" = ${ALL_CHECKSUM} ]]
+}

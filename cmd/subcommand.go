@@ -11,7 +11,6 @@ import (
 	"github.com/lets-cli/lets/commands/command"
 	"github.com/lets-cli/lets/config"
 	"github.com/lets-cli/lets/runner"
-	"github.com/lets-cli/lets/workdir"
 )
 
 // cut all elements before command name
@@ -41,14 +40,6 @@ func newCmdGeneric(cmdToRun command.Command, conf *config.Config, out io.Writer)
 			cmdToRun.Only = only
 			cmdToRun.Exclude = exclude
 			cmdToRun.Args = prepareArgs(cmdToRun, os.Args)
-			cmdToRun.WorkDir = conf.WorkDir
-
-			dotLetsDir, err := workdir.GetDotLetsDir(cmdToRun.WorkDir)
-			if err != nil {
-				return err
-			}
-
-			cmdToRun.DotLetsDir = dotLetsDir
 
 			return runner.RunCommand(cmd.Context(), cmdToRun, conf, out)
 		},

@@ -11,6 +11,7 @@ import (
 
 	"github.com/lets-cli/lets/commands/command"
 	"github.com/lets-cli/lets/util"
+	"github.com/lets-cli/lets/workdir"
 )
 
 var (
@@ -36,6 +37,7 @@ type PathInfo struct {
 
 // Config is a struct for loaded config file
 type Config struct {
+	// absolute path to work dir - where config is placed
 	WorkDir  string
 	FilePath string
 	Commands map[string]command.Command
@@ -43,6 +45,8 @@ type Config struct {
 	Env      map[string]string
 	Version  string
 	isMixin  bool // if true, we consider config as mixin and apply different parsing and validation
+	// absolute path to .lets
+	DotLetsDir string
 }
 
 type ParseError struct {
@@ -165,6 +169,12 @@ func Load(pathInfo PathInfo, letsVersion string) (*Config, error) {
 	if err = Validate(config, letsVersion); err != nil {
 		return nil, failedLoadErr(err)
 	}
+
+	dotLetsDir, err := workdir.GetDotLetsDir(pathInfo.WorkDir)
+	if err != nil {
+		return nil, err
+	}
+	config.DotLetsDir = dotLetsDir
 
 	return config, nil
 }

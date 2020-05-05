@@ -6,21 +6,21 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"sort"
-
-	"github.com/lets-cli/lets/env"
 )
 
 var checksumCache map[string][]byte = make(map[string][]byte)
 
+// files can have either absolute or relative path:
+// - in case of absolute path we just read that file
+// - in case of relative file we trying to read file in work dir
+//
 // return sorted list of files read by glob patterns
-func readFilesFromPatterns(patterns []string) ([]string, error) {
-	_, workDir := env.GetConfigPathFromEnv()
-
+func readFilesFromPatterns(workDir string, patterns []string) ([]string, error) {
 	var files []string
 
 	for _, pattern := range patterns {
 		absPatternPath := pattern
-		if filepath.IsAbs(pattern) {
+		if !filepath.IsAbs(pattern) {
 			absPatternPath = filepath.Join(workDir, pattern)
 		}
 
@@ -40,9 +40,9 @@ func readFilesFromPatterns(patterns []string) ([]string, error) {
 // calculate sha1 hash from files content and return hex digest
 // It calculates sha1 for each file, cache checksum for each file.
 // Resulting checksum is sha1 from all files sha1's
-func calculateChecksum(patterns []string) (string, error) {
+func calculateChecksum(workDir string, patterns []string) (string, error) {
 	// read filenames from patterns
-	files, err := readFilesFromPatterns(patterns)
+	files, err := readFilesFromPatterns(workDir, patterns)
 	if err != nil {
 		return "", err
 	}
@@ -146,11 +146,12 @@ func parseAndValidateChecksum(checksum interface{}, newCmd *Command) error {
 	return nil
 }
 
-func calculateChecksumFromSource(newCmd *Command) error {
+// calculate checksum from files listed in command.checksum
+func calculateChecksumFromSource(workDir string, newCmd *Command) error {
 	newCmd.ChecksumMap = make(map[string]string)
 	// if checksum is a list of patterns
 	if patterns, ok := newCmd.checksumSource[""]; ok {
-		calcChecksum, err := calculateChecksum(patterns)
+		calcChecksum, err := calculateChecksum(workDir, patterns)
 		if err != nil {
 			return fmt.Errorf("failed to calculate checksum: %s", err)
 		}
@@ -170,7 +171,7 @@ func calculateChecksumFromSource(newCmd *Command) error {
 	for _, key := range keys {
 		patterns := newCmd.checksumSource[key]
 
-		calcChecksum, err := calculateChecksum(patterns)
+		calcChecksum, err := calculateChecksum(workDir, patterns)
 		if err != nil {
 			return fmt.Errorf("failed to calculate checksum: %s", err)
 		}
