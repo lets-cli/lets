@@ -6,7 +6,8 @@
     "start": "docusaurus start",
     "build": "docusaurus build",
     "swizzle": "docusaurus swizzle",
-    "deploy": "docusaurus deploy"
+    "deploy": "docusaurus deploy",
+    "doc:deploy": "GIT_USER=lets-cli CURRENT_BRANCH=master USE_SSH=true npm --prefix docs run deploy"
   },
   "dependencies": {
     "@docusaurus/core": "^2.0.0-alpha.54",

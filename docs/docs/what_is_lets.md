@@ -1,7 +1,7 @@
 ---
 id: what_is_lets
 title: What is lets ?
-sidebar_label: What is lets
+sidebar_label: What is lets ?
 ---
 
 Lets is a task runner.

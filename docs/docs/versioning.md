@@ -1,4 +1,0 @@
----
-id: versioning
-title: Versioning
----
