@@ -75,3 +75,7 @@ commands:
     cmd: |
       VERSION=$(git describe)
       go build -ldflags="-X main.version=${VERSION:1}-dev" -o lets *.go && sudo mv ./lets /usr/local/bin/lets
+
+  publish-docs:
+    cmd: |
+      npm --prefix docs run doc:deploy
