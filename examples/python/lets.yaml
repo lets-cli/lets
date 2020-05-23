@@ -1,0 +1,48 @@
+shell: bash
+
+env:
+  DOCKER_BUILDKIT: "1"
+  COMPOSE_DOCKER_CLI_BUILD: "1"
+
+eval_env:
+  CURRENT_UID: echo "`id -u`:`id -g`"
+  CURRENT_USER_NAME: echo "`id -un`"
+  DOCKER_GATEWAY: echo $(docker network inspect uaprom_default --format="{{(index .IPAM.Config 0).Gateway}}")
+
+commands:
+  build-server:
+    checksum:
+      - requirements.txt
+      - Dockerfile
+    persist_checksum: true  
+    cmd: |
+      if [[ ${LETS_CHECKSUM_CHANGED} ]]; then
+        docker build -t server . -f Dockerfile
+      fi
+
+  # App and services
+  run:
+    description: Run marker app
+    depends:
+      - build-server
+    cmd: |
+      docker-compose up server
+
+  postgres:
+    description: Run postgres
+    cmd: docker-compose up postgres
+
+  ishell:
+    description: Run ipython shell
+    depends:
+      - build-server
+    cmd: docker-compose run --rm -T ishell
+
+  init-venv:
+    description: Run to init python virtual env in this repo
+    cmd: |
+      if [[ ! -d ./venv ]]; then
+        python3.8 -m venv ./venv
+      fi
+      source ./venv/bin/activate
+      python3.8 -m pip install -r ./requirements.txt

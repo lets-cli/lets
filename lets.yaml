@@ -79,3 +79,7 @@ commands:
   publish-docs:
     cmd: |
       npm --prefix docs run doc:deploy
+
+  run-docs:
+    cmd: |
+      npm --prefix docs start
