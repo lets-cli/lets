@@ -70,7 +70,7 @@ func newCmdGeneric(cmdToRun command.Command, conf *config.Config, out io.Writer)
 			c.Println(err)
 		}
 	})
-	initOnlyAndExecFlags(subCmd)
+	//initOnlyAndExecFlags(subCmd)
 
 	return subCmd
 }
@@ -82,18 +82,13 @@ func initSubCommands(rootCmd *cobra.Command, conf *config.Config, out io.Writer)
 	}
 }
 
-func initOnlyAndExecFlags(cmd *cobra.Command) {
-	cmd.Flags().StringArray("only", []string{}, "run only specified command(s) described in cmd as map")
-	cmd.Flags().StringArray("exclude", []string{}, "run all but excluded command(s) described in cmd as map")
-}
-
 func parseAndValidateOnlyAndExclude(cmd *cobra.Command) (only []string, exclude []string, err error) {
-	onlyCmds, err := cmd.Flags().GetStringArray("only")
+	onlyCmds, err := cmd.Parent().Flags().GetStringArray("only")
 	if err != nil {
 		return []string{}, []string{}, err
 	}
 
-	excludeCmds, err := cmd.Flags().GetStringArray("exclude")
+	excludeCmds, err := cmd.Parent().Flags().GetStringArray("exclude")
 	if err != nil {
 		return []string{}, []string{}, err
 	}

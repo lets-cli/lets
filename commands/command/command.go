@@ -34,10 +34,10 @@ type Command struct {
 	// script to run
 	Cmd string
 	// map of named scripts to run in parallel
-	CmdMap          map[string]string
-	Description     string
+	CmdMap      map[string]string
+	Description string
 	// env from command
-	Env             map[string]string
+	Env map[string]string
 	// env from -E flag
 	OverrideEnv     map[string]string
 	RawOptions      string

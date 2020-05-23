@@ -84,7 +84,7 @@ commands:
     cmd: |
       npm --prefix docs start
 
-  say:
-    env:
-      NAME: "Max"
-    cmd: echo Hello ${NAME}
+  foo:
+    cmd:
+      redis: echo "Redis"
+      app: echo "App"
