@@ -20,6 +20,7 @@ func CreateRootCommand(out io.Writer, version string) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runRoot(cmd)
 		},
+		TraverseChildren: true,
 		Version: version,
 	}
 
@@ -53,6 +54,7 @@ func initRootCommand(rootCmd *cobra.Command, out io.Writer, version string) {
 
 	initCompletionCmd(rootCmd)
 	initVersionFlag(rootCmd)
+	initEnvFlag(rootCmd)
 }
 
 // InitErrCheck check if error occurred before root cmd execution.
@@ -70,6 +72,10 @@ func initErrCheck(rootCmd *cobra.Command, err error) {
 
 func initVersionFlag(rootCmd *cobra.Command) {
 	rootCmd.Flags().BoolP("version", "v", false, "version for lets")
+}
+
+func initEnvFlag(rootCmd *cobra.Command) {
+	rootCmd.Flags().StringToStringP("env", "E", nil, "set env variable for running command KEY=VALUE")
 }
 
 func runRoot(cmd *cobra.Command) error {

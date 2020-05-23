@@ -41,6 +41,13 @@ func newCmdGeneric(cmdToRun command.Command, conf *config.Config, out io.Writer)
 			cmdToRun.Exclude = exclude
 			cmdToRun.Args = prepareArgs(cmdToRun, os.Args)
 
+			envs, err := parseAndValidateEnvFlag(cmd)
+			if err != nil {
+				return err
+			}
+
+			cmdToRun.OverrideEnv = envs
+
 			return runner.RunCommand(cmd.Context(), cmdToRun, conf, out)
 		},
 		// we use docopt to parse flags on our own, so any flag is valid flag here
@@ -97,4 +104,15 @@ func parseAndValidateOnlyAndExclude(cmd *cobra.Command) (only []string, exclude 
 	}
 
 	return onlyCmds, excludeCmds, nil
+}
+
+func parseAndValidateEnvFlag(cmd *cobra.Command) (map[string]string, error) {
+	// TraversChildren enabled for parent so we will have parent flags here
+	envs, err := cmd.Parent().Flags().GetStringToString("env")
+
+	if err != nil {
+		return map[string]string{}, err
+	}
+
+	return envs, nil
 }

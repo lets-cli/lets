@@ -83,3 +83,8 @@ commands:
   run-docs:
     cmd: |
       npm --prefix docs start
+
+  say:
+    env:
+      NAME: "Max"
+    cmd: echo Hello ${NAME}

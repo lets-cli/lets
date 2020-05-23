@@ -1,0 +1,15 @@
+shell: bash
+
+env:
+  NAME: "John"
+
+commands:
+  say_hello_global:
+    description: Say hello
+    cmd: echo "Hello ${NAME}"
+
+  say_hello:
+    description: Say hello
+    env:
+      NAME: Rick
+    cmd: echo "Hello ${NAME}"
