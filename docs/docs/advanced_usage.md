@@ -16,13 +16,55 @@ command:
     description: Run nodejs server
     cmd: npm run server
 ```
+
+#### Env
+
+You can add global and per-command `env`:
+
+```yaml
+shell: bash
+
+env:
+  DEBUG: "0"
+
+command:
+  run:
+    description: Run nodejs server
+    env:
+      NODE_ENV: development
+    cmd: npm run server
+```
+
+#### Eval env
+
+Also if value of environment variable must be evaluated, you can add global and per-command `eval_env`:
+
+```yaml
+shell: bash
+
+env:
+  DEBUG: "0"
+
+eval_env:
+  CURRENT_UID: echo "`id -u`:`id -g`"
+  CURRENT_USER_NAME: echo "`id -un`"
+
+command:
+  run:
+    description: Run nodejs server
+    env:
+      NODE_ENV: development
+    cmd: npm run server
+```
+
+#### Depends
+
 You already can start you application, and as any other projects your's also have dependencies. Dependencies can be added or deleted to project 
 
 and developer have to know that there is some new dependency and its needed to run `npm install` again.
 
 You can do this - just add a new command and make it as a `run` command dependency, so each time you call `lets run` - dependant command will execute first.
 
-#### Depends
 
 ```yaml
 shell: bash
@@ -37,7 +79,6 @@ command:
     depends:
       - build-deps
     cmd: npm run server
-    
 ```
 
 #### Checksum
