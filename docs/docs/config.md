@@ -21,9 +21,9 @@ Config schema
     * [persist_checksum](#persist_checksum)
 
 
-### Top-level directives:
+## Top-level directives:
 
-#### `version` 
+### `version` 
 `key: version`
 
 `type: semver string`
@@ -37,7 +37,7 @@ version: '0.0.20'
 ```
 
 
-#### `shell` 
+### `shell` 
 `key: shell`
 
 `type: string`
@@ -52,7 +52,7 @@ Example:
 shell: bash
 ```
 
-#### `global env` 
+### `global env` 
 `key: env`
 
 `type: string`
@@ -67,7 +67,7 @@ env:
   MY_GLOBAL_ENV: "123"
 ```
 
-#### `global eval_env` 
+### `global eval_env` 
 `key: env`
 
 `type: string`
@@ -82,7 +82,7 @@ eval_env:
   CURRENT_UID: echo "`id -u`:`id -g`"
 ```
 
-#### `mixins` 
+### `mixins` 
 `key: mixins`
 
 `type: list of string`
@@ -113,7 +113,7 @@ commands:
 
 And `lets test` works fine.
 
-#### `commands`
+### `commands`
 `key: commands`
 
 `type: mapping`
@@ -132,7 +132,7 @@ commands:
 
 ### Command directives:
 
-##### `description`
+#### `description`
 `key: description`
 
 `type: string`
@@ -147,7 +147,7 @@ commands:
     description: Test something
 ```
 
-##### `cmd`
+#### `cmd`
 `key: cmd`
 
 ```
@@ -226,7 +226,7 @@ There must be used before command name:
 lets --only app run
 ```
 
-##### `depends`
+#### `depends`
 `key: depends`
 
 `type: array of string`
@@ -256,7 +256,7 @@ commands:
 `build` command will be executed each time you run `lets test` or `lets fmt`
 
 
-##### `options`
+#### `options`
 `key: options`
 
 `type: string (multiline string)`
@@ -319,7 +319,7 @@ echo LETSCLI_DEBUG=${LETSCLI_DEBUG} # LETSCLI_DEBUG=--debug
 ```
 
 
-##### `env`
+#### `env`
 `key: env`
 
 `type: mapping string => string`
@@ -339,7 +339,7 @@ commands:
 ```
 
 
-##### `eval_env`
+#### `eval_env`
 `key: eval_env`
 
 `type: mapping string => string`
@@ -361,7 +361,7 @@ commands:
 Value will be executed in shell and result will be saved in env.
 
 
-##### `checksum`
+#### `checksum`
 `key: checksum`
 
 `type: array of string | mapping string => array of string`
@@ -419,7 +419,7 @@ commands:
 ```
 
 
-##### `persist_checksum`
+#### `persist_checksum`
 `key: persist_checksum`
 
 `type: bool`
@@ -428,13 +428,15 @@ This feature is useful when you want to know that something has changed between 
 
 `persist_checksum` can be used only if `checksum` declared for command.
 
-If set to true, each run all calculated checksums will be stored to disk.
+If set to `true`, each run all calculated checksums will be stored to disk.
 
 After each subsequent run `lets` will check if new checksum and stored checksum are different.
 
 Result of that check will be exposed via `LETS_CHECKSUM_CHANGED` and `LETS_CHECKSUM_[checksum-name]_CHANGED` env variables. 
 
 **IMPORTANT**: New checksum will override old checksum only if cmd has exit code **0** 
+
+`LETS_CHECKSUM_CHANGED` will be true after the very first execution, because when you first run command, there is no checksum yet, so we calculating new checksum - that means that checksum has changed.
 
 Example:
 

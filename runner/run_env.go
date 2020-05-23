@@ -44,6 +44,17 @@ func convertChecksumMapToEnvForCmd(checksumMap map[string]string) []string {
 	return envList
 }
 
+func isChecksumChanged(persistedChecksum string, persistedChecksumExists bool, newChecksum string) bool {
+	if !persistedChecksumExists {
+		// We set true here because if there was no persisted checksum that means that its a brand new checksum.
+		// Hence it was changed from none to some value.
+		return true
+	}
+
+	// But if we have persisted checksum - we check for checksum change below.
+	return persistedChecksum != newChecksum
+}
+
 // persistedChecksumMap can be empty, and if so, we set env var LETS_CHECKSUM_[NAME]_CHANGED to false for all checksums
 func convertChangedChecksumMapToEnvForCmd(
 	defaultChecksum string,
@@ -52,18 +63,15 @@ func convertChangedChecksumMapToEnvForCmd(
 ) []string {
 	var envList []string
 
-	for name, value := range checksumMap {
-		if name == "" { // TODO do we still have this empty key
+	for checksumName, checksumValue := range checksumMap {
+		if checksumName == "" { // TODO do we still have this empty key
 			continue
 		}
 
-		normalizedKey := normalizeEnvKey(name)
-		persistedValue, ok := persistedChecksumMap[name]
-		checksumChanged := false
+		normalizedKey := normalizeEnvKey(checksumName)
+		persistedChecksum, persistedChecksumExists := persistedChecksumMap[checksumName]
 
-		if ok {
-			checksumChanged = value != persistedValue
-		}
+		checksumChanged := isChecksumChanged(persistedChecksum, persistedChecksumExists, checksumValue)
 
 		envList = append(
 			envList,
@@ -71,12 +79,9 @@ func convertChangedChecksumMapToEnvForCmd(
 		)
 	}
 
-	persistedValue, ok := persistedChecksumMap[command.DefaultChecksumName]
+	persistedDefaultChecksum, persistedDefaultChecksumExists := persistedChecksumMap[command.DefaultChecksumName]
 
-	defaultChecksumChanged := false
-	if ok {
-		defaultChecksumChanged = defaultChecksum != persistedValue
-	}
+	defaultChecksumChanged := isChecksumChanged(persistedDefaultChecksum, persistedDefaultChecksumExists, defaultChecksum)
 
 	envList = append(
 		envList,
