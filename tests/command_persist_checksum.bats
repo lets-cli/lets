@@ -25,14 +25,14 @@ TEMP_FILE=foo_test.txt
     run lets ${CMD_NAME}
     printf "first run: %s\n" "${lines[@]}"
 
-    # first run, no stored checksum
+    # first run, no stored checksum - lets should calculate checksum, store it to disk
     # 1. check checksum value
-    # 2. check LETS_CHECKSUM_CHANGED has not changed
+    # 2. check LETS_CHECKSUM_CHANGED has to be changed as there was now checksum at all and now we have new checksum
     # 3. check checksum persisted
 
     [[ $status = 0 ]]
     [[ "${lines[0]}" = "LETS_CHECKSUM=${FIRST_CHECKSUM}" ]]
-    [[ "${lines[1]}" = "LETS_CHECKSUM_CHANGED=false" ]]
+    [[ "${lines[1]}" = "LETS_CHECKSUM_CHANGED=true" ]]
 
     # it creates .lets
     [[ -d .lets ]]
@@ -75,7 +75,7 @@ TEMP_FILE=foo_test.txt
 
     # first run, no stored checksum
     # 1. check checksum value
-    # 2. check LETS_CHECKSUM_CHANGED has not changed
+    # 2. check LETS_CHECKSUM_CHANGED has to be changed as there was now checksum at all and now we have new checksum
     # 3. check checksum persisted
 
     [[ $status = 0 ]]
@@ -84,7 +84,7 @@ TEMP_FILE=foo_test.txt
     sort_array lines
 
     [[ "${lines[0]}" = "1 LETS_CHECKSUM=${FIRST_CHECKSUM}" ]]
-    [[ "${lines[1]}" = "2 LETS_CHECKSUM_CHANGED=false" ]]
+    [[ "${lines[1]}" = "2 LETS_CHECKSUM_CHANGED=true" ]]
 
     # it creates .lets
     [[ -d .lets ]]
@@ -132,7 +132,7 @@ TEMP_FILE=foo_test.txt
 
     [[ $status = 1 ]]
     [[ "${lines[0]}" = "LETS_CHECKSUM=${FIRST_CHECKSUM}" ]]
-    [[ "${lines[1]}" = "LETS_CHECKSUM_CHANGED=false" ]]
+    [[ "${lines[1]}" = "LETS_CHECKSUM_CHANGED=true" ]]
 
     [[ -d .lets ]]
     [[ ! -d .lets/checksums ]]
