@@ -1,0 +1,34 @@
+version: '3'
+
+services:
+  base: &base
+    image: server
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /app
+    user: ${CURRENT_UID}
+    environment:
+      PYTHONUNBUFFERED: 1
+      PYTHONPATH: .
+    depends_on:
+      - postgres
+    volumes:
+      - ./server:/app/server
+
+  server:
+    <<: *base
+    ports:
+      - '3000:3000'
+    command: python3 -m server
+
+  ishell:
+    <<: *base
+    command: ipython
+
+  postgres:
+    image: postgres:11-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
