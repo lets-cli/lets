@@ -41,6 +41,13 @@ func newCmdGeneric(cmdToRun command.Command, conf *config.Config, out io.Writer)
 			cmdToRun.Exclude = exclude
 			cmdToRun.Args = prepareArgs(cmdToRun, os.Args)
 
+			envs, err := parseAndValidateEnvFlag(cmd)
+			if err != nil {
+				return err
+			}
+
+			cmdToRun.OverrideEnv = envs
+
 			return runner.RunCommand(cmd.Context(), cmdToRun, conf, out)
 		},
 		// we use docopt to parse flags on our own, so any flag is valid flag here
@@ -63,7 +70,7 @@ func newCmdGeneric(cmdToRun command.Command, conf *config.Config, out io.Writer)
 			c.Println(err)
 		}
 	})
-	initOnlyAndExecFlags(subCmd)
+	//initOnlyAndExecFlags(subCmd)
 
 	return subCmd
 }
@@ -75,18 +82,13 @@ func initSubCommands(rootCmd *cobra.Command, conf *config.Config, out io.Writer)
 	}
 }
 
-func initOnlyAndExecFlags(cmd *cobra.Command) {
-	cmd.Flags().StringArray("only", []string{}, "run only specified command(s) described in cmd as map")
-	cmd.Flags().StringArray("exclude", []string{}, "run all but excluded command(s) described in cmd as map")
-}
-
 func parseAndValidateOnlyAndExclude(cmd *cobra.Command) (only []string, exclude []string, err error) {
-	onlyCmds, err := cmd.Flags().GetStringArray("only")
+	onlyCmds, err := cmd.Parent().Flags().GetStringArray("only")
 	if err != nil {
 		return []string{}, []string{}, err
 	}
 
-	excludeCmds, err := cmd.Flags().GetStringArray("exclude")
+	excludeCmds, err := cmd.Parent().Flags().GetStringArray("exclude")
 	if err != nil {
 		return []string{}, []string{}, err
 	}
@@ -97,4 +99,15 @@ func parseAndValidateOnlyAndExclude(cmd *cobra.Command) (only []string, exclude 
 	}
 
 	return onlyCmds, excludeCmds, nil
+}
+
+func parseAndValidateEnvFlag(cmd *cobra.Command) (map[string]string, error) {
+	// TraversChildren enabled for parent so we will have parent flags here
+	envs, err := cmd.Parent().Flags().GetStringToString("env")
+
+	if err != nil {
+		return map[string]string{}, err
+	}
+
+	return envs, nil
 }

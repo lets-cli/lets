@@ -20,7 +20,8 @@ func CreateRootCommand(out io.Writer, version string) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runRoot(cmd)
 		},
-		Version: version,
+		TraverseChildren: true,
+		Version:          version,
 	}
 
 	initRootCommand(rootCmd, out, version)
@@ -53,6 +54,8 @@ func initRootCommand(rootCmd *cobra.Command, out io.Writer, version string) {
 
 	initCompletionCmd(rootCmd)
 	initVersionFlag(rootCmd)
+	initEnvFlag(rootCmd)
+	initOnlyAndExecFlags(rootCmd)
 }
 
 // InitErrCheck check if error occurred before root cmd execution.
@@ -70,6 +73,15 @@ func initErrCheck(rootCmd *cobra.Command, err error) {
 
 func initVersionFlag(rootCmd *cobra.Command) {
 	rootCmd.Flags().BoolP("version", "v", false, "version for lets")
+}
+
+func initEnvFlag(rootCmd *cobra.Command) {
+	rootCmd.Flags().StringToStringP("env", "E", nil, "set env variable for running command KEY=VALUE")
+}
+
+func initOnlyAndExecFlags(cmd *cobra.Command) {
+	cmd.Flags().StringArray("only", []string{}, "run only specified command(s) described in cmd as map")
+	cmd.Flags().StringArray("exclude", []string{}, "run all but excluded command(s) described in cmd as map")
 }
 
 func runRoot(cmd *cobra.Command) error {

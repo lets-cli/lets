@@ -83,3 +83,8 @@ commands:
   run-docs:
     cmd: |
       npm --prefix docs start
+
+  foo:
+    cmd:
+      redis: echo "Redis"
+      app: echo "App"

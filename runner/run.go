@@ -113,6 +113,7 @@ func prepareCmdForRun(
 		os.Environ(),
 		convertEnvMapToList(cfg.Env),
 		convertEnvMapToList(cmdToRun.Env),
+		convertEnvMapToList(cmdToRun.OverrideEnv),
 		convertEnvMapToList(cmdToRun.Options),
 		convertEnvMapToList(cmdToRun.CliOptions),
 		convertChecksumToEnvForCmd(cmdToRun.Checksum),

@@ -40,8 +40,11 @@ NOT_EXISTED_LETS_FILE="lets-not-existed.yaml"
     [[ "${lines[1]}" = "Usage:" ]]
     [[ "${lines[2]}" = "  lets [flags]" ]]
     [[ "${lines[3]}" = "Flags:" ]]
-    [[ "${lines[4]}" = "  -h, --help      help for lets" ]]
-    [[ "${lines[5]}" = "  -v, --version   version for lets" ]]
+    [[ "${lines[4]}" = "  -E, --env stringToString    set env variable for running command KEY=VALUE (default [])" ]]
+    [[ "${lines[5]}" = "      --exclude stringArray   run all but excluded command(s) described in cmd as map" ]]
+    [[ "${lines[6]}" = "  -h, --help                  help for lets" ]]
+    [[ "${lines[7]}" = "      --only stringArray      run only specified command(s) described in cmd as map" ]]
+    [[ "${lines[8]}" = "  -v, --version               version for lets" ]]
 }
 
 @test "no_lets_file: show help for 'lets -h' even if no config file" {
@@ -53,6 +56,9 @@ NOT_EXISTED_LETS_FILE="lets-not-existed.yaml"
     [[ "${lines[1]}" = "Usage:" ]]
     [[ "${lines[2]}" = "  lets [flags]" ]]
     [[ "${lines[3]}" = "Flags:" ]]
-    [[ "${lines[4]}" = "  -h, --help      help for lets" ]]
-    [[ "${lines[5]}" = "  -v, --version   version for lets" ]]
+    [[ "${lines[4]}" = "  -E, --env stringToString    set env variable for running command KEY=VALUE (default [])" ]]
+    [[ "${lines[5]}" = "      --exclude stringArray   run all but excluded command(s) described in cmd as map" ]]
+    [[ "${lines[6]}" = "  -h, --help                  help for lets" ]]
+    [[ "${lines[7]}" = "      --only stringArray      run only specified command(s) described in cmd as map" ]]
+    [[ "${lines[8]}" = "  -v, --version               version for lets" ]]
 }
