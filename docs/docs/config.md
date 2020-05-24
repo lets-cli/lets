@@ -23,7 +23,8 @@ Config schema
 
 ## Top-level directives:
 
-### `version` 
+### Version 
+
 `key: version`
 
 `type: semver string`
@@ -37,7 +38,8 @@ version: '0.0.20'
 ```
 
 
-### `shell` 
+### Shell 
+
 `key: shell`
 
 `type: string`
@@ -52,10 +54,11 @@ Example:
 shell: bash
 ```
 
-### `global env` 
+### Global env 
+
 `key: env`
 
-`type: string`
+`type: map string => string`
 
 Specify global env for all commands.
 
@@ -67,10 +70,11 @@ env:
   MY_GLOBAL_ENV: "123"
 ```
 
-### `global eval_env` 
+### Global eval_env 
+
 `key: env`
 
-`type: string`
+`type: map string => string`
 
 Specify global eval_env for all commands.
 
@@ -82,7 +86,8 @@ eval_env:
   CURRENT_UID: echo "`id -u`:`id -g`"
 ```
 
-### `mixins` 
+### Mixins
+
 `key: mixins`
 
 `type: list of string`
@@ -113,7 +118,8 @@ commands:
 
 And `lets test` works fine.
 
-### `commands`
+### Commands
+
 `key: commands`
 
 `type: mapping`
@@ -130,9 +136,10 @@ commands:
     description: Test something
 ```
 
-### Command directives:
+## Command directives:
 
-#### `description`
+### `description`
+
 `key: description`
 
 `type: string`
@@ -147,7 +154,8 @@ commands:
     description: Test something
 ```
 
-#### `cmd`
+### `cmd`
+
 `key: cmd`
 
 ```
@@ -226,7 +234,8 @@ There must be used before command name:
 lets --only app run
 ```
 
-#### `depends`
+### `depends`
+
 `key: depends`
 
 `type: array of string`
@@ -256,7 +265,8 @@ commands:
 `build` command will be executed each time you run `lets test` or `lets fmt`
 
 
-#### `options`
+### `options`
+
 `key: options`
 
 `type: string (multiline string)`
@@ -319,7 +329,8 @@ echo LETSCLI_DEBUG=${LETSCLI_DEBUG} # LETSCLI_DEBUG=--debug
 ```
 
 
-#### `env`
+### `env`
+
 `key: env`
 
 `type: mapping string => string`
@@ -339,7 +350,8 @@ commands:
 ```
 
 
-#### `eval_env`
+### `eval_env`
+
 `key: eval_env`
 
 `type: mapping string => string`
@@ -361,7 +373,8 @@ commands:
 Value will be executed in shell and result will be saved in env.
 
 
-#### `checksum`
+### `checksum`
+
 `key: checksum`
 
 `type: array of string | mapping string => array of string`
@@ -419,7 +432,8 @@ commands:
 ```
 
 
-#### `persist_checksum`
+### `persist_checksum`
+
 `key: persist_checksum`
 
 `type: bool`

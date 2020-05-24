@@ -8,7 +8,7 @@ If you already have `lets.yaml` then just go to that directory and run `lets` to
 
 If you are starting from scratch and want to create a new `lets.yaml`, please, take a look at [Creating new config](#creating-new-config) section.
 
-#### Config lookup
+### Config lookup
 
 `lets` will be looking for a config starting from where you call `lets` and up to the `/`.
 

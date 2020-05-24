@@ -3,7 +3,7 @@ id: env
 title: Lets environment
 ---
 
-## Default environment variables
+### Default environment variables
 
 `lets` has builtin environ variables.
 
@@ -12,7 +12,7 @@ title: Lets environment
 * `LETS_CONFIG_DIR` - changes path to dir where `lets.yaml` file placed
 * `LETS_NO_COLOR_OUTPUT` - disables colored output
 
-## Override command environment with -E flag
+### Override command env with -E flag
 
 You can override environment for command with `-E` flag:
 
