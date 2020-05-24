@@ -73,4 +73,4 @@ commands:
 As you can see, we execute `build` command each time we execute `run` command (`depends`).
 
 `persist_checksum` will save calculated checksum to `.lets` directory and all subsequent calls of `build` command will
-read checksum from disk, calculate new checksum and compare them. If `package.json` will change - we will rebuild image.
+read checksum from disk, calculate new checksum, and compare them. If `package.json` will change - we will rebuild the image.

@@ -6,11 +6,11 @@ sidebar_label: Getting started with Lets
 
 If you already have `lets.yaml` then just go to that directory and run `lets` to see all available commands.
 
-If you start from scratch and want to create a new `lets.yaml` see [Creating new config](#creating-new-config)
+If you are starting from scratch and want to create a new `lets.yaml`, please, take a look at [Creating new config](#creating-new-config) section.
 
 #### Config lookup
 
-`lets` will be looking for a config starting from where you call `lets` and all the way up to the `/`.
+`lets` will be looking for a config starting from where you call `lets` and up to the `/`.
 
 For example:
 
@@ -55,12 +55,14 @@ commands:
 3. Run commands
 
 ```bash
-lets echo
-# will print Hello
-lets run --debug --level=info
-# will print
+lets echo # will print 
+# Hello
+```
+
+```bash
+lets run --debug --level=info # will print
 # LETSOPT_DEBUG=true
-# LETSOPT_LEVEL=info#
+# LETSOPT_LEVEL=info
 # LETSCLI_DEBUG=--debug
 # LETSCLI_LEVEL=--level info
 

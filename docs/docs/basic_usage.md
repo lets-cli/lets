@@ -3,7 +3,7 @@ id: basic_usage
 title: Basic usage
 ---
 
-We will start with a simple example here. More advanced usage you will find in [Advanced section](advanced_usage.md)
+We will start with a simple example here. More advanced usage you will find in the [Advanced section](advanced_usage.md).
 
 Assume you have a `node.js` project.
 
@@ -32,7 +32,7 @@ command:
     cmd: npm run server
 ```
 
-Thats it. You've just created your first `lets` command.
+That's it. You've just created your first `lets` command.
 
 Run `lets` in terminal to see all available commands.
 

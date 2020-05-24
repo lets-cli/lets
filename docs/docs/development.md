@@ -65,7 +65,7 @@ To release a new version:
 lets release 0.0.1 -m "implement some new feature"
 ```
 
-This will create annotated tag with 0.0.1 and run `git push --tags`
+This will create an annotated tag with 0.0.1 and run `git push --tags`
 
 
 ## Versioning
@@ -74,4 +74,4 @@ This will create annotated tag with 0.0.1 and run `git push --tags`
 
 For situations like e.g. new functionality, there is a `version` in `lets.yaml` which specifies **minimum required** `lets` version.
 
-If `lets` version installed on user machine is less than the one specified in config it will show and error and ask user to upgrade `lets` version.
+If `lets` version installed on the user machine is less than the one specified in config it will show and error and ask the user to upgrade `lets` version.
