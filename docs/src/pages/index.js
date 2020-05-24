@@ -9,16 +9,16 @@ import styles from './styles.module.css';
 const features = [
   {
     title: <>Easy to Use</>,
-    imageUrl: 'img/undraw_docusaurus_mountain.svg',
+    imageUrl: 'img/check.svg',
     description: (
       <>
-        Lets was designed with a developers in mind. Its simple yet powerfull task runner with lots o features that just works.
+        Lets was designed for developers. Its simple yet powerful task runner with lots o features that just work.
       </>
     ),
   },
   {
     title: <>Simple syntax</>,
-    imageUrl: 'img/undraw_docusaurus_tree.svg',
+    imageUrl: 'img/doc.svg',
     description: (
       <>
         Lets use yaml as a config format which gives a well known, human-readable syntax
@@ -28,11 +28,11 @@ const features = [
   },
   {
     title: <>Suitable for any projects</>,
-    imageUrl: 'img/undraw_docusaurus_react.svg',
+    imageUrl: 'img/gear.svg',
     description: (
       <>
-        You can have couple of tasks or a hundred of them in your project.
-        Lets allows you focus on coding instead of writing hard-to-reason-about Makefiles.
+        You can have a couple of tasks or a hundred of them in your project.
+        Lets allow you to focus on coding instead of writing hard-to-reason-about Makefiles.
       </>
     ),
   },
@@ -47,7 +47,7 @@ function Feature({imageUrl, title, description}) {
           <img className={styles.featureImage} src={imgUrl} alt={title} />
         </div>
       )}
-      <h3>{title}</h3>
+      <h3 className={styles.featureTitle}>{title}</h3>
       <p>{description}</p>
     </div>
   );
@@ -58,7 +58,7 @@ function Home() {
   const {siteConfig = {}} = context;
   return (
     <Layout
-      title={`${siteConfig.title}`}
+      title={`${siteConfig.title} - CLI task runner for developers - a better alternative to make`}
       description="CLI task runner for developers - a better alternative to make">
       <header className={classnames('hero hero--primary', styles.heroBanner)}>
         <div className="container">

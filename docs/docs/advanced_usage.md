@@ -4,7 +4,7 @@ title: Advanced usage
 ---
 
 
-In advanced usage we will start with a clean project and then we will add more commands to show how you can improve a developer expirience in your project.
+In advanced usage we will start with a clean project and then we will add more commands to show how you can improve a developer experience in your project.
 
 Assume you have a `node.js` project with a `run` command in `lets.yaml` from  [Basic usage](basic_usage.md)
 
@@ -19,7 +19,7 @@ command:
 
 #### Env
 
-You can add global and per-command `env`:
+You can add global or per-command `env`:
 
 ```yaml
 shell: bash
@@ -37,7 +37,7 @@ command:
 
 #### Eval env
 
-Also if value of environment variable must be evaluated, you can add global and per-command `eval_env`:
+Also if the value of the environment variable must be evaluated, you can add global or per-command `eval_env`:
 
 ```yaml
 shell: bash
@@ -59,9 +59,9 @@ command:
 
 #### Depends
 
-You already can start you application, and as any other projects your's also have dependencies. Dependencies can be added or deleted to project 
+You already can start your application, and like any other project your's also have dependencies. Dependencies can be added or deleted to project 
 
-and developer have to know that there is some new dependency and its needed to run `npm install` again.
+and developers have to know that there is some new dependency and it is needed to run `npm install` again.
 
 You can do this - just add a new command and make it as a `run` command dependency, so each time you call `lets run` - dependant command will execute first.
 
@@ -83,19 +83,19 @@ command:
 
 #### Checksum
 
-Now, each time you call `lets run` - `build-deps` will be execute first and this will guarantee that your dependencies is always up to date.
+Now, each time you call `lets run` - `build-deps` will be executed first and this will guarantee that your dependencies are always up to date.
 
 But we have one downside - run `npm install` may take some time and we do not want to wait.
 
 `checksum` to the rescue.
 
-Checksums allows you to know when some of the files has changed and make a decision based on that.
+Checksums allow you to know when some of the files have changed and made a decision based on that.
 
 When you add `checksum` directive to a command - `lets` will calculate checksum from all of the files listed in `checksum` and put `LETS_CHECKSUM` env variable to command env.
 
 `LETS_CHECKSUM` will have a checksum value.
 
-We than can store this checksum somewhere in the file and check that stired checksum with a checksum from env.
+We then can store this checksum somewhere in the file and check that stored checksum with a checksum from env.
 
 Fortunately, `lets` have an option for that - `persist_checksum`.
 
@@ -131,7 +131,7 @@ So now `npm` install will be executed only on `package.json` change.
 
 ### Cmd as array
 
-So now you have a frontend in your project. You decided to add a command to build js with a webpack
+Now you have decided to add some frontend to your project. You decided to add a command to build js with a webpack.
 
 `lets.yaml`
 
@@ -171,7 +171,7 @@ command:
 }
 ```
 
-Now you want to run js with some options like `watch` or different config
+Now you want to run js with some options like `watch` or different config.
 
 So lets update js command:
 
@@ -184,17 +184,17 @@ js:
     - static
 ```
 
-All we made is just rewrite `cmd` to be array of strings. Now all postitional arguments will be appended to cmd during `lets js` call.
+All we made is just rewrite `cmd` to be an array of strings. Now all positional arguments will be appended to cmd during `lets js` call.
 
 **`lets js -- -w`** - this will pass `-w` option to webpack in `package.json`
 
 ### Options
 
-Sooner or later you will come up with a convinient commands for your project.
+Sooner or later you will come up with a convenient commands for your project.
 
 `lets` options will help you with that.
 
-Now you have a couple of environments in your project. And you want to be able to run server with different environments.
+Now you have a couple of environments in your project. And you want to be able to run a server with different environments.
 
 Assume you have some configs:
 
@@ -225,7 +225,7 @@ run:
 
 `lets` knows how to parse docopt string and convert it in env variables.
 
-In few words, `lets` will capitalize all options, replace `-` with `_` 
+In a few words, `lets` will capitalize on all options, replace `-` with `_` 
 and append `LETSOPT_` prefix - so for `lets run --stg` we will get `LETSOPT_STG` env variable with no value as its a bool option.
 
 Another variant of option usage:
@@ -241,18 +241,20 @@ run:
     npm run server -- config=${LETSOPT_CONFIG:-local.yaml}
 ```
 
-In this example we also use options but unlike the previous example we using key-value option here.
+In this example we also use options but unlike the previous example we using key-value options here.
 
 So if we call `lets run --config stg.yaml` - `lets` will create `LETSOPT_CONFIG` env variable with value **stg.yaml**
 
 One more example will show you another option `LETSCLI`.
 
-`LETSCLI` is just a complementary env variable `lets` will create for each `LETSOPT`. So how does it works ?
+`LETSCLI` is just a complementary env variable `lets` will create for each `LETSOPT`. 
 
-If we describe option `Usage: lets run --stg` we will actualy get two env variables to one option:
+So how does it works?
+
+If we describe option `Usage: lets run --stg` we will actually get two env variables to one option:
 
 - `LETSOPT_STG` with no value
-- `LETSCLI_STG` with value `--stg`. Its just basically stores cli argument as is.
+- `LETSCLI_STG` with value `--stg`. It just basically stores CLI argument as is.
 
 You can learn more about options in [Options section](config.md#options)
 
