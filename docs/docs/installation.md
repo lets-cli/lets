@@ -4,7 +4,7 @@ title: Installation
 sidebar_label: Installation
 ---
 
-**Shell script**:
+### **Shell script**
 
 This will install `lets` binary to `/usr/local/bin` directory and will require `sudo`. But you can change install location to any directory you want
 
@@ -40,7 +40,7 @@ Now you can add any binary files to ~/bin and you system will see and executable
 curl -sfL https://raw.githubusercontent.com/lets-cli/lets/master/install.sh | sh -s -- -b ~/bin
 ```
 
-**Binary (Cross-platform)**:
+### **Binary (Cross-platform)**
 
 Download the version you need for your platform from [Lets Releases](https://github.com/lets-cli/lets/releases). 
 
@@ -48,7 +48,7 @@ Once downloaded, the binary can be run from anywhere.
 
 Ideally, you should install it somewhere in your PATH for easy use. `/usr/local/bin` is the most probable location.
 
-**Arch Linux**:
+### **Arch Linux**
 
 You can get binary release from https://aur.archlinux.org/packages/lets-bin/
 

@@ -3,7 +3,7 @@ id: best_practices
 title: Best practices
 ---
 
-#### Default commands
+### Default commands
 
 If you have many projects (lets say - microservices) - it would be great to have one way to run and operate them when developing
 
@@ -11,7 +11,7 @@ If you have many projects (lets say - microservices) - it would be great to have
 - `test` command - each projects should have a tests and a way to run them, either one file or all tests at once
 - `init` command - some kind of project initialization - creates missing files, dirs for developer, checks permissions, login to docker registry, checks inotify limits for tools such as webpack and other file watchers.
 
-#### Split `lets.yaml` when it becomes big. 
+### Split `lets.yaml` when it becomes big. 
 
 If `lets.yaml` became big, it may be great to split it in a smaller, more specific files using `mixins` directive.
 For example:
@@ -24,7 +24,7 @@ For example:
 
 In each of these files we then hold all specific tasks.
 
-#### Use checskums
+### Use checskums
 
 Checksums can help you decrease amount of task executions. How ? Lets see.
 

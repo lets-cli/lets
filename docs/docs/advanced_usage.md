@@ -17,7 +17,7 @@ command:
     cmd: npm run server
 ```
 
-#### Env
+### Env
 
 You can add global or per-command `env`:
 
@@ -35,7 +35,7 @@ command:
     cmd: npm run server
 ```
 
-#### Eval env
+### Eval env
 
 Also if the value of the environment variable must be evaluated, you can add global or per-command `eval_env`:
 
@@ -57,7 +57,7 @@ command:
     cmd: npm run server
 ```
 
-#### Depends
+### Depends
 
 You already can start your application, and like any other project your's also have dependencies. Dependencies can be added or deleted to project 
 
@@ -81,7 +81,7 @@ command:
     cmd: npm run server
 ```
 
-#### Checksum
+### Checksum
 
 Now, each time you call `lets run` - `build-deps` will be executed first and this will guarantee that your dependencies are always up to date.
 
