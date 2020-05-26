@@ -11,7 +11,7 @@ title: Changelog
   ```bash
   # lets.yaml
   ...
-  command:
+  commands:
     greet:
       env:
         NAME: Morty
