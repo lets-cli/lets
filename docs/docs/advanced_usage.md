@@ -11,7 +11,7 @@ Assume you have a `node.js` project with a `run` command in `lets.yaml` from  [B
 ```yaml
 shell: bash
 
-command:
+commands:
   run:
     description: Run nodejs server
     cmd: npm run server
@@ -27,7 +27,7 @@ shell: bash
 env:
   DEBUG: "0"
 
-command:
+commands:
   run:
     description: Run nodejs server
     env:
@@ -49,7 +49,7 @@ eval_env:
   CURRENT_UID: echo "`id -u`:`id -g`"
   CURRENT_USER_NAME: echo "`id -un`"
 
-command:
+commands:
   run:
     description: Run nodejs server
     env:
@@ -69,7 +69,7 @@ You can do this - just add a new command and make it as a `run` command dependen
 ```yaml
 shell: bash
 
-command:
+commands:
   build-deps:
     description: Install project dependencies
     cmd: npm install
@@ -108,7 +108,7 @@ You can learn more about checksum in [Checksum section](config.md#checksum)
 ```yaml
 shell: bash
 
-command:
+commands:
   build-deps:
     description: Install project dependencies
     checksum:
@@ -138,7 +138,7 @@ Now you have decided to add some frontend to your project. You decided to add a 
 ```yaml
 shell: bash
 
-command:
+commands:
   build-deps:
     description: Install project dependencies
     checksum:

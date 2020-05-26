@@ -26,7 +26,7 @@ Lets create first command:
 ```yaml
 shell: bash
 
-command:
+commands:
   run:
     description: Run nodejs server
     cmd: npm run server

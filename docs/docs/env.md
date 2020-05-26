@@ -19,7 +19,7 @@ You can override environment for command with `-E` flag:
 ```yaml
 shell: bash
 
-command:
+commands:
   say:
     env:
       NAME: Rick
