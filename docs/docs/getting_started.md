@@ -31,9 +31,11 @@ lets # it will use lets.yaml right here (at /home/me/project/lets.yaml)
 ## Creating new config
 
 1. Create `lets.yaml` file in your project directory
-2. Add commands to `lets.yaml` config. [Config reference](#letsyaml)
+2. Add commands to `lets.yaml` config. [Config reference](config.md)
 
 ```yaml
+shell: /bin/sh
+
 commands:
     echo:
       description: Echo text
