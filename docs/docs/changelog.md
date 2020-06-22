@@ -3,6 +3,20 @@ id: changelog
 title: Changelog
 ---
 
+## 0.0.28
+
+* [Fix] Added environment variable value coercion.
+
+  ```yaml
+  commands:
+    run:
+      env:
+        VERBOSE: 1
+      cmd: docker-compose up
+  ```
+
+  Before 0.0.28 release this config vas invalid because `1` was not coerced to string `"1"`. Now it works as expected.
+
 ## 0.0.27
 
 * Added `-E` (`--env`) command-line flag. It allows to set(override) environment variables for a running command.
