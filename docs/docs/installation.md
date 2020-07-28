@@ -4,12 +4,22 @@ title: Installation
 sidebar_label: Installation
 ---
 
+## Install
+
 ### **Shell script**
 
-This will install `lets` binary to `/usr/local/bin` directory and will require `sudo`. But you can change install location to any directory you want
+This will install **latest** `lets` binary to `/usr/local/bin` directory and will require `sudo`. 
+
+But you can change install location to any directory you want
 
 ```bash
 sudo curl -sfL https://raw.githubusercontent.com/lets-cli/lets/master/install.sh | sudo sh -s -- -b /usr/local/bin
+```
+
+To install specific version of `lets` (for example `v0.0.21`):
+
+```bash
+sudo curl -sfL https://raw.githubusercontent.com/lets-cli/lets/master/install.sh | sudo sh -s -- -b /usr/local/bin v0.0.21
 ```
 
 Alternatively, if you do not want to install `lets` with a `sudo`, you can do next:
@@ -63,3 +73,19 @@ Also you can get bleeding edge version from https://aur.archlinux.org/packages/l
 ```bash
 yay -S lets-git
 ```
+
+## Update
+
+### Shell script 
+
+To update `lets` you can use the same [shell script](#shell-script) from above.
+
+Running script will update `lets` to **latest** version.
+
+### Binary 
+
+You can download latest version from [Lets Releases](https://github.com/lets-cli/lets/releases). 
+
+### Arch Linux
+
+AUR repository always provides **latest** version.
