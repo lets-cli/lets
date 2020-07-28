@@ -16,6 +16,7 @@ module.exports = {
     ],
     "Best practices": ['best_practices'],
     Changelog: ['changelog'],
+    "IDE support": ['ide_support'],
     Development: [
       'development',
       'contribute'
