@@ -162,7 +162,7 @@ commands:
 type: 
   - string
   - array of strings
-  - map of string => string
+  - map of string => string (experimental)
 ```
 
 Actual command to run in shell.
@@ -170,7 +170,7 @@ Actual command to run in shell.
 Can be either:
  - a string (also a multiline string)
  - an array of strings - it will allow to append all arguments passed to command as is (see bellow)
- - a map of string => string - this will allow run commands in parallel
+ - a map of string => string - this will allow run commands in parallel `(experimental)`
 
 Example single string:
 
@@ -213,6 +213,8 @@ lets test -v
 ```
 
 the `-v` will be appended, so the resulting command to run will be `go test ./... -v`
+
+`cmd` can be a map `(it is experimental feature)`.
 
 Example of map of string => string
 
