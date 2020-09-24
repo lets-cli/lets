@@ -1,6 +1,7 @@
 package config
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -22,12 +23,13 @@ var (
 	EvalEnv  = "eval_env"
 	MIXINS   = "mixins"
 	VERSION  = "version"
+	BEFORE   = "before"
 )
 
 const defaultConfigPath = "lets.yaml"
 
-var validConfigFields = []string{COMMANDS, SHELL, ENV, EvalEnv, MIXINS, VERSION}
-var validMixinConfigFields = []string{COMMANDS, ENV, EvalEnv}
+var validConfigFields = []string{COMMANDS, SHELL, ENV, EvalEnv, MIXINS, VERSION, BEFORE}
+var validMixinConfigFields = []string{COMMANDS, ENV, EvalEnv, BEFORE}
 
 type PathInfo struct {
 	Filename string
@@ -42,9 +44,11 @@ type Config struct {
 	FilePath string
 	Commands map[string]command.Command
 	Shell    string
-	Env      map[string]string
-	Version  string
-	isMixin  bool // if true, we consider config as mixin and apply different parsing and validation
+	// before is a script which will be included before every cmd
+	Before  string
+	Env     map[string]string
+	Version string
+	isMixin bool // if true, we consider config as mixin and apply different parsing and validation
 	// absolute path to .lets
 	DotLetsDir string
 }
@@ -265,6 +269,18 @@ func unmarshalConfigGeneral(rawKeyValue map[string]interface{}, cfg *Config) err
 		}
 	}
 
+	if before, ok := rawKeyValue[BEFORE]; ok {
+		before, ok := before.(string)
+		if !ok {
+			return fmt.Errorf("before must be a string")
+		}
+
+		err := parseAndValidateBefore(before, cfg)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -355,6 +371,17 @@ func readAndValidateMixins(mixins []interface{}, cfg *Config) error {
 	return nil
 }
 
+func joinBeforeScripts(beforeScripts ...string) string {
+	buf := new(bytes.Buffer)
+
+	for _, script := range beforeScripts {
+		buf.WriteString(script)
+		buf.WriteString("\n")
+	}
+
+	return buf.String()
+}
+
 // Merge main and mixin configs. If there is a conflict - return error as we do not override values
 // TODO add test
 func mergeConfigs(mainCfg *Config, mixinCfg *Config) error {
@@ -373,6 +400,11 @@ func mergeConfigs(mainCfg *Config, mixinCfg *Config) error {
 
 		mainCfg.Env[mixinEnvKey] = mixinEnvVal
 	}
+
+	mainCfg.Before = joinBeforeScripts(
+		mainCfg.Before,
+		mixinCfg.Before,
+	)
 
 	return nil
 }
@@ -414,6 +446,12 @@ func parseAndValidateEvalEnv(evalEnv map[interface{}]interface{}, cfg *Config) e
 			)
 		}
 	}
+
+	return nil
+}
+
+func parseAndValidateBefore(before string, cfg *Config) error {
+	cfg.Before = before
 
 	return nil
 }
