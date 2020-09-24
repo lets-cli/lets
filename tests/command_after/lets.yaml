@@ -1,0 +1,13 @@
+shell: bash
+
+commands:
+  cmd-with-after:
+    description: Test after script
+    cmd: echo "Main"
+    after: echo "After"
+
+  cmd-as-map-with-after:
+    description: Test after script with cmd-as-map
+    cmd:
+      echo: echo "Main"
+    after: echo "After"

@@ -13,6 +13,7 @@ Config schema
 * [commands](#commands)
     * [description](#description)
     * [cmd](#cmd)
+    * [after](#after)
     * [depends](#depends)
     * [options](#options)
     * [env](#env)
@@ -234,6 +235,35 @@ There must be used before command name:
 
 ```bash
 lets --only app run
+```
+
+### `after`
+
+`key: after`
+
+`type: string`
+
+Specify script to run after the actual command. May be useful, when we want to cleanup some resources or stop some services
+
+`after` script is guaranteed to execute if specified, event if `cmd` exit code is not `0`
+
+Example:
+
+```yaml
+commands:
+  redis:
+    description: Run redis
+    cmd: docker-compose up redis
+    after: docker-compose stop redis
+
+  run:
+    description: Run app and services
+    cmd: 
+      app: node server.js
+      redis: docker-compose up redis
+    after: |
+      echo Stopping app and redis
+      docker-compose stop redis
 ```
 
 ### `depends`
