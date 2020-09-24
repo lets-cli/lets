@@ -16,6 +16,7 @@ var (
 	DEPENDS         = "depends"
 	CHECKSUM        = "checksum"
 	PersistChecksum = "persist_checksum"
+	AFTER           = "after"
 )
 
 var validFields = []string{
@@ -27,12 +28,15 @@ var validFields = []string{
 	DEPENDS,
 	CHECKSUM,
 	PersistChecksum,
+	AFTER,
 }
 
 type Command struct {
 	Name string
 	// script to run
 	Cmd string
+	// script to run after cmd finished (cleanup, etc)
+	After string
 	// map of named scripts to run in parallel
 	CmdMap      map[string]string
 	Description string
@@ -126,6 +130,12 @@ func ParseAndValidateCommand(newCmd *Command, rawCommand map[interface{}]interfa
 
 	if cmd, ok := rawCommand[CMD]; ok {
 		if err := parseAndValidateCmd(cmd, newCmd); err != nil {
+			return err
+		}
+	}
+
+	if after, ok := rawCommand[AFTER]; ok {
+		if err := parseAndValidateAfter(after, newCmd); err != nil {
 			return err
 		}
 	}

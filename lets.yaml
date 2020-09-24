@@ -26,6 +26,7 @@ commands:
       - run
       - --rm
       - test
+    after: echo Done
 
   test-bats:
     description: Run bats tests

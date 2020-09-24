@@ -97,7 +97,6 @@ func prepareCmdForRun(
 	cmdScript string,
 	cfg *config.Config,
 	out io.Writer,
-	parentName string,
 ) *exec.Cmd {
 	cmd := exec.Command(cfg.Shell, "-c", cmdScript) // #nosec G204
 	// setup std out and err
@@ -128,25 +127,6 @@ func prepareCmdForRun(
 				cmdToRun.ChecksumMap,
 				cmdToRun.GetPersistedChecksums(),
 			),
-		)
-	}
-
-	isChildCmd := parentName != ""
-
-	if !isChildCmd {
-		logging.Log.Debugf(
-			"Executing command\nname: %s\ncmd: %s\nenv:\n%s",
-			fmt.Sprintf(NoticeColor, cmdToRun.Name),
-			fmt.Sprintf(NoticeColor, cmdToRun.Cmd),
-			cmd.Env,
-		)
-	} else {
-		logging.Log.Debugf(
-			"Executing child command\nparent name: %s\nname: %s\ncmd: %s\nenv:\n%s",
-			fmt.Sprintf(NoticeColor, parentName),
-			fmt.Sprintf(NoticeColor, cmdToRun.Name),
-			fmt.Sprintf(NoticeColor, cmdToRun.Cmd),
-			cmd.Env,
 		)
 	}
 
@@ -188,25 +168,31 @@ func runCmd(
 	cfg *config.Config,
 	out io.Writer,
 	parentName string,
-) error {
-	if err := initCmd(cmdToRun, cfg, parentName != noParent); err != nil {
+) (err error) {
+	defer func() {
+		if cmdToRun.After != "" {
+			err = runAfterScript(cmdToRun, cfg, out)
+		}
+	}()
+
+	if err = initCmd(cmdToRun, cfg, parentName != noParent); err != nil {
 		return err
 	}
 
-	if err := runDepends(cmdToRun, cfg, out); err != nil {
+	if err = runDepends(cmdToRun, cfg, out); err != nil {
 		return err
 	}
 
-	if err := runCmdScript(cmdToRun, cmdToRun.Cmd, cfg, out, parentName); err != nil {
+	if err = runCmdScript(cmdToRun, cmdToRun.Cmd, cfg, out, parentName); err != nil {
 		return err
 	}
 
 	// persist checksum only if exit code 0
-	if err := persistChecksum(*cmdToRun, cfg); err != nil {
+	if err = persistChecksum(*cmdToRun, cfg); err != nil {
 		return err
 	}
 
-	return nil
+	return err
 }
 
 func runCmdScript(
@@ -218,7 +204,24 @@ func runCmdScript(
 ) error {
 	isChildCmd := parentName != ""
 
-	cmd := prepareCmdForRun(cmdToRun, cmdScript, cfg, out, parentName)
+	cmd := prepareCmdForRun(cmdToRun, cmdScript, cfg, out)
+
+	if !isChildCmd {
+		logging.Log.Debugf(
+			"Executing command\nname: %s\ncmd: %s\nenv: %s",
+			fmt.Sprintf(NoticeColor, cmdToRun.Name),
+			fmt.Sprintf(NoticeColor, cmdToRun.Cmd),
+			cmd.Env,
+		)
+	} else {
+		logging.Log.Debugf(
+			"Executing child command\nparent name: %s\nname: %s\ncmd: %s\nenv: %s",
+			fmt.Sprintf(NoticeColor, parentName),
+			fmt.Sprintf(NoticeColor, cmdToRun.Name),
+			fmt.Sprintf(NoticeColor, cmdToRun.Cmd),
+			cmd.Env,
+		)
+	}
 
 	runErr := cmd.Run()
 	if runErr != nil {
@@ -227,6 +230,28 @@ func runCmdScript(
 		}
 
 		return fmt.Errorf("failed to run command '%s': %s", cmdToRun.Name, runErr)
+	}
+
+	return nil
+}
+
+func runAfterScript(
+	cmdToRun *command.Command,
+	cfg *config.Config,
+	out io.Writer,
+) error {
+	cmd := prepareCmdForRun(cmdToRun, cmdToRun.After, cfg, out)
+
+	logging.Log.Debugf(
+		"Executing after script:\ncommand: %s\nscript: %s\nenv: %s",
+		fmt.Sprintf(NoticeColor, cmdToRun.Name),
+		fmt.Sprintf(NoticeColor, cmdToRun.After),
+		cmd.Env,
+	)
+
+	runErr := cmd.Run()
+	if runErr != nil {
+		return fmt.Errorf("failed to run `after` script for command '%s': %s", cmdToRun.Name, runErr)
 	}
 
 	return nil
@@ -277,12 +302,18 @@ func filterCmdMap(
 
 // Run all commands from Command.CmdMap in parallel and wait for results.
 // Must be used only when Command.Cmd is map[string]string
-func runCmdAsMap(ctx context.Context, cmdToRun *command.Command, cfg *config.Config, out io.Writer) error {
-	if err := initCmd(cmdToRun, cfg, false); err != nil {
+func runCmdAsMap(ctx context.Context, cmdToRun *command.Command, cfg *config.Config, out io.Writer) (err error) {
+	defer func() {
+		if cmdToRun.After != "" {
+			err = runAfterScript(cmdToRun, cfg, out)
+		}
+	}()
+
+	if err = initCmd(cmdToRun, cfg, false); err != nil {
 		return err
 	}
 
-	if err := runDepends(cmdToRun, cfg, out); err != nil {
+	if err = runDepends(cmdToRun, cfg, out); err != nil {
 		return err
 	}
 
@@ -301,14 +332,14 @@ func runCmdAsMap(ctx context.Context, cmdToRun *command.Command, cfg *config.Con
 		})
 	}
 
-	if err := g.Wait(); err != nil {
+	if err = g.Wait(); err != nil {
 		return err
 	}
 
 	// persist checksum only if exit code 0
-	if err := persistChecksum(*cmdToRun, cfg); err != nil {
+	if err = persistChecksum(*cmdToRun, cfg); err != nil {
 		return err
 	}
 
-	return nil
+	return err
 }

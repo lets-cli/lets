@@ -25,6 +25,12 @@ func main() {
 	}
 }
 
+// getContext returns context and kicks of a goroutine
+// which waits for SIGINT, SIGTERM and cancels global context.
+//
+// Note that since we setting stdin to command we run, that command
+// will receive SIGINT, SIGTERM at the same time as we here,
+// so command's process can begin finishing earlier than cancel will say it to
 func getContext() context.Context {
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
