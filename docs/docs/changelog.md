@@ -3,6 +3,46 @@ id: changelog
 title: Changelog
 ---
 
+## 0.0.29
+
+* [Added] `after` directive to command.
+  It allows to run some script after main `cmd`
+  ```yaml
+  commands:
+    run:
+      cmd: docker-compose up redis
+      after: docker-compose stop redis
+  ```
+
+* [Added] `before` global directive to config.
+  It allows to run some script before each main `cmd`
+  ```yaml
+  before: |
+    function @docker-compose() {
+      docker-compose --log-level ERROR $@
+    }
+  
+  commands:
+    run:
+      cmd: @docker-compose up redis
+  ```
+
+* [Added] ignored minixs
+  It allows to include mixin only if it exists - otherwise lets will ignore it.
+  Useful for git-ignored files.
+  
+  Just add `-` prefix to mixin filename
+  
+  ```yaml
+  mixins:
+    - -my.yaml
+  
+  commands:
+    run:
+      cmd: docker-compose up redis
+  ```
+
+  
 ## 0.0.28
 
 * [Fix] Added environment variable value coercion.

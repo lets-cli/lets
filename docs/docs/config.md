@@ -148,6 +148,23 @@ commands:
 
 And `lets test` works fine.
 
+### Ignored mixins
+
+It is possible to specify mixin file which could not exist. It is convenient when you have
+git-ignored file where you write your own commands.
+
+To make `lets` read this mixin just add `-` prefix to filename
+
+For example:
+
+```yaml
+shell: bash
+mixins:
+  - -my.yaml
+```
+
+Now if `my.yaml` exists - it will be loaded as a mixin. If its not exists - `lets` will skip it.
+
 ### Commands
 
 `key: commands`

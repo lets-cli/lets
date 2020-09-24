@@ -2,6 +2,7 @@ shell: bash
 
 mixins:
   - build.yaml
+  - -lets.my.yaml
 
 eval_env:
   CURRENT_UID: echo "`id -u`:`id -g`"
