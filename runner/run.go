@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/docopt/docopt-go"
 	"golang.org/x/sync/errgroup"
@@ -84,6 +85,14 @@ func initCmd(
 	return nil
 }
 
+func joinBeforeAndScript(before string, script string) string {
+	if before == "" {
+		return script
+	}
+
+	return strings.Join([]string{before, script}, "\n")
+}
+
 // Prepare cmd to be run:
 // - set in/out
 // - set dir
@@ -98,7 +107,8 @@ func prepareCmdForRun(
 	cfg *config.Config,
 	out io.Writer,
 ) *exec.Cmd {
-	cmd := exec.Command(cfg.Shell, "-c", cmdScript) // #nosec G204
+	script := joinBeforeAndScript(cfg.Before, cmdScript)
+	cmd := exec.Command(cfg.Shell, "-c", script) // #nosec G204
 	// setup std out and err
 	cmd.Stdout = out
 	cmd.Stderr = out

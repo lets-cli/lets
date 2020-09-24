@@ -1,0 +1,19 @@
+shell: bash
+
+mixins:
+  - lets.mix.yaml
+
+before: |
+  function say_world() {
+    echo World
+  }
+
+
+commands:
+  hello:
+    description: echo Hello
+    cmd: say_hello
+
+  world:
+    description: echo World
+    cmd: say_world

@@ -10,6 +10,7 @@ Config schema
 * [mixins](#mixins)
 * [env](#global-env)
 * [eval_env](#global-eval_env)
+* [before](#before)
 * [commands](#commands)
     * [description](#description)
     * [cmd](#cmd)
@@ -85,6 +86,34 @@ Example:
 shell: bash
 eval_env:
   CURRENT_UID: echo "`id -u`:`id -g`"
+```
+
+### Global before 
+
+`key: before`
+
+`type: string`
+
+Specify global before script for all commands.
+
+Example:
+
+Run `redis` with docker-compose using log level ERROR
+
+```yaml
+shell: bash
+
+before:
+  function @docker-compose() {
+    docker-compose --log-level ERROR $@
+  }
+
+  export XXX=123
+
+commands:
+  redis: |
+    echo $XXX
+    @docker-compose up redis
 ```
 
 ### Mixins
