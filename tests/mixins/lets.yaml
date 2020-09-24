@@ -1,0 +1,5 @@
+shell: bash
+
+mixins:
+  - lets.mix.yaml
+  - -lets.no.yaml

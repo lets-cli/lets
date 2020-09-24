@@ -1,0 +1,4 @@
+commands:
+  hello-from-minix:
+    description: Print Hello
+    cmd: echo "Hello"

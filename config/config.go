@@ -2,6 +2,7 @@ package config
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -30,6 +31,8 @@ const defaultConfigPath = "lets.yaml"
 
 var validConfigFields = []string{COMMANDS, SHELL, ENV, EvalEnv, MIXINS, VERSION, BEFORE}
 var validMixinConfigFields = []string{COMMANDS, ENV, EvalEnv, BEFORE}
+
+var errFileNotExists = errors.New("file not exists")
 
 type PathInfo struct {
 	Filename string
@@ -137,7 +140,7 @@ func getFullConfigPath(filename string, workDir string) (string, error) {
 	}
 
 	if !util.FileExists(fileAbsPath) {
-		return "", nil
+		return "", fmt.Errorf("%w: %s", errFileNotExists, fileAbsPath)
 	}
 
 	return fileAbsPath, nil
@@ -343,12 +346,29 @@ func unmarshalMixinConfig(rawKeyValue map[string]interface{}, cfg *Config) error
 	return unmarshalConfigGeneral(rawKeyValue, cfg)
 }
 
+// Trim `-` prefix.
+// Using this prefix we allow to include non-existed mixins (git-ignored for example)
+func normalizeMixinFilename(filename string) string {
+	return strings.TrimPrefix(filename, "-")
+}
+
+// Ignored means that its okay of minix does not exists.
+// It can be a git-ignored file for example
+func isIgnoredMixin(filename string) bool {
+	return strings.HasPrefix(filename, "-")
+}
+
 func readAndValidateMixins(mixins []interface{}, cfg *Config) error {
 	for _, filename := range mixins {
 		if filename, ok := filename.(string); ok {
-			configAbsPath, err := getFullConfigPath(filename, cfg.WorkDir)
+			configAbsPath, err := getFullConfigPath(normalizeMixinFilename(filename), cfg.WorkDir)
 			if err != nil {
-				return fmt.Errorf("failed to read mixin config: %s", err)
+				if isIgnoredMixin(filename) && errors.Is(err, errFileNotExists) {
+					continue
+				} else {
+					// complain non-existed mixin only if its filename does not starts with dash `-`
+					return fmt.Errorf("failed to read mixin config: %s", err)
+				}
 			}
 
 			mixinCfg, err := loadMixinConfig(configAbsPath, cfg)
