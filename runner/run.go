@@ -2,6 +2,7 @@ package runner
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -22,13 +23,40 @@ const (
 
 const noParent = ""
 
+type RunErr struct {
+	err error
+}
+
+func (e *RunErr) Error() string {
+	return e.err.Error()
+}
+
+// ExitCode will return exit code from underlying ExitError or returns default error code
+func (e *RunErr) ExitCode() int {
+	var exitErr *exec.ExitError
+	if ok := errors.As(e.err, &exitErr); ok {
+		return exitErr.ExitCode()
+	}
+
+	return 1 // default error code
+}
+
+func newRunError(cmdName string, isChildCmd bool, err error) error {
+	runErr := fmt.Errorf("failed to run command '%s': %w", cmdName, err)
+
+	if isChildCmd {
+		runErr = fmt.Errorf("failed to run child command '%s' from 'depends': %w", cmdName, err)
+	}
+
+	return &RunErr{err: runErr}
+}
+
 type RunOptions struct {
 	Config  *config.Config
 	RawArgs []string
 }
 
 // RunCommand runs parent command
-// TODO maybe we should store commands map in config as map[string]*Command (as pointers)
 func RunCommand(ctx context.Context, cmdToRun command.Command, cfg *config.Config, out io.Writer) error {
 	if cmdToRun.CmdMap != nil {
 		return runCmdAsMap(ctx, &cmdToRun, cfg, out)
@@ -178,31 +206,31 @@ func runCmd(
 	cfg *config.Config,
 	out io.Writer,
 	parentName string,
-) (err error) {
+) error {
 	defer func() {
 		if cmdToRun.After != "" {
-			err = runAfterScript(cmdToRun, cfg, out)
+			runAfterScript(cmdToRun, cfg, out)
 		}
 	}()
 
-	if err = initCmd(cmdToRun, cfg, parentName != noParent); err != nil {
+	if err := initCmd(cmdToRun, cfg, parentName != noParent); err != nil {
 		return err
 	}
 
-	if err = runDepends(cmdToRun, cfg, out); err != nil {
+	if err := runDepends(cmdToRun, cfg, out); err != nil {
 		return err
 	}
 
-	if err = runCmdScript(cmdToRun, cmdToRun.Cmd, cfg, out, parentName); err != nil {
+	if err := runCmdScript(cmdToRun, cmdToRun.Cmd, cfg, out, parentName); err != nil {
 		return err
 	}
 
 	// persist checksum only if exit code 0
-	if err = persistChecksum(*cmdToRun, cfg); err != nil {
+	if err := persistChecksum(*cmdToRun, cfg); err != nil {
 		return err
 	}
 
-	return err
+	return nil
 }
 
 func runCmdScript(
@@ -235,21 +263,22 @@ func runCmdScript(
 
 	runErr := cmd.Run()
 	if runErr != nil {
-		if isChildCmd {
-			return fmt.Errorf("failed to run child command '%s' from 'depends': %s", cmdToRun.Name, runErr)
-		}
-
-		return fmt.Errorf("failed to run command '%s': %s", cmdToRun.Name, runErr)
+		return newRunError(cmdToRun.Name, isChildCmd, runErr)
 	}
 
 	return nil
 }
 
+// Runs 'after' script after main 'cmd' script
+// It allowed to fail and will print error
+// Do not return error directly to root because we consider only 'cmd' exit code.
+// Even if 'after' script failed we return exit code from 'cmd'.
+// This behavior may change in the future if needed
 func runAfterScript(
 	cmdToRun *command.Command,
 	cfg *config.Config,
 	out io.Writer,
-) error {
+) {
 	cmd := prepareCmdForRun(cmdToRun, cmdToRun.After, cfg, out)
 
 	logging.Log.Debugf(
@@ -261,10 +290,8 @@ func runAfterScript(
 
 	runErr := cmd.Run()
 	if runErr != nil {
-		return fmt.Errorf("failed to run `after` script for command '%s': %s", cmdToRun.Name, runErr)
+		fmt.Printf("failed to run `after` script for command '%s': %s", cmdToRun.Name, runErr)
 	}
-
-	return nil
 }
 
 func filterCmdMap(
@@ -315,7 +342,7 @@ func filterCmdMap(
 func runCmdAsMap(ctx context.Context, cmdToRun *command.Command, cfg *config.Config, out io.Writer) (err error) {
 	defer func() {
 		if cmdToRun.After != "" {
-			err = runAfterScript(cmdToRun, cfg, out)
+			runAfterScript(cmdToRun, cfg, out)
 		}
 	}()
 

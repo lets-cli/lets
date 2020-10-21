@@ -11,3 +11,14 @@ commands:
     cmd:
       echo: echo "Main"
     after: echo "After"
+
+  failure:
+    description: Test after script with cmd-as-map
+    cmd: exit 113
+    after: echo "After"
+
+  failure-as-map:
+    description: Test after script with cmd-as-map
+    cmd:
+      fail: exit 113
+    after: echo "After"

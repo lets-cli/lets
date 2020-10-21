@@ -9,6 +9,7 @@ import (
 	"github.com/lets-cli/lets/cmd"
 	"github.com/lets-cli/lets/env"
 	"github.com/lets-cli/lets/logging"
+	"github.com/lets-cli/lets/runner"
 )
 
 var version = "0.0.0-dev"
@@ -21,7 +22,14 @@ func main() {
 	rootCmd := cmd.CreateRootCommand(os.Stdout, version)
 
 	if err := rootCmd.ExecuteContext(ctx); err != nil {
-		os.Exit(1)
+		logging.Log.Printf("Error: %s", err.Error())
+
+		exitCode := 1
+		if e, ok := err.(*runner.RunErr); ok {
+			exitCode = e.ExitCode()
+		}
+
+		os.Exit(exitCode)
 	}
 }
 
