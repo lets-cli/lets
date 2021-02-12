@@ -1,12 +1,9 @@
 # lets
-Simple CLI task runner
+CLI task runner for productive developers
 
 Lets takes the best from Makefile and bash and presents you a simple yet powerful tool for defining and running cli tasks and commands.
 
-Just describe your commands in `lets.yaml` and lets will do the rest.
-
-> Very alpha software. Things may and will change/break
-
+Just describe your commands in `lets.yaml` and `lets` will do the rest.
 
 ## Docs
 
