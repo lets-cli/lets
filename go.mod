@@ -1,6 +1,6 @@
 module github.com/lets-cli/lets
 
-go 1.14
+go 1.16
 
 require (
 	github.com/coreos/go-semver v0.2.0
