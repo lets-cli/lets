@@ -2,7 +2,6 @@ package command
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -127,7 +126,7 @@ func (cmd *Command) ReadChecksumsFromDisk(dotLetsDir string, cmdName string, che
 func readOneChecksum(dotLetsDir, cmdName, checksumName string) (string, error) {
 	_, checksumFilePath := getChecksumPath(dotLetsDir, cmdName, checksumName)
 
-	fileData, err := ioutil.ReadFile(checksumFilePath)
+	fileData, err := os.ReadFile(checksumFilePath)
 	if err != nil {
 		return "", fmt.Errorf("can not open file %s to read checksum: %s", checksumFilePath, err)
 	}

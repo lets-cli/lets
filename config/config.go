@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -188,7 +187,7 @@ func Load(pathInfo PathInfo, letsVersion string) (*Config, error) {
 }
 
 func loadConfig(filename string, cfg *Config) error {
-	fileData, err := ioutil.ReadFile(filename)
+	fileData, err := os.ReadFile(filename)
 	if err != nil {
 		return err
 	}
@@ -202,7 +201,7 @@ func loadConfig(filename string, cfg *Config) error {
 }
 
 func loadMixinConfig(filename string, rootCfg *Config) (*Config, error) {
-	fileData, err := ioutil.ReadFile(filename)
+	fileData, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}

@@ -3,7 +3,7 @@ package command
 import (
 	"crypto/sha1" // #nosec G505
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"sort"
 )
@@ -57,7 +57,7 @@ func calculateChecksum(workDir string, patterns []string) (string, error) {
 				return "", err
 			}
 		} else {
-			data, err := ioutil.ReadFile(filename)
+			data, err := os.ReadFile(filename)
 			if err != nil {
 				return "", err
 			}
