@@ -22,7 +22,7 @@ func main() {
 	rootCmd := cmd.CreateRootCommand(os.Stdout, version)
 
 	if err := rootCmd.ExecuteContext(ctx); err != nil {
-		logging.Log.Printf("Error: %s", err.Error())
+		logging.Log.Error(err.Error())
 
 		exitCode := 1
 		if e, ok := err.(*runner.RunErr); ok {
