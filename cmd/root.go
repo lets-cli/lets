@@ -6,14 +6,12 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/lets-cli/lets/config"
-	"github.com/lets-cli/lets/logging"
 	"github.com/lets-cli/lets/upgrade"
 	"github.com/lets-cli/lets/upgrade/registry"
-	"github.com/lets-cli/lets/workdir"
 )
 
 // CreateRootCommand is where all the stuff begins
-func CreateRootCommand(out io.Writer, version string) *cobra.Command {
+func CreateRootCommand(out io.Writer, cfg *config.Config) *cobra.Command {
 	// rootCmd represents the base command when called without any subcommands
 	var rootCmd = &cobra.Command{
 		Use:   "lets",
@@ -23,57 +21,23 @@ func CreateRootCommand(out io.Writer, version string) *cobra.Command {
 			return runRoot(cmd)
 		},
 		TraverseChildren: true,
-		Version:          version,
+		Version:          cfg.Version,
 		SilenceErrors:    true,
 		SilenceUsage:     true,
 	}
 
-	initRootCommand(rootCmd, out, version)
+	initRootCommand(rootCmd, out, cfg)
 
 	return rootCmd
 }
 
-func initRootCommand(rootCmd *cobra.Command, out io.Writer, version string) {
-	var conf *config.Config
-
-	configPath, findCfgErr := config.FindConfig()
-	if findCfgErr != nil {
-		initErrCheck(rootCmd, findCfgErr)
-	} else {
-		cfg, cfgErr := config.Load(configPath, version)
-		if cfgErr != nil {
-			initErrCheck(rootCmd, cfgErr)
-		}
-		conf = cfg
-	}
-
-	if conf != nil {
-		// create .lets only when there is valid config in work dir
-		if createDirErr := workdir.CreateDotLetsDir(configPath.WorkDir); createDirErr != nil {
-			initErrCheck(rootCmd, createDirErr)
-		}
-
-		initSubCommands(rootCmd, conf, out)
-	}
-
+func initRootCommand(rootCmd *cobra.Command, out io.Writer, cfg *config.Config) {
+	initSubCommands(rootCmd, cfg, out)
 	initCompletionCmd(rootCmd)
 	initVersionFlag(rootCmd)
 	initEnvFlag(rootCmd)
 	initOnlyAndExecFlags(rootCmd)
 	initUpgradeFlag(rootCmd)
-}
-
-// InitErrCheck check if error occurred before root cmd execution.
-// Main reason to do it in PreRun allows us to run root cmd as usual,
-//	parse help flags if any provided or check if its help command.
-//
-// For example if config load failed with error (no lets.yaml in current dir) - print error and exit.
-func initErrCheck(rootCmd *cobra.Command, err error) {
-	rootCmd.PreRun = func(cmd *cobra.Command, args []string) {
-		if err != nil {
-			logging.Log.Fatal(err)
-		}
-	}
 }
 
 func initVersionFlag(rootCmd *cobra.Command) {

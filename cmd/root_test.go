@@ -6,13 +6,24 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/lets-cli/lets/test"
+	"github.com/lets-cli/lets/commands/command"
+	"github.com/lets-cli/lets/config"
 )
 
 func newTestRootCmd(args []string) (rootCmd *cobra.Command, out *bytes.Buffer) {
 	bufOut := new(bytes.Buffer)
 
-	rootCommand := CreateRootCommand(bufOut, "test-version")
+	testCfg := &config.Config{
+		Commands: make(map[string]command.Command),
+	}
+	testCfg.Commands["foo"] = command.Command{
+		Name: "foo",
+	}
+	testCfg.Commands["bar"] = command.Command{
+		Name: "bar",
+	}
+
+	rootCommand := CreateRootCommand(bufOut, testCfg)
 	rootCommand.SetOut(bufOut)
 	rootCommand.SetErr(bufOut)
 	rootCommand.SetArgs(args)
@@ -22,20 +33,6 @@ func newTestRootCmd(args []string) (rootCmd *cobra.Command, out *bytes.Buffer) {
 
 func TestRootCmd(t *testing.T) {
 	t.Run("should init sub commands", func(t *testing.T) {
-		configRaw := &test.SerializableTestConfig{
-			Shell: "bash",
-			Commands: map[string]map[string]string{
-				"foo": {
-					"cmd": "echo foo",
-				},
-				"bar": {
-					"cmd": "echo bar",
-				},
-			},
-		}
-		cleanupConfig := test.NewTestConfig(configRaw)
-		defer cleanupConfig()
-
 		var args []string
 		rootCmd, _ := newTestRootCmd(args)
 

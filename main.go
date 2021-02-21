@@ -7,9 +7,11 @@ import (
 	"syscall"
 
 	"github.com/lets-cli/lets/cmd"
+	"github.com/lets-cli/lets/config"
 	"github.com/lets-cli/lets/env"
 	"github.com/lets-cli/lets/logging"
 	"github.com/lets-cli/lets/runner"
+	"github.com/lets-cli/lets/workdir"
 )
 
 var version = "0.0.0-dev"
@@ -19,7 +21,18 @@ func main() {
 
 	logging.InitLogging(env.IsDebug())
 
-	rootCmd := cmd.CreateRootCommand(os.Stdout, version)
+	cfg, err := config.Read(version)
+	if err != nil {
+		logging.Log.Error(err.Error())
+		os.Exit(1)
+	}
+
+	if err = workdir.CreateDotLetsDir(cfg.WorkDir); err != nil {
+		logging.Log.Error(err.Error())
+		os.Exit(1)
+	}
+
+	rootCmd := cmd.CreateRootCommand(os.Stdout, cfg)
 
 	if err := rootCmd.ExecuteContext(ctx); err != nil {
 		logging.Log.Error(err.Error())

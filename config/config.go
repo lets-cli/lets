@@ -105,6 +105,20 @@ func newMixinConfig(workDir string, configAbsPath string) *Config {
 	return cfg
 }
 
+func Read(version string) (*Config, error) {
+	configPath, err := FindConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	cfg, err := LoadFromFile(configPath, version)
+	if err != nil {
+		return nil, err
+	}
+
+	return cfg, nil
+}
+
 func GetDefaultConfigPath() string {
 	return defaultConfigPath
 }
@@ -160,7 +174,7 @@ func getWorkDir(filename string, rootDir string) (string, error) {
 }
 
 // Load a config from file
-func Load(pathInfo PathInfo, letsVersion string) (*Config, error) {
+func LoadFromFile(pathInfo PathInfo, letsVersion string) (*Config, error) {
 	failedLoadErr := func(err error) error {
 		return fmt.Errorf("failed to load config file %s: %s", pathInfo.Filename, err)
 	}
