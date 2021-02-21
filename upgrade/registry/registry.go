@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path"
 	"strings"
 	"time"
 
@@ -22,10 +23,10 @@ type RepoRegistry interface {
 	GetLatestRelease() (string, error)
 	DownloadReleaseBinary(packageName string, version string, dstPath string) error
 	GetPackageName(os string, arch string) (string, error)
-	getDownloadUrl(repoUri string, packageName string, version string) string
+	GetDownloadUrl(repoUri string, packageName string, version string) string
 }
 
-type githubRegistry struct {
+type GithubRegistry struct {
 	client                 *http.Client
 	ctx                    context.Context
 	repoUri                string
@@ -33,12 +34,12 @@ type githubRegistry struct {
 	downloadPackageTimeout time.Duration
 }
 
-func NewGithubRegistry() RepoRegistry {
+func NewGithubRegistry() *GithubRegistry {
 	client := &http.Client{}
 
 	ctx := context.Background()
 
-	reg := githubRegistry{
+	reg := &GithubRegistry{
 		client:  client,
 		ctx:     ctx,
 		repoUri: "https://github.com/lets-cli/lets",
@@ -47,11 +48,11 @@ func NewGithubRegistry() RepoRegistry {
 	return reg
 }
 
-func (reg githubRegistry) getDownloadUrl(repoUri string, packageName string, version string) string {
+func (reg *GithubRegistry) GetDownloadUrl(repoUri string, packageName string, version string) string {
 	return fmt.Sprintf("%s/releases/download/%s/%s", repoUri, version, packageName)
 }
 
-func (reg githubRegistry) GetPackageName(os string, arch string) (string, error) {
+func (reg *GithubRegistry) GetPackageName(os string, arch string) (string, error) {
 	os = strings.Title(os)
 	arch, archExists := archAdaptMap[arch]
 	if !archExists {
@@ -60,8 +61,8 @@ func (reg githubRegistry) GetPackageName(os string, arch string) (string, error)
 	return fmt.Sprintf("lets_%s_%s", os, arch), nil
 }
 
-func (reg githubRegistry) DownloadReleaseBinary(packageName string, version string, dstPath string) error {
-	downloadUrl := reg.getDownloadUrl(reg.repoUri, fmt.Sprintf("%s.tar.gz", packageName), version)
+func (reg *GithubRegistry) DownloadReleaseBinary(packageName string, version string, dstPath string) error {
+	downloadUrl := reg.GetDownloadUrl(reg.repoUri, fmt.Sprintf("%s.tar.gz", packageName), version)
 
 	errFmt := func(err error) error {
 		return fmt.Errorf("failed to download release %s version %s: %s", packageName, version, err)
@@ -93,6 +94,17 @@ func (reg githubRegistry) DownloadReleaseBinary(packageName string, version stri
 		return errFmt(fmt.Errorf("network error: %s", resp.Status))
 	}
 
+	dstDir := fmt.Sprintf("%s.dir", dstPath)
+	// cleanup if something abd happens during download/extract/rename flow
+	defer os.RemoveAll(dstDir)
+
+	err = os.RemoveAll(dstDir)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			return errFmt(err)
+		}
+	}
+
 	err = os.RemoveAll(dstPath)
 	if err != nil {
 		if !os.IsNotExist(err) {
@@ -101,7 +113,13 @@ func (reg githubRegistry) DownloadReleaseBinary(packageName string, version stri
 	}
 
 	// TODO drop extract dependency, replace with own code
-	err = extract.Gz(reg.ctx, resp.Body, dstPath, nil)
+	err = extract.Gz(reg.ctx, resp.Body, dstDir, nil)
+	if err != nil {
+		return errFmt(err)
+	}
+
+	// since we do not need all content from tar, we take only binary and delete the rest
+	err = os.Rename(path.Join(dstDir, "lets"), dstPath)
 	if err != nil {
 		return errFmt(err)
 	}
@@ -113,7 +131,7 @@ type release struct {
 	TagName string `json:"tag_name"`
 }
 
-func (reg githubRegistry) GetLatestRelease() (string, error) {
+func (reg *GithubRegistry) GetLatestRelease() (string, error) {
 	errFmt := func(err error) error {
 		return fmt.Errorf("failed to get latest release version: %s", err)
 	}

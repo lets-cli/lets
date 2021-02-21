@@ -6,6 +6,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/spf13/cobra"
+
 	"github.com/lets-cli/lets/cmd"
 	"github.com/lets-cli/lets/config"
 	"github.com/lets-cli/lets/env"
@@ -21,18 +23,22 @@ func main() {
 
 	logging.InitLogging(env.IsDebug())
 
-	cfg, err := config.Read(version)
-	if err != nil {
-		logging.Log.Error(err.Error())
-		os.Exit(1)
+	cfg, readConfigErr := config.Read(version)
+
+	var rootCmd *cobra.Command
+	if cfg != nil {
+		rootCmd = cmd.CreateRootCommandWithConfig(os.Stdout, cfg, version)
+		if err := workdir.CreateDotLetsDir(cfg.WorkDir); err != nil {
+			logging.Log.Error(err)
+			os.Exit(1)
+		}
+	} else {
+		rootCmd = cmd.CreateRootCommand(version)
 	}
 
-	if err = workdir.CreateDotLetsDir(cfg.WorkDir); err != nil {
-		logging.Log.Error(err.Error())
-		os.Exit(1)
+	if readConfigErr != nil {
+		cmd.ConfigErrorCheck(rootCmd, readConfigErr)
 	}
-
-	rootCmd := cmd.CreateRootCommand(os.Stdout, cfg)
 
 	if err := rootCmd.ExecuteContext(ctx); err != nil {
 		logging.Log.Error(err.Error())

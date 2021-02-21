@@ -11,31 +11,57 @@ import (
 	"github.com/lets-cli/lets/upgrade/registry"
 )
 
-func Upgrade(reg registry.RepoRegistry) error {
+type Upgrader interface {
+	Upgrade() error
+}
+
+type BinaryUpgrader struct {
+	registry registry.RepoRegistry
+	currentVersion string
+	binaryPath string
+	downloadPath string
+	backupPath string
+}
+
+func NewBinaryUpgrader(reg registry.RepoRegistry, currentVersion string) (*BinaryUpgrader, error) {
 	executablePath, err := binaryPath()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	latestVersion, err := reg.GetLatestRelease()
+	return &BinaryUpgrader{
+		registry: reg,
+		currentVersion: currentVersion,
+		// TODO rewrite all paths with home dir
+		binaryPath: executablePath,
+		downloadPath: path.Join(os.TempDir(), "lets.download"),
+		backupPath: path.Join(os.TempDir(), "lets.backup"),
+	}, nil
+}
+
+
+func (up *BinaryUpgrader) Upgrade() error {
+	latestVersion, err := up.registry.GetLatestRelease()
 	if err != nil {
 		return err
 	}
 
-	packageName, err := reg.GetPackageName(runtime.GOOS, runtime.GOARCH)
+	if up.currentVersion == latestVersion {
+		logging.Log.Printf("Lets is up-to-date")
+		return nil
+	}
+
+	packageName, err := up.registry.GetPackageName(runtime.GOOS, runtime.GOARCH)
 	if err != nil {
 		return err
 	}
-
-	// TODO rewrite with home dir
-	downloadPath := path.Join(os.TempDir(), fmt.Sprintf("%s_%s", packageName, latestVersion))
 
 	logging.Log.Printf("Downloading latest release %s...", latestVersion)
 
-	err = reg.DownloadReleaseBinary(
+	err = up.registry.DownloadReleaseBinary(
 		packageName,
 		latestVersion,
-		downloadPath,
+		up.downloadPath,
 	)
 	if err != nil {
 		return err
@@ -43,12 +69,12 @@ func Upgrade(reg registry.RepoRegistry) error {
 
 	backupPath := path.Join(os.TempDir(), "lets.backup")
 
-	err = backupExecutable(executablePath, backupPath)
+	err = backupExecutable(up.binaryPath, backupPath)
 	if err != nil {
 		return err
 	}
 
-	err = replaceBinaries(downloadPath, executablePath, backupPath)
+	err = replaceBinaries(up.downloadPath, up.binaryPath, backupPath)
 	if err != nil {
 		return err
 	}
@@ -72,14 +98,17 @@ func backupExecutable(executablePath string, backupPath string) error {
 		return errFmt(err)
 	}
 
-	// TODO remove old backup
-	// TODO in edge db there is a hard link from original executable to backup path
+	err = os.RemoveAll(backupPath)
+	if err != nil {
+		return errFmt(err)
+	}
+
+	// TODO maybe use hard link from original executable to backup path
 	backupFile, err := os.Create(backupPath)
 	if err != nil {
 		return errFmt(err)
 	}
 
-	// in edgedb there is hard_link
 	_, err = io.Copy(backupFile, executableFile)
 	if err != nil {
 		return errFmt(err)
@@ -92,8 +121,7 @@ func replaceBinaries(downloadPath string, executablePath string, backupPath stri
 	defer os.RemoveAll(downloadPath)
 	defer os.RemoveAll(backupPath)
 
-	newExecutablePath := path.Join(downloadPath, "lets")
-	err := os.Rename(newExecutablePath, executablePath)
+	err := os.Rename(downloadPath, executablePath)
 	if err != nil {
 		// TODO handle backupPath
 		return fmt.Errorf("failed to update lets binary: %s", err)

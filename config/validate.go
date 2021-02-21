@@ -52,7 +52,7 @@ func validateVersion(cfg *Config, letsVersion string) error {
 	// in dev (where version is 0.0.0-dev) this predicate will be always false
 	if letsVersionParsed.LessThan(*cfgVersionParsed) {
 		return fmt.Errorf(
-			"config version '%s' is not compatible with 'lets' version '%s'. \n"+
+			"config version '%s' is not compatible with 'lets' version '%s'. "+
 				"Please upgrade 'lets' to '%s' "+
 				"using 'lets --upgrade' command or following documentation at https://lets-cli.org/docs/installation'",
 			cfgVersionParsed,

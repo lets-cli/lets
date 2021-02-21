@@ -121,7 +121,7 @@ setup() {
     printf "%s\n" "${lines[@]}"
 
     [[ $status != 0 ]]
-    [[ "${lines[0]}" = "Error: failed to parse docopt options for cmd test-options: --kv-opt requires argument" ]]
+    [[ "${lines[0]}" = "failed to parse docopt options for cmd test-options: --kv-opt requires argument" ]]
     [[ "${lines[1]}" = "Usage:" ]]
     [[ "${lines[2]}" = "  lets test-options [--kv-opt=<kv-opt>] [--bool-opt] [--attr=<attr>...] [<args>...]" ]]
     [[ "${lines[3]}" = "Options:" ]]
@@ -136,7 +136,7 @@ setup() {
     printf "%s\n" "${lines[@]}"
 
     [[ $status != 0 ]]
-    [[ "${lines[0]}" = "Error: failed to parse docopt options for cmd options-wrong-usage: no such option" ]]
+    [[ "${lines[0]}" = "failed to parse docopt options for cmd options-wrong-usage: no such option" ]]
     [[ "${lines[1]}" = "Usage: lets options-wrong-usage-xxx" ]]
 }
 

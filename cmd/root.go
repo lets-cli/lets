@@ -2,37 +2,64 @@ package cmd
 
 import (
 	"io"
+	"os"
 
 	"github.com/spf13/cobra"
 
 	"github.com/lets-cli/lets/config"
 	"github.com/lets-cli/lets/upgrade"
 	"github.com/lets-cli/lets/upgrade/registry"
+	"github.com/lets-cli/lets/logging"
 )
 
-// CreateRootCommand is where all the stuff begins
-func CreateRootCommand(out io.Writer, cfg *config.Config) *cobra.Command {
-	// rootCmd represents the base command when called without any subcommands
-	var rootCmd = &cobra.Command{
+// newRootCmd represents the base command when called without any subcommands
+func newRootCmd(version string) *cobra.Command {
+	return &cobra.Command{
 		Use:   "lets",
 		Short: "A CLI command runner",
 		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runRoot(cmd)
+			return runRoot(cmd, version)
 		},
 		TraverseChildren: true,
-		Version:          cfg.Version,
+		Version:          version,
 		SilenceErrors:    true,
 		SilenceUsage:     true,
 	}
+}
 
-	initRootCommand(rootCmd, out, cfg)
+// CreateRootCommandWithConfig used to run root command with all subcommands
+func CreateRootCommandWithConfig(out io.Writer, cfg *config.Config, version string) *cobra.Command {
+	var rootCmd = newRootCmd(version)
+
+	initRootCommand(rootCmd)
+	initSubCommands(rootCmd, cfg, out)
 
 	return rootCmd
 }
 
-func initRootCommand(rootCmd *cobra.Command, out io.Writer, cfg *config.Config) {
-	initSubCommands(rootCmd, cfg, out)
+// CreateRootCommand used to run only root command without config
+func CreateRootCommand(version string) *cobra.Command {
+	var rootCmd = newRootCmd(version)
+
+	initRootCommand(rootCmd)
+
+	return rootCmd
+}
+
+// ConfigErrorCheck will print error only if no args passed
+func ConfigErrorCheck(rootCmd *cobra.Command, err error) {
+	rootCmd.PreRun = func(cmd *cobra.Command, args []string) {
+		if cmd.Flags().NFlag() > 0 {
+			return
+		}
+		
+		logging.Log.Error(err)
+		os.Exit(1)
+	}
+}
+
+func initRootCommand(rootCmd *cobra.Command) {
 	initCompletionCmd(rootCmd)
 	initVersionFlag(rootCmd)
 	initEnvFlag(rootCmd)
@@ -57,14 +84,30 @@ func initUpgradeFlag(cmd *cobra.Command) {
 	cmd.Flags().Bool("upgrade", false, "upgrade lets to latest version")
 }
 
-func runRoot(cmd *cobra.Command) error {
+func runRoot(cmd *cobra.Command, version string) error {
 	selfUpgrade, err := cmd.Flags().GetBool("upgrade")
 	if err != nil {
 		return err
 	}
 
 	if selfUpgrade {
-		return upgrade.Upgrade(registry.NewGithubRegistry())
+		upgrader, err := upgrade.NewBinaryUpgrader(registry.NewGithubRegistry(), version)
+		if err != nil {
+			return err
+		}
+
+		return upgrader.Upgrade()
 	}
+
+	showVersion, err := cmd.Flags().GetBool("version")
+	if err != nil {
+		return err
+	}
+
+	if showVersion {
+		logging.Log.Printf("lets version %s", version)
+		return nil
+	}
+
 	return cmd.Help()
 }
