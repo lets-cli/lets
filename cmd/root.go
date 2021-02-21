@@ -7,6 +7,8 @@ import (
 
 	"github.com/lets-cli/lets/config"
 	"github.com/lets-cli/lets/logging"
+	"github.com/lets-cli/lets/upgrade"
+	"github.com/lets-cli/lets/upgrade/registry"
 	"github.com/lets-cli/lets/workdir"
 )
 
@@ -57,6 +59,7 @@ func initRootCommand(rootCmd *cobra.Command, out io.Writer, version string) {
 	initVersionFlag(rootCmd)
 	initEnvFlag(rootCmd)
 	initOnlyAndExecFlags(rootCmd)
+	initUpgradeFlag(rootCmd)
 }
 
 // InitErrCheck check if error occurred before root cmd execution.
@@ -85,6 +88,18 @@ func initOnlyAndExecFlags(cmd *cobra.Command) {
 	cmd.Flags().StringArray("exclude", []string{}, "run all but excluded command(s) described in cmd as map")
 }
 
+func initUpgradeFlag(cmd *cobra.Command) {
+	cmd.Flags().Bool("upgrade", false, "upgrade lets to latest version")
+}
+
 func runRoot(cmd *cobra.Command) error {
+	selfUpgrade, err := cmd.Flags().GetBool("upgrade")
+	if err != nil {
+		return err
+	}
+
+	if selfUpgrade {
+		return upgrade.Upgrade(registry.NewGithubRegistry())
+	}
 	return cmd.Help()
 }
