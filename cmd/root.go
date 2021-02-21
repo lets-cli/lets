@@ -1,18 +1,18 @@
 package cmd
 
 import (
+	"fmt"
 	"io"
 	"os"
 
-	"github.com/spf13/cobra"
-
 	"github.com/lets-cli/lets/config"
+	"github.com/lets-cli/lets/logging"
 	"github.com/lets-cli/lets/upgrade"
 	"github.com/lets-cli/lets/upgrade/registry"
-	"github.com/lets-cli/lets/logging"
+	"github.com/spf13/cobra"
 )
 
-// newRootCmd represents the base command when called without any subcommands
+// newRootCmd represents the base command when called without any subcommands.
 func newRootCmd(version string) *cobra.Command {
 	return &cobra.Command{
 		Use:   "lets",
@@ -28,9 +28,9 @@ func newRootCmd(version string) *cobra.Command {
 	}
 }
 
-// CreateRootCommandWithConfig used to run root command with all subcommands
+// CreateRootCommandWithConfig used to run root command with all subcommands.
 func CreateRootCommandWithConfig(out io.Writer, cfg *config.Config, version string) *cobra.Command {
-	var rootCmd = newRootCmd(version)
+	rootCmd := newRootCmd(version)
 
 	initRootCommand(rootCmd)
 	initSubCommands(rootCmd, cfg, out)
@@ -38,9 +38,9 @@ func CreateRootCommandWithConfig(out io.Writer, cfg *config.Config, version stri
 	return rootCmd
 }
 
-// CreateRootCommand used to run only root command without config
+// CreateRootCommand used to run only root command without config.
 func CreateRootCommand(version string) *cobra.Command {
-	var rootCmd = newRootCmd(version)
+	rootCmd := newRootCmd(version)
 
 	initRootCommand(rootCmd)
 
@@ -48,12 +48,16 @@ func CreateRootCommand(version string) *cobra.Command {
 }
 
 // ConfigErrorCheck will print error only if no args passed
+// Main reason to do it in PreRun allows us to run root cmd as usual,
+//	parse help flags if any provided or check if its help command.
+//
+// For example if config load failed with error (no lets.yaml in current dir) - print error and exit.
 func ConfigErrorCheck(rootCmd *cobra.Command, err error) {
 	rootCmd.PreRun = func(cmd *cobra.Command, args []string) {
 		if cmd.Flags().NFlag() > 0 {
 			return
 		}
-		
+
 		logging.Log.Error(err)
 		os.Exit(1)
 	}
@@ -87,13 +91,14 @@ func initUpgradeFlag(cmd *cobra.Command) {
 func runRoot(cmd *cobra.Command, version string) error {
 	selfUpgrade, err := cmd.Flags().GetBool("upgrade")
 	if err != nil {
-		return err
+		return fmt.Errorf("can not get flag 'upgrade': %w", err)
 	}
 
 	if selfUpgrade {
+		// TODO pass cmd context to be able ctrl+c
 		upgrader, err := upgrade.NewBinaryUpgrader(registry.NewGithubRegistry(), version)
 		if err != nil {
-			return err
+			return fmt.Errorf("can not upgrade lets: %w", err)
 		}
 
 		return upgrader.Upgrade()
@@ -101,11 +106,12 @@ func runRoot(cmd *cobra.Command, version string) error {
 
 	showVersion, err := cmd.Flags().GetBool("version")
 	if err != nil {
-		return err
+		return fmt.Errorf("can not get flag 'version': %w", err)
 	}
 
 	if showVersion {
 		logging.Log.Printf("lets version %s", version)
+
 		return nil
 	}
 

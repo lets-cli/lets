@@ -16,7 +16,7 @@ services:
     user: ${CURRENT_UID}
     volumes:
       - ./:/app
-    entrypoint: golangci-lint run -v -c .golang-ci.yaml
+    entrypoint: golangci-lint run -v -c .golangci.yaml --fix
 
   test:
     <<: *base

@@ -15,7 +15,7 @@ var DocoptParser = &docopt.Parser{
 }
 
 // ParseDocopts parses docopts for command options with args from os.Args
-// TODO pass os.Argv explicitly
+// TODO pass os.Argv explicitly.
 func ParseDocopts(args []string, rawOptions string) (docopt.Opts, error) {
 	// no options at all
 	if rawOptions == "" {
@@ -56,7 +56,7 @@ func OptsToLetsOpt(opts docopt.Opts) map[string]string {
 	return envMap
 }
 
-func OptsToLetsCli(opts docopt.Opts) map[string]string {
+func OptsToLetsCli(opts docopt.Opts) map[string]string { //nolint:cyclop
 	cliMap := make(map[string]string, len(opts))
 	formatVal := func(k, v string) string {
 		return fmt.Sprintf("%s %s", k, v)

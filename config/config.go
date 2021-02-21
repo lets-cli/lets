@@ -8,15 +8,14 @@ import (
 	"path/filepath"
 	"strings"
 
-	"gopkg.in/yaml.v2"
-
 	"github.com/lets-cli/lets/commands/command"
 	"github.com/lets-cli/lets/util"
 	"github.com/lets-cli/lets/workdir"
+	"gopkg.in/yaml.v2"
 )
 
 var (
-	// COMMANDS is a top-level directive. Includes all commands to run
+	// COMMANDS is a top-level directive. Includes all commands to run.
 	COMMANDS = "commands"
 	SHELL    = "shell"
 	ENV      = "env"
@@ -28,10 +27,15 @@ var (
 
 const defaultConfigPath = "lets.yaml"
 
-var validConfigFields = []string{COMMANDS, SHELL, ENV, EvalEnv, MIXINS, VERSION, BEFORE}
-var validMixinConfigFields = []string{COMMANDS, ENV, EvalEnv, BEFORE}
+var (
+	validConfigFields      = []string{COMMANDS, SHELL, ENV, EvalEnv, MIXINS, VERSION, BEFORE}
+	validMixinConfigFields = []string{COMMANDS, ENV, EvalEnv, BEFORE}
+)
 
-var errFileNotExists = errors.New("file not exists")
+var (
+	errFileNotExists  = errors.New("file not exists")
+	errConfigNotFound = errors.New("can not find config")
+)
 
 type PathInfo struct {
 	Filename string
@@ -39,7 +43,7 @@ type PathInfo struct {
 	WorkDir  string
 }
 
-// Config is a struct for loaded config file
+// Config is a struct for loaded config file.
 type Config struct {
 	// absolute path to work dir - where config is placed
 	WorkDir  string
@@ -128,7 +132,7 @@ func GetDefaultConfigPath() string {
 func getFullConfigPathRecursive(filename string, workDir string) (string, error) {
 	fileAbsPath, err := filepath.Abs(filepath.Join(workDir, filename))
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("can not get absolute workdir path: %w", err)
 	}
 
 	if util.FileExists(fileAbsPath) {
@@ -138,7 +142,7 @@ func getFullConfigPathRecursive(filename string, workDir string) (string, error)
 	// else we get parent and try again up until we reach roof of fs
 	parentDir := filepath.Dir(workDir)
 	if parentDir == "/" {
-		return "", fmt.Errorf("can not find config")
+		return "", errConfigNotFound
 	}
 
 	return getFullConfigPathRecursive(filename, parentDir)
@@ -149,7 +153,7 @@ func getFullConfigPathRecursive(filename string, workDir string) (string, error)
 func getFullConfigPath(filename string, workDir string) (string, error) {
 	fileAbsPath, err := filepath.Abs(filepath.Join(workDir, filename))
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("can not get absolute workdir path: %w", err)
 	}
 
 	if !util.FileExists(fileAbsPath) {
@@ -159,11 +163,11 @@ func getFullConfigPath(filename string, workDir string) (string, error) {
 	return fileAbsPath, nil
 }
 
-// workDir is where lets.yaml found or rootDir points to
+// workDir is where lets.yaml found or rootDir points to.
 func getWorkDir(filename string, rootDir string) (string, error) {
 	workDir, err := os.Getwd()
 	if err != nil {
-		return "", fmt.Errorf("failed to get workdir for config %s: %s", filename, err)
+		return "", fmt.Errorf("failed to get workdir for config %s: %w", filename, err)
 	}
 
 	if rootDir != "" {
@@ -173,10 +177,10 @@ func getWorkDir(filename string, rootDir string) (string, error) {
 	return workDir, nil
 }
 
-// Load a config from file
+// Load a config from file.
 func LoadFromFile(pathInfo PathInfo, letsVersion string) (*Config, error) {
 	failedLoadErr := func(err error) error {
-		return fmt.Errorf("failed to load config file %s: %s", pathInfo.Filename, err)
+		return fmt.Errorf("failed to load config file %s: %w", pathInfo.Filename, err)
 	}
 
 	config := newConfig(pathInfo.WorkDir, pathInfo.AbsPath)
@@ -192,7 +196,7 @@ func LoadFromFile(pathInfo PathInfo, letsVersion string) (*Config, error) {
 
 	dotLetsDir, err := workdir.GetDotLetsDir(pathInfo.WorkDir)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("can not get .lets absolute path: %w", err)
 	}
 
 	config.DotLetsDir = dotLetsDir
@@ -203,7 +207,7 @@ func LoadFromFile(pathInfo PathInfo, letsVersion string) (*Config, error) {
 func loadConfig(filename string, cfg *Config) error {
 	fileData, err := os.ReadFile(filename)
 	if err != nil {
-		return err
+		return fmt.Errorf("can not get read config file: %w", err)
 	}
 
 	err = yaml.Unmarshal(fileData, cfg)
@@ -217,20 +221,20 @@ func loadConfig(filename string, cfg *Config) error {
 func loadMixinConfig(filename string, rootCfg *Config) (*Config, error) {
 	fileData, err := os.ReadFile(filename)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("can not get read mixin config file: %w", err)
 	}
 
 	config := newMixinConfig(rootCfg.WorkDir, filename)
 
 	err = yaml.Unmarshal(fileData, config)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("can not decode mixin config file: %w", err)
 	}
 
 	return config, nil
 }
 
-// UnmarshalYAML unmarshals a config
+// UnmarshalYAML unmarshals a config.
 func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	rawKeyValue := make(map[string]interface{})
 
@@ -245,7 +249,7 @@ func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return unmarshalConfig(rawKeyValue, c)
 }
 
-func unmarshalConfigGeneral(rawKeyValue map[string]interface{}, cfg *Config) error {
+func unmarshalConfigGeneral(rawKeyValue map[string]interface{}, cfg *Config) error { //nolint:cyclop
 	if cmds, ok := rawKeyValue[COMMANDS]; ok {
 		cmdsMap, ok := cmds.(map[interface{}]interface{})
 		if !ok {
@@ -300,7 +304,7 @@ func unmarshalConfigGeneral(rawKeyValue map[string]interface{}, cfg *Config) err
 	return nil
 }
 
-func unmarshalConfig(rawKeyValue map[string]interface{}, cfg *Config) error {
+func unmarshalConfig(rawKeyValue map[string]interface{}, cfg *Config) error { //nolint:cyclop
 	if err := validateTopLevelFields(rawKeyValue, validConfigFields); err != nil {
 		return err
 	}
@@ -360,37 +364,37 @@ func unmarshalMixinConfig(rawKeyValue map[string]interface{}, cfg *Config) error
 }
 
 // Trim `-` prefix.
-// Using this prefix we allow to include non-existed mixins (git-ignored for example)
+// Using this prefix we allow to include non-existed mixins (git-ignored for example).
 func normalizeMixinFilename(filename string) string {
 	return strings.TrimPrefix(filename, "-")
 }
 
 // Ignored means that its okay of minix does not exists.
-// It can be a git-ignored file for example
+// It can be a git-ignored file for example.
 func isIgnoredMixin(filename string) bool {
 	return strings.HasPrefix(filename, "-")
 }
 
 func readAndValidateMixins(mixins []interface{}, cfg *Config) error {
 	for _, filename := range mixins {
-		if filename, ok := filename.(string); ok {
+		if filename, ok := filename.(string); ok { //nolint:nestif
 			configAbsPath, err := getFullConfigPath(normalizeMixinFilename(filename), cfg.WorkDir)
 			if err != nil {
 				if isIgnoredMixin(filename) && errors.Is(err, errFileNotExists) {
 					continue
 				} else {
 					// complain non-existed mixin only if its filename does not starts with dash `-`
-					return fmt.Errorf("failed to read mixin config: %s", err)
+					return fmt.Errorf("failed to read mixin config: %w", err)
 				}
 			}
 
 			mixinCfg, err := loadMixinConfig(configAbsPath, cfg)
 			if err != nil {
-				return fmt.Errorf("failed to load mixin config: %s", err)
+				return fmt.Errorf("failed to load mixin config: %w", err)
 			}
 
 			if err := mergeConfigs(cfg, mixinCfg); err != nil {
-				return fmt.Errorf("failed to merge mixin config %s with main config: %s", filename, err)
+				return fmt.Errorf("failed to merge mixin config %s with main config: %w", filename, err)
 			}
 		} else {
 			return newConfigParseError(
@@ -416,7 +420,7 @@ func joinBeforeScripts(beforeScripts ...string) string {
 }
 
 // Merge main and mixin configs. If there is a conflict - return error as we do not override values
-// TODO add test
+// TODO add test.
 func mergeConfigs(mainCfg *Config, mixinCfg *Config) error {
 	for _, mixinCmd := range mixinCfg.Commands {
 		if _, conflict := mainCfg.Commands[mixinCmd.Name]; conflict {
@@ -467,7 +471,7 @@ func parseAndValidateEvalEnv(evalEnv map[interface{}]interface{}, cfg *Config) e
 		if value, ok := value.(string); ok {
 			computedVal, err := command.EvalEnvVariable(value)
 			if err != nil {
-				return err
+				return fmt.Errorf("can not evaluate env variable: %w", err)
 			}
 
 			cfg.Env[nameKey] = computedVal
@@ -501,8 +505,8 @@ func (c *Config) loadCommands(cmds map[interface{}]interface{}) error {
 		}
 
 		newCmd := command.NewCommand(keyStr)
-		err := command.ParseAndValidateCommand(&newCmd, value.(map[interface{}]interface{}))
 
+		err := command.ParseAndValidateCommand(&newCmd, value.(map[interface{}]interface{}))
 		if err != nil {
 			return err
 		}

@@ -8,13 +8,13 @@ import (
 
 // eval env value and trim result string
 // TODO pass env from cfg.env - it will allow to use static env in eval_env
-// TODO maybe use cfg.Shell instead of sh
+// TODO maybe use cfg.Shell instead of sh.
 func EvalEnvVariable(rawCmd string) (string, error) {
 	cmd := exec.Command("sh", "-c", rawCmd)
-	out, err := cmd.Output()
 
+	out, err := cmd.Output()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("can not get output from eval_env script: %s: %w", rawCmd, err)
 	}
 
 	res := string(out)

@@ -12,7 +12,7 @@ func SafeCreateDir(dirPath string) error {
 			return nil
 		}
 
-		return fmt.Errorf("failed to create %s dir: %s", dirPath, err)
+		return fmt.Errorf("failed to create %s dir: %w", dirPath, err)
 	}
 
 	return nil

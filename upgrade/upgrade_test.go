@@ -38,7 +38,7 @@ func (m MockRegistry) GetPackageName(os string, arch string) (string, error) {
 	return "lets_test_package", nil
 }
 
-func (m MockRegistry) GetDownloadUrl(repoUri string, packageName string, version string) string {
+func (m MockRegistry) GetDownloadURL(repoURI string, packageName string, version string) string {
 	return ""
 }
 
@@ -56,7 +56,6 @@ func createTempBinary(content string) (*os.File, error) {
 	return binary, err
 }
 
-
 func newMockUpgrader(reg registry.RepoRegistry, version string) (*BinaryUpgrader, error) {
 	binary, err := createTempBinary(version)
 	if err != nil {
@@ -64,11 +63,11 @@ func newMockUpgrader(reg registry.RepoRegistry, version string) (*BinaryUpgrader
 	}
 
 	return &BinaryUpgrader{
-		registry: reg,
+		registry:       reg,
 		currentVersion: version,
-		binaryPath: binary.Name(),
-		downloadPath: path.Join(os.TempDir(), "lets.download"),
-		backupPath: path.Join(os.TempDir(), "lets.backup"),
+		binaryPath:     binary.Name(),
+		downloadPath:   path.Join(os.TempDir(), "lets.download"),
+		backupPath:     path.Join(os.TempDir(), "lets.backup"),
 	}, nil
 }
 
@@ -123,7 +122,7 @@ func TestSelfUpgrade(t *testing.T) {
 		binaryModTime := getFileModTime(upgrader.binaryPath)
 
 		// sleep to be sure files not created at the same time
-		time.Sleep(10*time.Millisecond)
+		time.Sleep(10 * time.Millisecond)
 
 		err = upgrader.Upgrade()
 		if err != nil {

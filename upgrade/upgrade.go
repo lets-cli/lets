@@ -16,11 +16,11 @@ type Upgrader interface {
 }
 
 type BinaryUpgrader struct {
-	registry registry.RepoRegistry
+	registry       registry.RepoRegistry
 	currentVersion string
-	binaryPath string
-	downloadPath string
-	backupPath string
+	binaryPath     string
+	downloadPath   string
+	backupPath     string
 }
 
 func NewBinaryUpgrader(reg registry.RepoRegistry, currentVersion string) (*BinaryUpgrader, error) {
@@ -30,30 +30,30 @@ func NewBinaryUpgrader(reg registry.RepoRegistry, currentVersion string) (*Binar
 	}
 
 	return &BinaryUpgrader{
-		registry: reg,
+		registry:       reg,
 		currentVersion: currentVersion,
 		// TODO rewrite all paths with home dir
-		binaryPath: executablePath,
+		binaryPath:   executablePath,
 		downloadPath: path.Join(os.TempDir(), "lets.download"),
-		backupPath: path.Join(os.TempDir(), "lets.backup"),
+		backupPath:   path.Join(os.TempDir(), "lets.backup"),
 	}, nil
 }
-
 
 func (up *BinaryUpgrader) Upgrade() error {
 	latestVersion, err := up.registry.GetLatestRelease()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get latest release version: %w", err)
 	}
 
 	if up.currentVersion == latestVersion {
 		logging.Log.Printf("Lets is up-to-date")
+
 		return nil
 	}
 
 	packageName, err := up.registry.GetPackageName(runtime.GOOS, runtime.GOARCH)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get package name: %w", err)
 	}
 
 	logging.Log.Printf("Downloading latest release %s...", latestVersion)
@@ -64,22 +64,21 @@ func (up *BinaryUpgrader) Upgrade() error {
 		up.downloadPath,
 	)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to download release %s version %s: %w", packageName, latestVersion, err)
 	}
 
-	backupPath := path.Join(os.TempDir(), "lets.backup")
-
-	err = backupExecutable(up.binaryPath, backupPath)
+	err = backupExecutable(up.binaryPath, up.backupPath)
 	if err != nil {
 		return err
 	}
 
-	err = replaceBinaries(up.downloadPath, up.binaryPath, backupPath)
+	err = replaceBinaries(up.downloadPath, up.binaryPath, up.backupPath)
 	if err != nil {
 		return err
 	}
 
 	logging.Log.Printf("Upgraded to version %s", latestVersion)
+
 	return nil
 }
 
@@ -90,7 +89,7 @@ func binaryPath() (string, error) {
 
 func backupExecutable(executablePath string, backupPath string) error {
 	errFmt := func(err error) error {
-		return fmt.Errorf("failed to backup current lets binary: %s", err)
+		return fmt.Errorf("failed to backup current lets binary: %w", err)
 	}
 
 	executableFile, err := os.Open(executablePath)
@@ -124,7 +123,7 @@ func replaceBinaries(downloadPath string, executablePath string, backupPath stri
 	err := os.Rename(downloadPath, executablePath)
 	if err != nil {
 		// TODO handle backupPath
-		return fmt.Errorf("failed to update lets binary: %s", err)
+		return fmt.Errorf("failed to update lets binary: %w", err)
 	}
 
 	return nil

@@ -4,14 +4,12 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/spf13/cobra"
-
 	"github.com/lets-cli/lets/commands/command"
 	"github.com/lets-cli/lets/config"
+	"github.com/spf13/cobra"
 )
 
 func newTestRootCmd(args []string) (rootCmd *cobra.Command) {
-
 	rootCommand := CreateRootCommand("v0.0.0-test")
 	rootCommand.SetArgs(args)
 

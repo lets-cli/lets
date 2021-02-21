@@ -9,15 +9,15 @@ import (
 )
 
 // LogRepresenter is an interface for objects that can format themselves for
-// logging
+// logging.
 type LogRepresenter interface {
 	Repr() string
 }
 
-// Formatter formats a log entry in a human readable way
+// Formatter formats a log entry in a human readable way.
 type Formatter struct{}
 
-// Format implements the log.Formatter interface
+// Format implements the log.Formatter interface.
 func (f *Formatter) Format(entry *log.Entry) ([]byte, error) {
 	buff := &bytes.Buffer{}
 	buff.WriteString(writeData(entry.Data))

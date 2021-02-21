@@ -8,8 +8,10 @@ import (
 	"github.com/lets-cli/lets/util"
 )
 
-const DefaultChecksumName = "lets_default_checksum"
-const checksumsDir = "checksums"
+const (
+	DefaultChecksumName = "lets_default_checksum"
+	checksumsDir        = "checksums"
+)
 
 func parseAndValidatePersistChecksum(persistChecksum interface{}, newCmd *Command) error {
 	shouldPersist, ok := persistChecksum.(bool)
@@ -42,15 +44,17 @@ func getCmdChecksumPath(dotLetsDir string, cmdName string) string {
 }
 
 // returns dir path and full file path to checksum
-// (.lets/checksums/[command_name]/, .lets/checksums/[command_name]/[checksum_name])
+// (.lets/checksums/[command_name]/, .lets/checksums/[command_name]/[checksum_name]).
 func getChecksumPath(dotLetsDir string, cmdName string, checksumName string) (string, string) {
 	dirPath := getCmdChecksumPath(dotLetsDir, cmdName)
+
 	return dirPath, filepath.Join(dirPath, checksumName)
 }
 
 func PersistCommandsChecksumToDisk(dotLetsDir string, cmd Command) error {
-	if err := util.SafeCreateDir(filepath.Join(dotLetsDir, checksumsDir)); err != nil {
-		return err
+	checksumPath := filepath.Join(dotLetsDir, checksumsDir)
+	if err := util.SafeCreateDir(checksumPath); err != nil {
+		return fmt.Errorf("can not create %s: %w", checksumPath, err)
 	}
 
 	// TODO if at least one write failed do we have to revert all writes ???
@@ -72,23 +76,23 @@ func PersistCommandsChecksumToDisk(dotLetsDir string, cmd Command) error {
 func persistOneChecksum(dotLetsDir string, cmdName string, checksumName string, checksum string) error {
 	checksumDirPath, checksumFilePath := getChecksumPath(dotLetsDir, cmdName, checksumName)
 	if err := util.SafeCreateDir(checksumDirPath); err != nil {
-		return err
+		return fmt.Errorf("can not create checksum dir at %s: %w", checksumDirPath, err)
 	}
 
 	f, err := os.OpenFile(checksumFilePath, os.O_CREATE|os.O_WRONLY, 0755)
 	if err != nil {
-		return fmt.Errorf("can not open file %s to persist checksum: %s", checksumFilePath, err)
+		return fmt.Errorf("can not open file %s to persist checksum: %w", checksumFilePath, err)
 	}
 
 	_, err = f.Write([]byte(checksum))
 	if err != nil {
-		return fmt.Errorf("can not write checksum to file %s: %s", checksumFilePath, err)
+		return fmt.Errorf("can not write checksum to file %s: %w", checksumFilePath, err)
 	}
 
 	return nil
 }
 
-// ChecksumForCmdPersisted checks if checksums for cmd exists and persisted
+// ChecksumForCmdPersisted checks if checksums for cmd exists and persisted.
 func ChecksumForCmdPersisted(dotLetsDir string, cmdName string) bool {
 	// check if checksums for cmd exists
 	if _, err := os.Stat(getCmdChecksumPath(dotLetsDir, cmdName)); err != nil {
@@ -98,7 +102,7 @@ func ChecksumForCmdPersisted(dotLetsDir string, cmdName string) bool {
 	return true
 }
 
-// ReadChecksumsFromDisk reads all checksums for cmd into map
+// ReadChecksumsFromDisk reads all checksums for cmd into map.
 func (cmd *Command) ReadChecksumsFromDisk(dotLetsDir string, cmdName string, checksumMap map[string]string) error {
 	checksums := make(map[string]string, len(checksumMap)+1)
 
@@ -128,7 +132,7 @@ func readOneChecksum(dotLetsDir, cmdName, checksumName string) (string, error) {
 
 	fileData, err := os.ReadFile(checksumFilePath)
 	if err != nil {
-		return "", fmt.Errorf("can not open file %s to read checksum: %s", checksumFilePath, err)
+		return "", fmt.Errorf("can not open file %s to read checksum: %w", checksumFilePath, err)
 	}
 
 	return string(fileData), nil

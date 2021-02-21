@@ -8,7 +8,7 @@ import (
 	"github.com/lets-cli/lets/test"
 )
 
-// get filename without last 4 chars - to make tests more predictable
+// get filename without last 4 chars - to make tests more predictable.
 func getFilePrefix(filename string) string {
 	return fmt.Sprintf("%s*", filename[:len(filename)-4])
 }
@@ -37,7 +37,6 @@ func TestCalculateChecksumSimpleFilename(t *testing.T) {
 		file1.Name(),
 		file2.Name(),
 	})
-
 	if err != nil {
 		t.Errorf("Checksum is not correct. Error: %s", err)
 	}
@@ -71,7 +70,6 @@ func TestCalculateChecksumGlobPattern(t *testing.T) {
 		f1Prefix,
 		f2Prefix,
 	})
-
 	if err != nil {
 		t.Errorf("Checksum is not correct. Error: %s", err)
 	}

@@ -1,20 +1,22 @@
 package command
 
 import (
-	"crypto/sha1" // #nosec G505
+
+	// #nosec G505
+	"crypto/sha1"
 	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
 )
 
-var checksumCache map[string][]byte = make(map[string][]byte)
+var checksumCache = make(map[string][]byte)
 
 // files can have either absolute or relative path:
 // - in case of absolute path we just read that file
 // - in case of relative file we trying to read file in work dir
 //
-// return sorted list of files read by glob patterns
+// return sorted list of files read by glob patterns.
 func readFilesFromPatterns(workDir string, patterns []string) ([]string, error) {
 	var files []string
 
@@ -26,7 +28,7 @@ func readFilesFromPatterns(workDir string, patterns []string) ([]string, error) 
 
 		matches, err := filepath.Glob(absPatternPath)
 		if err != nil {
-			return []string{}, err
+			return []string{}, fmt.Errorf("can not read file to calculate checksum: %w", err)
 		}
 
 		files = append(files, matches...)
@@ -39,7 +41,7 @@ func readFilesFromPatterns(workDir string, patterns []string) ([]string, error) 
 
 // calculate sha1 hash from files content and return hex digest
 // It calculates sha1 for each file, cache checksum for each file.
-// Resulting checksum is sha1 from all files sha1's
+// Resulting checksum is sha1 from all files sha1's.
 func calculateChecksum(workDir string, patterns []string) (string, error) {
 	// read filenames from patterns
 	files, err := readFilesFromPatterns(workDir, patterns)
@@ -54,18 +56,18 @@ func calculateChecksum(workDir string, patterns []string) (string, error) {
 		if cachedSum, found := checksumCache[filename]; found {
 			_, err = hasher.Write(cachedSum)
 			if err != nil {
-				return "", err
+				return "", fmt.Errorf("can not write cached checksum to hasher: %w", err)
 			}
 		} else {
 			data, err := os.ReadFile(filename)
 			if err != nil {
-				return "", err
+				return "", fmt.Errorf("can not read file to calculate checksum: %w", err)
 			}
 			cachedSum = fileHasher.Sum(data)
 			checksumCache[filename] = cachedSum
 			_, err = hasher.Write(cachedSum)
 			if err != nil {
-				return "", err
+				return "", fmt.Errorf("can not write checksum to hasher: %w", err)
 			}
 			fileHasher.Reset()
 		}
@@ -76,7 +78,7 @@ func calculateChecksum(workDir string, patterns []string) (string, error) {
 	return fmt.Sprintf("%x", checksum), nil
 }
 
-func parseAndValidateChecksum(checksum interface{}, newCmd *Command) error {
+func parseAndValidateChecksum(checksum interface{}, newCmd *Command) error { //nolint:cyclop
 	patternsList, okList := checksum.([]interface{})
 	patternsMap, okMap := checksum.(map[interface{}]interface{})
 	checksumSource := make(map[string][]string)
@@ -146,14 +148,14 @@ func parseAndValidateChecksum(checksum interface{}, newCmd *Command) error {
 	return nil
 }
 
-// calculate checksum from files listed in command.checksum
+// calculate checksum from files listed in command.checksum.
 func calculateChecksumFromSource(workDir string, newCmd *Command) error {
 	newCmd.ChecksumMap = make(map[string]string)
 	// if checksum is a list of patterns
 	if patterns, ok := newCmd.checksumSource[""]; ok {
 		calcChecksum, err := calculateChecksum(workDir, patterns)
 		if err != nil {
-			return fmt.Errorf("failed to calculate checksum: %s", err)
+			return fmt.Errorf("calculate checksum error: %w", err)
 		}
 
 		newCmd.Checksum = calcChecksum
@@ -173,14 +175,14 @@ func calculateChecksumFromSource(workDir string, newCmd *Command) error {
 
 		calcChecksum, err := calculateChecksum(workDir, patterns)
 		if err != nil {
-			return fmt.Errorf("failed to calculate checksum: %s", err)
+			return fmt.Errorf("failed to calculate checksum: %w", err)
 		}
 
 		newCmd.ChecksumMap[key] = calcChecksum
 
 		_, err = hasher.Write([]byte(calcChecksum))
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to update hasher with checksum: %w", err)
 		}
 	}
 

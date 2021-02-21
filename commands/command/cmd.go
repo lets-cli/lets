@@ -14,7 +14,7 @@ import (
 // The problem is, lets constructs a script string
 // and then passes it to an appropriate interpreter (sh -c $SCRIPT)
 // so we need to wrap args with quotation marks to prevent breaking
-// This also solves problem with json params: --key='{"value": 1}' => '--key={"value": 1}'
+// This also solves problem with json params: --key='{"value": 1}' => '--key={"value": 1}'.
 func escapeArgs(args []string) []string {
 	var escapedArgs []string
 
@@ -28,13 +28,22 @@ func escapeArgs(args []string) []string {
 	return escapedArgs
 }
 
-func parseAndValidateCmd(cmd interface{}, newCmd *Command) error {
+func parseAndValidateCmd(cmd interface{}, newCmd *Command) error { //nolint:cyclop
 	switch cmd := cmd.(type) {
 	case string:
 		// TODO pass args to command as is if option accepts_arguments: true
 		newCmd.Cmd = cmd
 	case []interface{}:
-		cmdList := make([]string, len(cmd))
+		// a list of arguments to be appended to commands in lets.yaml
+		var proxyArgs []string
+		// cut binary path and command name
+		if len(os.Args) > 1 {
+			proxyArgs = os.Args[2:]
+		} else if len(os.Args) == 1 {
+			proxyArgs = os.Args[1:]
+		}
+
+		cmdList := make([]string, 0, len(cmd)+len(proxyArgs))
 
 		for _, v := range cmd {
 			if v == nil {
@@ -47,15 +56,6 @@ func parseAndValidateCmd(cmd interface{}, newCmd *Command) error {
 			}
 
 			cmdList = append(cmdList, fmt.Sprintf("%s", v))
-		}
-
-		// a list of arguments to be appended to commands in lets.yaml
-		var proxyArgs []string
-		// cut binary path and command name
-		if len(os.Args) > 1 {
-			proxyArgs = os.Args[2:]
-		} else if len(os.Args) == 1 {
-			proxyArgs = os.Args[1:]
 		}
 
 		fullCommandList := append(cmdList, escapeArgs(proxyArgs)...)

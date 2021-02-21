@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-// that's how shell does it
+// that's how shell does it.
 func simulateProcessShellArgs(inputCmdList []string) []string {
 	var cmdList []string
 
@@ -30,7 +30,6 @@ func TestCommandFieldCmd(t *testing.T) {
 		// mock args
 		os.Args = []string{"bin_to_run"}
 		err := parseAndValidateCmd(cmdArgs, &testCmd)
-
 		if err != nil {
 			t.Fatalf("unexpected error: %s", err)
 		}
@@ -45,7 +44,6 @@ func TestCommandFieldCmd(t *testing.T) {
 		cmdArgs := "echo Hello"
 
 		err := parseAndValidateCmd(cmdArgs, &testCmd)
-
 		if err != nil {
 			t.Fatalf("unexpected error: %s", err)
 		}
@@ -65,7 +63,6 @@ func TestCommandFieldCmd(t *testing.T) {
 		os.Args = append([]string{"bin_to_run", "test-cmd"}, appendArgs...)
 
 		err := parseAndValidateCmd(cmdArgs, &testCmd)
-
 		if err != nil {
 			t.Fatalf("unexpected error: %s", err)
 		}

@@ -6,14 +6,13 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/spf13/cobra"
-
 	"github.com/lets-cli/lets/cmd"
 	"github.com/lets-cli/lets/config"
 	"github.com/lets-cli/lets/env"
 	"github.com/lets-cli/lets/logging"
 	"github.com/lets-cli/lets/runner"
 	"github.com/lets-cli/lets/workdir"
+	"github.com/spf13/cobra"
 )
 
 var version = "0.0.0-dev"
@@ -28,6 +27,7 @@ func main() {
 	var rootCmd *cobra.Command
 	if cfg != nil {
 		rootCmd = cmd.CreateRootCommandWithConfig(os.Stdout, cfg, version)
+
 		if err := workdir.CreateDotLetsDir(cfg.WorkDir); err != nil {
 			logging.Log.Error(err)
 			os.Exit(1)
@@ -44,7 +44,7 @@ func main() {
 		logging.Log.Error(err.Error())
 
 		exitCode := 1
-		if e, ok := err.(*runner.RunErr); ok {
+		if e, ok := err.(*runner.RunErr); ok { //nolint:errorlint
 			exitCode = e.ExitCode()
 		}
 
@@ -57,7 +57,7 @@ func main() {
 //
 // Note that since we setting stdin to command we run, that command
 // will receive SIGINT, SIGTERM at the same time as we here,
-// so command's process can begin finishing earlier than cancel will say it to
+// so command's process can begin finishing earlier than cancel will say it to.
 func getContext() context.Context {
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
