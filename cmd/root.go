@@ -25,6 +25,7 @@ func CreateRootCommand(out io.Writer, version string) *cobra.Command {
 		TraverseChildren: true,
 		Version:          version,
 		SilenceErrors:    true,
+		SilenceUsage:     true,
 	}
 
 	initRootCommand(rootCmd, out, version)
