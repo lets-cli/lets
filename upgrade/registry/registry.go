@@ -34,12 +34,10 @@ type GithubRegistry struct {
 	downloadPackageTimeout time.Duration
 }
 
-func NewGithubRegistry() *GithubRegistry {
+func NewGithubRegistry(ctx context.Context) *GithubRegistry {
 	client := &http.Client{
 		Timeout: 15 * 60 * time.Second, // global timeout
 	}
-
-	ctx := context.Background()
 
 	reg := &GithubRegistry{
 		client:                 client,

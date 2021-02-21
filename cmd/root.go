@@ -95,8 +95,7 @@ func runRoot(cmd *cobra.Command, version string) error {
 	}
 
 	if selfUpgrade {
-		// TODO pass cmd context to be able ctrl+c
-		upgrader, err := upgrade.NewBinaryUpgrader(registry.NewGithubRegistry(), version)
+		upgrader, err := upgrade.NewBinaryUpgrader(registry.NewGithubRegistry(cmd.Context()), version)
 		if err != nil {
 			return fmt.Errorf("can not upgrade lets: %w", err)
 		}
