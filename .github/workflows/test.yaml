@@ -52,5 +52,5 @@ jobs:
         uses: actions/checkout@v2
       - name: Lint
         run: |
-          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ./bin v1.24.0
-          ./bin/golangci-lint run -v -c .golang-ci.yaml
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ./bin v1.37.0
+          ./bin/golangci-lint run -v -c .golangci.yaml
