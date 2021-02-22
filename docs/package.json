@@ -7,7 +7,7 @@
     "build": "docusaurus build",
     "swizzle": "docusaurus swizzle",
     "deploy": "docusaurus deploy",
-    "doc:deploy": "GIT_USER=lets-cli CURRENT_BRANCH=master USE_SSH=true npm run deploy"
+    "doc:deploy": "./deploy.sh"
   },
   "dependencies": {
     "@docusaurus/core": "^2.0.0-alpha.54",
