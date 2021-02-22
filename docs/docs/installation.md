@@ -16,10 +16,13 @@ This will install **latest** `lets` binary to `~/bin` directory.
 
 To be able to run `lets` from any place in system add `$HOME/bin` to your `PATH`
 
+Open one of these files
+
 ```bash
 vim ~/.profile # or vim ~/.bashrc or ~/.zshrc
+```
 
-Add the folowing line at the end of file, save file and restart the shell.
+Add the following line at the end of file, save file and restart the shell.
 
 ```bash
 export PATH=$PATH:$HOME/bin
