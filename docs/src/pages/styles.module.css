@@ -41,10 +41,10 @@
 }
 
 .getStarted {
-  color: #fff !important;
+  background: #fff;
+  color: var(--ifm-link-color) !important;
 }
 
 .getStarted:hover {
-  color: var(--ifm-color-primary) !important;
   transform: scale(1.03);
 }

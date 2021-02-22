@@ -13,7 +13,7 @@ module.exports = {
         alt: 'Lets Logo',
         src: 'img/logo.png',
       },
-      links: [
+      items: [
         {to: 'docs/getting_started', label: 'Getting Started', position: 'right'},
         {to: 'blog', label: 'Blog', position: 'right'},
         {to: 'docs/faq', label: 'FAQ', position: 'right'},
@@ -68,7 +68,6 @@ module.exports = {
       {
         docs: {
           sidebarPath: require.resolve('./sidebars.js'),
-          // Please change this to your repo.
           editUrl:
             'https://github.com/lets-cli/lets/edit/master/docs/',
         },
