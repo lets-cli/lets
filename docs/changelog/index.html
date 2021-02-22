@@ -16,25 +16,25 @@
 <link rel="stylesheet" href="/styles.0f2594d6.css">
 
 
-<link rel="preload" href="/styles.a7b08ad3.js" as="script">
+<link rel="preload" href="/styles.b0e3705f.js" as="script">
 
-<link rel="preload" href="/runtime~main.5c2728d7.js" as="script">
+<link rel="preload" href="/runtime~main.f8d60d2d.js" as="script">
 
-<link rel="preload" href="/main.1535d43c.js" as="script">
+<link rel="preload" href="/main.b3e6b1e9.js" as="script">
 
-<link rel="preload" href="/1.9d5b5aca.js" as="script">
+<link rel="preload" href="/1.d68def49.js" as="script">
 
-<link rel="preload" href="/2.b2cfd455.js" as="script">
+<link rel="preload" href="/2.ad5c5ea7.js" as="script">
 
-<link rel="preload" href="/3.6d04d798.js" as="script">
+<link rel="preload" href="/3.3c52adf4.js" as="script">
 
-<link rel="preload" href="/1be78505.9e0ea19a.js" as="script">
+<link rel="preload" href="/1be78505.cb258fa8.js" as="script">
 
-<link rel="preload" href="/20ac7829.43b95dec.js" as="script">
+<link rel="preload" href="/20ac7829.83c8b07f.js" as="script">
 
-<link rel="preload" href="/17896441.edc9f4e3.js" as="script">
+<link rel="preload" href="/17896441.b69d2b5d.js" as="script">
 
-<link rel="preload" href="/9beb87c2.a2ddfd29.js" as="script">
+<link rel="preload" href="/9beb87c2.90f5885f.js" as="script">
 
 </head>
 <body>
@@ -48,28 +48,28 @@ It allows to include mixin only if it exists - otherwise lets will ignore it.
 Useful for git-ignored files.</p><p>Just add <code>-</code> prefix to mixin filename</p><div class="mdxCodeBlock_iHAB"><div class="codeBlockContent_32p_"><button type="button" aria-label="Copy code to clipboard" class="copyButton_1BYj">Copy</button><div tabindex="0" class="prism-code language-yaml codeBlock_19pQ"><div class="codeBlockLines_2n9r" style="color:#bfc7d5;background-color:#292d3e"><div class="token-line" style="color:#bfc7d5"><span class="token key atrule">mixins</span><span class="token punctuation" style="color:rgb(199, 146, 234)">:</span><span class="token plain"></span></div><div class="token-line" style="color:#bfc7d5"><span class="token plain">  </span><span class="token punctuation" style="color:rgb(199, 146, 234)">-</span><span class="token plain"> </span><span class="token punctuation" style="color:rgb(199, 146, 234)">-</span><span class="token plain">my.yaml</span></div><div class="token-line" style="color:#bfc7d5"><span class="token plain" style="display:inline-block">
 </span></div><div class="token-line" style="color:#bfc7d5"><span class="token plain"></span><span class="token key atrule">commands</span><span class="token punctuation" style="color:rgb(199, 146, 234)">:</span><span class="token plain"></span></div><div class="token-line" style="color:#bfc7d5"><span class="token plain">  </span><span class="token key atrule">run</span><span class="token punctuation" style="color:rgb(199, 146, 234)">:</span><span class="token plain"></span></div><div class="token-line" style="color:#bfc7d5"><span class="token plain">    </span><span class="token key atrule">cmd</span><span class="token punctuation" style="color:rgb(199, 146, 234)">:</span><span class="token plain"> docker</span><span class="token punctuation" style="color:rgb(199, 146, 234)">-</span><span class="token plain">compose up redis</span></div></div></div></div></div></li></ul><h2><a aria-hidden="true" tabindex="-1" class="anchor enhancedAnchor_ZqCz" id="0028"></a><a aria-hidden="true" tabindex="-1" class="hash-link" href="#0028" title="Direct link to heading">#</a>0.0.28</h2><ul><li><p>[Fix] Added environment variable value coercion.</p><div class="mdxCodeBlock_iHAB"><div class="codeBlockContent_32p_"><button type="button" aria-label="Copy code to clipboard" class="copyButton_1BYj">Copy</button><div tabindex="0" class="prism-code language-yaml codeBlock_19pQ"><div class="codeBlockLines_2n9r" style="color:#bfc7d5;background-color:#292d3e"><div class="token-line" style="color:#bfc7d5"><span class="token key atrule">commands</span><span class="token punctuation" style="color:rgb(199, 146, 234)">:</span><span class="token plain"></span></div><div class="token-line" style="color:#bfc7d5"><span class="token plain">  </span><span class="token key atrule">run</span><span class="token punctuation" style="color:rgb(199, 146, 234)">:</span><span class="token plain"></span></div><div class="token-line" style="color:#bfc7d5"><span class="token plain">    </span><span class="token key atrule">env</span><span class="token punctuation" style="color:rgb(199, 146, 234)">:</span><span class="token plain"></span></div><div class="token-line" style="color:#bfc7d5"><span class="token plain">      </span><span class="token key atrule">VERBOSE</span><span class="token punctuation" style="color:rgb(199, 146, 234)">:</span><span class="token plain"> </span><span class="token number" style="color:rgb(247, 140, 108)">1</span><span class="token plain"></span></div><div class="token-line" style="color:#bfc7d5"><span class="token plain">    </span><span class="token key atrule">cmd</span><span class="token punctuation" style="color:rgb(199, 146, 234)">:</span><span class="token plain"> docker</span><span class="token punctuation" style="color:rgb(199, 146, 234)">-</span><span class="token plain">compose up</span></div></div></div></div></div><p>Before 0.0.28 release this config vas invalid because <code>1</code> was not coerced to string <code>&quot;1&quot;</code>. Now it works as expected.</p></li></ul><h2><a aria-hidden="true" tabindex="-1" class="anchor enhancedAnchor_ZqCz" id="0027"></a><a aria-hidden="true" tabindex="-1" class="hash-link" href="#0027" title="Direct link to heading">#</a>0.0.27</h2><ul><li><p>Added <code>-E</code> (<code>--env</code>) command-line flag. It allows to set(override) environment variables for a running command.
 Example:</p><div class="mdxCodeBlock_iHAB"><div class="codeBlockContent_32p_"><button type="button" aria-label="Copy code to clipboard" class="copyButton_1BYj">Copy</button><div tabindex="0" class="prism-code language-bash codeBlock_19pQ"><div class="codeBlockLines_2n9r" style="color:#bfc7d5;background-color:#292d3e"><div class="token-line" style="color:#bfc7d5"><span class="token comment" style="color:rgb(105, 112, 152);font-style:italic"># lets.yaml</span><span class="token plain"></span></div><div class="token-line" style="color:#bfc7d5"><span class="token plain"></span><span class="token punctuation" style="color:rgb(199, 146, 234)">..</span><span class="token plain">.</span></div><div class="token-line" style="color:#bfc7d5"><span class="token plain">commands:</span></div><div class="token-line" style="color:#bfc7d5"><span class="token plain">  greet:</span></div><div class="token-line" style="color:#bfc7d5"><span class="token plain">    env:</span></div><div class="token-line" style="color:#bfc7d5"><span class="token plain">      NAME: Morty</span></div><div class="token-line" style="color:#bfc7d5"><span class="token plain">    cmd: </span><span class="token builtin class-name" style="color:rgb(255, 203, 107)">echo</span><span class="token plain"> </span><span class="token string" style="color:rgb(195, 232, 141)">&quot;Hello </span><span class="token string variable" style="color:rgb(191, 199, 213)">${NAME}</span><span class="token string" style="color:rgb(195, 232, 141)">&quot;</span><span class="token plain"></span></div><div class="token-line" style="color:#bfc7d5"><span class="token plain"></span><span class="token punctuation" style="color:rgb(199, 146, 234)">..</span><span class="token plain">.</span></div><div class="token-line" style="color:#bfc7d5"><span class="token plain" style="display:inline-block">
-</span></div><div class="token-line" style="color:#bfc7d5"><span class="token plain">lets -E </span><span class="token assign-left variable" style="color:rgb(191, 199, 213)">NAME</span><span class="token operator" style="color:rgb(137, 221, 255)">=</span><span class="token plain">Rick greet</span></div></div></div></div></div></li><li><p>Changed behavior of <code>persist_checksum</code> at first run. Now, if there was no checksum and we just calculated a new checksum, that means checksum has changed, hence <code>LETS_CHECKSUM_CHANGED</code> will be <code>true</code>.</p></li></ul></div></article><div class="margin-vert--xl"><div class="row"><div class="col"><a href="https://github.com/lets-cli/lets/edit/master/docs/docs/changelog.md" target="_blank" rel="noreferrer noopener"><svg fill="currentColor" height="1.2em" width="1.2em" preserveAspectRatio="xMidYMid meet" viewBox="0 0 40 40" style="margin-right:0.3em;vertical-align:sub"><g><path d="m34.5 11.7l-3 3.1-6.3-6.3 3.1-3q0.5-0.5 1.2-0.5t1.1 0.5l3.9 3.9q0.5 0.4 0.5 1.1t-0.5 1.2z m-29.5 17.1l18.4-18.5 6.3 6.3-18.4 18.4h-6.3v-6.2z"></path></g></svg>Edit this page</a></div></div></div><div class="margin-vert--lg"><nav class="pagination-nav"><div class="pagination-nav__item"><a class="pagination-nav__link" href="/docs/best_practices"><div class="pagination-nav__link--sublabel">Previous</div><div class="pagination-nav__link--label">« Best practices</div></a></div><div class="pagination-nav__item pagination-nav__item--next"><a class="pagination-nav__link" href="/docs/ide_support"><div class="pagination-nav__link--sublabel">Next</div><div class="pagination-nav__link--label">IDE/Text editors support »</div></a></div></nav></div></div></div><div class="col col--3"><div class="tableOfContents_TbNY"><ul class="contents contents__left-border"><li><a href="#0029" class="contents__link">0.0.29</a></li><li><a href="#0028" class="contents__link">0.0.28</a></li><li><a href="#0027" class="contents__link">0.0.27</a></li></ul></div></div></div></div></main></div></div><footer class="footer footer--dark"><div class="container"><div class="row footer__links"><div class="col footer__col"><h4 class="footer__title">Docs</h4><ul class="footer__items"><li class="footer__item"><a class="footer__link-item" href="/docs/getting_started">Getting Started</a></li></ul></div><div class="col footer__col"><h4 class="footer__title">Community</h4><ul class="footer__items"><li class="footer__item"><a class="footer__link-item" target="_blank" rel="noopener noreferrer" href="https://stackoverflow.com/questions/tagged/lets-cli">Stack Overflow</a></li></ul></div><div class="col footer__col"><h4 class="footer__title">More</h4><ul class="footer__items"><li class="footer__item"><a class="footer__link-item" href="/blog">Blog</a></li><li class="footer__item"><a class="footer__link-item" target="_blank" rel="noopener noreferrer" href="https://github.com/facebook/docusaurus">GitHub</a></li></ul></div></div><div class="text--center"><div>Copyright © 2020 Lets, Inc. Built with Docusaurus.</div></div></div></footer>
+</span></div><div class="token-line" style="color:#bfc7d5"><span class="token plain">lets -E </span><span class="token assign-left variable" style="color:rgb(191, 199, 213)">NAME</span><span class="token operator" style="color:rgb(137, 221, 255)">=</span><span class="token plain">Rick greet</span></div></div></div></div></div></li><li><p>Changed behavior of <code>persist_checksum</code> at first run. Now, if there was no checksum and we just calculated a new checksum, that means checksum has changed, hence <code>LETS_CHECKSUM_CHANGED</code> will be <code>true</code>.</p></li></ul></div></article><div class="margin-vert--xl"><div class="row"><div class="col"><a href="https://github.com/lets-cli/lets/edit/master/docs/docs/changelog.md" target="_blank" rel="noreferrer noopener"><svg fill="currentColor" height="1.2em" width="1.2em" preserveAspectRatio="xMidYMid meet" viewBox="0 0 40 40" style="margin-right:0.3em;vertical-align:sub"><g><path d="m34.5 11.7l-3 3.1-6.3-6.3 3.1-3q0.5-0.5 1.2-0.5t1.1 0.5l3.9 3.9q0.5 0.4 0.5 1.1t-0.5 1.2z m-29.5 17.1l18.4-18.5 6.3 6.3-18.4 18.4h-6.3v-6.2z"></path></g></svg>Edit this page</a></div></div></div><div class="margin-vert--lg"><nav class="pagination-nav"><div class="pagination-nav__item"><a class="pagination-nav__link" href="/docs/best_practices"><div class="pagination-nav__link--sublabel">Previous</div><div class="pagination-nav__link--label">« Best practices</div></a></div><div class="pagination-nav__item pagination-nav__item--next"><a class="pagination-nav__link" href="/docs/ide_support"><div class="pagination-nav__link--sublabel">Next</div><div class="pagination-nav__link--label">IDE/Text editors support »</div></a></div></nav></div></div></div><div class="col col--3"><div class="tableOfContents_TbNY"><ul class="contents contents__left-border"><li><a href="#0029" class="contents__link">0.0.29</a></li><li><a href="#0028" class="contents__link">0.0.28</a></li><li><a href="#0027" class="contents__link">0.0.27</a></li></ul></div></div></div></div></main></div></div><footer class="footer footer--dark"><div class="container"><div class="row footer__links"><div class="col footer__col"><h4 class="footer__title">Docs</h4><ul class="footer__items"><li class="footer__item"><a class="footer__link-item" href="/docs/getting_started">Getting Started</a></li></ul></div><div class="col footer__col"><h4 class="footer__title">Community</h4><ul class="footer__items"><li class="footer__item"><a class="footer__link-item" target="_blank" rel="noopener noreferrer" href="https://stackoverflow.com/questions/tagged/lets-cli">Stack Overflow</a></li></ul></div><div class="col footer__col"><h4 class="footer__title">More</h4><ul class="footer__items"><li class="footer__item"><a class="footer__link-item" href="/blog">Blog</a></li><li class="footer__item"><a class="footer__link-item" target="_blank" rel="noopener noreferrer" href="https://github.com/facebook/docusaurus">GitHub</a></li></ul></div></div><div class="text--center"><div>Copyright © 2021 Lets, Inc. Built with Docusaurus.</div></div></div></footer>
 </div>
 
-<script src="/styles.a7b08ad3.js"></script>
+<script src="/styles.b0e3705f.js"></script>
 
-<script src="/runtime~main.5c2728d7.js"></script>
+<script src="/runtime~main.f8d60d2d.js"></script>
 
-<script src="/main.1535d43c.js"></script>
+<script src="/main.b3e6b1e9.js"></script>
 
-<script src="/1.9d5b5aca.js"></script>
+<script src="/1.d68def49.js"></script>
 
-<script src="/2.b2cfd455.js"></script>
+<script src="/2.ad5c5ea7.js"></script>
 
-<script src="/3.6d04d798.js"></script>
+<script src="/3.3c52adf4.js"></script>
 
-<script src="/1be78505.9e0ea19a.js"></script>
+<script src="/1be78505.cb258fa8.js"></script>
 
-<script src="/20ac7829.43b95dec.js"></script>
+<script src="/20ac7829.83c8b07f.js"></script>
 
-<script src="/17896441.edc9f4e3.js"></script>
+<script src="/17896441.b69d2b5d.js"></script>
 
-<script src="/9beb87c2.a2ddfd29.js"></script>
+<script src="/9beb87c2.90f5885f.js"></script>
 
 
 </body>
