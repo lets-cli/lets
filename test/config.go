@@ -12,7 +12,7 @@ type SerializableTestConfig struct {
 	Commands map[string]map[string]string
 }
 
-// NewTestConfig creates config, write it to temp dir, set LETS_CONFIG_DIR with LETS_CONFIG and return cleanup func
+// NewTestConfig creates config, write it to temp dir, set LETS_CONFIG_DIR with LETS_CONFIG and return cleanup func.
 func NewTestConfig(configRaw *SerializableTestConfig) func() {
 	tempDir := os.TempDir()
 	testConfigFile := CreateTempFile(tempDir, "lets_*.yaml")

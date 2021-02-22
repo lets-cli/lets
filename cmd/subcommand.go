@@ -6,14 +6,13 @@ import (
 	"io"
 	"os"
 
-	"github.com/spf13/cobra"
-
 	"github.com/lets-cli/lets/commands/command"
 	"github.com/lets-cli/lets/config"
 	"github.com/lets-cli/lets/runner"
+	"github.com/spf13/cobra"
 )
 
-// cut all elements before command name
+// cut all elements before command name.
 func prepareArgs(cmd command.Command, originalArgs []string) []string {
 	nameIdx := 0
 
@@ -26,7 +25,7 @@ func prepareArgs(cmd command.Command, originalArgs []string) []string {
 	return originalArgs[nameIdx:]
 }
 
-// newCmdGeneric creates new cobra root sub command from Command
+// newCmdGeneric creates new cobra root sub command from Command.
 func newCmdGeneric(cmdToRun command.Command, conf *config.Config, out io.Writer) *cobra.Command {
 	subCmd := &cobra.Command{
 		Use:   cmdToRun.Name,
@@ -70,12 +69,11 @@ func newCmdGeneric(cmdToRun command.Command, conf *config.Config, out io.Writer)
 			c.Println(err)
 		}
 	})
-	//initOnlyAndExecFlags(subCmd)
 
 	return subCmd
 }
 
-// initialize all commands dynamically from config
+// initialize all commands dynamically from config.
 func initSubCommands(rootCmd *cobra.Command, conf *config.Config, out io.Writer) {
 	for _, cmdToRun := range conf.Commands {
 		rootCmd.AddCommand(newCmdGeneric(cmdToRun, conf, out))
@@ -85,12 +83,12 @@ func initSubCommands(rootCmd *cobra.Command, conf *config.Config, out io.Writer)
 func parseAndValidateOnlyAndExclude(cmd *cobra.Command) (only []string, exclude []string, err error) {
 	onlyCmds, err := cmd.Parent().Flags().GetStringArray("only")
 	if err != nil {
-		return []string{}, []string{}, err
+		return []string{}, []string{}, fmt.Errorf("can not get flag 'only': %w", err)
 	}
 
 	excludeCmds, err := cmd.Parent().Flags().GetStringArray("exclude")
 	if err != nil {
-		return []string{}, []string{}, err
+		return []string{}, []string{}, fmt.Errorf("can not get flag 'exclude': %w", err)
 	}
 
 	if len(excludeCmds) > 0 && len(onlyCmds) > 0 {
@@ -104,9 +102,8 @@ func parseAndValidateOnlyAndExclude(cmd *cobra.Command) (only []string, exclude 
 func parseAndValidateEnvFlag(cmd *cobra.Command) (map[string]string, error) {
 	// TraversChildren enabled for parent so we will have parent flags here
 	envs, err := cmd.Parent().Flags().GetStringToString("env")
-
 	if err != nil {
-		return map[string]string{}, err
+		return map[string]string{}, fmt.Errorf("can not get flag 'env': %w", err)
 	}
 
 	return envs, nil

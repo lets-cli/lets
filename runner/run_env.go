@@ -55,7 +55,7 @@ func isChecksumChanged(persistedChecksum string, persistedChecksumExists bool, n
 	return persistedChecksum != newChecksum
 }
 
-// persistedChecksumMap can be empty, and if so, we set env var LETS_CHECKSUM_[NAME]_CHANGED to false for all checksums
+// persistedChecksumMap can be empty, and if so, we set env var LETS_CHECKSUM_[NAME]_CHANGED to false for all checksums.
 func convertChangedChecksumMapToEnvForCmd(
 	defaultChecksum string,
 	checksumMap map[string]string,

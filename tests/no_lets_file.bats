@@ -20,7 +20,7 @@ NOT_EXISTED_LETS_FILE="lets-not-existed.yaml"
     printf "%s\n" "${lines[@]}"
 
     [[ $status != 0 ]]
-    [[ "${lines[0]}" = "[ERROR] failed to find config file ${NOT_EXISTED_LETS_FILE}: can not find config" ]]
+    [[ "${lines[0]}" = "failed to find config file ${NOT_EXISTED_LETS_FILE}: can not find config" ]]
 }
 
 @test "no_lets_file: show config read error (broken config)" {
@@ -28,7 +28,7 @@ NOT_EXISTED_LETS_FILE="lets-not-existed.yaml"
     printf "%s\n" "${lines[@]}"
 
     [[ $status != 0 ]]
-    [[ "${lines[0]}" = "[ERROR] failed to load config file broken_lets.yaml: failed to parse config: field 'commands': must be a mapping" ]]
+    [[ "${lines[0]}" = "failed to load config file broken_lets.yaml: failed to parse config: field 'commands': must be a mapping" ]]
 }
 
 @test "no_lets_file: show help for 'lets help' even if no config file" {
@@ -44,7 +44,8 @@ NOT_EXISTED_LETS_FILE="lets-not-existed.yaml"
     [[ "${lines[5]}" = "      --exclude stringArray   run all but excluded command(s) described in cmd as map" ]]
     [[ "${lines[6]}" = "  -h, --help                  help for lets" ]]
     [[ "${lines[7]}" = "      --only stringArray      run only specified command(s) described in cmd as map" ]]
-    [[ "${lines[8]}" = "  -v, --version               version for lets" ]]
+    [[ "${lines[8]}" = "      --upgrade               upgrade lets to latest version" ]]
+    [[ "${lines[9]}" = "  -v, --version               version for lets" ]]
 }
 
 @test "no_lets_file: show help for 'lets -h' even if no config file" {
@@ -60,5 +61,6 @@ NOT_EXISTED_LETS_FILE="lets-not-existed.yaml"
     [[ "${lines[5]}" = "      --exclude stringArray   run all but excluded command(s) described in cmd as map" ]]
     [[ "${lines[6]}" = "  -h, --help                  help for lets" ]]
     [[ "${lines[7]}" = "      --only stringArray      run only specified command(s) described in cmd as map" ]]
-    [[ "${lines[8]}" = "  -v, --version               version for lets" ]]
+    [[ "${lines[8]}" = "      --upgrade               upgrade lets to latest version" ]]
+    [[ "${lines[9]}" = "  -v, --version               version for lets" ]]
 }

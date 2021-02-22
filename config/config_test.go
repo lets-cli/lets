@@ -11,7 +11,7 @@ func TestReadConfig(t *testing.T) {
 			t.Errorf("can not find test config: %s", err)
 		}
 
-		_, err = Load(cp, "0.0.0-test")
+		_, err = LoadFromFile(cp, "0.0.0-test")
 		if err != nil {
 			t.Errorf("can not read test config: %s", err)
 		}

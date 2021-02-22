@@ -1,75 +1,74 @@
 package cmd
 
 import (
+	"fmt"
 	"io"
-
-	"github.com/spf13/cobra"
+	"os"
 
 	"github.com/lets-cli/lets/config"
 	"github.com/lets-cli/lets/logging"
-	"github.com/lets-cli/lets/workdir"
+	"github.com/lets-cli/lets/upgrade"
+	"github.com/lets-cli/lets/upgrade/registry"
+	"github.com/spf13/cobra"
 )
 
-// CreateRootCommand is where all the stuff begins
-func CreateRootCommand(out io.Writer, version string) *cobra.Command {
-	// rootCmd represents the base command when called without any subcommands
-	var rootCmd = &cobra.Command{
+// newRootCmd represents the base command when called without any subcommands.
+func newRootCmd(version string) *cobra.Command {
+	return &cobra.Command{
 		Use:   "lets",
 		Short: "A CLI command runner",
 		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runRoot(cmd)
+			return runRoot(cmd, version)
 		},
 		TraverseChildren: true,
 		Version:          version,
 		SilenceErrors:    true,
+		SilenceUsage:     true,
 	}
+}
 
-	initRootCommand(rootCmd, out, version)
+// CreateRootCommandWithConfig used to run root command with all subcommands.
+func CreateRootCommandWithConfig(out io.Writer, cfg *config.Config, version string) *cobra.Command {
+	rootCmd := newRootCmd(version)
+
+	initRootCommand(rootCmd)
+	initSubCommands(rootCmd, cfg, out)
 
 	return rootCmd
 }
 
-func initRootCommand(rootCmd *cobra.Command, out io.Writer, version string) {
-	var conf *config.Config
+// CreateRootCommand used to run only root command without config.
+func CreateRootCommand(version string) *cobra.Command {
+	rootCmd := newRootCmd(version)
 
-	configPath, findCfgErr := config.FindConfig()
-	if findCfgErr != nil {
-		initErrCheck(rootCmd, findCfgErr)
-	} else {
-		cfg, cfgErr := config.Load(configPath, version)
-		if cfgErr != nil {
-			initErrCheck(rootCmd, cfgErr)
-		}
-		conf = cfg
-	}
+	initRootCommand(rootCmd)
 
-	if conf != nil {
-		// create .lets only when there is valid config in work dir
-		if createDirErr := workdir.CreateDotLetsDir(configPath.WorkDir); createDirErr != nil {
-			initErrCheck(rootCmd, createDirErr)
-		}
-
-		initSubCommands(rootCmd, conf, out)
-	}
-
-	initCompletionCmd(rootCmd)
-	initVersionFlag(rootCmd)
-	initEnvFlag(rootCmd)
-	initOnlyAndExecFlags(rootCmd)
+	return rootCmd
 }
 
-// InitErrCheck check if error occurred before root cmd execution.
+// ConfigErrorCheck will print error only if no args passed
 // Main reason to do it in PreRun allows us to run root cmd as usual,
 //	parse help flags if any provided or check if its help command.
 //
 // For example if config load failed with error (no lets.yaml in current dir) - print error and exit.
-func initErrCheck(rootCmd *cobra.Command, err error) {
+func ConfigErrorCheck(rootCmd *cobra.Command, err error) {
 	rootCmd.PreRun = func(cmd *cobra.Command, args []string) {
-		if err != nil {
-			logging.Log.Fatal(err)
+		if cmd.Flags().NFlag() > 0 {
+			return
 		}
+
+		logging.Log.Error(err)
+		os.Exit(1)
 	}
+}
+
+func initRootCommand(rootCmd *cobra.Command) {
+	initCompletionCmd(rootCmd)
+	initVersionFlag(rootCmd)
+	initEnvFlag(rootCmd)
+	initOnlyAndExecFlags(rootCmd)
+	initUpgradeFlag(rootCmd)
 }
 
 func initVersionFlag(rootCmd *cobra.Command) {
@@ -85,6 +84,35 @@ func initOnlyAndExecFlags(cmd *cobra.Command) {
 	cmd.Flags().StringArray("exclude", []string{}, "run all but excluded command(s) described in cmd as map")
 }
 
-func runRoot(cmd *cobra.Command) error {
+func initUpgradeFlag(cmd *cobra.Command) {
+	cmd.Flags().Bool("upgrade", false, "upgrade lets to latest version")
+}
+
+func runRoot(cmd *cobra.Command, version string) error {
+	selfUpgrade, err := cmd.Flags().GetBool("upgrade")
+	if err != nil {
+		return fmt.Errorf("can not get flag 'upgrade': %w", err)
+	}
+
+	if selfUpgrade {
+		upgrader, err := upgrade.NewBinaryUpgrader(registry.NewGithubRegistry(cmd.Context()), version)
+		if err != nil {
+			return fmt.Errorf("can not upgrade lets: %w", err)
+		}
+
+		return upgrader.Upgrade()
+	}
+
+	showVersion, err := cmd.Flags().GetBool("version")
+	if err != nil {
+		return fmt.Errorf("can not get flag 'version': %w", err)
+	}
+
+	if showVersion {
+		logging.Log.Printf("lets version %s", version)
+
+		return nil
+	}
+
 	return cmd.Help()
 }

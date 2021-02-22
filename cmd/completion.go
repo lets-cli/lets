@@ -44,18 +44,18 @@ complete -o filenames -F _lets_completion lets
 func genBashCompletion(w io.Writer) error {
 	tmpl, err := template.New("Main").Parse(bashCompletionText)
 	if err != nil {
-		return fmt.Errorf("error creating zsh completion template: %v", err)
+		return fmt.Errorf("error creating zsh completion template: %w", err)
 	}
 
 	return tmpl.Execute(w, nil)
 }
 
 // generate zsh completion script.
-// if verbose passed - generate completion with description
+// if verbose passed - generate completion with description.
 func genZshCompletion(w io.Writer, verbose bool) error {
 	tmpl, err := template.New("Main").Parse(zshCompletionText)
 	if err != nil {
-		return fmt.Errorf("error creating zsh completion template: %v", err)
+		return fmt.Errorf("error creating zsh completion template: %w", err)
 	}
 
 	data := struct {
@@ -69,9 +69,9 @@ func genZshCompletion(w io.Writer, verbose bool) error {
 	return tmpl.Execute(w, data)
 }
 
-// generate string of commands joined with \n
+// generate string of commands joined with \n.
 func getCommandsList(rootCmd *cobra.Command, w io.Writer, verbose bool) error {
-	var buf = new(bytes.Buffer)
+	buf := new(bytes.Buffer)
 
 	for _, cmd := range rootCmd.Commands() {
 		if !cmd.Hidden && cmd.Name() != "help" {
@@ -90,27 +90,30 @@ func getCommandsList(rootCmd *cobra.Command, w io.Writer, verbose bool) error {
 	}
 
 	_, err := buf.WriteTo(w)
+	if err != nil {
+		return fmt.Errorf("can not generate commands list: %w", err)
+	}
 
-	return err
+	return nil
 }
 
 func initCompletionCmd(rootCmd *cobra.Command) {
-	var completionCmd = &cobra.Command{
+	completionCmd := &cobra.Command{
 		Use:    "completion",
 		Hidden: true,
 		Short:  "Generates completion scripts for bash, zsh",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			shellType, err := cmd.Flags().GetString("shell")
 			if err != nil {
-				return err
+				return fmt.Errorf("can not get flag 'shell': %w", err)
 			}
 			verbose, err := cmd.Flags().GetBool("verbose")
 			if err != nil {
-				return err
+				return fmt.Errorf("can not get flag 'verbose': %w", err)
 			}
 			list, err := cmd.Flags().GetBool("list")
 			if err != nil {
-				return err
+				return fmt.Errorf("can not get flag 'list': %w", err)
 			}
 
 			if list {

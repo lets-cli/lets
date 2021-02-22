@@ -30,8 +30,9 @@ setup() {
     [[ "${lines[10]}" = "      --exclude stringArray   run all but excluded command(s) described in cmd as map" ]]
     [[ "${lines[11]}" = "  -h, --help                  help for lets" ]]
     [[ "${lines[12]}" = "      --only stringArray      run only specified command(s) described in cmd as map" ]]
-    [[ "${lines[13]}" = "  -v, --version               version for lets" ]]
-    [[ "${lines[14]}" = 'Use "lets [command] --help" for more information about a command.' ]]
+    [[ "${lines[13]}" = "      --upgrade               upgrade lets to latest version" ]]
+    [[ "${lines[14]}" = "  -v, --version               version for lets" ]]
+    [[ "${lines[15]}" = 'Use "lets [command] --help" for more information about a command.' ]]
 }
 
 @test "help: run 'lets help'" {
@@ -52,6 +53,7 @@ setup() {
     [[ "${lines[10]}" = "      --exclude stringArray   run all but excluded command(s) described in cmd as map" ]]
     [[ "${lines[11]}" = "  -h, --help                  help for lets" ]]
     [[ "${lines[12]}" = "      --only stringArray      run only specified command(s) described in cmd as map" ]]
-    [[ "${lines[13]}" = "  -v, --version               version for lets" ]]
-    [[ "${lines[14]}" = 'Use "lets [command] --help" for more information about a command.' ]]
+    [[ "${lines[13]}" = "      --upgrade               upgrade lets to latest version" ]]
+    [[ "${lines[14]}" = "  -v, --version               version for lets" ]]
+    [[ "${lines[15]}" = 'Use "lets [command] --help" for more information about a command.' ]]
 }

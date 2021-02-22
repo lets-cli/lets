@@ -80,7 +80,7 @@ func (e *ParseCommandError) Error() string {
 	return fmt.Sprintf("failed to parse '%s' command: %s", e.Name, e.Err)
 }
 
-// env is not proper arg
+// env is not proper arg.
 func newParseCommandError(msg string, name string, field string, meta string) error {
 	fields := []string{field}
 	if meta != "" {
@@ -102,7 +102,7 @@ func newParseCommandError(msg string, name string, field string, meta string) er
 	}
 }
 
-// NewCommand creates new command struct
+// NewCommand creates new command struct.
 func NewCommand(name string) Command {
 	return Command{
 		Name: name,
@@ -122,8 +122,8 @@ func (cmd *Command) GetPersistedChecksums() map[string]string {
 	return cmd.persistedChecksums
 }
 
-// ParseAndValidateCommand parses and validates unmarshaled yaml
-func ParseAndValidateCommand(newCmd *Command, rawCommand map[interface{}]interface{}) error {
+// ParseAndValidateCommand parses and validates unmarshaled yaml.
+func ParseAndValidateCommand(newCmd *Command, rawCommand map[interface{}]interface{}) error { //nolint:cyclop
 	if err := validateCommandFields(rawCommand, validFields); err != nil {
 		return err
 	}

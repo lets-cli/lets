@@ -20,17 +20,13 @@ func withColor(msg string) string {
 	return fmt.Sprintf(NoticeColor, msg)
 }
 
-// Validate loaded config
+// Validate loaded config.
 func Validate(config *Config, letsVersion string) error {
 	if err := validateCircularDepends(config); err != nil {
 		return err
 	}
 
-	if err := validateVersion(config, letsVersion); err != nil {
-		return err
-	}
-
-	return nil
+	return validateVersion(config, letsVersion)
 }
 
 func validateVersion(cfg *Config, letsVersion string) error {
@@ -41,18 +37,20 @@ func validateVersion(cfg *Config, letsVersion string) error {
 
 	cfgVersionParsed, err := util.ParseVersion(cfg.Version)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to parse config version: %w", err)
 	}
 
 	letsVersionParsed, err := util.ParseVersion(letsVersion)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to parse lets version: %w", err)
 	}
 
 	// in dev (where version is 0.0.0-dev) this predicate will be always false
 	if letsVersionParsed.LessThan(*cfgVersionParsed) {
 		return fmt.Errorf(
-			"config version '%s' is not compatible with 'lets' version '%s'. Please upgrade 'lets' to '%s'",
+			"config version '%s' is not compatible with 'lets' version '%s'. "+
+				"Please upgrade 'lets' to '%s' "+
+				"using 'lets --upgrade' command or following documentation at https://lets-cli.org/docs/installation'",
 			cfgVersionParsed,
 			letsVersionParsed,
 			cfgVersionParsed,
@@ -63,7 +61,7 @@ func validateVersion(cfg *Config, letsVersion string) error {
 }
 
 // if any two commands have each other command in deps, raise error
-// TODO not optimal function but works for now
+// TODO not optimal function but works for now.
 func validateCircularDepends(cfg *Config) error {
 	for _, cmdA := range cfg.Commands {
 		for _, cmdB := range cfg.Commands {

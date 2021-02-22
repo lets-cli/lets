@@ -10,11 +10,10 @@ import (
 	"strings"
 
 	"github.com/docopt/docopt-go"
-	"golang.org/x/sync/errgroup"
-
 	"github.com/lets-cli/lets/commands/command"
 	"github.com/lets-cli/lets/config"
 	"github.com/lets-cli/lets/logging"
+	"golang.org/x/sync/errgroup"
 )
 
 const (
@@ -31,7 +30,7 @@ func (e *RunErr) Error() string {
 	return e.err.Error()
 }
 
-// ExitCode will return exit code from underlying ExitError or returns default error code
+// ExitCode will return exit code from underlying ExitError or returns default error code.
 func (e *RunErr) ExitCode() int {
 	var exitErr *exec.ExitError
 	if ok := errors.As(e.err, &exitErr); ok {
@@ -56,7 +55,7 @@ type RunOptions struct {
 	RawArgs []string
 }
 
-// RunCommand runs parent command
+// RunCommand runs parent command.
 func RunCommand(ctx context.Context, cmdToRun command.Command, cfg *config.Config, out io.Writer) error {
 	if cmdToRun.CmdMap != nil {
 		return runCmdAsMap(ctx, &cmdToRun, cfg, out)
@@ -65,7 +64,7 @@ func RunCommand(ctx context.Context, cmdToRun command.Command, cfg *config.Confi
 	return runCmd(&cmdToRun, cfg, out, noParent)
 }
 
-// format docopts error and adds usage string to output
+// format docopts error and adds usage string to output.
 func formatOptsUsageError(err error, opts docopt.Opts, cmdName string, rawOptions string) error {
 	if opts == nil && err.Error() == "" {
 		err = fmt.Errorf("no such option")
@@ -78,7 +77,7 @@ func formatOptsUsageError(err error, opts docopt.Opts, cmdName string, rawOption
 
 // Init Command before run:
 // - parse docopt
-// - calculate checksum
+// - calculate checksum.
 func initCmd(
 	cmdToRun *command.Command,
 	cfg *config.Config,
@@ -97,7 +96,7 @@ func initCmd(
 
 	// calculate checksum if needed
 	if err := cmdToRun.ChecksumCalculator(cfg.WorkDir); err != nil {
-		return err
+		return fmt.Errorf("failed to calculate checksum for command '%s': %w", cmdToRun.Name, err)
 	}
 
 	// if command declared as persist_checksum we must read current persisted checksums into memory
@@ -105,7 +104,7 @@ func initCmd(
 		if command.ChecksumForCmdPersisted(cfg.DotLetsDir, cmdToRun.Name) {
 			err := cmdToRun.ReadChecksumsFromDisk(cfg.DotLetsDir, cmdToRun.Name, cmdToRun.ChecksumMap)
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to read persisted checksum for command '%s': %w", cmdToRun.Name, err)
 			}
 		}
 	}
@@ -171,7 +170,7 @@ func prepareCmdForRun(
 	return cmd
 }
 
-// Run all commands from Depends in sequential order
+// Run all commands from Depends in sequential order.
 func runDepends(cmdToRun *command.Command, cfg *config.Config, out io.Writer) error {
 	for _, dependCmdName := range cmdToRun.Depends {
 		dependCmd := cfg.Commands[dependCmdName]
@@ -187,12 +186,12 @@ func runDepends(cmdToRun *command.Command, cfg *config.Config, out io.Writer) er
 }
 
 // Persist new calculated checksum to disk.
-// This function mus be called only after command finished(exited) with status 0
+// This function mus be called only after command finished(exited) with status 0.
 func persistChecksum(cmdToRun command.Command, cfg *config.Config) error {
 	if cmdToRun.PersistChecksum {
 		err := command.PersistCommandsChecksumToDisk(cfg.DotLetsDir, cmdToRun)
 		if err != nil {
-			return err
+			return fmt.Errorf("can not persist checksum to disk: %w", err)
 		}
 	}
 
@@ -200,7 +199,7 @@ func persistChecksum(cmdToRun command.Command, cfg *config.Config) error {
 }
 
 // Run command and wait for result.
-// Must be used only when Command.Cmd is string or []string
+// Must be used only when Command.Cmd is string or []string.
 func runCmd(
 	cmdToRun *command.Command,
 	cfg *config.Config,
@@ -226,11 +225,7 @@ func runCmd(
 	}
 
 	// persist checksum only if exit code 0
-	if err := persistChecksum(*cmdToRun, cfg); err != nil {
-		return err
-	}
-
-	return nil
+	return persistChecksum(*cmdToRun, cfg)
 }
 
 func runCmdScript(
@@ -273,7 +268,7 @@ func runCmdScript(
 // It allowed to fail and will print error
 // Do not return error directly to root because we consider only 'cmd' exit code.
 // Even if 'after' script failed we return exit code from 'cmd'.
-// This behavior may change in the future if needed
+// This behavior may change in the future if needed.
 func runAfterScript(
 	cmdToRun *command.Command,
 	cfg *config.Config,
@@ -288,9 +283,8 @@ func runAfterScript(
 		cmd.Env,
 	)
 
-	runErr := cmd.Run()
-	if runErr != nil {
-		fmt.Printf("failed to run `after` script for command '%s': %s", cmdToRun.Name, runErr)
+	if runErr := cmd.Run(); runErr != nil {
+		logging.Log.Printf("failed to run `after` script for command '%s': %s", cmdToRun.Name, runErr)
 	}
 }
 
@@ -338,7 +332,7 @@ func filterCmdMap(
 }
 
 // Run all commands from Command.CmdMap in parallel and wait for results.
-// Must be used only when Command.Cmd is map[string]string
+// Must be used only when Command.Cmd is map[string]string.
 func runCmdAsMap(ctx context.Context, cmdToRun *command.Command, cfg *config.Config, out io.Writer) (err error) {
 	defer func() {
 		if cmdToRun.After != "" {
@@ -370,12 +364,12 @@ func runCmdAsMap(ctx context.Context, cmdToRun *command.Command, cfg *config.Con
 	}
 
 	if err = g.Wait(); err != nil {
-		return err
+		return err //nolint:wrapcheck
 	}
 
 	// persist checksum only if exit code 0
 	if err = persistChecksum(*cmdToRun, cfg); err != nil {
-		return err
+		return fmt.Errorf("persist checksum error in command '%s': %w", cmdToRun.Name, err)
 	}
 
 	return err

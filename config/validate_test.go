@@ -20,7 +20,6 @@ func TestValidateCircularDeps(t *testing.T) {
 			Depends: []string{"noop"},
 		}
 		err := validateCircularDepends(testCfg)
-
 		if err != nil {
 			t.Errorf("checked itself when validation circular depends. got:  %s", err)
 		}
@@ -43,7 +42,6 @@ func TestValidateCircularDeps(t *testing.T) {
 			Depends: []string{"noop"},
 		}
 		err := validateCircularDepends(testCfg)
-
 		if err != nil {
 			t.Errorf("checked itself when validation circular depends. got:  %s", err)
 		}

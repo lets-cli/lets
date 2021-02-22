@@ -1,3 +1,6 @@
+run:
+  tests: false
+
 linters:
   enable-all: true
   disable:
@@ -6,6 +9,9 @@ linters:
     - funlen
     - godox
     - maligned
+    - goerr113
+    - exhaustivestruct
+    - wrapcheck
     - prealloc # enable it sometimes
 
 linters-settings:
