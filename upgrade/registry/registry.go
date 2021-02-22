@@ -32,6 +32,7 @@ type GithubRegistry struct {
 	repoURI                string
 	downloadURL            string
 	downloadPackageTimeout time.Duration
+	latestReleaseTimeout   time.Duration
 }
 
 func NewGithubRegistry(ctx context.Context) *GithubRegistry {
@@ -44,7 +45,8 @@ func NewGithubRegistry(ctx context.Context) *GithubRegistry {
 		ctx:                    ctx,
 		repoURI:                "https://github.com/lets-cli/lets",
 		downloadURL:            "",
-		downloadPackageTimeout: 60 * 5 * time.Second, // TODO 5 minute timeout is enough?
+		downloadPackageTimeout: 60 * 5 * time.Second,
+		latestReleaseTimeout:   60 * time.Second,
 	}
 
 	return reg
@@ -116,6 +118,7 @@ func (reg *GithubRegistry) DownloadReleaseBinary( //nolint:cyclop
 		}
 	}
 
+	// TODO add download progress bar
 	// TODO drop extract dependency, replace with own code
 	err = extract.Gz(reg.ctx, resp.Body, dstDir, nil)
 	if err != nil {
@@ -136,7 +139,7 @@ type release struct {
 }
 
 func (reg *GithubRegistry) GetLatestRelease() (string, error) {
-	ctx, cancel := context.WithTimeout(reg.ctx, 30*time.Second)
+	ctx, cancel := context.WithTimeout(reg.ctx, reg.latestReleaseTimeout)
 	defer cancel()
 
 	url := fmt.Sprintf("%s/releases/latest", reg.repoURI)

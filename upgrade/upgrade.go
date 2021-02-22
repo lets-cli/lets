@@ -102,7 +102,6 @@ func backupExecutable(executablePath string, backupPath string) error {
 		return errFmt(err)
 	}
 
-	// TODO maybe use hard link from original executable to backup path
 	backupFile, err := os.Create(backupPath)
 	if err != nil {
 		return errFmt(err)
@@ -122,7 +121,9 @@ func replaceBinaries(downloadPath string, executablePath string, backupPath stri
 
 	err := os.Rename(downloadPath, executablePath)
 	if err != nil {
-		// TODO handle backupPath
+		// restore original file from backup
+		err := os.Rename(backupPath, executablePath)
+
 		return fmt.Errorf("failed to update lets binary: %w", err)
 	}
 
