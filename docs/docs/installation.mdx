@@ -4,9 +4,20 @@ title: Installation
 sidebar_label: Installation
 ---
 
-## Install
 
-### **Shell script**
+### Binary
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+<Tabs
+    defaultValue="shell"
+    values={[
+        { label: 'Shell', value: 'shell', },
+        { label: 'Binary', value: 'binary', },
+    ]}
+>
+<TabItem value="shell">
 
 ```bash
 curl --proto '=https' --tlsv1.2 -sSf https://lets-cli.org/install.sh | sh -- -b ~/bin
@@ -41,15 +52,30 @@ To use `lets` globally in system you may want to install `lets` to `/usr/local/b
 curl --proto '=https' --tlsv1.2 -sSf https://lets-cli.org/install.sh | sh -s -- -b /usr/local/bin
 ```
 
-### **Binary (Cross-platform)**
+</TabItem>
+<TabItem value='binary'>
 
-Download the version you need for your platform from [Lets Releases](https://github.com/lets-cli/lets/releases). 
+Download the version you need for your platform from [Lets Releases](https://github.com/lets-cli/lets/releases).
 
 Once downloaded, the binary can be run from anywhere.
 
 Ideally, you should install it somewhere in your PATH for easy use. `/usr/local/bin` is the most probable location.
 
-### **Arch Linux**
+</TabItem>
+</Tabs>
+
+
+### Package managers
+
+<Tabs
+    defaultValue="snap"
+    values={[
+        { label: 'Snap', value: 'snap', },
+        { label: 'Homebrew', value: 'homebrew', },
+        { label: 'Arch', value: 'arch', },
+    ]}
+>
+<TabItem value="arch">
 
 You can get binary release from https://aur.archlinux.org/packages/lets-bin/
 
@@ -65,24 +91,52 @@ Also you can get bleeding edge version from https://aur.archlinux.org/packages/l
 yay -S lets-git
 ```
 
+</TabItem>
+<TabItem value="snap">
+
+TODO
+
+</TabItem>
+<TabItem value="homebrew">
+
+TODO
+
+</TabItem>
+</Tabs>
+
 ## Update
 
-### Self upgrade
+<Tabs
+    defaultValue="self"
+    values={[
+        { label: 'Self upgrade', value: 'self', },
+        { label: 'Shell script', value: 'shell', },
+        { label: 'Binary', value: 'binary', },
+        { label: 'Arch', value: 'arch', },
+    ]}
+>
+<TabItem value="self">
 
 ```bash
 lets --upgrade
 ```
 
-### Shell script 
+</TabItem>
+<TabItem value="shell">
 
 To update `lets` you can use the same [shell script](#shell-script) from above.
 
 Running script will update `lets` to **latest** version.
 
-### Binary 
+</TabItem>
+<TabItem value="binary">
 
-You can download latest version from [Lets Releases](https://github.com/lets-cli/lets/releases). 
+You can download latest version from [Lets Releases](https://github.com/lets-cli/lets/releases).
 
-### Arch Linux
+</TabItem>
+<TabItem value="arch">
 
 AUR repository always provides **latest** version.
+
+</TabItem>
+</Tabs>
