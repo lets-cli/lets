@@ -8,46 +8,37 @@ sidebar_label: Installation
 
 ### **Shell script**
 
-This will install **latest** `lets` binary to `/usr/local/bin` directory and will require `sudo`. 
-
-But you can change install location to any directory you want
-
 ```bash
-sudo curl -sfL https://raw.githubusercontent.com/lets-cli/lets/master/install.sh | sudo sh -s -- -b /usr/local/bin
+curl --proto '=https' --tlsv1.2 -sSf https://lets-cli.org/install.sh | sh -- -b ~/bin
 ```
 
-To install specific version of `lets` (for example `v0.0.21`):
+This will install **latest** `lets` binary to `~/bin` directory.
+
+To be able to run `lets` from any place in system add `$HOME/bin` to your `PATH`
 
 ```bash
-sudo curl -sfL https://raw.githubusercontent.com/lets-cli/lets/master/install.sh | sudo sh -s -- -b /usr/local/bin v0.0.21
-```
+vim ~/.profile # or vim ~/.bashrc or ~/.zshrc
 
-Alternatively, if you do not want to install `lets` with a `sudo`, you can do next:
-
-1. Create (if do not have any) some bin directory somewhere in your home dir 
-
-```bash
-cd ~
-mkdir bin
-```
-
-2. Add this dir to your `PATH`
-
-```bash
-vim ~/.bashrc # or ~/.zshrc
-
-Add the folowing line, save file and restart the shell.
+Add the folowing line at the end of file, save file and restart the shell.
 
 ```bash
 export PATH=$PATH:$HOME/bin
 ```
 
-Now you can add any binary files to ~/bin and you system will see and executable globally.
+You can change install location to any directory you want, probably to directory that is in your $PATH
 
-3. Install lets to ~/bin
+To install a specific version of `lets` (for example `v0.0.21`):
 
 ```bash
-curl -sfL https://raw.githubusercontent.com/lets-cli/lets/master/install.sh | sh -s -- -b ~/bin
+curl --proto '=https' --tlsv1.2 -sSf https://lets-cli.org/install.sh | sh -s -- v0.0.21
+```
+
+To use `lets` globally in system you may want to install `lets` to `/usr/local/bin`
+
+> May require `sudo`
+
+```bash
+curl --proto '=https' --tlsv1.2 -sSf https://lets-cli.org/install.sh | sh -s -- -b /usr/local/bin
 ```
 
 ### **Binary (Cross-platform)**
@@ -75,6 +66,12 @@ yay -S lets-git
 ```
 
 ## Update
+
+### Self upgrade
+
+```bash
+lets --upgrade
+```
 
 ### Shell script 
 
