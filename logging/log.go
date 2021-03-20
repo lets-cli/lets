@@ -2,7 +2,6 @@ package logging
 
 import (
 	"io"
-	"io/ioutil"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -10,13 +9,13 @@ import (
 // Log is the main application logger.
 var Log = log.New()
 
-// InitLogging for logrus
+// InitLogging for logrus.
 func InitLogging(
 	verbose bool,
 	stdWriter io.Writer,
 	errWriter io.Writer,
 ) {
-	Log.SetOutput(ioutil.Discard)
+	Log.SetOutput(io.Discard)
 
 	logger := Log
 
