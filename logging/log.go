@@ -1,7 +1,7 @@
 package logging
 
 import (
-	"os"
+	"io"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -9,7 +9,14 @@ import (
 // Log is the main application logger.
 var Log = log.New()
 
-func InitLogging(verbose bool) {
+// InitLogging for logrus.
+func InitLogging(
+	verbose bool,
+	stdWriter io.Writer,
+	errWriter io.Writer,
+) {
+	Log.SetOutput(io.Discard)
+
 	logger := Log
 
 	logger.Level = log.InfoLevel
@@ -18,9 +25,25 @@ func InitLogging(verbose bool) {
 		logger.Level = log.DebugLevel
 	}
 
-	logger.Out = os.Stderr
+	Log.AddHook(&WriterHook{
+		Writer: stdWriter,
+		LogLevels: []log.Level{
+			log.InfoLevel,
+			log.DebugLevel,
+			log.WarnLevel,
+		},
+	})
+
+	Log.AddHook(&WriterHook{
+		Writer: errWriter,
+		LogLevels: []log.Level{
+			log.PanicLevel,
+			log.FatalLevel,
+			log.ErrorLevel,
+		},
+	})
 
 	formatter := &Formatter{}
-	log.SetFormatter(formatter)
+	Log.SetFormatter(formatter)
 	logger.Formatter = formatter
 }

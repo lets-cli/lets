@@ -20,7 +20,7 @@ var version = "0.0.0-dev"
 func main() {
 	ctx := getContext()
 
-	logging.InitLogging(env.IsDebug())
+	logging.InitLogging(env.IsDebug(), os.Stdout, os.Stderr)
 
 	cfg, readConfigErr := config.Read(version)
 
