@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <id>https://lets-cli.org/blog</id>
+    <title>Lets Blog</title>
+    <updated>2020-05-24T00:00:00.000Z</updated>
+    <generator>https://github.com/jpmonette/feed</generator>
+    <link rel="alternate" href="https://lets-cli.org/blog"/>
+    <subtitle>Lets Blog</subtitle>
+    <icon>https://lets-cli.org/img/favicon.ico</icon>
+    <entry>
+        <title type="html"><![CDATA[History of lets]]></title>
+        <id>History of lets</id>
+        <link href="https://lets-cli.org/blog/2020/05/24/history-of-lets"/>
+        <updated>2020-05-24T00:00:00.000Z</updated>
+        <summary type="html"><![CDATA[History of Lets.]]></summary>
+    </entry>
+</feed>

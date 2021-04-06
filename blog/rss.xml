@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0">
+    <channel>
+        <title>Lets Blog</title>
+        <link>https://lets-cli.org/blog</link>
+        <description>Lets Blog</description>
+        <lastBuildDate>Sun, 24 May 2020 00:00:00 GMT</lastBuildDate>
+        <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
+        <generator>https://github.com/jpmonette/feed</generator>
+        <item>
+            <title><![CDATA[History of lets]]></title>
+            <link>https://lets-cli.org/blog/2020/05/24/history-of-lets</link>
+            <guid>History of lets</guid>
+            <pubDate>Sun, 24 May 2020 00:00:00 GMT</pubDate>
+            <description><![CDATA[History of Lets.]]></description>
+        </item>
+    </channel>
+</rss>
