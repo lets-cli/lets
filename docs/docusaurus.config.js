@@ -16,7 +16,6 @@ module.exports = {
       items: [
         {to: 'docs/getting_started', label: 'Getting Started', position: 'right'},
         {to: 'blog', label: 'Blog', position: 'right'},
-        {to: 'docs/faq', label: 'FAQ', position: 'right'},
         {
           href: 'https://github.com/lets-cli/lets',
           label: 'GitHub',
