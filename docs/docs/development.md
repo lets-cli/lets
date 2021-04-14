@@ -5,27 +5,31 @@ title: Development
 
 ## Build
 
+We are suggesting to use `lets-dev` name for development binary, so u could
+have stable `lets` version untouched.
+
 To build a binary:
 
 ```bash
-go build -o lets *.go
+go build -o lets-dev *.go
 ```
 
 To install in system
 
 ```bash
-go build -o lets *.go && sudo mv ./lets /usr/local/bin/lets
+go build -o lets-dev *.go && sudo mv ./lets-dev /usr/local/bin/lets-dev
 ```
 
 Or if you already have `lets` installed in your system:
 
 ```bash
-lets build-and-install
+lets build-and-install [--path=<path>]
 ```
+`path` - your custom executable $PATH, defaults to `/usr/local/bin`
 
-After install - check version of lets - `lets --version` - it should be development
+After install - check version of lets - `lets-dev --version` - it should be development
 
-It will install `lets` to /usr/local/bin/lets and set version to development with current tag and timestamp
+It will install `lets-dev` to /usr/local/bin/lets-dev, or whereever u`ve specified in path, and set version to development with current tag and timestamp
 
 ## Test
 

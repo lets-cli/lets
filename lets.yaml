@@ -73,10 +73,22 @@ commands:
       go fmt ./...
 
   build-and-install:
-    description: Build and install lets development version from source code to /usr/local/bin/lets
+    description: Build and install lets-dev version from source code
+    options: |
+      Usage: lets build-and-install [--path=<path>]
+      Options:
+        --path=<path>, -p    Custom executable path
     cmd: |
       VERSION=$(git describe)
-      go build -ldflags="-X main.version=${VERSION:1}-dev" -o lets *.go && sudo mv ./lets /usr/local/bin/lets
+      PATH2LETSDEV="/usr/local/bin"
+
+      if [[ -n ${LETSOPT_PATH} ]]; then
+        PATH2LETSDEV=$LETSOPT_PATH
+      fi
+
+      go build -ldflags="-X main.version=${VERSION:1}-dev" -o lets-dev *.go && \
+      sudo mv ./lets-dev $PATH2LETSDEV/lets-dev && \
+      echo " - build 'lets-dev' successfully installed in ${PATH2LETSDEV}"
 
   publish-docs:
     cmd: |
