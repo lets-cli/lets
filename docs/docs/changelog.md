@@ -3,6 +3,13 @@ id: changelog
 title: Changelog
 ---
 
+## 0.0.30
+
+* [Added] Build `lets` for `arm64 (M1)` arch
+* [Deleted] Drop `386` arch builds
+* [Added] Publish `lets` to homebrew 
+
+
 ## 0.0.29
 
 * [Added] `after` directive to command.

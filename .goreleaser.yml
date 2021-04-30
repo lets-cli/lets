@@ -2,7 +2,6 @@ project_name: lets
 
 before:
   hooks:
-    # you may remove this if you don't use vgo
     - go mod tidy
 
 release:
@@ -15,11 +14,11 @@ builds:
     - linux
     - darwin
   goarch:
-    - 386
     - amd64
+    - arm64
   ignore:
-    - goos: darwin
-      goarch: 386
+    - goos: linux
+      goarch: arm64
   ldflags:
     - -X main.version={{.Version}}
 
@@ -31,6 +30,15 @@ archives:
     windows: Windows
     386: i386
     amd64: x86_64
+
+brews:
+  - name: lets
+    description: "CLI task runner for productive developers - a better alternative to make"
+    homepage: "https://lets-cli.org/"
+    license: "MIT"
+    tap:
+      owner: lets-cli
+      name: homebrew-tap
 
 checksum:
   name_template: '{{ .ProjectName }}_checksums.txt'
