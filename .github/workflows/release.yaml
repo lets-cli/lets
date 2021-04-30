@@ -23,6 +23,7 @@ jobs:
           args: release --rm-dist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.GH_PAT }}
   aur-sync:
     runs-on: ubuntu-latest
     steps:
