@@ -7,7 +7,8 @@ title: Changelog
 
 * [Added] Build `lets` for `arm64 (M1)` arch
 * [Deleted] Drop `386` arch builds
-* [Added] Publish `lets` to homebrew 
+* [Added] Publish `lets` to homebrew
+* [Added] `--upgrade` flag to make self-upgrades
 
 
 ## 0.0.29

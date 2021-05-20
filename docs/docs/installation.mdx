@@ -126,14 +126,25 @@ brew install lets-cli/tap/lets
 >
 <TabItem value="self">
 
+Starting from version `0.0.30` lets has `--upgrade` flag which allows to do self-upgrades.
+
+It updates binary located at `which lets`
+
+
 ```bash
 lets --upgrade
 ```
 
+If your `lets` version is below `0.0.30` - use shell script and specify the latest version.
+
 </TabItem>
 <TabItem value="shell">
 
-To update `lets` you can use the same [shell script](#shell-script) from above.
+To update `lets` you can use shell script
+
+```
+curl --proto '=https' --tlsv1.2 -sSf https://lets-cli.org/install.sh | sh -s -- -b $(dirname $(which lets))
+```
 
 Running script will update `lets` to **latest** version.
 
