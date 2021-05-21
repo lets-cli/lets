@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/lets-cli/lets/commands/command"
 	"github.com/lets-cli/lets/config"
 	"github.com/lets-cli/lets/runner"
 	"github.com/spf13/cobra"
 )
+
+const genericCmdTplPlaceholder = "${LETS_COMMAND_NAME}"
 
 // cut all elements before command name.
 func prepareArgs(cmd command.Command, originalArgs []string) []string {
@@ -23,6 +26,11 @@ func prepareArgs(cmd command.Command, originalArgs []string) []string {
 	}
 
 	return originalArgs[nameIdx:]
+}
+
+func replaceGenericCmdPlaceholder(commandName string, cmd command.Command) string {
+	// replace only one placeholder in options
+	return strings.Replace(cmd.RawOptions, genericCmdTplPlaceholder, commandName, 1)
 }
 
 // newCmdGeneric creates new cobra root sub command from Command.
@@ -44,6 +52,8 @@ func newCmdGeneric(cmdToRun command.Command, conf *config.Config, out io.Writer)
 			if err != nil {
 				return err
 			}
+
+			cmdToRun.RawOptions = replaceGenericCmdPlaceholder(cmdToRun.Name, cmdToRun)
 
 			cmdToRun.OverrideEnv = envs
 
