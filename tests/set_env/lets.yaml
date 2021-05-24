@@ -13,3 +13,7 @@ commands:
     env:
       NAME: Rick
     cmd: echo "Hello ${NAME}"
+
+  say_command:
+    description: Say command name
+    cmd: echo $LETS_COMMAND_NAME

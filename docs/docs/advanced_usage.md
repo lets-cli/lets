@@ -259,7 +259,7 @@ If we describe option `Usage: lets run --stg` we will actually get two env varia
 You can learn more about options in [Options section](config.md#options)
 
 ### Command templates
-U can make command templates using .yaml features, for generic options, like
+You can make command templates using .yaml features, for generic options, like
 --watch, --config etc.
 
 `${LETS_COMMAND_NAME}` - is template string, which will be replaced by your command name in runtime.

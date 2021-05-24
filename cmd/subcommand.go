@@ -13,8 +13,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const genericCmdTplPlaceholder = "${LETS_COMMAND_NAME}"
-
 // cut all elements before command name.
 func prepareArgs(cmd command.Command, originalArgs []string) []string {
 	nameIdx := 0
@@ -29,6 +27,7 @@ func prepareArgs(cmd command.Command, originalArgs []string) []string {
 }
 
 func replaceGenericCmdPlaceholder(commandName string, cmd command.Command) string {
+	genericCmdTplPlaceholder := fmt.Sprintf("${%s}", runner.GenericCmdNameTpl)
 	// replace only one placeholder in options
 	return strings.Replace(cmd.RawOptions, genericCmdTplPlaceholder, commandName, 1)
 }
