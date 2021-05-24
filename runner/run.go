@@ -16,10 +16,9 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-const (
-	NoticeColor = "\033[1;36m%s\033[0m"
-	GenericCmdNameTpl = "LETS_COMMAND_NAME"
-)
+const NoticeColor = "\033[1;36m%s\033[0m"
+
+const GenericCmdNameTpl = "LETS_COMMAND_NAME"
 
 const noParent = ""
 
