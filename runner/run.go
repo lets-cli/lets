@@ -16,9 +16,9 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-const (
-	NoticeColor = "\033[1;36m%s\033[0m"
-)
+const NoticeColor = "\033[1;36m%s\033[0m"
+
+const GenericCmdNameTpl = "LETS_COMMAND_NAME"
 
 const noParent = ""
 
@@ -152,6 +152,7 @@ func prepareCmdForRun(
 		convertEnvMapToList(cmdToRun.OverrideEnv),
 		convertEnvMapToList(cmdToRun.Options),
 		convertEnvMapToList(cmdToRun.CliOptions),
+		[]string{makeEnvEntry(GenericCmdNameTpl, cmdToRun.Name)},
 		convertChecksumToEnvForCmd(cmdToRun.Checksum),
 		convertChecksumMapToEnvForCmd(cmdToRun.ChecksumMap),
 	)

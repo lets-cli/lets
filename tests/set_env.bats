@@ -35,3 +35,11 @@ setup() {
     [[ $status == 0 ]]
     [[ "${lines[0]}" = "Hello Morty" ]]
 }
+
+@test "say_command: should set env var $LETS_COMMAND_NAME" {
+    run lets say_command
+    printf "%s\n" "${lines[@]}"
+
+    [[ $status == 0 ]]
+    [[ "${lines[0]}" = "say_command" ]]
+}

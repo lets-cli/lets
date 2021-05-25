@@ -1,0 +1,32 @@
+shell: bash
+
+commands:
+  main-cmd-template: &main-cmd-template
+    options: |
+      Usage:  lets ${LETS_COMMAND_NAME} [<posarg>] [--config=<config>]
+      Options:
+        <posarg> ,          Some positional
+        --config=<config> -c  Custom config
+    cmd: |
+      echo "Do some stuff"
+
+  main-cmd-tpl-with-adds:
+    <<: *main-cmd-template
+    cmd: |
+      echo $LETSOPT_POSARG
+      echo $LETSOPT_CONFIG
+
+  main-cmd-template-wo-ph: &main-cmd-template-wo-ph
+    options: |
+      Usage:  lets main-cmd-template-wo-ph [<posarg>] [--config=<config>]
+      Options:
+        <posarg> ,          Some positional
+        --config=<config> -c  Custom config
+    cmd: |
+      echo "Do some stuff"
+
+  main-cmd-tpl-with-adds-wo-ph:
+    <<: *main-cmd-template-wo-ph
+    cmd: |
+      echo $LETSOPT_POSARG
+      echo $LETSOPT_CONFIG
