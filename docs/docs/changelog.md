@@ -3,7 +3,18 @@ id: changelog
 title: Changelog
 ---
 
-## 0.0.30
+
+## [0.0.33](https://github.com/lets-cli/lets/releases/tag/v0.0.33)
+
+* [Added] Allow templating in command `options` directive [docs](/docs/advanced_usage#command-templates)
+
+
+## [0.0.32](https://github.com/lets-cli/lets/releases/tag/v0.0.32)
+
+* [Fixed] Publish lets to homebrew
+
+
+## [0.0.30](https://github.com/lets-cli/lets/releases/tag/v0.0.30)
 
 * [Added] Build `lets` for `arm64 (M1)` arch
 * [Deleted] Drop `386` arch builds
