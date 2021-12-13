@@ -207,7 +207,7 @@ func LoadFromFile(pathInfo PathInfo, letsVersion string) (*Config, error) {
 func loadConfig(filename string, cfg *Config) error {
 	fileData, err := os.ReadFile(filename)
 	if err != nil {
-		return fmt.Errorf("can not get read config file: %w", err)
+		return fmt.Errorf("can not read config file: %w", err)
 	}
 
 	err = yaml.Unmarshal(fileData, cfg)

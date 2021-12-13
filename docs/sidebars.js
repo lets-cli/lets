@@ -18,6 +18,7 @@ module.exports = {
     Changelog: ['changelog'],
     "IDE support": ['ide_support'],
     Development: [
+      'architecture',
       'development',
       'contribute'
     ],
