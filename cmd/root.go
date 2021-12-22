@@ -5,7 +5,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/lets-cli/lets/config"
+	"github.com/lets-cli/lets/config/config"
 	"github.com/lets-cli/lets/logging"
 	"github.com/lets-cli/lets/upgrade"
 	"github.com/lets-cli/lets/upgrade/registry"

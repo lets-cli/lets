@@ -1,6 +1,6 @@
 package parser
 
-import "github.com/lets-cli/lets/config"
+import "github.com/lets-cli/lets/config/config"
 
 func parseAndValidateOptions(options interface{}, newCmd *config.Command) error {
 	if value, ok := options.(string); ok {

@@ -4,8 +4,25 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/lets-cli/lets/config/path"
 	"github.com/lets-cli/lets/env"
+	"github.com/lets-cli/lets/workdir"
 )
+
+// TODO constants ?
+const defaultConfigPath = "lets.yaml"
+
+type PathInfo struct {
+	Filename string
+	AbsPath  string
+	WorkDir  string
+	// .lets
+	DotLetsDir  string
+}
+
+func GetDefaultConfigPath() string {
+	return defaultConfigPath
+}
 
 // FindConfig will try to find best match for config file.
 // Rules are:
@@ -37,13 +54,13 @@ func FindConfig() (PathInfo, error) {
 		configAbsPath = configFilename
 	} else {
 		if configDirFromEnv {
-			configAbsPath, err = GetFullConfigPath(configFilename, workDir)
+			configAbsPath, err = path.GetFullConfigPath(configFilename, workDir)
 			if err != nil {
 				return PathInfo{}, failedFindErr(err, configFilename)
 			}
 		} else {
 			// try to find abs config path up in parent dir tree
-			configAbsPath, err = getFullConfigPathRecursive(configFilename, workDir)
+			configAbsPath, err = path.GetFullConfigPathRecursive(configFilename, workDir)
 			if err != nil {
 				return PathInfo{}, failedFindErr(err, configFilename)
 			}
@@ -53,10 +70,16 @@ func FindConfig() (PathInfo, error) {
 	// just to be sure that work dir is correct
 	workDir = filepath.Dir(configAbsPath)
 
+	dotLetsDir, err := workdir.GetDotLetsDir(workDir)
+	if err != nil {
+		return PathInfo{}, fmt.Errorf("can not get .lets absolute path: %w", err)
+	}
+
 	pathInfo := PathInfo{
 		AbsPath:  configAbsPath,
 		WorkDir:  workDir,
 		Filename: configFilename,
+		DotLetsDir: dotLetsDir,
 	}
 
 	return pathInfo, nil

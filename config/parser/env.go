@@ -3,7 +3,7 @@ package parser
 import (
 	"fmt"
 
-	"github.com/lets-cli/lets/config"
+	"github.com/lets-cli/lets/config/config"
 )
 
 func parseAndValidateEnv(env interface{}, newCmd *config.Command) error {

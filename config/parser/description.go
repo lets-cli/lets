@@ -1,6 +1,6 @@
 package parser
 
-import "github.com/lets-cli/lets/config"
+import "github.com/lets-cli/lets/config/config"
 
 func parseAndValidateDescription(desc interface{}, newCmd *config.Command) error {
 	if value, ok := desc.(string); ok {

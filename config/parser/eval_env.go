@@ -5,7 +5,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/lets-cli/lets/config"
+	"github.com/lets-cli/lets/config/config"
 )
 
 // eval env value and trim result string

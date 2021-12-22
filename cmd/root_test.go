@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/lets-cli/lets/config"
+	"github.com/lets-cli/lets/config/config"
 	"github.com/spf13/cobra"
 )
 

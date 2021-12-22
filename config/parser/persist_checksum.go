@@ -1,7 +1,7 @@
 package parser
 
 import (
-	"github.com/lets-cli/lets/config"
+	"github.com/lets-cli/lets/config/config"
 )
 
 func parseAndValidatePersistChecksum(persistChecksum interface{}, newCmd *config.Command) error {
