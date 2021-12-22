@@ -37,7 +37,7 @@ func FindConfig() (PathInfo, error) {
 		configAbsPath = configFilename
 	} else {
 		if configDirFromEnv {
-			configAbsPath, err = getFullConfigPath(configFilename, workDir)
+			configAbsPath, err = GetFullConfigPath(configFilename, workDir)
 			if err != nil {
 				return PathInfo{}, failedFindErr(err, configFilename)
 			}

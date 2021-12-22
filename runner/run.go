@@ -10,9 +10,9 @@ import (
 	"strings"
 
 	"github.com/docopt/docopt-go"
-	"github.com/lets-cli/lets/commands/command"
 	"github.com/lets-cli/lets/config"
 	"github.com/lets-cli/lets/logging"
+	"github.com/lets-cli/lets/parser"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -56,7 +56,7 @@ type RunOptions struct {
 }
 
 // RunCommand runs parent command.
-func RunCommand(ctx context.Context, cmdToRun command.Command, cfg *config.Config, out io.Writer) error {
+func RunCommand(ctx context.Context, cmdToRun config.Command, cfg *config.Config, out io.Writer) error {
 	if cmdToRun.CmdMap != nil {
 		return runCmdAsMap(ctx, &cmdToRun, cfg, out)
 	}
@@ -79,19 +79,19 @@ func formatOptsUsageError(err error, opts docopt.Opts, cmdName string, rawOption
 // - parse docopt
 // - calculate checksum.
 func initCmd(
-	cmdToRun *command.Command,
+	cmdToRun *config.Command,
 	cfg *config.Config,
 	isChildCmd bool,
 ) error {
 	// parse docopts - only for parent
 	if !isChildCmd {
-		opts, err := command.ParseDocopts(cmdToRun.Args, cmdToRun.RawOptions)
+		opts, err := parser.ParseDocopts(cmdToRun.Args, cmdToRun.RawOptions)
 		if err != nil {
 			return formatOptsUsageError(err, opts, cmdToRun.Name, cmdToRun.RawOptions)
 		}
 
-		cmdToRun.Options = command.OptsToLetsOpt(opts)
-		cmdToRun.CliOptions = command.OptsToLetsCli(opts)
+		cmdToRun.Options = parser.OptsToLetsOpt(opts)
+		cmdToRun.CliOptions = parser.OptsToLetsCli(opts)
 	}
 
 	// calculate checksum if needed
@@ -101,7 +101,7 @@ func initCmd(
 
 	// if command declared as persist_checksum we must read current persisted checksums into memory
 	if cmdToRun.PersistChecksum {
-		if command.ChecksumForCmdPersisted(cfg.DotLetsDir, cmdToRun.Name) {
+		if config.ChecksumForCmdPersisted(cfg.DotLetsDir, cmdToRun.Name) {
 			err := cmdToRun.ReadChecksumsFromDisk(cfg.DotLetsDir, cmdToRun.Name, cmdToRun.ChecksumMap)
 			if err != nil {
 				return fmt.Errorf("failed to read persisted checksum for command '%s': %w", cmdToRun.Name, err)
@@ -129,7 +129,7 @@ func joinBeforeAndScript(before string, script string) string {
 // Passing ctx will change behavior of program drastically - it will kill process if context will be canceled.
 //
 func prepareCmdForRun(
-	cmdToRun *command.Command,
+	cmdToRun *config.Command,
 	cmdScript string,
 	cfg *config.Config,
 	out io.Writer,
@@ -172,7 +172,7 @@ func prepareCmdForRun(
 }
 
 // Run all commands from Depends in sequential order.
-func runDepends(cmdToRun *command.Command, cfg *config.Config, out io.Writer) error {
+func runDepends(cmdToRun *config.Command, cfg *config.Config, out io.Writer) error {
 	for _, dependCmdName := range cmdToRun.Depends {
 		dependCmd := cfg.Commands[dependCmdName]
 
@@ -188,9 +188,9 @@ func runDepends(cmdToRun *command.Command, cfg *config.Config, out io.Writer) er
 
 // Persist new calculated checksum to disk.
 // This function mus be called only after command finished(exited) with status 0.
-func persistChecksum(cmdToRun command.Command, cfg *config.Config) error {
+func persistChecksum(cmdToRun config.Command, cfg *config.Config) error {
 	if cmdToRun.PersistChecksum {
-		err := command.PersistCommandsChecksumToDisk(cfg.DotLetsDir, cmdToRun)
+		err := config.PersistCommandsChecksumToDisk(cfg.DotLetsDir, cmdToRun)
 		if err != nil {
 			return fmt.Errorf("can not persist checksum to disk: %w", err)
 		}
@@ -202,7 +202,7 @@ func persistChecksum(cmdToRun command.Command, cfg *config.Config) error {
 // Run command and wait for result.
 // Must be used only when Command.Cmd is string or []string.
 func runCmd(
-	cmdToRun *command.Command,
+	cmdToRun *config.Command,
 	cfg *config.Config,
 	out io.Writer,
 	parentName string,
@@ -230,7 +230,7 @@ func runCmd(
 }
 
 func runCmdScript(
-	cmdToRun *command.Command,
+	cmdToRun *config.Command,
 	cmdScript string,
 	cfg *config.Config,
 	out io.Writer,
@@ -271,7 +271,7 @@ func runCmdScript(
 // Even if 'after' script failed we return exit code from 'cmd'.
 // This behavior may change in the future if needed.
 func runAfterScript(
-	cmdToRun *command.Command,
+	cmdToRun *config.Command,
 	cfg *config.Config,
 	out io.Writer,
 ) {
@@ -334,7 +334,7 @@ func filterCmdMap(
 
 // Run all commands from Command.CmdMap in parallel and wait for results.
 // Must be used only when Command.Cmd is map[string]string.
-func runCmdAsMap(ctx context.Context, cmdToRun *command.Command, cfg *config.Config, out io.Writer) (err error) {
+func runCmdAsMap(ctx context.Context, cmdToRun *config.Command, cfg *config.Config, out io.Writer) (err error) {
 	defer func() {
 		if cmdToRun.After != "" {
 			runAfterScript(cmdToRun, cfg, out)

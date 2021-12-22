@@ -1,6 +1,8 @@
-package command
+package parser
 
-func parseAndValidateOptions(options interface{}, newCmd *Command) error {
+import "github.com/lets-cli/lets/config"
+
+func parseAndValidateOptions(options interface{}, newCmd *config.Command) error {
 	if value, ok := options.(string); ok {
 		newCmd.RawOptions = value
 	} else {

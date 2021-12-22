@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/lets-cli/lets/commands/command"
+	"github.com/lets-cli/lets/config"
 )
 
 func makeEnvEntry(k, v string) string {
@@ -79,7 +79,7 @@ func convertChangedChecksumMapToEnvForCmd(
 		)
 	}
 
-	persistedDefaultChecksum, persistedDefaultChecksumExists := persistedChecksumMap[command.DefaultChecksumName]
+	persistedDefaultChecksum, persistedDefaultChecksumExists := persistedChecksumMap[config.DefaultChecksumName]
 
 	defaultChecksumChanged := isChecksumChanged(persistedDefaultChecksum, persistedDefaultChecksumExists, defaultChecksum)
 

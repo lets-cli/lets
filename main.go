@@ -7,9 +7,9 @@ import (
 	"syscall"
 
 	"github.com/lets-cli/lets/cmd"
-	"github.com/lets-cli/lets/config"
 	"github.com/lets-cli/lets/env"
 	"github.com/lets-cli/lets/logging"
+	"github.com/lets-cli/lets/parser"
 	"github.com/lets-cli/lets/runner"
 	"github.com/lets-cli/lets/workdir"
 	"github.com/spf13/cobra"
@@ -22,7 +22,7 @@ func main() {
 
 	logging.InitLogging(env.IsDebug(), os.Stdout, os.Stderr)
 
-	cfg, readConfigErr := config.Read(version)
+	cfg, readConfigErr := parser.ReadConfig(version)
 
 	var rootCmd *cobra.Command
 	if cfg != nil {

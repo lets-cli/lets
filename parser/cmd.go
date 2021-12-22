@@ -1,9 +1,11 @@
-package command
+package parser
 
 import (
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/lets-cli/lets/config"
 )
 
 // A workaround function which helps to prevent breaking
@@ -28,7 +30,7 @@ func escapeArgs(args []string) []string {
 	return escapedArgs
 }
 
-func parseAndValidateCmd(cmd interface{}, newCmd *Command) error { //nolint:cyclop
+func parseAndValidateCmd(cmd interface{}, newCmd *config.Command) error { //nolint:cyclop
 	switch cmd := cmd.(type) {
 	case string:
 		// TODO pass args to command as is if option accepts_arguments: true

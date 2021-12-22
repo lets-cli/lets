@@ -1,9 +1,11 @@
-package command
+package parser
 
 import (
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/lets-cli/lets/config"
 )
 
 // that's how shell does it.
@@ -25,7 +27,7 @@ func simulateProcessShellArgs(inputCmdList []string) []string {
 
 func TestCommandFieldCmd(t *testing.T) {
 	t.Run("so subcommand in os.Args", func(t *testing.T) {
-		testCmd := NewCommand("test-cmd")
+		testCmd := config.NewCommand("test-cmd")
 		cmdArgs := "echo Hello"
 		// mock args
 		os.Args = []string{"bin_to_run"}
@@ -40,7 +42,7 @@ func TestCommandFieldCmd(t *testing.T) {
 	})
 
 	t.Run("as string", func(t *testing.T) {
-		testCmd := NewCommand("test-cmd")
+		testCmd := config.NewCommand("test-cmd")
 		cmdArgs := "echo Hello"
 
 		err := parseAndValidateCmd(cmdArgs, &testCmd)
@@ -54,7 +56,7 @@ func TestCommandFieldCmd(t *testing.T) {
 	})
 
 	t.Run("as list", func(t *testing.T) {
-		testCmd := NewCommand("test-cmd")
+		testCmd := config.NewCommand("test-cmd")
 		var cmdArgs []interface{}
 		cmdArgs = append(cmdArgs, "echo", "Hello")
 

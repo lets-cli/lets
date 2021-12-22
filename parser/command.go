@@ -1,9 +1,10 @@
-package command
+package parser
 
 import (
 	"fmt"
 	"strings"
 
+	"github.com/lets-cli/lets/config"
 	"github.com/lets-cli/lets/util"
 )
 
@@ -29,42 +30,6 @@ var validFields = []string{
 	CHECKSUM,
 	PersistChecksum,
 	AFTER,
-}
-
-type Command struct {
-	Name string
-	// script to run
-	Cmd string
-	// script to run after cmd finished (cleanup, etc)
-	After string
-	// map of named scripts to run in parallel
-	CmdMap      map[string]string
-	Description string
-	// env from command
-	Env map[string]string
-	// env from -E flag
-	OverrideEnv     map[string]string
-	RawOptions      string
-	Options         map[string]string
-	CliOptions      map[string]string
-	Depends         []string
-	Checksum        string
-	ChecksumMap     map[string]string
-	PersistChecksum bool
-
-	// prepared args - started from command name
-	Args []string
-
-	// run only specified commands from cmd map
-	Only []string
-	// run all but excluded commands from cmd map
-	Exclude []string
-
-	// if command has declared checksum
-	hasChecksum    bool
-	checksumSource map[string][]string
-	// store loaded persisted checksums here
-	persistedChecksums map[string]string
 }
 
 type ParseCommandError struct {
@@ -102,28 +67,8 @@ func newParseCommandError(msg string, name string, field string, meta string) er
 	}
 }
 
-// NewCommand creates new command struct.
-func NewCommand(name string) Command {
-	return Command{
-		Name: name,
-		Env:  make(map[string]string),
-	}
-}
-
-func (cmd *Command) ChecksumCalculator(workDir string) error {
-	if len(cmd.checksumSource) == 0 {
-		return nil
-	}
-
-	return calculateChecksumFromSource(workDir, cmd)
-}
-
-func (cmd *Command) GetPersistedChecksums() map[string]string {
-	return cmd.persistedChecksums
-}
-
-// ParseAndValidateCommand parses and validates unmarshaled yaml.
-func ParseAndValidateCommand(newCmd *Command, rawCommand map[interface{}]interface{}) error { //nolint:cyclop
+// parseAndValidateCommand parses and validates unmarshaled yaml.
+func parseAndValidateCommand(newCmd *config.Command, rawCommand map[interface{}]interface{}) error { //nolint:cyclop
 	if err := validateCommandFields(rawCommand, validFields); err != nil {
 		return err
 	}

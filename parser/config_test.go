@@ -1,12 +1,14 @@
-package config
+package parser
 
 import (
 	"testing"
+
+	"github.com/lets-cli/lets/config"
 )
 
 func TestReadConfig(t *testing.T) {
 	t.Run("just read config", func(t *testing.T) {
-		cp, err := FindConfig()
+		cp, err := config.FindConfig()
 		if err != nil {
 			t.Errorf("can not find test config: %s", err)
 		}

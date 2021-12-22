@@ -2,20 +2,18 @@ package config
 
 import (
 	"testing"
-
-	"github.com/lets-cli/lets/commands/command"
 )
 
 func TestValidateCircularDeps(t *testing.T) {
 	t.Run("command skip itself", func(t *testing.T) {
 		testCfg := &Config{
-			Commands: make(map[string]command.Command),
+			Commands: make(map[string]Command),
 		}
-		testCfg.Commands["a-cmd"] = command.Command{
+		testCfg.Commands["a-cmd"] = Command{
 			Name:    "a-cmd",
 			Depends: []string{"noop"},
 		}
-		testCfg.Commands["b-cmd"] = command.Command{
+		testCfg.Commands["b-cmd"] = Command{
 			Name:    "b-cmd",
 			Depends: []string{"noop"},
 		}
@@ -27,17 +25,17 @@ func TestValidateCircularDeps(t *testing.T) {
 
 	t.Run("command with similar name should not fail validation", func(t *testing.T) {
 		testCfg := &Config{
-			Commands: make(map[string]command.Command),
+			Commands: make(map[string]Command),
 		}
-		testCfg.Commands["a-cmd"] = command.Command{
+		testCfg.Commands["a-cmd"] = Command{
 			Name:    "a-cmd",
 			Depends: []string{"b1-cmd"},
 		}
-		testCfg.Commands["b"] = command.Command{
+		testCfg.Commands["b"] = Command{
 			Name:    "b",
 			Depends: []string{"a-cmd"},
 		}
-		testCfg.Commands["b1-cmd"] = command.Command{
+		testCfg.Commands["b1-cmd"] = Command{
 			Name:    "b1-cmd",
 			Depends: []string{"noop"},
 		}
@@ -49,17 +47,17 @@ func TestValidateCircularDeps(t *testing.T) {
 
 	t.Run("validation should fail", func(t *testing.T) {
 		testCfg := &Config{
-			Commands: make(map[string]command.Command),
+			Commands: make(map[string]Command),
 		}
-		testCfg.Commands["a-cmd"] = command.Command{
+		testCfg.Commands["a-cmd"] = Command{
 			Name:    "a-cmd",
 			Depends: []string{"b1-cmd"},
 		}
-		testCfg.Commands["b"] = command.Command{
+		testCfg.Commands["b"] = Command{
 			Name:    "b",
 			Depends: []string{"a-cmd"},
 		}
-		testCfg.Commands["b1-cmd"] = command.Command{
+		testCfg.Commands["b1-cmd"] = Command{
 			Name:    "b1-cmd",
 			Depends: []string{"a-cmd"},
 		}
