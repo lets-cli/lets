@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/lets-cli/lets/config"
+	"github.com/lets-cli/lets/config/config"
 )
 
 func makeEnvEntry(k, v string) string {

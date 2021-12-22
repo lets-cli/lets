@@ -1,6 +1,6 @@
 package parser
 
-import "github.com/lets-cli/lets/config"
+import "github.com/lets-cli/lets/config/config"
 
 func parseAndValidateChecksum(checksum interface{}, newCmd *config.Command) error { //nolint:cyclop
 	patternsList, okList := checksum.([]interface{})

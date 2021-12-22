@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/lets-cli/lets/config"
+	"github.com/lets-cli/lets/config/config"
 )
 
 // that's how shell does it.

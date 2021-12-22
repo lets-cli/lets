@@ -3,7 +3,7 @@ package parser
 import (
 	"fmt"
 
-	"github.com/lets-cli/lets/config"
+	"github.com/lets-cli/lets/config/config"
 )
 
 func parseAndValidateEnv(env interface{}, newCmd *config.Command) error {
@@ -15,7 +15,6 @@ func parseAndValidateEnv(env interface{}, newCmd *config.Command) error {
 	return nil
 }
 
-// TODO split parsers for command and config
 func parseAndValidateEnvForConfig(env map[interface{}]interface{}, cfg *config.Config) error {
 	for name, value := range env {
 		nameKey := name.(string)

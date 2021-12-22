@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/lets-cli/lets/config"
+	"github.com/lets-cli/lets/config/config"
 )
 
 // A workaround function which helps to prevent breaking

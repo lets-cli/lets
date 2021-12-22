@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/lets-cli/lets/config"
+	"github.com/lets-cli/lets/config/config"
 	"github.com/lets-cli/lets/runner"
 	"github.com/spf13/cobra"
 )

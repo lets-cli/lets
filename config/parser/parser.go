@@ -7,11 +7,10 @@ import (
 	"os"
 	"strings"
 
-	"gopkg.in/yaml.v2"
-
-	"github.com/lets-cli/lets/config"
+	"github.com/lets-cli/lets/config/config"
+	"github.com/lets-cli/lets/config/path"
 	"github.com/lets-cli/lets/util"
-	"github.com/lets-cli/lets/workdir"
+	"gopkg.in/yaml.v2"
 )
 
 type ParseError struct {
@@ -48,7 +47,7 @@ func newConfigParseError(msg string, name string, field string) error {
 	}
 }
 
-func unmarshalConfigGeneral(rawKeyValue map[string]interface{}, cfg *config.Config) error { //nolint:cyclop
+func parseConfigGeneral(rawKeyValue map[string]interface{}, cfg *config.Config) error { //nolint:cyclop
 	if cmds, ok := rawKeyValue[config.COMMANDS]; ok {
 		cmdsMap, ok := cmds.(map[interface{}]interface{})
 		if !ok {
@@ -63,11 +62,10 @@ func unmarshalConfigGeneral(rawKeyValue map[string]interface{}, cfg *config.Conf
 		if err != nil {
 			return err
 		}
+
 		for _, c := range commands {
-			// TODO do I need to reassign variable here because of go ?
 			cfg.Commands[c.Name] = c
 		}
-
 	}
 
 	if env, ok := rawKeyValue[ENV]; ok {
@@ -109,12 +107,22 @@ func unmarshalConfigGeneral(rawKeyValue map[string]interface{}, cfg *config.Conf
 	return nil
 }
 
-func unmarshalConfig(rawKeyValue map[string]interface{}, cfg *config.Config) error { //nolint:cyclop
-	if err := config.ValidateTopLevelFields(rawKeyValue, config.ValidConfigFields); err != nil {
+func validateTopLevelFields(rawKeyValue map[string]interface{}, validFields []string) error {
+	for key := range rawKeyValue {
+		if !util.IsStringInList(key, validFields) {
+			return fmt.Errorf("unknown top-level field '%s'", key)
+		}
+	}
+
+	return nil
+}
+
+func parseConfig(rawKeyValue map[string]interface{}, cfg *config.Config) error { //nolint:cyclop
+	if err := validateTopLevelFields(rawKeyValue, config.ValidConfigFields); err != nil {
 		return err
 	}
 
-	if err := unmarshalConfigGeneral(rawKeyValue, cfg); err != nil {
+	if err := parseConfigGeneral(rawKeyValue, cfg); err != nil {
 		return err
 	}
 
@@ -160,14 +168,6 @@ func unmarshalConfig(rawKeyValue map[string]interface{}, cfg *config.Config) err
 	return nil
 }
 
-func unmarshalMixinConfig(rawKeyValue map[string]interface{}, cfg *config.Config) error {
-	if err := config.ValidateTopLevelFields(rawKeyValue, config.ValidMixinConfigFields); err != nil {
-		return err
-	}
-
-	return unmarshalConfigGeneral(rawKeyValue, cfg)
-}
-
 // Trim `-` prefix.
 // Using this prefix we allow to include non-existed mixins (git-ignored for example).
 func normalizeMixinFilename(filename string) string {
@@ -183,9 +183,9 @@ func isIgnoredMixin(filename string) bool {
 func readAndValidateMixins(mixins []interface{}, cfg *config.Config) error {
 	for _, filename := range mixins {
 		if filename, ok := filename.(string); ok { //nolint:nestif
-			configAbsPath, err := config.GetFullConfigPath(normalizeMixinFilename(filename), cfg.WorkDir)
+			configAbsPath, err := path.GetFullConfigPath(normalizeMixinFilename(filename), cfg.WorkDir)
 			if err != nil {
-				if isIgnoredMixin(filename) && errors.Is(err, config.ErrFileNotExists) {
+				if isIgnoredMixin(filename) && errors.Is(err, path.ErrFileNotExists) {
 					continue
 				} else {
 					// complain non-existed mixin only if its filename does not starts with dash `-`
@@ -193,8 +193,14 @@ func readAndValidateMixins(mixins []interface{}, cfg *config.Config) error {
 				}
 			}
 
-			mixinCfg, err := loadMixinConfig(configAbsPath, cfg)
+			fileData, err := os.ReadFile(configAbsPath)
 			if err != nil {
+				return fmt.Errorf("can not read mixin config file: %w", err)
+			}
+
+			mixinCfg := config.NewMixinConfig(cfg.WorkDir, filename, cfg.DotLetsDir)
+
+			if err := parseMixinConfig(fileData, mixinCfg); err != nil {
 				return fmt.Errorf("failed to load mixin config: %w", err)
 			}
 
@@ -213,28 +219,18 @@ func readAndValidateMixins(mixins []interface{}, cfg *config.Config) error {
 	return nil
 }
 
-// TODO maybe file parser and file loader must be separated
-func loadMixinConfig(filename string, rootCfg *config.Config) (*config.Config, error) {
-	fileData, err := os.ReadFile(filename)
-	if err != nil {
-		return nil, fmt.Errorf("can not read mixin config file: %w", err)
-	}
-
-	cfg := config.NewMixinConfig(rootCfg.WorkDir, filename)
-
+func parseMixinConfig(data []byte, mixinCfg *config.Config) error {
 	rawKeyValue := make(map[string]interface{})
 
-	err = yaml.Unmarshal(fileData, &rawKeyValue)
-	if err != nil {
-		return nil, fmt.Errorf("can not decode mixin config file: %w", err)
+	if err := yaml.Unmarshal(data, &rawKeyValue); err != nil {
+		return fmt.Errorf("can not decode mixin config file: %w", err)
 	}
 
-	err = unmarshalMixinConfig(rawKeyValue, cfg)
-	if err != nil {
-		return nil, fmt.Errorf("can not decode mixin config file: %w", err)
+	if err := validateTopLevelFields(rawKeyValue, config.ValidMixinConfigFields); err != nil {
+		return err
 	}
 
-	return cfg, nil
+	return parseConfigGeneral(rawKeyValue, mixinCfg)
 }
 
 // Merge main and mixin configs. If there is a conflict - return error as we do not override values
@@ -306,45 +302,13 @@ func joinBeforeScripts(beforeScripts ...string) string {
 	return buf.String()
 }
 
-func loadConfig(filename string, cfg *config.Config) error {
-	fileData, err := os.ReadFile(filename)
-	if err != nil {
-		return fmt.Errorf("can not read config file: %w", err)
-	}
-
+// Parse file data into config.
+func Parse(data []byte, cfg *config.Config) error {
 	rawKeyValue := make(map[string]interface{})
 
-	err = yaml.Unmarshal(fileData, &rawKeyValue)
-	if err != nil {
+	if err := yaml.Unmarshal(data, &rawKeyValue); err != nil {
 		return err
 	}
 
-	return unmarshalConfig(rawKeyValue, cfg)
-}
-
-// Load a config from file.
-func LoadFromFile(pathInfo config.PathInfo, letsVersion string) (*config.Config, error) {
-	failedLoadErr := func(err error) error {
-		return fmt.Errorf("failed to load config file %s: %w", pathInfo.Filename, err)
-	}
-
-	cfg := config.NewConfig(pathInfo.WorkDir, pathInfo.AbsPath)
-
-	err := loadConfig(pathInfo.AbsPath, cfg)
-	if err != nil {
-		return nil, failedLoadErr(err)
-	}
-
-	if err = config.Validate(cfg, letsVersion); err != nil {
-		return nil, failedLoadErr(err)
-	}
-
-	dotLetsDir, err := workdir.GetDotLetsDir(pathInfo.WorkDir)
-	if err != nil {
-		return nil, fmt.Errorf("can not get .lets absolute path: %w", err)
-	}
-
-	cfg.DotLetsDir = dotLetsDir
-
-	return cfg, nil
+	return parseConfig(rawKeyValue, cfg)
 }

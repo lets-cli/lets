@@ -1,6 +1,6 @@
 package parser
 
-import "github.com/lets-cli/lets/config"
+import "github.com/lets-cli/lets/config/config"
 
 func parseAndValidateDepends(depends interface{}, newCmd *config.Command) error {
 	if depends, ok := depends.([]interface{}); ok {

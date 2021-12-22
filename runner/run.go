@@ -10,9 +10,9 @@ import (
 	"strings"
 
 	"github.com/docopt/docopt-go"
-	"github.com/lets-cli/lets/config"
+	"github.com/lets-cli/lets/config/config"
+	"github.com/lets-cli/lets/config/parser"
 	"github.com/lets-cli/lets/logging"
-	"github.com/lets-cli/lets/parser"
 	"golang.org/x/sync/errgroup"
 )
 

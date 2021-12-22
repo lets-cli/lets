@@ -1,6 +1,7 @@
 package config
 
 import (
+
 	// #nosec G505
 	"crypto/sha1"
 	"fmt"
