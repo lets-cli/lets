@@ -74,7 +74,7 @@ func parseConfigGeneral(rawKeyValue map[string]interface{}, cfg *config.Config) 
 			return fmt.Errorf("env must be a mapping")
 		}
 
-		err := parseAndValidateEnvForConfig(env, cfg)
+		err := parseEnvForConfig(env, cfg)
 		if err != nil {
 			return err
 		}
@@ -86,7 +86,7 @@ func parseConfigGeneral(rawKeyValue map[string]interface{}, cfg *config.Config) 
 			return fmt.Errorf("eval_env must be a mapping")
 		}
 
-		err := parseAndValidateEvalEnvForConfig(evalEnv, cfg)
+		err := parseEvalEnvForConfig(evalEnv, cfg)
 		if err != nil {
 			return err
 		}
@@ -98,7 +98,7 @@ func parseConfigGeneral(rawKeyValue map[string]interface{}, cfg *config.Config) 
 			return fmt.Errorf("before must be a string")
 		}
 
-		err := parseAndValidateBefore(before, cfg)
+		err := parseBefore(before, cfg)
 		if err != nil {
 			return err
 		}
@@ -258,7 +258,7 @@ func mergeConfigs(mainCfg *config.Config, mixinCfg *config.Config) error {
 	return nil
 }
 
-func parseAndValidateBefore(before string, cfg *config.Config) error {
+func parseBefore(before string, cfg *config.Config) error {
 	cfg.Before = before
 
 	return nil
@@ -278,7 +278,7 @@ func parseCommands(cmds map[interface{}]interface{}) ([]config.Command, error) {
 
 		newCmd := config.NewCommand(keyStr)
 
-		err := parseAndValidateCommand(&newCmd, value.(map[interface{}]interface{}))
+		err := parseCommand(&newCmd, value.(map[interface{}]interface{}))
 		if err != nil {
 			return []config.Command{}, err
 		}

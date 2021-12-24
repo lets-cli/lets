@@ -2,11 +2,11 @@ package parser
 
 import "github.com/lets-cli/lets/config/config"
 
-func parseAndValidateOptions(options interface{}, newCmd *config.Command) error {
+func parseOptions(options interface{}, newCmd *config.Command) error {
 	if value, ok := options.(string); ok {
 		newCmd.RawOptions = value
 	} else {
-		return newParseCommandError(
+		return parseError(
 			"must be a string",
 			newCmd.Name,
 			OPTIONS,

@@ -30,7 +30,7 @@ func escapeArgs(args []string) []string {
 	return escapedArgs
 }
 
-func parseAndValidateCmd(cmd interface{}, newCmd *config.Command) error { //nolint:cyclop
+func parseCmd(cmd interface{}, newCmd *config.Command) error { //nolint:cyclop
 	switch cmd := cmd.(type) {
 	case string:
 		// TODO pass args to command as is if option accepts_arguments: true
@@ -49,7 +49,7 @@ func parseAndValidateCmd(cmd interface{}, newCmd *config.Command) error { //noli
 
 		for _, v := range cmd {
 			if v == nil {
-				return newParseCommandError(
+				return parseError(
 					"got nil in cmd list",
 					newCmd.Name,
 					CMD,
@@ -68,7 +68,7 @@ func parseAndValidateCmd(cmd interface{}, newCmd *config.Command) error { //noli
 		for cmdName, cmdScript := range cmd {
 			cmdName, cmdNameOk := cmdName.(string)
 			if !cmdNameOk {
-				return newParseCommandError(
+				return parseError(
 					"cmd name must be string",
 					newCmd.Name,
 					CMD,
@@ -78,7 +78,7 @@ func parseAndValidateCmd(cmd interface{}, newCmd *config.Command) error { //noli
 
 			cmdScript, cmdScriptOK := cmdScript.(string)
 			if !cmdScriptOK {
-				return newParseCommandError(
+				return parseError(
 					"cmd name must be string",
 					newCmd.Name,
 					CMD,
@@ -91,7 +91,7 @@ func parseAndValidateCmd(cmd interface{}, newCmd *config.Command) error { //noli
 
 		newCmd.CmdMap = cmdMap
 	default:
-		return newParseCommandError(
+		return parseError(
 			"must be either string or list of string",
 			newCmd.Name,
 			CMD,
