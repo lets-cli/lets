@@ -15,7 +15,7 @@ func Load(version string) (*config.Config, error) {
 	}
 
 	cfg := config.NewConfig(
-		configPath.WorkDir, 
+		configPath.WorkDir,
 		configPath.AbsPath,
 		configPath.DotLetsDir,
 	)

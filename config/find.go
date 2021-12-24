@@ -71,9 +71,9 @@ func FindConfig() (PathInfo, error) {
 	}
 
 	pathInfo := PathInfo{
-		AbsPath:  configAbsPath,
-		WorkDir:  workDir,
-		Filename: configFilename,
+		AbsPath:    configAbsPath,
+		WorkDir:    workDir,
+		Filename:   configFilename,
 		DotLetsDir: dotLetsDir,
 	}
 

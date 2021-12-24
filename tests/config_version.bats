@@ -26,7 +26,7 @@ teardown() {
     printf "%s\n" "${lines[@]}"
 
     [[ $status != 0 ]]
-    [[ "${lines[0]}" = "failed to load config file lets-with-version-0.0.3.yaml: config version '0.0.3' is not compatible with 'lets' version '0.0.2'. Please upgrade 'lets' to '0.0.3' using 'lets --upgrade' command or following documentation at https://lets-cli.org/docs/installation'" ]]
+    [[ "${lines[0]}" = "config version '0.0.3' is not compatible with 'lets' version '0.0.2'. Please upgrade 'lets' to '0.0.3' using 'lets --upgrade' command or following documentation at https://lets-cli.org/docs/installation'" ]]
 }
 
 @test "config_version: no version specified" {
