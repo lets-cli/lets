@@ -7,8 +7,8 @@ import (
 	"path"
 	"runtime"
 
-	"github.com/lets-cli/lets/logging"
 	"github.com/lets-cli/lets/upgrade/registry"
+	log "github.com/sirupsen/logrus"
 )
 
 type Upgrader interface {
@@ -46,7 +46,7 @@ func (up *BinaryUpgrader) Upgrade() error {
 	}
 
 	if up.currentVersion == latestVersion {
-		logging.Log.Printf("Lets is up-to-date")
+		log.Printf("Lets is up-to-date")
 
 		return nil
 	}
@@ -56,7 +56,7 @@ func (up *BinaryUpgrader) Upgrade() error {
 		return fmt.Errorf("failed to get package name: %w", err)
 	}
 
-	logging.Log.Printf("Downloading latest release %s...", latestVersion)
+	log.Printf("Downloading latest release %s...", latestVersion)
 
 	err = up.registry.DownloadReleaseBinary(
 		packageName,
@@ -77,7 +77,7 @@ func (up *BinaryUpgrader) Upgrade() error {
 		return err
 	}
 
-	logging.Log.Printf("Upgraded to version %s", latestVersion)
+	log.Printf("Upgraded to version %s", latestVersion)
 
 	return nil
 }

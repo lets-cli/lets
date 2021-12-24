@@ -3,6 +3,8 @@ package logging
 import (
 	"bytes"
 	"testing"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func TestLoggingToStd(t *testing.T) {
@@ -16,8 +18,8 @@ func TestLoggingToStd(t *testing.T) {
 
 		InitLogging(false, &stdBuff, &errBuff)
 
-		Log.Info(stdOutMsg)
-		Log.Error(stdErrMsg)
+		log.Info(stdOutMsg)
+		log.Error(stdErrMsg)
 
 		// coz log adds line break for output
 		if stdBuff.String() != stdOutMsg+"\n" {

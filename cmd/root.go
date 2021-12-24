@@ -6,9 +6,9 @@ import (
 	"os"
 
 	"github.com/lets-cli/lets/config/config"
-	"github.com/lets-cli/lets/logging"
 	"github.com/lets-cli/lets/upgrade"
 	"github.com/lets-cli/lets/upgrade/registry"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -58,7 +58,7 @@ func ConfigErrorCheck(rootCmd *cobra.Command, err error) {
 			return
 		}
 
-		logging.Log.Error(err)
+		log.Error(err)
 		os.Exit(1)
 	}
 }
@@ -109,7 +109,7 @@ func runRoot(cmd *cobra.Command, version string) error {
 	}
 
 	if showVersion {
-		logging.Log.Printf("lets version %s", version)
+		log.Printf("lets version %s", version)
 
 		return nil
 	}
