@@ -22,7 +22,7 @@ services:
     <<: *base
     environment:
       LETS_CONFIG_DIR: ..
-    entrypoint: [go, test, ./..., -v, -coverprofile=coverage.out]
+    command: gotestsum --format testname -- ./... -coverprofile=coverage.out
 
   test-bats:
     <<: *base
