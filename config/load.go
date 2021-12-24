@@ -15,7 +15,7 @@ func Load(version string) (*config.Config, error) {
 	}
 
 	cfg := config.NewConfig(
-		configPath.WorkDir,
+		configPath.WorkDir, 
 		configPath.AbsPath,
 		configPath.DotLetsDir,
 	)
@@ -24,7 +24,6 @@ func Load(version string) (*config.Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("can not read config file: %w", err)
 	}
-
 	err = parser.Parse(fileData, cfg)
 	if err != nil {
 		return nil, err

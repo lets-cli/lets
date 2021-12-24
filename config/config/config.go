@@ -34,10 +34,10 @@ type Config struct {
 
 func NewConfig(workDir string, configAbsPath string, dotLetsDir string) *Config {
 	return &Config{
-		Commands:   make(map[string]Command),
-		Env:        make(map[string]string),
-		WorkDir:    workDir,
-		FilePath:   configAbsPath,
+		Commands: make(map[string]Command),
+		Env:      make(map[string]string),
+		WorkDir:  workDir,
+		FilePath: configAbsPath,
 		DotLetsDir: dotLetsDir,
 	}
 }

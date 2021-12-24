@@ -192,14 +192,12 @@ func readAndValidateMixins(mixins []interface{}, cfg *config.Config) error {
 					return fmt.Errorf("failed to read mixin config: %w", err)
 				}
 			}
-
 			fileData, err := os.ReadFile(configAbsPath)
 			if err != nil {
 				return fmt.Errorf("can not read mixin config file: %w", err)
 			}
 
 			mixinCfg := config.NewMixinConfig(cfg.WorkDir, filename, cfg.DotLetsDir)
-
 			if err := parseMixinConfig(fileData, mixinCfg); err != nil {
 				return fmt.Errorf("failed to load mixin config: %w", err)
 			}
