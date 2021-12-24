@@ -4,8 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/lets-cli/lets/commands/command"
-	"github.com/lets-cli/lets/config"
+	"github.com/lets-cli/lets/config/config"
 	"github.com/spf13/cobra"
 )
 
@@ -20,12 +19,12 @@ func newTestRootCmdWithConfig(args []string) (rootCmd *cobra.Command, out *bytes
 	bufOut := new(bytes.Buffer)
 
 	testCfg := &config.Config{
-		Commands: make(map[string]command.Command),
+		Commands: make(map[string]config.Command),
 	}
-	testCfg.Commands["foo"] = command.Command{
+	testCfg.Commands["foo"] = config.Command{
 		Name: "foo",
 	}
-	testCfg.Commands["bar"] = command.Command{
+	testCfg.Commands["bar"] = config.Command{
 		Name: "bar",
 	}
 

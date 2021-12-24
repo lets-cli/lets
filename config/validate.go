@@ -3,7 +3,7 @@ package config
 import (
 	"fmt"
 
-	"github.com/lets-cli/lets/commands/command"
+	"github.com/lets-cli/lets/config/config"
 	"github.com/lets-cli/lets/env"
 	"github.com/lets-cli/lets/util"
 )
@@ -21,7 +21,7 @@ func withColor(msg string) string {
 }
 
 // Validate loaded config.
-func Validate(config *Config, letsVersion string) error {
+func validate(config *config.Config, letsVersion string) error {
 	if err := validateCircularDepends(config); err != nil {
 		return err
 	}
@@ -29,7 +29,7 @@ func Validate(config *Config, letsVersion string) error {
 	return validateVersion(config, letsVersion)
 }
 
-func validateVersion(cfg *Config, letsVersion string) error {
+func validateVersion(cfg *config.Config, letsVersion string) error {
 	// no version specified on config
 	if cfg.Version == "" {
 		return nil
@@ -62,7 +62,7 @@ func validateVersion(cfg *Config, letsVersion string) error {
 
 // if any two commands have each other command in deps, raise error
 // TODO not optimal function but works for now.
-func validateCircularDepends(cfg *Config) error {
+func validateCircularDepends(cfg *config.Config) error {
 	for _, cmdA := range cfg.Commands {
 		for _, cmdB := range cfg.Commands {
 			if cmdA.Name == cmdB.Name {
@@ -82,16 +82,6 @@ func validateCircularDepends(cfg *Config) error {
 	return nil
 }
 
-func depsIntersect(cmdA command.Command, cmdB command.Command) bool {
+func depsIntersect(cmdA config.Command, cmdB config.Command) bool {
 	return util.IsStringInList(cmdA.Name, cmdB.Depends) && util.IsStringInList(cmdB.Name, cmdA.Depends)
-}
-
-func validateTopLevelFields(rawKeyValue map[string]interface{}, validFields []string) error {
-	for key := range rawKeyValue {
-		if !util.IsStringInList(key, validFields) {
-			return fmt.Errorf("unknown top-level field '%s'", key)
-		}
-	}
-
-	return nil
 }

@@ -5,7 +5,7 @@ title: Development
 
 ## Build
 
-We are suggesting to use `lets-dev` name for development binary, so u could
+We are suggesting to use `lets-dev` name for development binary, so you could
 have stable `lets` version untouched.
 
 To build a binary:
@@ -29,7 +29,7 @@ lets build-and-install [--path=<path>]
 
 After install - check version of lets - `lets-dev --version` - it should be development
 
-It will install `lets-dev` to /usr/local/bin/lets-dev, or whereever u`ve specified in path, and set version to development with current tag and timestamp
+It will install `lets-dev` to /usr/local/bin/lets-dev, or wherever you`ve specified in path, and set version to development with current tag and timestamp
 
 ## Test
 
@@ -51,7 +51,7 @@ To get coverage:
 lets coverage
 ```
 
-To test `lets` output we using `bats` - bash automated testing:
+To test `lets` output we are using `bats` - bash automated testing:
 
 ```shell script
 lets test-bats

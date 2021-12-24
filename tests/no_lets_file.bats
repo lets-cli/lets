@@ -28,7 +28,7 @@ NOT_EXISTED_LETS_FILE="lets-not-existed.yaml"
     printf "%s\n" "${lines[@]}"
 
     [[ $status != 0 ]]
-    [[ "${lines[0]}" = "failed to load config file broken_lets.yaml: failed to parse config: field 'commands': must be a mapping" ]]
+    [[ "${lines[0]}" = "failed to parse config: field 'commands': must be a mapping" ]]
 }
 
 @test "no_lets_file: show help for 'lets help' even if no config file" {

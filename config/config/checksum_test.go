@@ -1,4 +1,4 @@
-package command
+package config
 
 import (
 	"fmt"
@@ -101,7 +101,7 @@ func TestCalculateChecksumFromListOrMap(t *testing.T) {
 	cmdChAsList := NewCommand("checksum-as-list")
 	f1Prefix := getFilePrefix(file1.Name())
 	f2Prefix := getFilePrefix(file2.Name())
-	cmdChAsList.checksumSource = map[string][]string{
+	cmdChAsList.ChecksumSource = map[string][]string{
 		"": {f1Prefix, f2Prefix},
 	}
 
@@ -120,7 +120,7 @@ func TestCalculateChecksumFromListOrMap(t *testing.T) {
 
 	// declare command with checksum as map but with same files
 	cmdChAsMap := NewCommand("checksum-as-map")
-	cmdChAsMap.checksumSource = map[string][]string{
+	cmdChAsMap.ChecksumSource = map[string][]string{
 		"misc": {f1Prefix, f2Prefix},
 	}
 

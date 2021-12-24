@@ -7,14 +7,13 @@ import (
 	"os"
 	"strings"
 
-	"github.com/lets-cli/lets/commands/command"
-	"github.com/lets-cli/lets/config"
+	"github.com/lets-cli/lets/config/config"
 	"github.com/lets-cli/lets/runner"
 	"github.com/spf13/cobra"
 )
 
 // cut all elements before command name.
-func prepareArgs(cmd command.Command, originalArgs []string) []string {
+func prepareArgs(cmd config.Command, originalArgs []string) []string {
 	nameIdx := 0
 
 	for idx, arg := range originalArgs {
@@ -26,14 +25,14 @@ func prepareArgs(cmd command.Command, originalArgs []string) []string {
 	return originalArgs[nameIdx:]
 }
 
-func replaceGenericCmdPlaceholder(commandName string, cmd command.Command) string {
+func replaceGenericCmdPlaceholder(commandName string, cmd config.Command) string {
 	genericCmdTplPlaceholder := fmt.Sprintf("${%s}", runner.GenericCmdNameTpl)
 	// replace only one placeholder in options
 	return strings.Replace(cmd.RawOptions, genericCmdTplPlaceholder, commandName, 1)
 }
 
 // newCmdGeneric creates new cobra root sub command from Command.
-func newCmdGeneric(cmdToRun command.Command, conf *config.Config, out io.Writer) *cobra.Command {
+func newCmdGeneric(cmdToRun config.Command, conf *config.Config, out io.Writer) *cobra.Command {
 	subCmd := &cobra.Command{
 		Use:   cmdToRun.Name,
 		Short: cmdToRun.Description,

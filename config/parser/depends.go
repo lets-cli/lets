@@ -1,6 +1,8 @@
-package command
+package parser
 
-func parseAndValidateDepends(depends interface{}, newCmd *Command) error {
+import "github.com/lets-cli/lets/config/config"
+
+func parseAndValidateDepends(depends interface{}, newCmd *config.Command) error {
 	if depends, ok := depends.([]interface{}); ok {
 		for _, value := range depends {
 			if value, ok := value.(string); ok {

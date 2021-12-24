@@ -124,7 +124,7 @@ commands:
 
 Allows to split `lets.yaml` into mixins (mixin config files).
 
-To make `lets.yaml` small and readable its convenient to split main config into many smaller ones and include them
+To make `lets.yaml` small and readable it is convenient to split main config into many smaller ones and include them
 
 Example:
 
@@ -163,7 +163,7 @@ mixins:
   - -my.yaml
 ```
 
-Now if `my.yaml` exists - it will be loaded as a mixin. If its not exists - `lets` will skip it.
+Now if `my.yaml` exists - it will be loaded as a mixin. If it is not exist - `lets` will skip it.
 
 ### Commands
 
@@ -354,7 +354,7 @@ All you need is to write a valid docopt for a command and lets will parse and in
 
 More info [http://docopt.org](http://docopt.org)
 
-When parsed, `lets` will provide two kind of env variabled:
+When parsed, `lets` will provide two kind of env variables:
 
 - `LETSOPT_<VAR>`
 - `LETSCLI_<VAR>`
@@ -398,7 +398,7 @@ echo LETSOPT_LOG_LEVEL=${LETSOPT_LOG_LEVEL} # LETSOPT_LOG_LEVEL=info
 echo LETSOPT_DEBUG=${LETSOPT_DEBUG} # LETSOPT_DEBUG=true
 ```
 
-Raw flags (useful if for example you wan to pass `--debug` as is)
+Raw flags (useful if for example you want to pass `--debug` as is)
 
 ```bash
 echo LETSCLI_ARGS=${LETSCLI_ARGS} # LETSCLI_ARGS=one two three
@@ -413,7 +413,7 @@ echo LETSCLI_DEBUG=${LETSCLI_DEBUG} # LETSCLI_DEBUG=--debug
 
 `type: mapping string => string`
 
-Env is as simple as it sounds. Define additional env for a commmand: 
+Env is as simple as it sounds. Define additional env for a command: 
 
 Example:
 
@@ -457,18 +457,18 @@ Value will be executed in shell and result will be saved in env.
 
 `type: array of string | mapping string => array of string`
 
-Checksum used for computing file hashed. It is useful when you depend on some files content changes.
+Checksum used for computing file hashes. It is useful when you depend on some files content changes.
 
 In `checksum` you can specify:
 
 - a list of file names 
-- a list of file regext patterns (parsed via go `path/filepath.Glob`)
+- a list of file regexp patterns (parsed via go `path/filepath.Glob`)
 
 or
 
 - a mapping where key is name of env variable and value is:
     - a list of file names 
-    - a list of file regext patterns (parsed via go `path/filepath.Glob`)
+    - a list of file regexp patterns (parsed via go `path/filepath.Glob`)
 
 Each time a command runs, `lets` will calculate the checksum of all files specified in `checksum`.
 
@@ -528,7 +528,7 @@ Result of that check will be exposed via `LETS_CHECKSUM_CHANGED` and `LETS_CHECK
 
 **IMPORTANT**: New checksum will override old checksum only if cmd has exit code **0** 
 
-`LETS_CHECKSUM_CHANGED` will be true after the very first execution, because when you first run command, there is no checksum yet, so we calculating new checksum - that means that checksum has changed.
+`LETS_CHECKSUM_CHANGED` will be true after the very first execution, because when you first run command, there is no checksum yet, so we are calculating new checksum - that means that checksum has changed.
 
 Example:
 
