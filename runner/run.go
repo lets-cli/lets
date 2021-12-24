@@ -12,7 +12,7 @@ import (
 	"github.com/docopt/docopt-go"
 	"github.com/lets-cli/lets/config/config"
 	"github.com/lets-cli/lets/config/parser"
-	"github.com/lets-cli/lets/logging"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -251,14 +251,14 @@ func runCmdScript(
 	cmd := prepareCmdForRun(cmdToRun, cmdScript, cfg, out)
 
 	if !isChildCmd {
-		logging.Log.Debugf(
+		log.Debugf(
 			"Executing command\nname: %s\ncmd: %s\nenv: %s\n",
 			fmt.Sprintf(NoticeColor, cmdToRun.Name),
 			fmt.Sprintf(NoticeColor, cmdToRun.Cmd),
 			fmtEnv(cmd.Env),
 		)
 	} else {
-		logging.Log.Debugf(
+		log.Debugf(
 			"Executing child command\nparent name: %s\nname: %s\ncmd: %s\nenv: %s\n",
 			fmt.Sprintf(NoticeColor, parentName),
 			fmt.Sprintf(NoticeColor, cmdToRun.Name),
@@ -287,7 +287,7 @@ func runAfterScript(
 ) {
 	cmd := prepareCmdForRun(cmdToRun, cmdToRun.After, cfg, out)
 
-	logging.Log.Debugf(
+	log.Debugf(
 		"Executing after script:\ncommand: %s\nscript: %s\nenv: %s",
 		fmt.Sprintf(NoticeColor, cmdToRun.Name),
 		fmt.Sprintf(NoticeColor, cmdToRun.After),
@@ -295,7 +295,7 @@ func runAfterScript(
 	)
 
 	if runErr := cmd.Run(); runErr != nil {
-		logging.Log.Printf("failed to run `after` script for command '%s': %s", cmdToRun.Name, runErr)
+		log.Printf("failed to run `after` script for command '%s': %s", cmdToRun.Name, runErr)
 	}
 }
 

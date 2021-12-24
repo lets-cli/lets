@@ -12,6 +12,7 @@ import (
 	"github.com/lets-cli/lets/logging"
 	"github.com/lets-cli/lets/runner"
 	"github.com/lets-cli/lets/workdir"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -29,7 +30,7 @@ func main() {
 		rootCmd = cmd.CreateRootCommandWithConfig(os.Stdout, cfg, version)
 
 		if err := workdir.CreateDotLetsDir(cfg.WorkDir); err != nil {
-			logging.Log.Error(err)
+			log.Error(err)
 			os.Exit(1)
 		}
 	} else {
@@ -41,7 +42,7 @@ func main() {
 	}
 
 	if err := rootCmd.ExecuteContext(ctx); err != nil {
-		logging.Log.Error(err.Error())
+		log.Error(err.Error())
 
 		exitCode := 1
 		if e, ok := err.(*runner.RunErr); ok { //nolint:errorlint
@@ -66,7 +67,7 @@ func getContext() context.Context {
 
 	go func() {
 		sig := <-ch
-		logging.Log.Printf("lets: signal received: %s", sig)
+		log.Printf("lets: signal received: %s", sig)
 		cancel()
 	}()
 

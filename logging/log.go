@@ -7,25 +7,21 @@ import (
 )
 
 // Log is the main application logger.
-var Log = log.New()
-
 // InitLogging for logrus.
 func InitLogging(
 	verbose bool,
 	stdWriter io.Writer,
 	errWriter io.Writer,
 ) {
-	Log.SetOutput(io.Discard)
+	log.SetOutput(io.Discard)
 
-	logger := Log
-
-	logger.Level = log.InfoLevel
+	log.SetLevel(log.InfoLevel)
 
 	if verbose {
-		logger.Level = log.DebugLevel
+		log.SetLevel(log.DebugLevel)
 	}
 
-	Log.AddHook(&WriterHook{
+	log.AddHook(&WriterHook{
 		Writer: stdWriter,
 		LogLevels: []log.Level{
 			log.InfoLevel,
@@ -34,7 +30,7 @@ func InitLogging(
 		},
 	})
 
-	Log.AddHook(&WriterHook{
+	log.AddHook(&WriterHook{
 		Writer: errWriter,
 		LogLevels: []log.Level{
 			log.PanicLevel,
@@ -43,7 +39,5 @@ func InitLogging(
 		},
 	})
 
-	formatter := &Formatter{}
-	Log.SetFormatter(formatter)
-	logger.Formatter = formatter
+	log.SetFormatter(&Formatter{})
 }
