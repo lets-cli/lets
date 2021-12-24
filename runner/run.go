@@ -229,6 +229,16 @@ func runCmd(
 	return persistChecksum(*cmdToRun, cfg)
 }
 
+func fmtEnv(env []string) string {
+	buf := ""
+
+	for _, entry := range env {
+		buf = fmt.Sprintf("%s\n%s", buf, entry)
+	}
+
+	return buf
+}
+
 func runCmdScript(
 	cmdToRun *config.Command,
 	cmdScript string,
@@ -242,18 +252,18 @@ func runCmdScript(
 
 	if !isChildCmd {
 		logging.Log.Debugf(
-			"Executing command\nname: %s\ncmd: %s\nenv: %s",
+			"Executing command\nname: %s\ncmd: %s\nenv: %s\n",
 			fmt.Sprintf(NoticeColor, cmdToRun.Name),
 			fmt.Sprintf(NoticeColor, cmdToRun.Cmd),
-			cmd.Env,
+			fmtEnv(cmd.Env),
 		)
 	} else {
 		logging.Log.Debugf(
-			"Executing child command\nparent name: %s\nname: %s\ncmd: %s\nenv: %s",
+			"Executing child command\nparent name: %s\nname: %s\ncmd: %s\nenv: %s\n",
 			fmt.Sprintf(NoticeColor, parentName),
 			fmt.Sprintf(NoticeColor, cmdToRun.Name),
 			fmt.Sprintf(NoticeColor, cmdToRun.Cmd),
-			cmd.Env,
+			fmtEnv(cmd.Env),
 		)
 	}
 
@@ -281,7 +291,7 @@ func runAfterScript(
 		"Executing after script:\ncommand: %s\nscript: %s\nenv: %s",
 		fmt.Sprintf(NoticeColor, cmdToRun.Name),
 		fmt.Sprintf(NoticeColor, cmdToRun.After),
-		cmd.Env,
+		fmtEnv(cmd.Env),
 	)
 
 	if runErr := cmd.Run(); runErr != nil {
