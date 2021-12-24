@@ -2,7 +2,7 @@ package parser
 
 import "github.com/lets-cli/lets/config/config"
 
-func parseAndValidateChecksum(checksum interface{}, newCmd *config.Command) error { //nolint:cyclop
+func parseChecksum(checksum interface{}, newCmd *config.Command) error { //nolint:cyclop
 	patternsList, okList := checksum.([]interface{})
 	patternsMap, okMap := checksum.(map[interface{}]interface{})
 	checksumSource := make(map[string][]string)
@@ -13,7 +13,7 @@ func parseAndValidateChecksum(checksum interface{}, newCmd *config.Command) erro
 			if value, ok := value.(string); ok {
 				checksumSource[""] = append(checksumSource[""], value)
 			} else {
-				return newParseCommandError(
+				return parseError(
 					"value of checksum list must be a string",
 					newCmd.Name,
 					CHECKSUM,
@@ -25,7 +25,7 @@ func parseAndValidateChecksum(checksum interface{}, newCmd *config.Command) erro
 		for key, patterns := range patternsMap {
 			key, ok := key.(string)
 			if !ok {
-				return newParseCommandError(
+				return parseError(
 					"key of checksum list must be a string",
 					newCmd.Name,
 					CHECKSUM,
@@ -36,7 +36,7 @@ func parseAndValidateChecksum(checksum interface{}, newCmd *config.Command) erro
 			patterns, ok := patterns.([]interface{})
 
 			if !ok {
-				return newParseCommandError(
+				return parseError(
 					"value of checksum map must be a list",
 					newCmd.Name,
 					CHECKSUM,
@@ -48,7 +48,7 @@ func parseAndValidateChecksum(checksum interface{}, newCmd *config.Command) erro
 				if value, ok := value.(string); ok {
 					checksumSource[key] = append(checksumSource[key], value)
 				} else {
-					return newParseCommandError(
+					return parseError(
 						"value of checksum list must be a string",
 						newCmd.Name,
 						CHECKSUM,
@@ -58,7 +58,7 @@ func parseAndValidateChecksum(checksum interface{}, newCmd *config.Command) erro
 			}
 		}
 	default:
-		return newParseCommandError(
+		return parseError(
 			"must be a list of string (files of glob patterns) or a map of lists of string",
 			newCmd.Name,
 			CHECKSUM,

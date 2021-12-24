@@ -46,7 +46,7 @@ func (e *ParseCommandError) Error() string {
 }
 
 // env is not proper arg.
-func newParseCommandError(msg string, name string, field string, meta string) error {
+func parseError(msg string, name string, field string, meta string) error {
 	fields := []string{field}
 	if meta != "" {
 		fields = append(fields, meta)
@@ -67,62 +67,62 @@ func newParseCommandError(msg string, name string, field string, meta string) er
 	}
 }
 
-// parseAndValidateCommand parses and validates unmarshaled yaml.
-func parseAndValidateCommand(newCmd *config.Command, rawCommand map[interface{}]interface{}) error { //nolint:cyclop
+// parseCommand parses and validates unmarshaled yaml.
+func parseCommand(newCmd *config.Command, rawCommand map[interface{}]interface{}) error { //nolint:cyclop
 	if err := validateCommandFields(rawCommand, validFields); err != nil {
 		return err
 	}
 
 	if cmd, ok := rawCommand[CMD]; ok {
-		if err := parseAndValidateCmd(cmd, newCmd); err != nil {
+		if err := parseCmd(cmd, newCmd); err != nil {
 			return err
 		}
 	}
 
 	if after, ok := rawCommand[AFTER]; ok {
-		if err := parseAndValidateAfter(after, newCmd); err != nil {
+		if err := parseAfter(after, newCmd); err != nil {
 			return err
 		}
 	}
 
 	if desc, ok := rawCommand[DESCRIPTION]; ok {
-		if err := parseAndValidateDescription(desc, newCmd); err != nil {
+		if err := parseDescription(desc, newCmd); err != nil {
 			return err
 		}
 	}
 
 	if env, ok := rawCommand[ENV]; ok {
-		if err := parseAndValidateEnv(env, newCmd); err != nil {
+		if err := parseEnv(env, newCmd); err != nil {
 			return err
 		}
 	}
 
 	if evalEnv, ok := rawCommand[EvalEnv]; ok {
-		if err := parseAndValidateEvalEnv(evalEnv, newCmd); err != nil {
+		if err := parseEvalEnv(evalEnv, newCmd); err != nil {
 			return err
 		}
 	}
 
 	if options, ok := rawCommand[OPTIONS]; ok {
-		if err := parseAndValidateOptions(options, newCmd); err != nil {
+		if err := parseOptions(options, newCmd); err != nil {
 			return err
 		}
 	}
 
 	if depends, ok := rawCommand[DEPENDS]; ok {
-		if err := parseAndValidateDepends(depends, newCmd); err != nil {
+		if err := parseDepends(depends, newCmd); err != nil {
 			return err
 		}
 	}
 
 	if checksum, ok := rawCommand[CHECKSUM]; ok {
-		if err := parseAndValidateChecksum(checksum, newCmd); err != nil {
+		if err := parseChecksum(checksum, newCmd); err != nil {
 			return err
 		}
 	}
 
 	if persistChecksum, ok := rawCommand[PersistChecksum]; ok {
-		if err := parseAndValidatePersistChecksum(persistChecksum, newCmd); err != nil {
+		if err := parsePersistChecksum(persistChecksum, newCmd); err != nil {
 			return err
 		}
 	}

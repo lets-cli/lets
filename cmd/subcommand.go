@@ -37,7 +37,7 @@ func newCmdGeneric(cmdToRun config.Command, conf *config.Config, out io.Writer) 
 		Use:   cmdToRun.Name,
 		Short: cmdToRun.Description,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			only, exclude, err := parseAndValidateOnlyAndExclude(cmd)
+			only, exclude, err := parseOnlyAndExclude(cmd)
 			if err != nil {
 				return err
 			}
@@ -46,7 +46,7 @@ func newCmdGeneric(cmdToRun config.Command, conf *config.Config, out io.Writer) 
 			cmdToRun.Exclude = exclude
 			cmdToRun.Args = prepareArgs(cmdToRun, os.Args)
 
-			envs, err := parseAndValidateEnvFlag(cmd)
+			envs, err := parseEnvFlag(cmd)
 			if err != nil {
 				return err
 			}
@@ -88,7 +88,7 @@ func initSubCommands(rootCmd *cobra.Command, conf *config.Config, out io.Writer)
 	}
 }
 
-func parseAndValidateOnlyAndExclude(cmd *cobra.Command) (only []string, exclude []string, err error) {
+func parseOnlyAndExclude(cmd *cobra.Command) (only []string, exclude []string, err error) {
 	onlyCmds, err := cmd.Parent().Flags().GetStringArray("only")
 	if err != nil {
 		return []string{}, []string{}, fmt.Errorf("can not get flag 'only': %w", err)
@@ -107,7 +107,7 @@ func parseAndValidateOnlyAndExclude(cmd *cobra.Command) (only []string, exclude 
 	return onlyCmds, excludeCmds, nil
 }
 
-func parseAndValidateEnvFlag(cmd *cobra.Command) (map[string]string, error) {
+func parseEnvFlag(cmd *cobra.Command) (map[string]string, error) {
 	// TraversChildren enabled for parent so we will have parent flags here
 	envs, err := cmd.Parent().Flags().GetStringToString("env")
 	if err != nil {

@@ -6,7 +6,7 @@ import (
 	"github.com/lets-cli/lets/config/config"
 )
 
-func parseAndValidateEnv(env interface{}, newCmd *config.Command) error {
+func parseEnv(env interface{}, newCmd *config.Command) error {
 	for name, value := range env.(map[interface{}]interface{}) {
 		nameKey := name.(string)
 		newCmd.Env[nameKey] = fmt.Sprintf("%v", value)
@@ -15,7 +15,7 @@ func parseAndValidateEnv(env interface{}, newCmd *config.Command) error {
 	return nil
 }
 
-func parseAndValidateEnvForConfig(env map[interface{}]interface{}, cfg *config.Config) error {
+func parseEnvForConfig(env map[interface{}]interface{}, cfg *config.Config) error {
 	for name, value := range env {
 		nameKey := name.(string)
 

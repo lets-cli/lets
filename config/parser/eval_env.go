@@ -24,14 +24,14 @@ func evalEnvVariable(rawCmd string) (string, error) {
 	return strings.TrimSpace(res), nil
 }
 
-func parseAndValidateEvalEnv(evalEnv interface{}, newCmd *config.Command) error {
+func parseEvalEnv(evalEnv interface{}, newCmd *config.Command) error {
 	for name, value := range evalEnv.(map[interface{}]interface{}) {
 		nameKey := name.(string)
 
 		if value, ok := value.(string); ok {
 			computedVal, err := evalEnvVariable(value)
 			if err != nil {
-				return newParseCommandError(
+				return parseError(
 					fmt.Sprintf("failed to eval: %s", err),
 					newCmd.Name,
 					EvalEnv,
@@ -41,7 +41,7 @@ func parseAndValidateEvalEnv(evalEnv interface{}, newCmd *config.Command) error 
 
 			newCmd.Env[nameKey] = computedVal
 		} else {
-			return newParseCommandError(
+			return parseError(
 				"must be a string",
 				newCmd.Name,
 				EvalEnv,
@@ -53,7 +53,7 @@ func parseAndValidateEvalEnv(evalEnv interface{}, newCmd *config.Command) error 
 	return nil
 }
 
-func parseAndValidateEvalEnvForConfig(evalEnv map[interface{}]interface{}, cfg *config.Config) error {
+func parseEvalEnvForConfig(evalEnv map[interface{}]interface{}, cfg *config.Config) error {
 	for name, value := range evalEnv {
 		nameKey := name.(string)
 

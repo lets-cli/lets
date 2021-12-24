@@ -31,7 +31,7 @@ func TestCommandFieldCmd(t *testing.T) {
 		cmdArgs := "echo Hello"
 		// mock args
 		os.Args = []string{"bin_to_run"}
-		err := parseAndValidateCmd(cmdArgs, &testCmd)
+		err := parseCmd(cmdArgs, &testCmd)
 		if err != nil {
 			t.Fatalf("unexpected error: %s", err)
 		}
@@ -45,7 +45,7 @@ func TestCommandFieldCmd(t *testing.T) {
 		testCmd := config.NewCommand("test-cmd")
 		cmdArgs := "echo Hello"
 
-		err := parseAndValidateCmd(cmdArgs, &testCmd)
+		err := parseCmd(cmdArgs, &testCmd)
 		if err != nil {
 			t.Fatalf("unexpected error: %s", err)
 		}
@@ -64,7 +64,7 @@ func TestCommandFieldCmd(t *testing.T) {
 		// mock args
 		os.Args = append([]string{"bin_to_run", "test-cmd"}, appendArgs...)
 
-		err := parseAndValidateCmd(cmdArgs, &testCmd)
+		err := parseCmd(cmdArgs, &testCmd)
 		if err != nil {
 			t.Fatalf("unexpected error: %s", err)
 		}
