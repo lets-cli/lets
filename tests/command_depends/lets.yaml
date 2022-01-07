@@ -3,12 +3,17 @@ shell: bash
 commands:
   run-with-depends:
     description: Test command depends
-    depends: [foo, bar]
+    depends: 
+      - name: greet
+        args: Developer
+      - bar
     cmd: |
       echo "Main"
 
-  foo:
-    cmd: echo Foo
+  greet:
+    options: |
+      Usage: lets greet <name>
+    cmd: echo Hello ${LETSOPT_NAME}
 
   bar:
     cmd: echo Bar

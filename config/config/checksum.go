@@ -85,6 +85,7 @@ func calculateChecksum(workDir string, patterns []string) (string, error) {
 	return fmt.Sprintf("%x", checksum), nil
 }
 
+// getMapKeys get keys as array.
 func getChecksumsKeys(mapping map[string][]string) []string {
 	keys := make([]string, len(mapping))
 	idx := 0

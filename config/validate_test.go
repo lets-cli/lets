@@ -6,6 +6,24 @@ import (
 	"github.com/lets-cli/lets/config/config"
 )
 
+func TestValidateCommandInDependsExists(t *testing.T) {
+	t.Run("command depends on non-existing command", func(t *testing.T) {
+		testCfg := &config.Config{
+			Commands: make(map[string]config.Command),
+		}
+		testCfg.Commands["foo"] = config.Command{
+			Name: "foo",
+			Depends: map[string]config.Dep{
+				"bar": {Name: "bar"},
+			},
+		}
+		err := validateCommandInDependsExists(testCfg)
+		if err == nil {
+			t.Error("command foo depends on non-existing command bar. Must fail")
+		}
+	})
+}
+
 func TestValidateCircularDeps(t *testing.T) {
 	t.Run("command skip itself", func(t *testing.T) {
 		testCfg := &config.Config{
@@ -13,11 +31,11 @@ func TestValidateCircularDeps(t *testing.T) {
 		}
 		testCfg.Commands["a-cmd"] = config.Command{
 			Name:    "a-cmd",
-			Depends: []string{"noop"},
+			Depends: map[string]config.Dep{},
 		}
 		testCfg.Commands["b-cmd"] = config.Command{
 			Name:    "b-cmd",
-			Depends: []string{"noop"},
+			Depends: map[string]config.Dep{},
 		}
 		err := validateCircularDepends(testCfg)
 		if err != nil {
@@ -30,16 +48,20 @@ func TestValidateCircularDeps(t *testing.T) {
 			Commands: make(map[string]config.Command),
 		}
 		testCfg.Commands["a-cmd"] = config.Command{
-			Name:    "a-cmd",
-			Depends: []string{"b1-cmd"},
+			Name: "a-cmd",
+			Depends: map[string]config.Dep{
+				"b1-cmd": {Name: "b1-cmd"},
+			},
 		}
 		testCfg.Commands["b"] = config.Command{
-			Name:    "b",
-			Depends: []string{"a-cmd"},
+			Name: "b",
+			Depends: map[string]config.Dep{
+				"a-cmd": {Name: "a-cmd"},
+			},
 		}
 		testCfg.Commands["b1-cmd"] = config.Command{
 			Name:    "b1-cmd",
-			Depends: []string{"noop"},
+			Depends: map[string]config.Dep{},
 		}
 		err := validateCircularDepends(testCfg)
 		if err != nil {
@@ -52,16 +74,22 @@ func TestValidateCircularDeps(t *testing.T) {
 			Commands: make(map[string]config.Command),
 		}
 		testCfg.Commands["a-cmd"] = config.Command{
-			Name:    "a-cmd",
-			Depends: []string{"b1-cmd"},
+			Name: "a-cmd",
+			Depends: map[string]config.Dep{
+				"b1-cmd": {Name: "b1-cmd"},
+			},
 		}
 		testCfg.Commands["b"] = config.Command{
-			Name:    "b",
-			Depends: []string{"a-cmd"},
+			Name: "b",
+			Depends: map[string]config.Dep{
+				"a-cmd": {Name: "a-cmd"},
+			},
 		}
 		testCfg.Commands["b1-cmd"] = config.Command{
-			Name:    "b1-cmd",
-			Depends: []string{"a-cmd"},
+			Name: "b1-cmd",
+			Depends: map[string]config.Dep{
+				"a-cmd": {Name: "a-cmd"},
+			},
 		}
 		err := validateCircularDepends(testCfg)
 

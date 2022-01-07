@@ -34,11 +34,7 @@ var validFields = []string{
 
 type ParseCommandError struct {
 	Name string
-	Path struct {
-		Full  string
-		Field string
-	}
-	Err error
+	Err  error
 }
 
 func (e *ParseCommandError) Error() string {
@@ -46,24 +42,18 @@ func (e *ParseCommandError) Error() string {
 }
 
 // env is not proper arg.
+// TODO refactor meta arg.
 func parseError(msg string, name string, field string, meta string) error {
 	fields := []string{field}
 	if meta != "" {
 		fields = append(fields, meta)
 	}
 
-	fullPath := strings.Join(fields, ".")
+	fullPath := strings.Join(fields, ". ")
 
 	return &ParseCommandError{
 		Name: name,
-		Path: struct {
-			Full  string
-			Field string
-		}{
-			Full:  fullPath,
-			Field: field,
-		},
-		Err: fmt.Errorf("field %s: %s", fullPath, msg),
+		Err:  fmt.Errorf("field %s: %s", fullPath, msg),
 	}
 }
 
