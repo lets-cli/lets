@@ -61,7 +61,6 @@ func validateVersion(cfg *config.Config, letsVersion string) error {
 }
 
 // if any two commands have each other command in deps, raise error
-// TODO not optimal function but works for now.
 func validateCircularDepends(cfg *config.Config) error {
 	for _, cmdA := range cfg.Commands {
 		for _, cmdB := range cfg.Commands {
@@ -69,7 +68,7 @@ func validateCircularDepends(cfg *config.Config) error {
 				continue
 			}
 
-			if yes := depsIntersect(cmdA, cmdB); yes {
+			if yes := detectCircularDependencies(cmdA, cmdB); yes {
 				return fmt.Errorf(
 					"command '%s' have circular depends on command '%s'",
 					withColor(cmdA.Name),
@@ -82,6 +81,8 @@ func validateCircularDepends(cfg *config.Config) error {
 	return nil
 }
 
-func depsIntersect(cmdA config.Command, cmdB config.Command) bool {
-	return util.IsStringInList(cmdA.Name, cmdB.Depends) && util.IsStringInList(cmdB.Name, cmdA.Depends)
+func detectCircularDependencies(cmdA config.Command, cmdB config.Command) bool {
+	_, aDependsOnB := cmdA.Depends[cmdB.Name]
+	_, bDependsOnA := cmdB.Depends[cmdA.Name]
+	return aDependsOnB && bDependsOnA
 }
