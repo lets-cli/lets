@@ -4,7 +4,7 @@ import "github.com/lets-cli/lets/config/config"
 
 func parseOptions(options interface{}, newCmd *config.Command) error {
 	if value, ok := options.(string); ok {
-		newCmd.RawOptions = value
+		newCmd.Docopts = value
 	} else {
 		return parseError(
 			"must be a string",
