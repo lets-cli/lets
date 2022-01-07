@@ -22,6 +22,10 @@ func withColor(msg string) string {
 
 // Validate loaded config.
 func validate(config *config.Config, letsVersion string) error {
+	if err := validateCommandInDependsExists(config); err != nil {
+		return err
+	}
+
 	if err := validateCircularDepends(config); err != nil {
 		return err
 	}
@@ -60,7 +64,23 @@ func validateVersion(cfg *config.Config, letsVersion string) error {
 	return nil
 }
 
-// if any two commands have each other command in deps, raise error
+func validateCommandInDependsExists(cfg *config.Config) error {
+	for _, cmd := range cfg.Commands {
+		for dependsCmdName := range cmd.Depends {
+			if _, exists := cfg.Commands[dependsCmdName]; !exists {
+				return fmt.Errorf(
+					"command '%s' depends on command '%s' which is not exist",
+					withColor(cmd.Name),
+					withColor(dependsCmdName),
+				)
+			}
+		}
+	}
+
+	return nil
+}
+
+// if any two commands have each other command in deps, raise error.
 func validateCircularDepends(cfg *config.Config) error {
 	for _, cmdA := range cfg.Commands {
 		for _, cmdB := range cfg.Commands {
@@ -84,5 +104,6 @@ func validateCircularDepends(cfg *config.Config) error {
 func detectCircularDependencies(cmdA config.Command, cmdB config.Command) bool {
 	_, aDependsOnB := cmdA.Depends[cmdB.Name]
 	_, bDependsOnA := cmdB.Depends[cmdA.Name]
+
 	return aDependsOnB && bDependsOnA
 }

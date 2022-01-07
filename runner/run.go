@@ -12,15 +12,27 @@ import (
 	"github.com/docopt/docopt-go"
 	"github.com/lets-cli/lets/config/config"
 	"github.com/lets-cli/lets/config/parser"
+	"github.com/lets-cli/lets/env"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 )
 
-const NoticeColor = "\033[1;36m%s\033[0m"
+const color = "\033[1;36m%s\033[0m"
 
 const GenericCmdNameTpl = "LETS_COMMAND_NAME"
 
-const noParent = ""
+func colored(msg string, color string) string {
+	if env.IsNotColorOutput() {
+		return msg
+	}
+
+	return fmt.Sprintf(color, msg)
+}
+
+func debugf(format string, a ...interface{}) {
+	prefixed := fmt.Sprintf("lets: %s", fmt.Sprintf(format, a...))
+	log.Debugf(colored(prefixed, color))
+}
 
 type RunErr struct {
 	err error
@@ -40,28 +52,123 @@ func (e *RunErr) ExitCode() int {
 	return 1 // default error code
 }
 
-func newRunError(cmdName string, isChildCmd bool, err error) error {
-	runErr := fmt.Errorf("failed to run command '%s': %w", cmdName, err)
+type Runner struct {
+	cmd       *config.Command
+	parentCmd *config.Command // child command if parentCmd is not nil
+	cfg       *config.Config
+	out       io.Writer
+}
 
-	if isChildCmd {
-		runErr = fmt.Errorf("failed to run child command '%s' from 'depends': %w", cmdName, err)
+func NewRunner(cmd *config.Command, cfg *config.Config, out io.Writer) *Runner {
+	return &Runner{
+		cmd: cmd,
+		cfg: cfg,
+		out: out,
+	}
+}
+
+func NewChildRunner(cmd *config.Command, parentRunner *Runner) *Runner {
+	return &Runner{
+		cmd:       cmd,
+		parentCmd: parentRunner.cmd,
+		cfg:       parentRunner.cfg,
+		out:       parentRunner.out,
+	}
+}
+
+// Execute runs command.
+func (r *Runner) Execute(ctx context.Context) error {
+	if r.parentCmd != nil {
+		return r.runChild(ctx)
 	}
 
-	return &RunErr{err: runErr}
+	if r.cmd.CmdMap != nil {
+		return r.runCmdAsMap(ctx)
+	}
+
+	return r.run(ctx)
+}
+
+// Run main command and wait for result.
+// Must be used only when Command.Cmd is string or []string.
+func (r *Runner) run(ctx context.Context) error {
+	debugf("running command '%s': %s", r.cmd.Name, r.cmd.Pretty())
+
+	defer func() {
+		if r.cmd.After != "" {
+			r.runAfterScript()
+		}
+	}()
+
+	if err := r.initCmd(); err != nil {
+		return err
+	}
+
+	if err := r.runDepends(ctx); err != nil {
+		return err
+	}
+
+	if err := r.runCmdScript(r.cmd.Cmd); err != nil {
+		return err
+	}
+
+	// persist checksum only if exit code 0
+	return r.persistChecksum()
+}
+
+// Run command and wait for result.
+// Must be used only when Command.Cmd is string or []string.
+func (r *Runner) runChild(ctx context.Context) error {
+	debugf("running child command '%s': %s", r.cmd.Name, r.cmd.Pretty())
+
+	defer func() {
+		if r.cmd.After != "" {
+			r.runAfterScript()
+		}
+	}()
+
+	// never skip docopt for main command
+	if err := r.initCmd(); err != nil {
+		return err
+	}
+
+	if err := r.runDepends(ctx); err != nil {
+		return err
+	}
+
+	cmd := r.prepareOsCommandForRun(r.cmd.Cmd)
+
+	debugf(
+		"executing child os command for %s -> %s\ncmd: %s\nenv: %s\n",
+		r.parentCmd.Name, r.cmd.Name, r.cmd.Cmd, fmtEnv(cmd.Env),
+	)
+
+	if err := cmd.Run(); err != nil {
+		return &RunErr{err: fmt.Errorf("failed to run child command '%s' from 'depends': %w", r.cmd.Name, err)}
+	}
+
+	// persist checksum only if exit code 0
+	return r.persistChecksum()
+}
+
+// Runs 'after' script after main 'cmd' script
+// It allowed to fail and will print error
+// Do not return error directly to root because we consider only 'cmd' exit code.
+// Even if 'after' script failed we return exit code from 'cmd'.
+// This behavior may change in the future if needed.
+func (r *Runner) runAfterScript() {
+	cmd := r.prepareOsCommandForRun(r.cmd.After)
+
+	debugf("executing after script:\ncommand: %s\nscript: %s\nenv: %s", r.cmd.Name, r.cmd.After, fmtEnv(cmd.Env))
+
+	if runErr := cmd.Run(); runErr != nil {
+		log.Printf("failed to run `after` script for command '%s': %s", r.cmd.Name, runErr)
+	}
 }
 
 type RunOptions struct {
 	Config  *config.Config
 	RawArgs []string
-}
-
-// RunCommand runs parent command.
-func RunCommand(ctx context.Context, cmdToRun config.Command, cfg *config.Config, out io.Writer) error {
-	if cmdToRun.CmdMap != nil {
-		return runCmdAsMap(ctx, &cmdToRun, cfg, out)
-	}
-
-	return runCmd(&cmdToRun, cfg, out, noParent)
 }
 
 // format docopts error and adds usage string to output.
@@ -78,33 +185,29 @@ func formatOptsUsageError(err error, opts docopt.Opts, cmdName string, rawOption
 // Init Command before run:
 // - parse docopt
 // - calculate checksum.
-func initCmd(
-	cmdToRun *config.Command,
-	cfg *config.Config,
-	isChildCmd bool,
-) error {
-	// parse docopts - only for parent
-	if !isChildCmd {
-		opts, err := parser.ParseDocopts(cmdToRun.Args, cmdToRun.RawOptions)
+func (r *Runner) initCmd() error {
+	if !r.cmd.SkipDocopts {
+		debugf("parse docopt for command '%s'", r.cmd.Name)
+		opts, err := parser.ParseDocopts(r.cmd.Args, r.cmd.Docopts)
 		if err != nil {
-			return formatOptsUsageError(err, opts, cmdToRun.Name, cmdToRun.RawOptions)
+			return formatOptsUsageError(err, opts, r.cmd.Name, r.cmd.Docopts)
 		}
 
-		cmdToRun.Options = parser.OptsToLetsOpt(opts)
-		cmdToRun.CliOptions = parser.OptsToLetsCli(opts)
+		r.cmd.Options = parser.OptsToLetsOpt(opts)
+		r.cmd.CliOptions = parser.OptsToLetsCli(opts)
 	}
 
 	// calculate checksum if needed
-	if err := cmdToRun.ChecksumCalculator(cfg.WorkDir); err != nil {
-		return fmt.Errorf("failed to calculate checksum for command '%s': %w", cmdToRun.Name, err)
+	if err := r.cmd.ChecksumCalculator(r.cfg.WorkDir); err != nil {
+		return fmt.Errorf("failed to calculate checksum for command '%s': %w", r.cmd.Name, err)
 	}
 
 	// if command declared as persist_checksum we must read current persisted checksums into memory
-	if cmdToRun.PersistChecksum {
-		if config.ChecksumForCmdPersisted(cfg.DotLetsDir, cmdToRun.Name) {
-			err := cmdToRun.ReadChecksumsFromDisk(cfg.DotLetsDir, cmdToRun.Name, cmdToRun.ChecksumMap)
+	if r.cmd.PersistChecksum {
+		if config.ChecksumForCmdPersisted(r.cfg.DotLetsDir, r.cmd.Name) {
+			err := r.cmd.ReadChecksumsFromDisk(r.cfg.DotLetsDir, r.cmd.Name, r.cmd.ChecksumMap)
 			if err != nil {
-				return fmt.Errorf("failed to read persisted checksum for command '%s': %w", cmdToRun.Name, err)
+				return fmt.Errorf("failed to read persisted checksum for command '%s': %w", r.cmd.Name, err)
 			}
 		}
 	}
@@ -128,42 +231,37 @@ func joinBeforeAndScript(before string, script string) string {
 // NOTE: We intentionally do not passing ctx to exec.Command because we want to wait for process end.
 // Passing ctx will change behavior of program drastically - it will kill process if context will be canceled.
 //
-func prepareCmdForRun(
-	cmdToRun *config.Command,
-	cmdScript string,
-	cfg *config.Config,
-	out io.Writer,
-) *exec.Cmd {
-	script := joinBeforeAndScript(cfg.Before, cmdScript)
-	cmd := exec.Command(cfg.Shell, "-c", script) // #nosec G204
+func (r *Runner) prepareOsCommandForRun(cmdScript string) *exec.Cmd {
+	script := joinBeforeAndScript(r.cfg.Before, cmdScript)
+	cmd := exec.Command(r.cfg.Shell, "-c", script) // #nosec G204
 	// setup std out and err
-	cmd.Stdout = out
-	cmd.Stderr = out
+	cmd.Stdout = r.out
+	cmd.Stderr = r.out
 	cmd.Stdin = os.Stdin
 
 	// set working directory for command
-	cmd.Dir = cfg.WorkDir
+	cmd.Dir = r.cfg.WorkDir
 
 	// setup env for command
 	cmd.Env = composeEnvs(
 		os.Environ(),
-		convertEnvMapToList(cfg.Env),
-		convertEnvMapToList(cmdToRun.Env),
-		convertEnvMapToList(cmdToRun.OverrideEnv),
-		convertEnvMapToList(cmdToRun.Options),
-		convertEnvMapToList(cmdToRun.CliOptions),
-		[]string{makeEnvEntry(GenericCmdNameTpl, cmdToRun.Name)},
-		convertChecksumToEnvForCmd(cmdToRun.Checksum),
-		convertChecksumMapToEnvForCmd(cmdToRun.ChecksumMap),
+		convertEnvMapToList(r.cfg.Env),
+		convertEnvMapToList(r.cmd.Env),
+		convertEnvMapToList(r.cmd.OverrideEnv),
+		convertEnvMapToList(r.cmd.Options),
+		convertEnvMapToList(r.cmd.CliOptions),
+		[]string{makeEnvEntry(GenericCmdNameTpl, r.cmd.Name)},
+		convertChecksumToEnvForCmd(r.cmd.Checksum),
+		convertChecksumMapToEnvForCmd(r.cmd.ChecksumMap),
 	)
 
-	if cmdToRun.PersistChecksum {
+	if r.cmd.PersistChecksum {
 		cmd.Env = composeEnvs(
 			cmd.Env,
 			convertChangedChecksumMapToEnvForCmd(
-				cmdToRun.Checksum,
-				cmdToRun.ChecksumMap,
-				cmdToRun.GetPersistedChecksums(),
+				r.cmd.Checksum,
+				r.cmd.ChecksumMap,
+				r.cmd.GetPersistedChecksums(),
 			),
 		)
 	}
@@ -172,11 +270,28 @@ func prepareCmdForRun(
 }
 
 // Run all commands from Depends in sequential order.
-func runDepends(cmdToRun *config.Command, cfg *config.Config, out io.Writer) error {
-	for _, dependCmdName := range cmdToRun.Depends {
-		dependCmd := cfg.Commands[dependCmdName]
+func (r *Runner) runDepends(ctx context.Context) error {
+	for depName, dep := range r.cmd.Depends {
+		debugf("running dependency '%s' for command '%s'", depName, r.cmd.Name)
 
-		err := runCmd(&dependCmd, cfg, out, cmdToRun.Name)
+		dependCmd := r.cfg.Commands[depName]
+		if dependCmd.CmdMap != nil {
+			// forbid to run depends command as map
+			return &RunErr{
+				err: fmt.Errorf(
+					"failed to run child command '%s' from 'depends': cmd as map is not allowed in depends yet",
+					r.cmd.Name,
+				),
+			}
+		}
+
+		// by default, if depends command in simple format, skip docopts
+		dependCmd.SkipDocopts = true
+		if len(dep.Args) != 0 {
+			dependCmd = dependCmd.WithArgs(dep.Args)
+			dependCmd.SkipDocopts = false
+		}
+		err := NewChildRunner(&dependCmd, r).Execute(ctx)
 		if err != nil {
 			// must return error to root
 			return err
@@ -188,45 +303,17 @@ func runDepends(cmdToRun *config.Command, cfg *config.Config, out io.Writer) err
 
 // Persist new calculated checksum to disk.
 // This function mus be called only after command finished(exited) with status 0.
-func persistChecksum(cmdToRun config.Command, cfg *config.Config) error {
-	if cmdToRun.PersistChecksum {
-		err := config.PersistCommandsChecksumToDisk(cfg.DotLetsDir, cmdToRun)
+func (r *Runner) persistChecksum() error {
+	if r.cmd.PersistChecksum {
+		debugf("persisting checksum for command '%s'", r.cmd.Name)
+
+		err := config.PersistCommandsChecksumToDisk(r.cfg.DotLetsDir, *r.cmd)
 		if err != nil {
 			return fmt.Errorf("can not persist checksum to disk: %w", err)
 		}
 	}
 
 	return nil
-}
-
-// Run command and wait for result.
-// Must be used only when Command.Cmd is string or []string.
-func runCmd(
-	cmdToRun *config.Command,
-	cfg *config.Config,
-	out io.Writer,
-	parentName string,
-) error {
-	defer func() {
-		if cmdToRun.After != "" {
-			runAfterScript(cmdToRun, cfg, out)
-		}
-	}()
-
-	if err := initCmd(cmdToRun, cfg, parentName != noParent); err != nil {
-		return err
-	}
-
-	if err := runDepends(cmdToRun, cfg, out); err != nil {
-		return err
-	}
-
-	if err := runCmdScript(cmdToRun, cmdToRun.Cmd, cfg, out, parentName); err != nil {
-		return err
-	}
-
-	// persist checksum only if exit code 0
-	return persistChecksum(*cmdToRun, cfg)
 }
 
 func fmtEnv(env []string) string {
@@ -239,64 +326,16 @@ func fmtEnv(env []string) string {
 	return buf
 }
 
-func runCmdScript(
-	cmdToRun *config.Command,
-	cmdScript string,
-	cfg *config.Config,
-	out io.Writer,
-	parentName string,
-) error {
-	isChildCmd := parentName != ""
+func (r *Runner) runCmdScript(cmdScript string) error {
+	cmd := r.prepareOsCommandForRun(cmdScript)
 
-	cmd := prepareCmdForRun(cmdToRun, cmdScript, cfg, out)
+	debugf("executing os command for '%s'\ncmd: %s\nenv: %s\n", r.cmd.Name, r.cmd.Cmd, fmtEnv(cmd.Env))
 
-	if !isChildCmd {
-		log.Debugf(
-			"Executing command\nname: %s\ncmd: %s\nenv: %s\n",
-			fmt.Sprintf(NoticeColor, cmdToRun.Name),
-			fmt.Sprintf(NoticeColor, cmdToRun.Cmd),
-			fmtEnv(cmd.Env),
-		)
-	} else {
-		log.Debugf(
-			"Executing child command\nparent name: %s\nname: %s\ncmd: %s\nenv: %s\n",
-			fmt.Sprintf(NoticeColor, parentName),
-			fmt.Sprintf(NoticeColor, cmdToRun.Name),
-			fmt.Sprintf(NoticeColor, cmdToRun.Cmd),
-			fmtEnv(cmd.Env),
-		)
-	}
-
-	runErr := cmd.Run()
-	if runErr != nil {
-		return newRunError(cmdToRun.Name, isChildCmd, runErr)
+	if err := cmd.Run(); err != nil {
+		return &RunErr{err: fmt.Errorf("failed to run command '%s': %w", r.cmd.Name, err)}
 	}
 
 	return nil
-}
-
-// Runs 'after' script after main 'cmd' script
-// It allowed to fail and will print error
-// Do not return error directly to root because we consider only 'cmd' exit code.
-// Even if 'after' script failed we return exit code from 'cmd'.
-// This behavior may change in the future if needed.
-func runAfterScript(
-	cmdToRun *config.Command,
-	cfg *config.Config,
-	out io.Writer,
-) {
-	cmd := prepareCmdForRun(cmdToRun, cmdToRun.After, cfg, out)
-
-	log.Debugf(
-		"Executing after script:\ncommand: %s\nscript: %s\nenv: %s",
-		fmt.Sprintf(NoticeColor, cmdToRun.Name),
-		fmt.Sprintf(NoticeColor, cmdToRun.After),
-		fmtEnv(cmd.Env),
-	)
-
-	if runErr := cmd.Run(); runErr != nil {
-		log.Printf("failed to run `after` script for command '%s': %s", cmdToRun.Name, runErr)
-	}
 }
 
 func filterCmdMap(
@@ -344,24 +383,24 @@ func filterCmdMap(
 
 // Run all commands from Command.CmdMap in parallel and wait for results.
 // Must be used only when Command.Cmd is map[string]string.
-func runCmdAsMap(ctx context.Context, cmdToRun *config.Command, cfg *config.Config, out io.Writer) (err error) {
+func (r *Runner) runCmdAsMap(ctx context.Context) (err error) {
 	defer func() {
-		if cmdToRun.After != "" {
-			runAfterScript(cmdToRun, cfg, out)
+		if r.cmd.After != "" {
+			r.runAfterScript()
 		}
 	}()
 
-	if err = initCmd(cmdToRun, cfg, false); err != nil {
+	if err = r.initCmd(); err != nil {
 		return err
 	}
 
-	if err = runDepends(cmdToRun, cfg, out); err != nil {
+	if err = r.runDepends(ctx); err != nil {
 		return err
 	}
 
 	g, _ := errgroup.WithContext(ctx)
 
-	cmdMap, err := filterCmdMap(cmdToRun.Name, cmdToRun.CmdMap, cmdToRun.Only, cmdToRun.Exclude)
+	cmdMap, err := filterCmdMap(r.cmd.Name, r.cmd.CmdMap, r.cmd.Only, r.cmd.Exclude)
 	if err != nil {
 		return err
 	}
@@ -370,7 +409,7 @@ func runCmdAsMap(ctx context.Context, cmdToRun *config.Command, cfg *config.Conf
 		cmdExecScript := cmdExecScript
 		// wait for cmd to end in a goroutine with error propagation
 		g.Go(func() error {
-			return runCmdScript(cmdToRun, cmdExecScript, cfg, out, noParent)
+			return r.runCmdScript(cmdExecScript)
 		})
 	}
 
@@ -379,8 +418,8 @@ func runCmdAsMap(ctx context.Context, cmdToRun *config.Command, cfg *config.Conf
 	}
 
 	// persist checksum only if exit code 0
-	if err = persistChecksum(*cmdToRun, cfg); err != nil {
-		return fmt.Errorf("persist checksum error in command '%s': %w", cmdToRun.Name, err)
+	if err = r.persistChecksum(); err != nil {
+		return fmt.Errorf("persist checksum error in command '%s': %w", r.cmd.Name, err)
 	}
 
 	return err

@@ -85,6 +85,19 @@ func calculateChecksum(workDir string, patterns []string) (string, error) {
 	return fmt.Sprintf("%x", checksum), nil
 }
 
+// getMapKeys get keys as array.
+func getChecksumsKeys(mapping map[string][]string) []string {
+	keys := make([]string, len(mapping))
+	idx := 0
+
+	for key := range mapping {
+		keys[idx] = key
+		idx++
+	}
+
+	return keys
+}
+
 // calculate checksum from files listed in command.checksum.
 func calculateChecksumFromSource(workDir string, newCmd *Command) error {
 	newCmd.ChecksumMap = make(map[string]string)
@@ -103,7 +116,7 @@ func calculateChecksumFromSource(workDir string, newCmd *Command) error {
 	// if checksum is a map of key: patterns
 	hasher := sha1.New() // #nosec G401
 
-	keys := util.GetMapKeys(newCmd.ChecksumSource)
+	keys := getChecksumsKeys(newCmd.ChecksumSource)
 	// sort keys to make checksum deterministic
 	sort.Strings(keys)
 

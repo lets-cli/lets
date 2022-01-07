@@ -1,5 +1,9 @@
 package config
 
+import (
+	"encoding/json"
+)
+
 type Command struct {
 	Name string
 	// script to run
@@ -12,11 +16,13 @@ type Command struct {
 	// env from command
 	Env map[string]string
 	// env from -E flag
-	OverrideEnv     map[string]string
-	RawOptions      string
+	OverrideEnv map[string]string
+	// store docopts from options directive
+	Docopts         string
+	SkipDocopts     bool // default false
 	Options         map[string]string
 	CliOptions      map[string]string
-	Depends         []string
+	Depends         map[string]Dep
 	Checksum        string
 	ChecksumMap     map[string]string
 	PersistChecksum bool
@@ -39,9 +45,23 @@ type Command struct {
 // NewCommand creates new command struct.
 func NewCommand(name string) Command {
 	return Command{
-		Name: name,
-		Env:  make(map[string]string),
+		Name:        name,
+		Env:         make(map[string]string),
+		SkipDocopts: false,
 	}
+}
+
+func (cmd Command) WithArgs(args []string) Command {
+	newCmd := cmd
+	newCmd.Args = args
+
+	return newCmd
+}
+
+func (cmd Command) Pretty() string {
+	pretty, _ := json.MarshalIndent(cmd, "", "  ")
+
+	return string(pretty)
 }
 
 func (cmd *Command) ChecksumCalculator(workDir string) error {

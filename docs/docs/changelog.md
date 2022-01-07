@@ -3,7 +3,16 @@ id: changelog
 title: Changelog
 ---
 
+## [Unreleased]
 
+* [Added] Allow to override command arguments when using command in `depends`
+
+   See example [in config docs](/docs/config#override-arguments-in-depends-command)
+
+* [Added] Validate if commands declared in `depends` actually exist.
+* [Refactoring] Refactored `runner` package, implemented `Runner` struct.
+
+  
 ## [0.0.33](https://github.com/lets-cli/lets/releases/tag/v0.0.33)
 
 * [Added] Allow templating in command `options` directive [docs](/docs/advanced_usage#command-templates)

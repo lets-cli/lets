@@ -316,9 +316,9 @@ commands:
 
 `key: depends`
 
-`type: array of string`
+`type: array of string or array or object`
 
-Specify what commands to run before the actual command. May be useful, when have one shared command.
+Specify what commands to run before the actual command. May be useful, when you have one shared command.
 For example, lets say you have command `build`, which builds docker image.
 
 Example:
@@ -342,6 +342,52 @@ commands:
 
 `build` command will be executed each time you run `lets test` or `lets fmt`
 
+#### Override arguments in depends command
+
+It is possible to override arguments for any commands declared in depends.
+
+For example we want `build` command to be executed with `--verbose` flag in test `depends`.
+
+```yaml
+commands:
+  greet:
+    cmd: echo Hi developer
+
+  alarm:
+    options: |
+      Usage: lets alarm <msg>
+    cmd: echo Alarm ${LETSOPT_MSG}
+
+  build:
+    description: Build docker image
+    options: |
+      lets build [--verbose]
+    cmd: |
+      if [[ -n ${LETSOPT_VERBOSE} ]]; then
+        echo Building docker image
+      fi
+      docker build -t myimg . -f Dockerfile
+
+  test:
+    description: Test something
+    depends:
+      - greet
+      - name: alarm
+        args: Something is happening
+      - name: build:
+        args: [--verbose]
+    cmd: go test ./... -v
+```
+
+Running `lets test` will output: 
+
+```shell
+# lets test
+# Hi developer
+# Something is happening
+# Building docker image
+# ... continue building docker image
+```
 
 ### `options`
 

@@ -9,7 +9,7 @@ setup() {
     printf "%s\n" "${lines[@]}"
 
     [[ $status = 0 ]]
-    [[ "${lines[0]}" = "Foo" ]]
+    [[ "${lines[0]}" = "Hello Developer" ]]
     [[ "${lines[1]}" = "Bar" ]]
     [[ "${lines[2]}" = "Main" ]]
 }

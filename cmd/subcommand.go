@@ -55,7 +55,7 @@ func newCmdGeneric(cmdToRun config.Command, conf *config.Config, out io.Writer) 
 
 			cmdToRun.OverrideEnv = envs
 
-			return runner.RunCommand(cmd.Context(), cmdToRun, conf, out)
+			return runner.NewRunner(&cmdToRun, conf, out).Execute(cmd.Context())
 		},
 		// we use docopt to parse flags on our own, so any flag is valid flag here
 		FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},
