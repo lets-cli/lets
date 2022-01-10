@@ -188,7 +188,7 @@ All we made is just rewrite `cmd` to be an array of strings. Now all positional 
 
 **`lets js -- -w`** - this will pass `-w` option to webpack in `package.json`
 
-### Options
+### Positional arguments (Options)
 
 Sooner or later you will come up with a convenient commands for your project.
 
@@ -258,6 +258,30 @@ If we describe option `Usage: lets run --stg` we will actually get two env varia
 
 You can learn more about options in [Options section](config.md#options)
 
+
+### Positional arguments using $@ or LETS_COMMAND_ARGS
+
+You may not want to use `options` and describe all possible arguments and options to your command.
+
+In that case, you can use standard `"$@"` env variable to access all positional args passed to command.
+
+For convenience `LETS_COMMAND_ARGS` env variable contains same positional args as `"$@"`.
+
+The most common use case for this is to pass all positional args to command's `cmd` script as is, see examples: 
+
+```yaml
+shell: bash
+
+commands:
+  npm:
+    cmd: npm "$@"
+
+  webpack:
+    cmd: |
+      echo Running webpack
+      webpack "${LETS_COMMAND_ARGS}"
+```
+
 ### Command templates
 
 You can make command templates using .yaml features, for generic options, like
@@ -281,25 +305,6 @@ commands:
     <<: *run
     cmd: |
       echo ${LETSOPT_CONFIG:-local.yaml}
-```
-
-### Positional arguments using $@ or LETS_COMMAND_ARGS
-
-You can use standard "$@" env variable to access all positional args passed to command.
-
-For convenience `LETS_COMMAND_ARGS` env variable contains same positional args as `"$@"`.
-
-```yaml
-shell: bash
-
-commands:
-  npm:
-    cmd: npm "$@"
-
-  webpack:
-    cmd: |
-      echo Running webpack
-      webpack "${LETS_COMMAND_ARGS}"
 ```
 
 ### Examples

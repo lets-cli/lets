@@ -11,6 +11,7 @@ import (
 var (
 	CMD             = "cmd"
 	DESCRIPTION     = "description"
+	WORKDIR         = "work_dir"
 	ENV             = "env"
 	EvalEnv         = "eval_env"
 	OPTIONS         = "options"
@@ -23,6 +24,7 @@ var (
 var validFields = []string{
 	CMD,
 	DESCRIPTION,
+	WORKDIR,
 	ENV,
 	EvalEnv,
 	OPTIONS,
@@ -58,7 +60,8 @@ func parseError(msg string, name string, field string, meta string) error {
 }
 
 // parseCommand parses and validates unmarshaled yaml.
-func parseCommand(newCmd *config.Command, rawCommand map[interface{}]interface{}) error { //nolint:cyclop
+//nolint:cyclop,gocognit
+func parseCommand(newCmd *config.Command, rawCommand map[interface{}]interface{}) error {
 	if err := validateCommandFields(rawCommand, validFields); err != nil {
 		return err
 	}
@@ -77,6 +80,12 @@ func parseCommand(newCmd *config.Command, rawCommand map[interface{}]interface{}
 
 	if desc, ok := rawCommand[DESCRIPTION]; ok {
 		if err := parseDescription(desc, newCmd); err != nil {
+			return err
+		}
+	}
+
+	if workdir, ok := rawCommand[WORKDIR]; ok {
+		if err := parseWorkDir(workdir, newCmd); err != nil {
 			return err
 		}
 	}
