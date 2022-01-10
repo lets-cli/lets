@@ -12,6 +12,7 @@ var (
 	CMD             = "cmd"
 	DESCRIPTION     = "description"
 	WORKDIR         = "work_dir"
+	SHELL           = "shell"
 	ENV             = "env"
 	EvalEnv         = "eval_env"
 	OPTIONS         = "options"
@@ -25,6 +26,7 @@ var validFields = []string{
 	CMD,
 	DESCRIPTION,
 	WORKDIR,
+	SHELL,
 	ENV,
 	EvalEnv,
 	OPTIONS,
@@ -86,6 +88,12 @@ func parseCommand(newCmd *config.Command, rawCommand map[interface{}]interface{}
 
 	if workdir, ok := rawCommand[WORKDIR]; ok {
 		if err := parseWorkDir(workdir, newCmd); err != nil {
+			return err
+		}
+	}
+
+	if shell, ok := rawCommand[SHELL]; ok {
+		if err := parseShell(shell, newCmd); err != nil {
 			return err
 		}
 	}

@@ -302,6 +302,30 @@ commands:
     cmd: npm start
 ```
 
+### `shell`
+
+`key: shell`
+
+`type: string`
+
+Specify shell to run command in.
+
+Any shell can be used, not only sh-compatible, for example `python`.
+
+Example:
+
+```yaml
+shell: bash
+commands:
+  run-sh:
+    shell: /bin/sh
+    cmd: echo Hi
+    
+  run-py:
+    shell: python
+    cmd: print('hi')
+```
+
 
 ### `after`
 

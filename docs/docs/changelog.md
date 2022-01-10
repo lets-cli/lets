@@ -15,7 +15,8 @@ title: Changelog
 * [Added] `LETS_COMMAND_ARGS` - will contain command's positional args. [See config](/docs/env#default-environment-variabless).
   
   Also, special bash env variables such as `"$@"` and `"$1"` etc. now available inside `cmd` script and work as expected. 
-* [Added] `work_dir` directive. See [config](/docs/config#work_dir)
+* [Added] `work_dir` directive for command. See [config](/docs/config#work_dir)
+* [Added] `shell` directive for command. See [config](/docs/config#shell-1)
   
 ## [0.0.33](https://github.com/lets-cli/lets/releases/tag/v0.0.33)
 
