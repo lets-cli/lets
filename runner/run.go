@@ -190,7 +190,7 @@ func (r *Runner) initCmd() error {
 		debugf("parse docopt for command '%s'", r.cmd.Name)
 		opts, err := parser.ParseDocopts(r.cmd.Args, r.cmd.Docopts)
 		if err != nil {
-			// TODO if allow_args, just continue with what we got
+			// TODO if accept_args, just continue with what we got
 			//  but this may  require changes in go-docopt
 			return formatOptsUsageError(err, opts, r.cmd.Name, r.cmd.Docopts)
 		}
@@ -235,9 +235,13 @@ func joinBeforeAndScript(before string, script string) string {
 //
 func (r *Runner) prepareOsCommandForRun(cmdScript string) *exec.Cmd {
 	script := joinBeforeAndScript(r.cfg.Before, cmdScript)
-	// TODO override shell in command
+	shell := r.cfg.Shell
+	if r.cmd.Shell != "" {
+		shell = r.cmd.Shell
+	}
+
 	cmd := exec.Command(
-		r.cfg.Shell,
+		shell,
 		"-c",
 		script,
 		"--", // see https://linux.die.net/man/1/bash
@@ -260,6 +264,7 @@ func (r *Runner) prepareOsCommandForRun(cmdScript string) *exec.Cmd {
 		os.Environ(),
 		makeEnvEntryList(GenericCmdNameTpl, r.cmd.Name),
 		makeEnvEntryList("LETS_COMMAND_ARGS", strings.Join(r.cmd.CommandArgs, " ")),
+		makeEnvEntryList("SHELL", shell),
 		convertEnvMapToList(r.cfg.Env),
 		convertEnvMapToList(r.cmd.Env),
 		convertEnvMapToList(r.cmd.OverrideEnv),

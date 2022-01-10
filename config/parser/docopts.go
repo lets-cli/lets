@@ -14,8 +14,7 @@ var DocoptParser = &docopt.Parser{
 	SkipHelpFlags: false,
 }
 
-// ParseDocopts parses docopts for command options with args from os.Args
-// TODO pass os.Argv explicitly.
+// ParseDocopts parses docopts for command options with args from os.Args.
 func ParseDocopts(args []string, docopts string) (docopt.Opts, error) {
 	// no options at all
 	if docopts == "" {

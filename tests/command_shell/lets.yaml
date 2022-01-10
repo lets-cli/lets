@@ -1,0 +1,6 @@
+shell: bash
+
+commands:
+  show-shell:
+    shell: /bin/sh
+    cmd: echo "$SHELL"

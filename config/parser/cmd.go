@@ -33,7 +33,6 @@ func escapeArgs(args []string) []string {
 func parseCmd(cmd interface{}, newCmd *config.Command) error { //nolint:cyclop
 	switch cmd := cmd.(type) {
 	case string:
-		// TODO pass args to command as is if option accepts_arguments: true
 		newCmd.Cmd = cmd
 	case []interface{}:
 		// a list of arguments to be appended to commands in lets.yaml

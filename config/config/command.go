@@ -12,7 +12,9 @@ type Command struct {
 	After string
 	// map of named scripts to run in parallel
 	CmdMap map[string]string
-	// if specified, overrides global workdir (where lets.yaml is located)
+	// if specified, overrides global shell for this particular command
+	Shell string
+	// if specified, overrides global workdir (where lets.yaml is located) for this particular command
 	WorkDir     string
 	Description string
 	// env from command
