@@ -259,6 +259,7 @@ If we describe option `Usage: lets run --stg` we will actually get two env varia
 You can learn more about options in [Options section](config.md#options)
 
 ### Command templates
+
 You can make command templates using .yaml features, for generic options, like
 --watch, --config etc.
 
@@ -280,6 +281,25 @@ commands:
     <<: *run
     cmd: |
       echo ${LETSOPT_CONFIG:-local.yaml}
+```
+
+### Positional arguments using $@ or LETS_COMMAND_ARGS
+
+You can use standard "$@" env variable to access all positional args passed to command.
+
+For convenience `LETS_COMMAND_ARGS` env variable contains same positional args as `"$@"`.
+
+```yaml
+shell: bash
+
+commands:
+  npm:
+    cmd: npm "$@"
+
+  webpack:
+    cmd: |
+      echo Running webpack
+      webpack "${LETS_COMMAND_ARGS}"
 ```
 
 ### Examples

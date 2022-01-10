@@ -45,6 +45,7 @@ func newCmdGeneric(cmdToRun config.Command, conf *config.Config, out io.Writer) 
 			cmdToRun.Only = only
 			cmdToRun.Exclude = exclude
 			cmdToRun.Args = prepareArgs(cmdToRun, os.Args)
+			cmdToRun.CommandArgs = cmdToRun.Args[1:]
 
 			envs, err := parseEnvFlag(cmd)
 			if err != nil {

@@ -12,6 +12,11 @@ func makeEnvEntry(k, v string) string {
 	return fmt.Sprintf("%s=%s", k, v)
 }
 
+// helper function for convenient use with composeEnvs.
+func makeEnvEntryList(k, v string) []string {
+	return []string{makeEnvEntry(k, v)}
+}
+
 func normalizeEnvKey(origKey string) string {
 	key := strings.ReplaceAll(origKey, "-", "_")
 	key = strings.ToUpper(key)

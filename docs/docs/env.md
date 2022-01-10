@@ -10,8 +10,9 @@ title: Lets environment
 * `LETS_DEBUG` - enable debug messages
 * `LETS_CONFIG` - changes default `lets.yaml` file path (e.g. LETS_CONFIG=lets.my.yaml)
 * `LETS_CONFIG_DIR` - changes path to dir where `lets.yaml` file placed
-* `LETS_NO_COLOR_OUTPUT` - disables colored output
+* `NO_COLOR` - disables colored output. See https://no-color.org/
 * `LETS_COMMAND_NAME` - string name of launched command
+* `LETS_COMMAND_ARGS` - positional arguments for launched command, e.g. for `lets run --debug --config=test.ini` it will contain `--debug --config=test.ini`
 
 ### Override command env with -E flag
 
