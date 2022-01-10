@@ -250,8 +250,10 @@ func (r *Runner) prepareOsCommandForRun(cmdScript string) *exec.Cmd {
 	cmd.Stdin = os.Stdin
 
 	// set working directory for command
-	// TODO add work_dir to cmd
 	cmd.Dir = r.cfg.WorkDir
+	if r.cmd.WorkDir != "" {
+		cmd.Dir = r.cmd.WorkDir
+	}
 
 	// setup env for command
 	cmd.Env = composeEnvs(

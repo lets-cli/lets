@@ -11,7 +11,9 @@ type Command struct {
 	// script to run after cmd finished (cleanup, etc)
 	After string
 	// map of named scripts to run in parallel
-	CmdMap      map[string]string
+	CmdMap map[string]string
+	// if specified, overrides global workdir (where lets.yaml is located)
+	WorkDir     string
 	Description string
 	// env from command
 	Env map[string]string

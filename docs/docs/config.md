@@ -14,6 +14,7 @@ Config schema
 * [commands](#commands)
     * [description](#description)
     * [cmd](#cmd)
+    * [work_dir](#work_dir)
     * [after](#after)
     * [depends](#depends)
     * [options](#options)
@@ -282,6 +283,25 @@ There must be used before command name:
 ```bash
 lets --only app run
 ```
+
+### `work_dir`
+
+`key: work_dir`
+
+`type: string`
+
+Specify work directory to run in. Path must be relative to project root. Be default command's workdir is project root (where lets.yaml located).
+
+Example:
+
+```yaml
+commands:
+  run-docs:
+    description: Run docusaurus documentation live
+    work_dir: docs
+    cmd: npm start
+```
+
 
 ### `after`
 

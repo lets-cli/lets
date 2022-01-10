@@ -1,0 +1,6 @@
+shell: bash
+
+commands:
+  print-file:
+    work_dir: project
+    cmd: cat text.txt

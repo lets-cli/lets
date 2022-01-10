@@ -90,12 +90,12 @@ commands:
       echo " - build 'lets-dev' successfully installed in ${PATH2LETSDEV}"
 
   publish-docs:
-    cmd: |
-      npm --prefix docs run doc:deploy
+    work_dir: docs
+    cmd: npm run doc:deploy
 
   run-docs:
-    cmd: |
-      npm --prefix docs start
+    work_dir: docs
+    cmd: npm start
 
   print-env:
     cmd: |
