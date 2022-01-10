@@ -27,8 +27,12 @@ type Command struct {
 	ChecksumMap     map[string]string
 	PersistChecksum bool
 
-	// prepared args - started from command name
+	// args with command name
+	// e.g. from 'lets run --debug' we will get [run, --debug]
 	Args []string
+	// args without command name
+	// e.g. from 'lets run --debug' we will get [--debug]
+	CommandArgs []string
 
 	// run only specified commands from cmd map
 	Only []string

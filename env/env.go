@@ -22,7 +22,7 @@ func IsDebug() bool {
 }
 
 func IsNotColorOutput() bool {
-	notColored, err := strconv.ParseBool(os.Getenv("LETS_NO_COLOR_OUTPUT"))
+	notColored, err := strconv.ParseBool(os.Getenv("NO_COLOR"))
 	if err != nil {
 		return false
 	}

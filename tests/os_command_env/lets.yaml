@@ -1,0 +1,11 @@
+shell: bash
+
+commands:
+  print-command-name-from-env:
+    cmd: echo ${LETS_COMMAND_NAME}
+
+  print-command-args-from-env:
+    cmd: echo ${LETS_COMMAND_ARGS}
+
+  print-shell-args:
+    cmd: echo $@

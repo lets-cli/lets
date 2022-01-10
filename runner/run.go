@@ -190,6 +190,8 @@ func (r *Runner) initCmd() error {
 		debugf("parse docopt for command '%s'", r.cmd.Name)
 		opts, err := parser.ParseDocopts(r.cmd.Args, r.cmd.Docopts)
 		if err != nil {
+			// TODO if allow_args, just continue with what we got
+			//  but this may  require changes in go-docopt
 			return formatOptsUsageError(err, opts, r.cmd.Name, r.cmd.Docopts)
 		}
 
@@ -233,24 +235,34 @@ func joinBeforeAndScript(before string, script string) string {
 //
 func (r *Runner) prepareOsCommandForRun(cmdScript string) *exec.Cmd {
 	script := joinBeforeAndScript(r.cfg.Before, cmdScript)
-	cmd := exec.Command(r.cfg.Shell, "-c", script) // #nosec G204
+	// TODO override shell in command
+	cmd := exec.Command(
+		r.cfg.Shell,
+		"-c",
+		script,
+		"--", // see https://linux.die.net/man/1/bash
+		strings.Join(r.cmd.CommandArgs, " "),
+	) // #nosec G204
+
 	// setup std out and err
 	cmd.Stdout = r.out
 	cmd.Stderr = r.out
 	cmd.Stdin = os.Stdin
 
 	// set working directory for command
+	// TODO add work_dir to cmd
 	cmd.Dir = r.cfg.WorkDir
 
 	// setup env for command
 	cmd.Env = composeEnvs(
 		os.Environ(),
+		makeEnvEntryList(GenericCmdNameTpl, r.cmd.Name),
+		makeEnvEntryList("LETS_COMMAND_ARGS", strings.Join(r.cmd.CommandArgs, " ")),
 		convertEnvMapToList(r.cfg.Env),
 		convertEnvMapToList(r.cmd.Env),
 		convertEnvMapToList(r.cmd.OverrideEnv),
 		convertEnvMapToList(r.cmd.Options),
 		convertEnvMapToList(r.cmd.CliOptions),
-		[]string{makeEnvEntry(GenericCmdNameTpl, r.cmd.Name)},
 		convertChecksumToEnvForCmd(r.cmd.Checksum),
 		convertChecksumMapToEnvForCmd(r.cmd.ChecksumMap),
 	)

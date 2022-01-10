@@ -5,12 +5,15 @@ title: Changelog
 
 ## [Unreleased]
 
-* [Added] Allow to override command arguments when using command in `depends`
+* [Added] Allow override command arguments when using command in `depends`
 
    See example [in config docs](/docs/config#override-arguments-in-depends-command)
 
 * [Added] Validate if commands declared in `depends` actually exist.
 * [Refactoring] Refactored `runner` package, implemented `Runner` struct.
+* [Added] Support `NO_COLOR` env variable to disable colored output. See https://no-color.org/
+* [Added] `LETS_COMMAND_ARGS` - will contain command's positional args. [See config](/docs/env#default-environment-variabless).
+  Also, special bash env variables such as `"$@"` and `"$1"` etc. now available inside `cmd` script and work as expected. 
 
   
 ## [0.0.33](https://github.com/lets-cli/lets/releases/tag/v0.0.33)
