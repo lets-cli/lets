@@ -8,6 +8,7 @@ import (
 	"github.com/lets-cli/lets/config/config"
 	"github.com/lets-cli/lets/upgrade"
 	"github.com/lets-cli/lets/upgrade/registry"
+	"github.com/lets-cli/lets/workdir"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -65,27 +66,11 @@ func ConfigErrorCheck(rootCmd *cobra.Command, err error) {
 
 func initRootCommand(rootCmd *cobra.Command) {
 	initCompletionCmd(rootCmd)
-	initVersionFlag(rootCmd)
-	initEnvFlag(rootCmd)
-	initOnlyAndExecFlags(rootCmd)
-	initUpgradeFlag(rootCmd)
-}
-
-func initVersionFlag(rootCmd *cobra.Command) {
-	rootCmd.Flags().BoolP("version", "v", false, "version for lets")
-}
-
-func initEnvFlag(rootCmd *cobra.Command) {
 	rootCmd.Flags().StringToStringP("env", "E", nil, "set env variable for running command KEY=VALUE")
-}
-
-func initOnlyAndExecFlags(cmd *cobra.Command) {
-	cmd.Flags().StringArray("only", []string{}, "run only specified command(s) described in cmd as map")
-	cmd.Flags().StringArray("exclude", []string{}, "run all but excluded command(s) described in cmd as map")
-}
-
-func initUpgradeFlag(cmd *cobra.Command) {
-	cmd.Flags().Bool("upgrade", false, "upgrade lets to latest version")
+	rootCmd.Flags().StringArray("only", []string{}, "run only specified command(s) described in cmd as map")
+	rootCmd.Flags().StringArray("exclude", []string{}, "run all but excluded command(s) described in cmd as map")
+	rootCmd.Flags().Bool("upgrade", false, "upgrade lets to latest version")
+	rootCmd.Flags().Bool("init", false, "creates a new lets.yaml in the current folder")
 }
 
 func runRoot(cmd *cobra.Command, version string) error {
@@ -103,13 +88,19 @@ func runRoot(cmd *cobra.Command, version string) error {
 		return upgrader.Upgrade()
 	}
 
-	showVersion, err := cmd.Flags().GetBool("version")
+	init, err := cmd.Flags().GetBool("init")
 	if err != nil {
-		return fmt.Errorf("can not get flag 'version': %w", err)
+		return fmt.Errorf("can not get flag 'init': %w", err)
 	}
 
-	if showVersion {
-		log.Printf("lets version %s", version)
+	if init {
+		wd, err := os.Getwd()
+		if err != nil {
+			log.Fatal(err)
+		}
+		if err := workdir.InitLetsFile(wd, version); err != nil {
+			log.Fatal(err)
+		}
 
 		return nil
 	}

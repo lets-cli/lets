@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"os"
@@ -13,22 +12,16 @@ import (
 )
 
 // cut all elements before command name.
-func prepareArgs(cmd config.Command, originalArgs []string) []string {
+func prepareArgs(cmdName string, originalArgs []string) []string {
 	nameIdx := 0
 
 	for idx, arg := range originalArgs {
-		if arg == cmd.Name {
+		if arg == cmdName {
 			nameIdx = idx
 		}
 	}
 
 	return originalArgs[nameIdx:]
-}
-
-func replaceGenericCmdPlaceholder(commandName string, cmd config.Command) string {
-	genericCmdTplPlaceholder := fmt.Sprintf("${%s}", runner.GenericCmdNameTpl)
-	// replace only one placeholder in options
-	return strings.Replace(cmd.Docopts, genericCmdTplPlaceholder, commandName, 1)
 }
 
 // newCmdGeneric creates new cobra root sub command from Command.
@@ -42,19 +35,22 @@ func newCmdGeneric(cmdToRun config.Command, conf *config.Config, out io.Writer) 
 				return err
 			}
 
-			cmdToRun.Only = only
-			cmdToRun.Exclude = exclude
-			cmdToRun.Args = prepareArgs(cmdToRun, os.Args)
-			cmdToRun.CommandArgs = cmdToRun.Args[1:]
-
 			envs, err := parseEnvFlag(cmd)
 			if err != nil {
 				return err
 			}
 
-			cmdToRun.Docopts = replaceGenericCmdPlaceholder(cmdToRun.Name, cmdToRun)
-
+			cmdToRun.Only = only
+			cmdToRun.Exclude = exclude
+			cmdToRun.Args = prepareArgs(cmdToRun.Name, os.Args)
+			cmdToRun.CommandArgs = cmdToRun.Args[1:]
 			cmdToRun.OverrideEnv = envs
+			// replace only one placeholder in options
+			cmdToRun.Docopts = strings.Replace(
+				cmdToRun.Docopts,
+				fmt.Sprintf("${%s}", runner.GenericCmdNameTpl), cmdToRun.Name,
+				1,
+			)
 
 			return runner.NewRunner(&cmdToRun, conf, out).Execute(cmd.Context())
 		},
@@ -65,16 +61,8 @@ func newCmdGeneric(cmdToRun config.Command, conf *config.Config, out io.Writer) 
 		SilenceUsage:       true,
 	}
 
-	// try print docopt as help for command
 	subCmd.SetHelpFunc(func(c *cobra.Command, strings []string) {
-		buf := new(bytes.Buffer)
-		if cmdToRun.Description != "" {
-			buf.WriteString(fmt.Sprintf("%s\n\n", cmdToRun.Description))
-		}
-		buf.WriteString(cmdToRun.Docopts)
-
-		_, err := buf.WriteTo(c.OutOrStdout())
-		if err != nil {
+		if _, err := fmt.Fprint(c.OutOrStdout(), cmdToRun.Help()); err != nil {
 			c.Println(err)
 		}
 	})
@@ -102,7 +90,7 @@ func parseOnlyAndExclude(cmd *cobra.Command) (only []string, exclude []string, e
 
 	if len(excludeCmds) > 0 && len(onlyCmds) > 0 {
 		return []string{}, []string{}, fmt.Errorf(
-			"you must use either 'only' or 'exclude' flag but not both at the same time")
+			"can not use '--only' and '--exclude' at the same time")
 	}
 
 	return onlyCmds, excludeCmds, nil

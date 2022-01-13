@@ -1,7 +1,9 @@
 package config
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
 )
 
 type Command struct {
@@ -70,6 +72,23 @@ func (cmd Command) Pretty() string {
 	pretty, _ := json.MarshalIndent(cmd, "", "  ")
 
 	return string(pretty)
+}
+
+func (cmd *Command) Help() string {
+	buf := new(bytes.Buffer)
+	if cmd.Description != "" {
+		buf.WriteString(fmt.Sprintf("%s\n\n", cmd.Description))
+	}
+
+	if cmd.Docopts != "" {
+		buf.WriteString(cmd.Docopts)
+	}
+
+	if buf.Len() == 0 {
+		buf.WriteString(fmt.Sprintf("No help message for '%s'", cmd.Name))
+	}
+
+	return buf.String()
 }
 
 func (cmd *Command) ChecksumCalculator(workDir string) error {

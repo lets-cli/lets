@@ -10,7 +10,7 @@ import (
 
 var (
 	ErrFileNotExists  = errors.New("file not exists")
-	ErrConfigNotFound = errors.New("can not find config")
+	ErrConfigNotFound = errors.New("config not exists")
 )
 
 // find config file non-recursively

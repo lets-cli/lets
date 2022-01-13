@@ -8,8 +8,8 @@ import (
 	"github.com/lets-cli/lets/config/parser"
 )
 
-func Load(version string) (*config.Config, error) {
-	configPath, err := FindConfig()
+func Load(configName string, configDir string, version string) (*config.Config, error) {
+	configPath, err := FindConfig(configName, configDir)
 	if err != nil {
 		return nil, err
 	}

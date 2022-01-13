@@ -23,7 +23,10 @@ func main() {
 
 	logging.InitLogging(env.IsDebug(), os.Stdout, os.Stderr)
 
-	cfg, readConfigErr := config.Load(version)
+	configFile := os.Getenv("LETS_CONFIG")
+	configDir := os.Getenv("LETS_CONFIG_DIR")
+
+	cfg, readConfigErr := config.Load(configFile, configDir, version)
 
 	var rootCmd *cobra.Command
 	if cfg != nil {
