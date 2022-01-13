@@ -6,6 +6,8 @@ clean_test_files() {
 }
 
 setup() {
+    load "${BATS_UTILS_PATH}/bats-support/load.bash"
+    load "${BATS_UTILS_PATH}/bats-assert/load.bash"
     cd ./tests/command_persist_checksum
     clean_test_files
 }
@@ -30,9 +32,9 @@ TEMP_FILE=foo_test.txt
     # 2. check LETS_CHECKSUM_CHANGED has to be changed as there was now checksum at all and now we have new checksum
     # 3. check checksum persisted
 
-    [[ $status = 0 ]]
-    [[ "${lines[0]}" = "LETS_CHECKSUM=${FIRST_CHECKSUM}" ]]
-    [[ "${lines[1]}" = "LETS_CHECKSUM_CHANGED=true" ]]
+    assert_success
+    assert_line --index 0 "LETS_CHECKSUM=${FIRST_CHECKSUM}"
+    assert_line --index 1 "LETS_CHECKSUM_CHANGED=true"
 
     # it creates .lets
     [[ -d .lets ]]
@@ -47,9 +49,9 @@ TEMP_FILE=foo_test.txt
     run lets ${CMD_NAME}
     printf "second run: %s\n" "${lines[@]}"
 
-    [[ $status = 0 ]]
-    [[ "${lines[0]}" = "LETS_CHECKSUM=${FIRST_CHECKSUM}" ]]
-    [[ "${lines[1]}" = "LETS_CHECKSUM_CHANGED=false" ]]
+    assert_success
+    assert_line --index 0 "LETS_CHECKSUM=${FIRST_CHECKSUM}"
+    assert_line --index 1 "LETS_CHECKSUM_CHANGED=false"
 
     # third run, there is stored checksum and we creating new file. checksum must be changed now
 
@@ -62,29 +64,28 @@ TEMP_FILE=foo_test.txt
     run lets ${CMD_NAME}
     printf "third run: %s\n" "${lines[@]}"
 
-    [[ $status = 0 ]]
-    [[ "${lines[0]}" = "LETS_CHECKSUM=${CHANGED_CHECKSUM}" ]]
-    [[ "${lines[1]}" = "LETS_CHECKSUM_CHANGED=true" ]]
+    assert_success
+    assert_line --index 0 "LETS_CHECKSUM=${CHANGED_CHECKSUM}"
+    assert_line --index 1 "LETS_CHECKSUM_CHANGED=true"
 }
 
 @test "command_persist_checksum: should persist checksum for cmd-as-map" {
     export CMD_NAME=persist-checksum-for-cmd-as-map
 
     run lets ${CMD_NAME}
-    printf "%s\n" "${lines[@]}"
 
     # first run, no stored checksum
     # 1. check checksum value
     # 2. check LETS_CHECKSUM_CHANGED has to be changed as there was now checksum at all and now we have new checksum
     # 3. check checksum persisted
 
-    [[ $status = 0 ]]
+    assert_success
 
     # there is no guarantee in which order cmds will finish, so we sort output on our own
     sort_array lines
 
-    [[ "${lines[0]}" = "1 LETS_CHECKSUM=${FIRST_CHECKSUM}" ]]
-    [[ "${lines[1]}" = "2 LETS_CHECKSUM_CHANGED=true" ]]
+    assert_line --index 0 "1 LETS_CHECKSUM=${FIRST_CHECKSUM}"
+    assert_line --index 1 "2 LETS_CHECKSUM_CHANGED=true"
 
     # it creates .lets
     [[ -d .lets ]]
@@ -97,15 +98,13 @@ TEMP_FILE=foo_test.txt
 
     # second run, previous checksum persisted. lets must read it and check that its not changed
     run lets ${CMD_NAME}
-    printf "%s\n" "${lines[@]}"
-
-    [[ $status = 0 ]]
+    assert_success
 
     # there is no guarantee in which order cmds will finish, so we sort output on our own
     sort_array lines
 
-    [[ "${lines[0]}" = "1 LETS_CHECKSUM=${FIRST_CHECKSUM}" ]]
-    [[ "${lines[1]}" = "2 LETS_CHECKSUM_CHANGED=false" ]]
+    assert_line --index 0 "1 LETS_CHECKSUM=${FIRST_CHECKSUM}"
+    assert_line --index 1 "2 LETS_CHECKSUM_CHANGED=false"
 
     # third run, there is stored checksum and we creating new file. checksum must be changed now
 
@@ -116,23 +115,21 @@ TEMP_FILE=foo_test.txt
     # 2. check LETS_CHECKSUM_CHANGED has changed to true
     # 2. check new checksum persisted
     run lets ${CMD_NAME}
-    printf "%s\n" "${lines[@]}"
 
     # there is no guarantee in which order cmds will finish, so we sort output on our own
-    [[ $status = 0 ]]
+    assert_success
 
     sort_array lines
-    [[ "${lines[0]}" = "1 LETS_CHECKSUM=${CHANGED_CHECKSUM}" ]]
-    [[ "${lines[1]}" = "2 LETS_CHECKSUM_CHANGED=true" ]]
+    assert_line --index 0 "1 LETS_CHECKSUM=${CHANGED_CHECKSUM}"
+    assert_line --index 1 "2 LETS_CHECKSUM_CHANGED=true"
 }
 
 @test "command_persist_checksum: should persist checksum only if exit code = 0" {
     run lets with-error-code-1
-    printf "%s\n" "${lines[@]}"
 
     [[ $status = 1 ]]
-    [[ "${lines[0]}" = "LETS_CHECKSUM=${FIRST_CHECKSUM}" ]]
-    [[ "${lines[1]}" = "LETS_CHECKSUM_CHANGED=true" ]]
+    assert_line --index 0 "LETS_CHECKSUM=${FIRST_CHECKSUM}"
+    assert_line --index 1 "LETS_CHECKSUM_CHANGED=true"
 
     [[ -d .lets ]]
     [[ ! -d .lets/checksums ]]
@@ -143,9 +140,8 @@ TEMP_FILE=foo_test.txt
     cd ./use_persist_without_checksum
 
     run lets use-persist-without-checksum
-    printf "%s\n" "${lines[@]}"
 
     [[ $status = 1 ]]
 
-    [[ "${lines[0]}" = "failed to parse 'use-persist-without-checksum' command: field persist_checksum: you must declare 'checksum' for command to use 'persist_checksum'" ]]
+    assert_line --index 0 "failed to parse 'use-persist-without-checksum' command: field persist_checksum: you must declare 'checksum' for command to use 'persist_checksum'"
 }

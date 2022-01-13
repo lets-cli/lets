@@ -6,9 +6,12 @@ WORKDIR /app
 RUN apt-get update && apt-get install git gcc
 
 RUN cd /tmp && \
-    git clone https://github.com/sstephenson/bats.git && \
-    cd bats && \
-    ./install.sh /usr
+    git clone git://github.com/bats-core/bats-core && \
+    git clone git://github.com/bats-core/bats-support.git /bats/bats-support && \
+    git clone git://github.com/bats-core/bats-assert.git /bats/bats-assert && \
+    cd bats-core && \
+    ./install.sh /usr && \
+    echo Bats installed
 
 RUN go install gotest.tools/gotestsum@latest
 

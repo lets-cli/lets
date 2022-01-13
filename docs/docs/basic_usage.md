@@ -9,9 +9,7 @@ Assume you have a `node.js` project.
 
 ### Create config
 
-Go to your project repo and create `lets.yaml`.
-
-**`touch lets.yaml`**
+Go to your project repo and create `lets.yaml` by running `lets --init`.
 
 Now add `.lets` to `.gitignore`. `.lets` is a lets directory where it stores some internal metadata. You do not need to commit this directory.
 

@@ -33,13 +33,15 @@ jobs:
         env:
           NO_COLOR: 1
         run: |
-          git clone https://github.com/sstephenson/bats.git bats-repo
-          cd bats-repo
+          git clone git://github.com/bats-core/bats-core
+          git clone git://github.com/bats-core/bats-support.git bats-core/bats-support
+          git clone git://github.com/bats-core/bats-assert.git bats-core/bats-assert
+          cd bats-core
           ./install.sh ../
-          cd ..
+          cd ../
           PATH=${PATH}:$(pwd)
           go build -o lets *.go
-          ./bin/bats tests
+          BATS_UTILS_PATH=./bats-core ./bin/bats tests
 
   lint:
     runs-on: ubuntu-latest
