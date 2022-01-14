@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/codeclysm/extract v2.2.0+incompatible
-	github.com/coreos/go-semver v0.2.0
+	github.com/coreos/go-semver v0.3.0
 	github.com/docopt/docopt-go v0.0.0-20180111231733-ee0de3bc6815
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.0.0
