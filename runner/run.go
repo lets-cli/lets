@@ -174,6 +174,7 @@ type RunOptions struct {
 // format docopts error and adds usage string to output.
 func formatOptsUsageError(err error, opts docopt.Opts, cmdName string, rawOptions string) error {
 	if opts == nil && err.Error() == "" {
+		// TODO how to get wrong option name
 		err = fmt.Errorf("no such option")
 	}
 
@@ -290,7 +291,8 @@ func (r *Runner) prepareOsCommandForRun(cmdScript string) *exec.Cmd {
 
 // Run all commands from Depends in sequential order.
 func (r *Runner) runDepends(ctx context.Context) error {
-	for depName, dep := range r.cmd.Depends {
+	for _, depName := range r.cmd.DependsNames {
+		dep := r.cmd.Depends[depName]
 		debugf("running dependency '%s' for command '%s'", depName, r.cmd.Name)
 
 		dependCmd := r.cfg.Commands[depName]

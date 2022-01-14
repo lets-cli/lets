@@ -106,18 +106,21 @@ func parseDepends(rawDepends interface{}, newCmd *config.Command) error {
 	}
 
 	dependencies := make(map[string]config.Dep, len(depends))
+	dependsNames := make([]string, 0, len(depends))
 
 	for idx, value := range depends {
 		switch v := value.(type) {
 		case string:
 			dep := &config.Dep{Name: v, Args: []string{}}
 			dependencies[dep.Name] = *dep
+			dependsNames = append(dependsNames, dep.Name)
 		case map[interface{}]interface{}:
 			dep, err := parseDependsAsMap(v, newCmd.Name, idx)
 			if err != nil {
 				return err
 			}
 			dependencies[dep.Name] = *dep
+			dependsNames = append(dependsNames, dep.Name)
 		default:
 			return parseError(
 				"value of depends list must be a string",
@@ -129,6 +132,7 @@ func parseDepends(rawDepends interface{}, newCmd *config.Command) error {
 	}
 
 	newCmd.Depends = dependencies
+	newCmd.DependsNames = dependsNames
 
 	return nil
 }

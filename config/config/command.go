@@ -24,11 +24,13 @@ type Command struct {
 	// env from -E flag
 	OverrideEnv map[string]string
 	// store docopts from options directive
-	Docopts         string
-	SkipDocopts     bool // default false
-	Options         map[string]string
-	CliOptions      map[string]string
-	Depends         map[string]Dep
+	Docopts     string
+	SkipDocopts bool // default false
+	Options     map[string]string
+	CliOptions  map[string]string
+	Depends     map[string]Dep
+	// store depends commands in order declared in config
+	DependsNames    []string
 	Checksum        string
 	ChecksumMap     map[string]string
 	PersistChecksum bool
