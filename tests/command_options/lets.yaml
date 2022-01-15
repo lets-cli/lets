@@ -30,5 +30,10 @@ commands:
 
   test-proxy-options:
     description: Test passthrough options (lets must append them to ./echoArgs.sh)
-    cmd: 
+    cmd:
       - ./echoArgs.sh
+
+  say:
+    options: |
+      Usage: lets say <say>
+    cmd: echo "Hi ${LETSOPT_SAY}"

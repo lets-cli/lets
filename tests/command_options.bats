@@ -151,3 +151,9 @@ setup() {
     assert_line --index 2 "-m"
     assert_line --index 3 "my message contains whitespace!!"
 }
+
+@test "command_options: param with same name as command name itself" {
+    run lets say Bro
+    assert_success
+    assert_line --index 0 "Hi Bro"
+}

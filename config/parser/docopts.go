@@ -28,6 +28,9 @@ func OptsToLetsOpt(opts docopt.Opts) map[string]string {
 	envMap := make(map[string]string, len(opts))
 
 	for origKey, value := range opts {
+		if !isOptKey(origKey) {
+			continue
+		}
 		key := normalizeKey(origKey)
 		envKey := fmt.Sprintf("LETSOPT_%s", key)
 

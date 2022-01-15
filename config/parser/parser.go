@@ -10,7 +10,7 @@ import (
 	"github.com/lets-cli/lets/config/config"
 	"github.com/lets-cli/lets/config/path"
 	"github.com/lets-cli/lets/util"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 type ParseError struct {
@@ -49,7 +49,7 @@ func newConfigParseError(msg string, name string, field string) error {
 
 func parseConfigGeneral(rawKeyValue map[string]interface{}, cfg *config.Config) error { //nolint:cyclop
 	if cmds, ok := rawKeyValue[config.COMMANDS]; ok {
-		cmdsMap, ok := cmds.(map[interface{}]interface{})
+		cmdsMap, ok := cmds.(map[string]interface{})
 		if !ok {
 			return newConfigParseError(
 				"must be a mapping",
@@ -69,7 +69,7 @@ func parseConfigGeneral(rawKeyValue map[string]interface{}, cfg *config.Config) 
 	}
 
 	if env, ok := rawKeyValue[ENV]; ok {
-		env, ok := env.(map[interface{}]interface{})
+		env, ok := env.(map[string]interface{})
 		if !ok {
 			return fmt.Errorf("env must be a mapping")
 		}
@@ -81,7 +81,7 @@ func parseConfigGeneral(rawKeyValue map[string]interface{}, cfg *config.Config) 
 	}
 
 	if evalEnv, ok := rawKeyValue[EvalEnv]; ok {
-		evalEnv, ok := evalEnv.(map[interface{}]interface{})
+		evalEnv, ok := evalEnv.(map[string]interface{})
 		if !ok {
 			return fmt.Errorf("eval_env must be a mapping")
 		}
@@ -264,21 +264,37 @@ func parseBefore(before string, cfg *config.Config) error {
 	return nil
 }
 
-func parseCommands(cmds map[interface{}]interface{}) ([]config.Command, error) {
+func parseCommands(cmds map[string]interface{}) ([]config.Command, error) {
 	var commands []config.Command
-	for key, value := range cmds {
-		keyStr, ok := key.(string)
-		if !ok {
+	for rawName, rawValue := range cmds {
+		rawCmd := map[string]interface{}{}
+
+		switch rawValue := rawValue.(type) {
+		case map[string]interface{}:
+			rawCmd = rawValue
+		case map[interface{}]interface{}:
+			for k, v := range rawValue {
+				k, ok := k.(string)
+				if !ok {
+					return []config.Command{}, newConfigParseError(
+						"command directive must be a string",
+						rawName,
+						"",
+					)
+				}
+				rawCmd[k] = v
+			}
+		default:
 			return []config.Command{}, newConfigParseError(
-				"parser name must be a string",
+				"command name must be a string",
 				config.COMMANDS,
 				"",
 			)
 		}
 
-		newCmd := config.NewCommand(keyStr)
+		newCmd := config.NewCommand(rawName)
 
-		err := parseCommand(&newCmd, value.(map[interface{}]interface{}))
+		err := parseCommand(&newCmd, rawCmd)
 		if err != nil {
 			return []config.Command{}, err
 		}
