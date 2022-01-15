@@ -7,21 +7,24 @@ import (
 )
 
 const (
-	NAME = "name"
-	ARGS = "args"
+	nameKey = "name"
+	argsKey = "args"
+	envKey  = "env"
 )
 
 var (
-	depKeys    = []string{NAME, ARGS}
+	depKeys    = []string{nameKey, argsKey, envKey}
 	depKeysMap = map[string]bool{
-		NAME: true,
-		ARGS: true,
+		nameKey: true,
+		argsKey: true,
+		envKey:  true,
 	}
 )
 
 func parseDependsAsMap(dep map[interface{}]interface{}, cmdName string, idx int) (*config.Dep, error) { //nolint:cyclop
 	name := ""
 	args := []string{}
+	env := map[string]string{}
 
 	for k, v := range dep {
 		key, ok := k.(string)
@@ -43,7 +46,8 @@ func parseDependsAsMap(dep map[interface{}]interface{}, cmdName string, idx int)
 			)
 		}
 
-		if key == NAME {
+		switch key {
+		case nameKey:
 			value, ok := v.(string)
 			if !ok {
 				return nil, &ParseCommandError{
@@ -56,7 +60,7 @@ func parseDependsAsMap(dep map[interface{}]interface{}, cmdName string, idx int)
 				}
 			}
 			name = value
-		} else if key == ARGS {
+		case argsKey:
 			switch value := v.(type) {
 			case string:
 				args = append(args, value)
@@ -83,6 +87,11 @@ func parseDependsAsMap(dep map[interface{}]interface{}, cmdName string, idx int)
 						fmt.Sprintf("value of 'args' must be a string or an array of string, got: %#v", v)),
 				}
 			}
+		case envKey:
+			for envName, envValue := range v.(map[interface{}]interface{}) {
+				nameKey := envName.(string)
+				env[nameKey] = fmt.Sprintf("%v", envValue)
+			}
 		}
 	}
 
@@ -90,6 +99,7 @@ func parseDependsAsMap(dep map[interface{}]interface{}, cmdName string, idx int)
 		Name: name,
 		// args always must start with a dependency name, otherwise docopt will fail
 		Args: append([]string{name}, args...),
+		Env:  env,
 	}, nil
 }
 

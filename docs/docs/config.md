@@ -388,9 +388,12 @@ commands:
 
 #### Override arguments in depends command
 
-It is possible to override arguments for any commands declared in depends.
+It is possible to override arguments or env for any commands declared in depends.
 
-For example we want `build` command to be executed with `--verbose` flag in test `depends`.
+For example we want:
+
+- `build` command to be executed with `--verbose` flag in test `depends`.
+- `alarm` command to be executed with `Something is happening` arg and `LEVEL: INFO` env in test `depends`.
 
 ```yaml
 commands:
@@ -400,6 +403,8 @@ commands:
   alarm:
     options: |
       Usage: lets alarm <msg>
+    env:
+      LEVEL: DEBUG
     cmd: echo Alarm ${LETSOPT_MSG}
 
   build:
@@ -418,6 +423,8 @@ commands:
       - greet
       - name: alarm
         args: Something is happening
+        env:
+          LEVEL: INFO
       - name: build:
         args: [--verbose]
     cmd: go test ./... -v

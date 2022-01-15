@@ -5,7 +5,7 @@ title: Changelog
 
 ## [Unreleased]
 
-* [Added] Allow override command arguments when using command in `depends`
+* [Added] Allow override command arguments and env when using command in `depends`
 
    See example [in config docs](/docs/config#override-arguments-in-depends-command)
 

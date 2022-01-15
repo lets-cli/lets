@@ -3,17 +3,34 @@ shell: bash
 commands:
   run-with-depends:
     description: Test command depends
-    depends: 
-      - name: greet
-        args: Developer
+    depends:
+      - greet
       - bar
     cmd: |
       echo "Main"
 
+  override-args:
+      description: Test override args
+      depends:
+        - name: greet
+          args: Developer
+        - bar
+      cmd: echo "Override args"
+
+  override-env:
+      description: Test override env
+      depends:
+        - name: greet
+          env:
+            LEVEL: DEBUG
+      cmd: echo "Override env"
+
   greet:
     options: |
-      Usage: lets greet <name>
-    cmd: echo Hello ${LETSOPT_NAME}
+      Usage: lets greet [<name>]
+    env:
+      LEVEL: INFO
+    cmd: echo Hello ${LETSOPT_NAME:-world} with level ${LEVEL}
 
   bar:
     cmd: echo Bar
