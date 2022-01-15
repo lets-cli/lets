@@ -1,0 +1,8 @@
+shell: bash
+
+commands:
+  y:
+    cmd: echo Hi from y
+
+  yes:
+    cmd: echo Hi from yes

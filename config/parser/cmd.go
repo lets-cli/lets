@@ -61,20 +61,10 @@ func parseCmd(cmd interface{}, newCmd *config.Command) error { //nolint:cyclop
 
 		fullCommandList := append(cmdList, escapeArgs(proxyArgs)...)
 		newCmd.Cmd = strings.TrimSpace(strings.Join(fullCommandList, " "))
-	case map[interface{}]interface{}:
+	case map[string]interface{}:
 		cmdMap := make(map[string]string, len(cmd))
 
 		for cmdName, cmdScript := range cmd {
-			cmdName, cmdNameOk := cmdName.(string)
-			if !cmdNameOk {
-				return parseError(
-					"cmd name must be string",
-					newCmd.Name,
-					CMD,
-					cmdName,
-				)
-			}
-
 			cmdScript, cmdScriptOK := cmdScript.(string)
 			if !cmdScriptOK {
 				return parseError(
@@ -91,7 +81,12 @@ func parseCmd(cmd interface{}, newCmd *config.Command) error { //nolint:cyclop
 		newCmd.CmdMap = cmdMap
 	default:
 		return parseError(
-			"must be either string or list of string",
+			`
+must be one of
+  - string
+  - list of string
+  - map of string to string
+`,
 			newCmd.Name,
 			CMD,
 			"",

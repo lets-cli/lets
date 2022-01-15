@@ -2,9 +2,9 @@ package parser
 
 import "github.com/lets-cli/lets/config/config"
 
-func parseChecksum(checksum interface{}, newCmd *config.Command) error { //nolint:cyclop
+func parseChecksum(checksum interface{}, newCmd *config.Command) error {
 	patternsList, okList := checksum.([]interface{})
-	patternsMap, okMap := checksum.(map[interface{}]interface{})
+	patternsMap, okMap := checksum.(map[string]interface{})
 	checksumSource := make(map[string][]string)
 
 	switch {
@@ -23,16 +23,6 @@ func parseChecksum(checksum interface{}, newCmd *config.Command) error { //nolin
 		}
 	case okMap:
 		for key, patterns := range patternsMap {
-			key, ok := key.(string)
-			if !ok {
-				return parseError(
-					"key of checksum list must be a string",
-					newCmd.Name,
-					CHECKSUM,
-					"",
-				)
-			}
-
 			patterns, ok := patterns.([]interface{})
 
 			if !ok {

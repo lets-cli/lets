@@ -25,9 +25,7 @@ func evalEnvVariable(rawCmd string) (string, error) {
 }
 
 func parseEvalEnv(evalEnv interface{}, newCmd *config.Command) error {
-	for name, value := range evalEnv.(map[interface{}]interface{}) {
-		nameKey := name.(string)
-
+	for name, value := range evalEnv.(map[string]interface{}) {
 		if value, ok := value.(string); ok {
 			computedVal, err := evalEnvVariable(value)
 			if err != nil {
@@ -35,17 +33,17 @@ func parseEvalEnv(evalEnv interface{}, newCmd *config.Command) error {
 					fmt.Sprintf("failed to eval: %s", err),
 					newCmd.Name,
 					EvalEnv,
-					nameKey,
+					name,
 				)
 			}
 
-			newCmd.Env[nameKey] = computedVal
+			newCmd.Env[name] = computedVal
 		} else {
 			return parseError(
 				"must be a string",
 				newCmd.Name,
 				EvalEnv,
-				nameKey,
+				name,
 			)
 		}
 	}
@@ -53,22 +51,20 @@ func parseEvalEnv(evalEnv interface{}, newCmd *config.Command) error {
 	return nil
 }
 
-func parseEvalEnvForConfig(evalEnv map[interface{}]interface{}, cfg *config.Config) error {
+func parseEvalEnvForConfig(evalEnv map[string]interface{}, cfg *config.Config) error {
 	for name, value := range evalEnv {
-		nameKey := name.(string)
-
 		if value, ok := value.(string); ok {
 			computedVal, err := evalEnvVariable(value)
 			if err != nil {
 				return fmt.Errorf("can not evaluate env variable: %w", err)
 			}
 
-			cfg.Env[nameKey] = computedVal
+			cfg.Env[name] = computedVal
 		} else {
 			return newConfigParseError(
 				"must be a string",
 				EvalEnv,
-				nameKey,
+				name,
 			)
 		}
 	}

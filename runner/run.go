@@ -196,6 +196,8 @@ func (r *Runner) initCmd() error {
 			return formatOptsUsageError(err, opts, r.cmd.Name, r.cmd.Docopts)
 		}
 
+		debugf("raw docopt for command '%s': %#v", r.cmd.Name, opts)
+
 		r.cmd.Options = parser.OptsToLetsOpt(opts)
 		r.cmd.CliOptions = parser.OptsToLetsCli(opts)
 	}

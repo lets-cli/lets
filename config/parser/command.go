@@ -63,7 +63,7 @@ func parseError(msg string, name string, field string, meta string) error {
 
 // parseCommand parses and validates unmarshaled yaml.
 //nolint:cyclop,gocognit
-func parseCommand(newCmd *config.Command, rawCommand map[interface{}]interface{}) error {
+func parseCommand(newCmd *config.Command, rawCommand map[string]interface{}) error {
 	if err := validateCommandFields(rawCommand, validFields); err != nil {
 		return err
 	}
@@ -137,9 +137,9 @@ func parseCommand(newCmd *config.Command, rawCommand map[interface{}]interface{}
 	return nil
 }
 
-func validateCommandFields(rawKeyValue map[interface{}]interface{}, validFields []string) error {
+func validateCommandFields(rawKeyValue map[string]interface{}, validFields []string) error {
 	for key := range rawKeyValue {
-		if !util.IsStringInList(key.(string), validFields) {
+		if !util.IsStringInList(key, validFields) {
 			return fmt.Errorf("unknown command field '%s'", key)
 		}
 	}

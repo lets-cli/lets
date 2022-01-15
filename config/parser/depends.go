@@ -21,22 +21,12 @@ var (
 	}
 )
 
-func parseDependsAsMap(dep map[interface{}]interface{}, cmdName string, idx int) (*config.Dep, error) { //nolint:cyclop
+func parseDependsAsMap(dep map[string]interface{}, cmdName string, idx int) (*config.Dep, error) { //nolint:cyclop
 	name := ""
 	args := []string{}
 	env := map[string]string{}
 
-	for k, v := range dep {
-		key, ok := k.(string)
-		if !ok {
-			return nil, parseError(
-				"key of depend must be a string",
-				cmdName,
-				DEPENDS,
-				"",
-			)
-		}
-
+	for key, v := range dep {
 		if _, exists := depKeysMap[key]; !exists {
 			return nil, parseError(
 				fmt.Sprintf("key of depend must be one of %s", depKeys),
@@ -88,9 +78,8 @@ func parseDependsAsMap(dep map[interface{}]interface{}, cmdName string, idx int)
 				}
 			}
 		case envKey:
-			for envName, envValue := range v.(map[interface{}]interface{}) {
-				nameKey := envName.(string)
-				env[nameKey] = fmt.Sprintf("%v", envValue)
+			for envName, envValue := range v.(map[string]interface{}) {
+				env[envName] = fmt.Sprintf("%v", envValue)
 			}
 		}
 	}
@@ -124,7 +113,7 @@ func parseDepends(rawDepends interface{}, newCmd *config.Command) error {
 			dep := &config.Dep{Name: v, Args: []string{}}
 			dependencies[dep.Name] = *dep
 			dependsNames = append(dependsNames, dep.Name)
-		case map[interface{}]interface{}:
+		case map[string]interface{}:
 			dep, err := parseDependsAsMap(v, newCmd.Name, idx)
 			if err != nil {
 				return err
