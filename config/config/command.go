@@ -70,6 +70,15 @@ func (cmd Command) WithArgs(args []string) Command {
 	return newCmd
 }
 
+func (cmd Command) WithEnv(env map[string]string) Command {
+	newCmd := cmd
+	for key, val := range env {
+		newCmd.Env[key] = val
+	}
+
+	return newCmd
+}
+
 func (cmd Command) Pretty() string {
 	pretty, _ := json.MarshalIndent(cmd, "", "  ")
 

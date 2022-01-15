@@ -312,6 +312,9 @@ func (r *Runner) runDepends(ctx context.Context) error {
 			dependCmd = dependCmd.WithArgs(dep.Args)
 			dependCmd.SkipDocopts = false
 		}
+		if len(dep.Env) != 0 {
+			dependCmd = dependCmd.WithEnv(dep.Env)
+		}
 		err := NewChildRunner(&dependCmd, r).Execute(ctx)
 		if err != nil {
 			// must return error to root
