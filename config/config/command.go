@@ -52,6 +52,11 @@ type Command struct {
 	ChecksumSource map[string][]string
 	// store loaded persisted checksums here
 	persistedChecksums map[string]string
+
+	// ref is basically a command name to use with predefined args, env
+	Ref string
+	// can be specified only with ref
+	RefArgs string
 }
 
 // NewCommand creates new command struct.
@@ -66,6 +71,21 @@ func NewCommand(name string) Command {
 func (cmd Command) WithArgs(args []string) Command {
 	newCmd := cmd
 	newCmd.Args = args
+
+	return newCmd
+}
+
+func (cmd Command) FromRef(refCommand Command) Command {
+	newCmd := cmd
+
+	// append args
+	if len(newCmd.Args) == 0 {
+		newCmd.Args = []string{cmd.Name, refCommand.RefArgs}
+	} else {
+		newCmd.Args = append(newCmd.Args, refCommand.RefArgs)
+	}
+
+	newCmd.CommandArgs = newCmd.Args[1:]
 
 	return newCmd
 }

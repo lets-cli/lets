@@ -1,0 +1,9 @@
+shell: bash
+
+commands:
+  hello:
+    cmd: echo Hello $@
+
+  hello-world:
+    ref: hello
+    args: World

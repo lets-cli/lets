@@ -20,6 +20,8 @@ var (
 	CHECKSUM        = "checksum"
 	PersistChecksum = "persist_checksum"
 	AFTER           = "after"
+	REF             = "ref"
+	ARGS            = "args"
 )
 
 var validFields = []string{
@@ -34,6 +36,8 @@ var validFields = []string{
 	CHECKSUM,
 	PersistChecksum,
 	AFTER,
+	REF,
+	ARGS,
 }
 
 type ParseCommandError struct {
@@ -134,6 +138,21 @@ func parseCommand(newCmd *config.Command, rawCommand map[string]interface{}) err
 		}
 	}
 
+	ref, refOk := rawCommand[REF]
+	if refOk {
+		if err := parseRef(ref, newCmd); err != nil {
+			return err
+		}
+	}
+
+	if refOk {
+		if args, ok := rawCommand[ARGS]; ok {
+			if err := parseArgs(args, newCmd); err != nil {
+				return err
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -142,6 +161,13 @@ func validateCommandFields(rawKeyValue map[string]interface{}, validFields []str
 		if !util.IsStringInList(key, validFields) {
 			return fmt.Errorf("unknown command field '%s'", key)
 		}
+	}
+
+	_, argsExist := rawKeyValue[ARGS] // # ifshort
+	_, refExist := rawKeyValue[REF]
+
+	if argsExist && !refExist {
+		return fmt.Errorf("'args' can only be used with 'ref'")
 	}
 
 	return nil

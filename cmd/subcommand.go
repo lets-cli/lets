@@ -25,10 +25,10 @@ func prepareArgs(cmdName string, originalArgs []string) []string {
 }
 
 // newCmdGeneric creates new cobra root sub command from Command.
-func newCmdGeneric(cmdToRun config.Command, conf *config.Config, out io.Writer) *cobra.Command {
+func newCmdGeneric(command config.Command, conf *config.Config, out io.Writer) *cobra.Command {
 	subCmd := &cobra.Command{
-		Use:   cmdToRun.Name,
-		Short: cmdToRun.Description,
+		Use:   command.Name,
+		Short: command.Description,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			only, exclude, err := parseOnlyAndExclude(cmd)
 			if err != nil {
@@ -40,19 +40,25 @@ func newCmdGeneric(cmdToRun config.Command, conf *config.Config, out io.Writer) 
 				return err
 			}
 
-			cmdToRun.Only = only
-			cmdToRun.Exclude = exclude
-			cmdToRun.Args = prepareArgs(cmdToRun.Name, os.Args)
-			cmdToRun.CommandArgs = cmdToRun.Args[1:]
-			cmdToRun.OverrideEnv = envs
+			command.Only = only
+			command.Exclude = exclude
+			command.Args = prepareArgs(command.Name, os.Args)
+			command.CommandArgs = command.Args[1:]
+			command.OverrideEnv = envs
 			// replace only one placeholder in options
-			cmdToRun.Docopts = strings.Replace(
-				cmdToRun.Docopts,
-				fmt.Sprintf("${%s}", runner.GenericCmdNameTpl), cmdToRun.Name,
+			command.Docopts = strings.Replace(
+				command.Docopts,
+				fmt.Sprintf("${%s}", runner.GenericCmdNameTpl), command.Name,
 				1,
 			)
 
-			return runner.NewRunner(&cmdToRun, conf, out).Execute(cmd.Context())
+			commandToRun := command
+			if command.Ref != "" {
+				refCmd := command
+				commandToRun = conf.Commands[refCmd.Ref].FromRef(refCmd)
+			}
+
+			return runner.NewRunner(&commandToRun, conf, out).Execute(cmd.Context())
 		},
 		// we use docopt to parse flags on our own, so any flag is valid flag here
 		FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},
@@ -62,7 +68,7 @@ func newCmdGeneric(cmdToRun config.Command, conf *config.Config, out io.Writer) 
 	}
 
 	subCmd.SetHelpFunc(func(c *cobra.Command, strings []string) {
-		if _, err := fmt.Fprint(c.OutOrStdout(), cmdToRun.Help()); err != nil {
+		if _, err := fmt.Fprint(c.OutOrStdout(), command.Help()); err != nil {
 			c.Println(err)
 		}
 	})

@@ -12,15 +12,16 @@ title: Changelog
 * [Added] Validate if commands declared in `depends` actually exist.
 * [Refactoring] Refactored `runner` package, implemented `Runner` struct.
 * [Added] Support `NO_COLOR` env variable to disable colored output. See https://no-color.org/
-* [Added] `LETS_COMMAND_ARGS` - will contain command's positional args. [See config](/docs/env#default-environment-variabless).
+* [Added] `LETS_COMMAND_ARGS` - will contain command's positional args. [See config](/docs/env#default-environment-variables).
   
   Also, special bash env variables such as `"$@"` and `"$1"` etc. now available inside `cmd` script and work as expected. 
 * [Added] `work_dir` directive for command. See [config](/docs/config#work_dir)
 * [Added] `shell` directive for command. See [config](/docs/config#shell-1)
 * [Added] `--init` flag. Run `lets --init` to create new `lets.yaml` with example command
 * [Refactoring] updated `bats` test framework and adjusted all bats tests 
+* [Added] `ref` directive to `command`. Allows to declare existing command with predefined args [See config](/docs/config#ref).
 
-  
+
 ## [0.0.33](https://github.com/lets-cli/lets/releases/tag/v0.0.33)
 
 * [Added] Allow templating in command `options` directive [docs](/docs/advanced_usage#command-templates)
