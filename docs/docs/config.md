@@ -22,6 +22,8 @@ Config schema
     * [eval_env](#eval_env)
     * [checksum](#checksum)
     * [persist_checksum](#persist_checksum)
+    * [ref](#ref)
+    * [args](#args)
 
 
 ## Top-level directives:
@@ -649,3 +651,50 @@ Resulting env will be:
 * `LETS_CHECKSUM_DEPS_CHANGED` - is checksum of deps files changed
 * `LETS_CHECKSUM_DOC_CHANGED` - is checksum of doc files changed
 * `LETS_CHECKSUM_CHANGED` - is checksum of all checksums (deps and doc) changed
+
+### `ref`
+
+`key: ref`
+
+`type: string`
+
+**`Experimental feature`**
+
+NOTE: `ref` is not compatible (yet) with any directives except `args`. Actually `ref` is a special syntax that turns command into reference to command. It may be changed in the future.
+
+Allows to run command with predefined arguments. Before this was implemented, if you had some commmand and wanted same command but with some predefined args, you had to use so called `lets-in-lets` hack.
+
+Before:
+
+```yaml
+commands:
+  ls:
+    cmd: [ls]
+
+  ls-table:
+    cmd: lets ls -l
+```
+
+
+Now:
+
+```yaml
+commands:
+  ls:
+    cmd: [ls]
+
+  ls-table:
+    ref: ls
+    args: -l
+```
+
+### `args`
+
+`key: args`
+
+`type: string`
+
+**`Experimental feature`**
+
+`args` is used only with [ref](#ref) and allows to set additional positional args to referenced command. See [ref](#ref) example.
+

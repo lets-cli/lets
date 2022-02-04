@@ -96,8 +96,3 @@ commands:
   run-docs:
     work_dir: docs
     cmd: npm start
-
-  print-env:
-    cmd: |
-      echo positional args: $@
-      env | grep LETS

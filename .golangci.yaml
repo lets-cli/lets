@@ -14,6 +14,7 @@ linters:
     - wrapcheck
     - prealloc # enable it sometimes
     - wsl
+    - ifshort
 
 linters-settings:
   gomnd:
