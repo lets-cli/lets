@@ -10,10 +10,11 @@ import (
 	"github.com/lets-cli/lets/config/config"
 	"github.com/lets-cli/lets/config/path"
 	"github.com/lets-cli/lets/util"
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 )
 
-type ParseError struct {
+type ConfigParseError struct {
 	Path struct {
 		Full  string
 		Field string
@@ -21,10 +22,11 @@ type ParseError struct {
 	Err error
 }
 
-func (e *ParseError) Error() string {
+func (e *ConfigParseError) Error() string {
 	return fmt.Sprintf("failed to parse config: %s", e.Err)
 }
 
+// TODO refactor this.
 func newConfigParseError(msg string, name string, field string) error {
 	fields := []string{name, field}
 	sep := "."
@@ -35,7 +37,7 @@ func newConfigParseError(msg string, name string, field string) error {
 
 	fullPath := strings.Join(fields, sep)
 
-	return &ParseError{
+	return &ConfigParseError{
 		Path: struct {
 			Full  string
 			Field string
@@ -47,7 +49,7 @@ func newConfigParseError(msg string, name string, field string) error {
 	}
 }
 
-func parseConfigGeneral(rawKeyValue map[string]interface{}, cfg *config.Config) error { //nolint:cyclop
+func parseConfigGeneral(rawKeyValue map[string]interface{}, cfg *config.Config) error {
 	if cmds, ok := rawKeyValue[config.COMMANDS]; ok {
 		cmdsMap, ok := cmds.(map[string]interface{})
 		if !ok {
@@ -58,7 +60,7 @@ func parseConfigGeneral(rawKeyValue map[string]interface{}, cfg *config.Config) 
 			)
 		}
 
-		commands, err := parseCommands(cmdsMap)
+		commands, err := parseCommands(cmdsMap, cfg)
 		if err != nil {
 			return err
 		}
@@ -68,28 +70,45 @@ func parseConfigGeneral(rawKeyValue map[string]interface{}, cfg *config.Config) 
 		}
 	}
 
+	rawEnv := make(map[string]interface{})
+
 	if env, ok := rawKeyValue[ENV]; ok {
 		env, ok := env.(map[string]interface{})
 		if !ok {
 			return fmt.Errorf("env must be a mapping")
 		}
-
-		err := parseEnvForConfig(env, cfg)
-		if err != nil {
-			return err
+		for k, v := range env {
+			rawEnv[k] = v
 		}
 	}
 
 	if evalEnv, ok := rawKeyValue[EvalEnv]; ok {
+		log.Debug("eval_env is deprecated, consider using 'env' with 'sh' executor")
 		evalEnv, ok := evalEnv.(map[string]interface{})
 		if !ok {
 			return fmt.Errorf("eval_env must be a mapping")
 		}
 
-		err := parseEvalEnvForConfig(evalEnv, cfg)
-		if err != nil {
-			return err
+		for k, v := range evalEnv {
+			rawEnv[k] = map[string]interface{}{"sh": v}
 		}
+	}
+
+	envEntries, err := parseEnvEntries(rawEnv, cfg)
+	if err != nil {
+		return err
+	}
+
+	for _, entry := range envEntries {
+		value, err := entry.Value()
+		if err != nil {
+			return parseDirectiveError(
+				"env",
+				fmt.Sprintf("can not get value for '%s' env variable", entry.Name()),
+			)
+		}
+
+		cfg.Env[entry.Name()] = value
 	}
 
 	if before, ok := rawKeyValue[config.BEFORE]; ok {
@@ -117,7 +136,7 @@ func validateTopLevelFields(rawKeyValue map[string]interface{}, validFields []st
 	return nil
 }
 
-func parseConfig(rawKeyValue map[string]interface{}, cfg *config.Config) error { //nolint:cyclop
+func parseConfig(rawKeyValue map[string]interface{}, cfg *config.Config) error {
 	if err := validateTopLevelFields(rawKeyValue, config.ValidConfigFields); err != nil {
 		return err
 	}
@@ -264,7 +283,7 @@ func parseBefore(before string, cfg *config.Config) error {
 	return nil
 }
 
-func parseCommands(cmds map[string]interface{}) ([]config.Command, error) {
+func parseCommands(cmds map[string]interface{}, cfg *config.Config) ([]config.Command, error) {
 	var commands []config.Command
 	for rawName, rawValue := range cmds {
 		rawCmd := map[string]interface{}{}
@@ -294,7 +313,7 @@ func parseCommands(cmds map[string]interface{}) ([]config.Command, error) {
 
 		newCmd := config.NewCommand(rawName)
 
-		err := parseCommand(&newCmd, rawCmd)
+		err := parseCommand(&newCmd, rawCmd, cfg)
 		if err != nil {
 			return []config.Command{}, err
 		}

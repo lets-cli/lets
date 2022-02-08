@@ -6,6 +6,12 @@ commands:
     env:
       ONE: "1"
       TWO: two
+      BAR:
+        sh: echo Bar
+      FOO:
+        checksum: [foo.txt]
     cmd: |
       echo ONE=${ONE}
       echo TWO=${TWO}
+      echo BAR=${BAR}
+      echo FOO=${FOO}

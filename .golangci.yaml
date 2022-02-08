@@ -15,6 +15,10 @@ linters:
     - prealloc # enable it sometimes
     - wsl
     - ifshort
+    - unparam
+    - cyclop
+    - gocyclo
+    - gocognit
 
 linters-settings:
   gomnd:

@@ -30,7 +30,7 @@ func escapeArgs(args []string) []string {
 	return escapedArgs
 }
 
-func parseCmd(cmd interface{}, newCmd *config.Command) error { //nolint:cyclop
+func parseCmd(cmd interface{}, newCmd *config.Command) error {
 	switch cmd := cmd.(type) {
 	case string:
 		newCmd.Cmd = cmd

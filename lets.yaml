@@ -4,6 +4,14 @@ mixins:
   - build.yaml
   - -lets.my.yaml
 
+env:
+    NAME: "max"
+    AGE: 27
+    CURRENT_UID:
+      sh: echo "`id -u`:`id -g`"
+    NGINX_DEV:
+      checksum: [go.mod, go.sum]
+
 eval_env:
   CURRENT_UID: echo "`id -u`:`id -g`"
 

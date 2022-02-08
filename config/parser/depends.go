@@ -21,7 +21,7 @@ var (
 	}
 )
 
-func parseDependsAsMap(dep map[string]interface{}, cmdName string, idx int) (*config.Dep, error) { //nolint:cyclop
+func parseDependsAsMap(dep map[string]interface{}, cmdName string, idx int) (*config.Dep, error) {
 	name := ""
 	args := []string{}
 	env := map[string]string{}
@@ -40,8 +40,8 @@ func parseDependsAsMap(dep map[string]interface{}, cmdName string, idx int) (*co
 		case nameKey:
 			value, ok := v.(string)
 			if !ok {
-				return nil, &ParseCommandError{
-					Name: cmdName,
+				return nil, &ParseError{
+					CommandName: cmdName,
 					Err: fmt.Errorf(
 						"field '%s': %s",
 						fmt.Sprintf("%s.[%d][name:%s]", DEPENDS, idx, name),
@@ -58,8 +58,8 @@ func parseDependsAsMap(dep map[string]interface{}, cmdName string, idx int) (*co
 				for _, arg := range value {
 					arg, ok := arg.(string)
 					if !ok {
-						return nil, &ParseCommandError{
-							Name: cmdName,
+						return nil, &ParseError{
+							CommandName: cmdName,
 							Err: fmt.Errorf(
 								"field '%s': %s",
 								fmt.Sprintf("%s.[%d][name:%s]", DEPENDS, idx, name),
@@ -69,8 +69,8 @@ func parseDependsAsMap(dep map[string]interface{}, cmdName string, idx int) (*co
 					args = append(args, arg)
 				}
 			default:
-				return nil, &ParseCommandError{
-					Name: cmdName,
+				return nil, &ParseError{
+					CommandName: cmdName,
 					Err: fmt.Errorf(
 						"field '%s': %s",
 						fmt.Sprintf("%s.[%d][name:%s]", DEPENDS, idx, name),

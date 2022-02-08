@@ -2,10 +2,10 @@ package parser
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/lets-cli/lets/config/config"
 	"github.com/lets-cli/lets/util"
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -40,34 +40,8 @@ var validFields = []string{
 	ARGS,
 }
 
-type ParseCommandError struct {
-	Name string
-	Err  error
-}
-
-func (e *ParseCommandError) Error() string {
-	return fmt.Sprintf("failed to parse '%s' command: %s", e.Name, e.Err)
-}
-
-// env is not proper arg.
-// TODO refactor meta arg.
-func parseError(msg string, name string, field string, meta string) error {
-	fields := []string{field}
-	if meta != "" {
-		fields = append(fields, meta)
-	}
-
-	fullPath := strings.Join(fields, ". ")
-
-	return &ParseCommandError{
-		Name: name,
-		Err:  fmt.Errorf("field %s: %s", fullPath, msg),
-	}
-}
-
 // parseCommand parses and validates unmarshaled yaml.
-//nolint:cyclop,gocognit
-func parseCommand(newCmd *config.Command, rawCommand map[string]interface{}) error {
+func parseCommand(newCmd *config.Command, rawCommand map[string]interface{}, cfg *config.Config) error {
 	if err := validateCommandFields(rawCommand, validFields); err != nil {
 		return err
 	}
@@ -102,16 +76,44 @@ func parseCommand(newCmd *config.Command, rawCommand map[string]interface{}) err
 		}
 	}
 
+	rawEnv := make(map[string]interface{})
+
 	if env, ok := rawCommand[ENV]; ok {
-		if err := parseEnv(env, newCmd); err != nil {
-			return err
+		env, ok := env.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("env must be a mapping")
+		}
+		for k, v := range env {
+			rawEnv[k] = v
 		}
 	}
 
 	if evalEnv, ok := rawCommand[EvalEnv]; ok {
-		if err := parseEvalEnv(evalEnv, newCmd); err != nil {
-			return err
+		log.Debug("eval_env is deprecated, consider using 'env' with 'sh' executor")
+		evalEnv, ok := evalEnv.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("env must be a mapping")
 		}
+		for k, v := range evalEnv {
+			rawEnv[k] = map[string]interface{}{"sh": v}
+		}
+	}
+
+	envEntries, err := parseEnvEntries(rawEnv, cfg)
+	if err != nil {
+		return err
+	}
+
+	for _, entry := range envEntries {
+		value, err := entry.Value()
+		if err != nil {
+			return parseDirectiveError(
+				"env",
+				fmt.Sprintf("can not get value for '%s' env variable", entry.Name()),
+			)
+		}
+
+		newCmd.Env[entry.Name()] = value
 	}
 
 	if options, ok := rawCommand[OPTIONS]; ok {

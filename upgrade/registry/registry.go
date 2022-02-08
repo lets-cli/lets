@@ -67,7 +67,7 @@ func (reg *GithubRegistry) GetPackageName(os string, arch string) (string, error
 	return fmt.Sprintf("lets_%s_%s", os, arch), nil
 }
 
-func (reg *GithubRegistry) DownloadReleaseBinary( //nolint:cyclop
+func (reg *GithubRegistry) DownloadReleaseBinary(
 	packageName string,
 	version string,
 	dstPath string,

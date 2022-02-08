@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+
+	"github.com/lets-cli/lets/checksum"
 )
 
 type Command struct {
@@ -31,7 +33,6 @@ type Command struct {
 	Depends     map[string]Dep
 	// store depends commands in order declared in config
 	DependsNames    []string
-	Checksum        string
 	ChecksumMap     map[string]string
 	PersistChecksum bool
 
@@ -48,8 +49,8 @@ type Command struct {
 	Exclude []string
 
 	// if command has declared checksum
-	HasChecksum    bool
-	ChecksumSource map[string][]string
+	HasChecksum     bool
+	ChecksumSources map[string][]string
 	// store loaded persisted checksums here
 	persistedChecksums map[string]string
 
@@ -123,11 +124,18 @@ func (cmd *Command) Help() string {
 }
 
 func (cmd *Command) ChecksumCalculator(workDir string) error {
-	if len(cmd.ChecksumSource) == 0 {
+	if len(cmd.ChecksumSources) == 0 {
 		return nil
 	}
 
-	return calculateChecksumFromSource(workDir, cmd)
+	checksumMap, err := checksum.CalculateChecksumFromSources(workDir, cmd.ChecksumSources)
+	if err != nil {
+		return err
+	}
+
+	cmd.ChecksumMap = checksumMap
+
+	return nil
 }
 
 func (cmd *Command) GetPersistedChecksums() map[string]string {
@@ -139,20 +147,17 @@ func (cmd *Command) ReadChecksumsFromDisk(dotLetsDir string, cmdName string, che
 	checksums := make(map[string]string, len(checksumMap)+1)
 
 	for checksumName := range checksumMap {
-		checksum, err := readOneChecksum(dotLetsDir, cmdName, checksumName)
+		filename := checksumName
+		if checksumName == checksum.DefaultChecksumKey {
+			filename = checksum.DefaultChecksumFileName
+		}
+		checksumResult, err := checksum.ReadChecksumFromDisk(dotLetsDir, cmdName, filename)
 		if err != nil {
 			return err
 		}
 
-		checksums[checksumName] = checksum
+		checksums[checksumName] = checksumResult
 	}
-
-	checksum, err := readOneChecksum(dotLetsDir, cmdName, DefaultChecksumName)
-	if err != nil {
-		return err
-	}
-
-	checksums[DefaultChecksumName] = checksum
 
 	cmd.persistedChecksums = checksums
 

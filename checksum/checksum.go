@@ -1,4 +1,4 @@
-package config
+package checksum
 
 import (
 
@@ -13,8 +13,9 @@ import (
 )
 
 const (
-	DefaultChecksumName = "lets_default_checksum"
-	checksumsDir        = "checksums"
+	DefaultChecksumKey      = "__default_checksum__"
+	DefaultChecksumFileName = "lets_default_checksum"
+	checksumsDir            = "checksums"
 )
 
 var checksumCache = make(map[string][]byte)
@@ -46,10 +47,10 @@ func readFilesFromPatterns(workDir string, patterns []string) ([]string, error) 
 	return files, nil
 }
 
-// calculate sha1 hash from files content and return hex digest
+// CalculateChecksum calculates sha1 hash from files content and return hex digest
 // It calculates sha1 for each file, cache checksum for each file.
 // Resulting checksum is sha1 from all files sha1's.
-func calculateChecksum(workDir string, patterns []string) (string, error) {
+func CalculateChecksum(workDir string, patterns []string) (string, error) {
 	// read filenames from patterns
 	files, err := readFilesFromPatterns(workDir, patterns)
 	if err != nil {
@@ -98,50 +99,51 @@ func getChecksumsKeys(mapping map[string][]string) []string {
 	return keys
 }
 
-// calculate checksum from files listed in command.checksum.
-func calculateChecksumFromSource(workDir string, newCmd *Command) error {
-	newCmd.ChecksumMap = make(map[string]string)
+// CalculateChecksumFromSources calculates checksum from checksumSources.
+func CalculateChecksumFromSources(workDir string, checksumSources map[string][]string) (map[string]string, error) {
+	checksumMap := make(map[string]string)
+
 	// if checksum is a list of patterns
-	if patterns, ok := newCmd.ChecksumSource[""]; ok {
-		calcChecksum, err := calculateChecksum(workDir, patterns)
+	if patterns, ok := checksumSources[DefaultChecksumKey]; ok {
+		calcChecksum, err := CalculateChecksum(workDir, patterns)
 		if err != nil {
-			return fmt.Errorf("calculate checksum error: %w", err)
+			return nil, fmt.Errorf("calculate checksum error: %w", err)
 		}
 
-		newCmd.Checksum = calcChecksum
+		checksumMap[DefaultChecksumKey] = calcChecksum
 
-		return nil
+		return checksumMap, nil
 	}
 
 	// if checksum is a map of key: patterns
 	hasher := sha1.New() // #nosec G401
 
-	keys := getChecksumsKeys(newCmd.ChecksumSource)
+	keys := getChecksumsKeys(checksumSources)
 	// sort keys to make checksum deterministic
 	sort.Strings(keys)
 
 	for _, key := range keys {
-		patterns := newCmd.ChecksumSource[key]
+		patterns := checksumSources[key]
 
-		calcChecksum, err := calculateChecksum(workDir, patterns)
+		calcChecksum, err := CalculateChecksum(workDir, patterns)
 		if err != nil {
-			return fmt.Errorf("failed to calculate checksum: %w", err)
+			return nil, fmt.Errorf("failed to calculate checksum: %w", err)
 		}
 
-		newCmd.ChecksumMap[key] = calcChecksum
+		checksumMap[key] = calcChecksum
 
 		_, err = hasher.Write([]byte(calcChecksum))
 		if err != nil {
-			return fmt.Errorf("failed to update hasher with checksum: %w", err)
+			return nil, fmt.Errorf("failed to update hasher with checksum: %w", err)
 		}
 	}
 
-	newCmd.Checksum = fmt.Sprintf("%x", hasher.Sum(nil))
+	checksumMap[DefaultChecksumKey] = fmt.Sprintf("%x", hasher.Sum(nil))
 
-	return nil
+	return checksumMap, nil
 }
 
-func readOneChecksum(dotLetsDir, cmdName, checksumName string) (string, error) {
+func ReadChecksumFromDisk(dotLetsDir, cmdName, checksumName string) (string, error) {
 	_, checksumFilePath := getChecksumPath(dotLetsDir, cmdName, checksumName)
 
 	fileData, err := os.ReadFile(checksumFilePath)
@@ -164,23 +166,23 @@ func getChecksumPath(dotLetsDir string, cmdName string, checksumName string) (st
 	return dirPath, filepath.Join(dirPath, checksumName)
 }
 
-func PersistCommandsChecksumToDisk(dotLetsDir string, cmd Command) error {
+// TODO maybe checksumMap has to be separate struct ?
+func PersistCommandsChecksumToDisk(dotLetsDir string, checksumMap map[string]string, cmdName string) error {
 	checksumPath := filepath.Join(dotLetsDir, checksumsDir)
 	if err := util.SafeCreateDir(checksumPath); err != nil {
 		return fmt.Errorf("can not create %s: %w", checksumPath, err)
 	}
 
 	// TODO if at least one write failed do we have to revert all writes ???
-	for checksumName, checksum := range cmd.ChecksumMap {
-		err := persistOneChecksum(dotLetsDir, cmd.Name, checksumName, checksum)
+	for checksumName, checksum := range checksumMap {
+		filename := checksumName
+		if checksumName == DefaultChecksumKey {
+			filename = DefaultChecksumFileName
+		}
+		err := persistOneChecksum(dotLetsDir, cmdName, filename, checksum)
 		if err != nil {
 			return err
 		}
-	}
-
-	err := persistOneChecksum(dotLetsDir, cmd.Name, DefaultChecksumName, cmd.Checksum)
-	if err != nil {
-		return err
 	}
 
 	return nil
@@ -205,8 +207,8 @@ func persistOneChecksum(dotLetsDir string, cmdName string, checksumName string, 
 	return nil
 }
 
-// ChecksumForCmdPersisted checks if checksums for cmd exists and persisted.
-func ChecksumForCmdPersisted(dotLetsDir string, cmdName string) bool {
+// IsChecksumForCmdPersisted checks if checksums for cmd exists and persisted.
+func IsChecksumForCmdPersisted(dotLetsDir string, cmdName string) bool {
 	// check if checksums for cmd exists
 	if _, err := os.Stat(getCmdChecksumPath(dotLetsDir, cmdName)); err != nil {
 		return !os.IsNotExist(err)
