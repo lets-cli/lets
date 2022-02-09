@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"os"
+	"strings"
 
 	"github.com/lets-cli/lets/checksum"
 )
@@ -76,14 +78,20 @@ func (cmd Command) WithArgs(args []string) Command {
 	return newCmd
 }
 
-func (cmd Command) FromRef(refCommand Command) Command {
+func (cmd Command) FromRef(refCommand Command, cfg *Config) Command {
 	newCmd := cmd
 
-	// append args
+	// we have to expand env here on our own, since this args not came from users tty, and not expanded before lets
+	refArgsRaw := os.Expand(refCommand.RefArgs, func(key string) string {
+		return cfg.Env[key]
+	})
+
+	refArgs := strings.Split(refArgsRaw, " ")
+
 	if len(newCmd.Args) == 0 {
-		newCmd.Args = []string{cmd.Name, refCommand.RefArgs}
+		newCmd.Args = append([]string{cmd.Name}, refArgs...)
 	} else {
-		newCmd.Args = append(newCmd.Args, refCommand.RefArgs)
+		newCmd.Args = append(newCmd.Args, refArgs...)
 	}
 
 	newCmd.CommandArgs = newCmd.Args[1:]

@@ -218,7 +218,7 @@ func readAndValidateMixins(mixins []interface{}, cfg *config.Config) error {
 
 			mixinCfg := config.NewMixinConfig(cfg.WorkDir, filename, cfg.DotLetsDir)
 			if err := parseMixinConfig(fileData, mixinCfg); err != nil {
-				return fmt.Errorf("failed to load mixin config: %w", err)
+				return fmt.Errorf("failed to load mixin config '%s': %w", filename, err)
 			}
 
 			if err := mergeConfigs(cfg, mixinCfg); err != nil {
@@ -328,6 +328,9 @@ func joinBeforeScripts(beforeScripts ...string) string {
 	buf := new(bytes.Buffer)
 
 	for _, script := range beforeScripts {
+		if script == "" {
+			continue
+		}
 		buf.WriteString(script)
 		buf.WriteString("\n")
 	}
