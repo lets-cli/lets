@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/lets-cli/lets/config/config"
+	"github.com/lets-cli/lets/checksum"
 )
 
 func makeEnvEntry(k, v string) string {
@@ -33,17 +33,15 @@ func convertEnvMapToList(envMap map[string]string) []string {
 	return envList
 }
 
-func convertChecksumToEnvForCmd(checksum string) []string {
-	return []string{makeEnvEntry("LETS_CHECKSUM", checksum)}
-}
-
 func convertChecksumMapToEnvForCmd(checksumMap map[string]string) []string {
 	var envList []string
 
 	for name, value := range checksumMap {
-		if name != "" {
-			envList = append(envList, makeEnvEntry(fmt.Sprintf("LETS_CHECKSUM_%s", normalizeEnvKey(name)), value))
+		envKey := fmt.Sprintf("LETS_CHECKSUM_%s", normalizeEnvKey(name))
+		if name == checksum.DefaultChecksumKey {
+			envKey = "LETS_CHECKSUM"
 		}
+		envList = append(envList, makeEnvEntry(envKey, value))
 	}
 
 	return envList
@@ -62,36 +60,28 @@ func isChecksumChanged(persistedChecksum string, persistedChecksumExists bool, n
 
 // persistedChecksumMap can be empty, and if so, we set env var LETS_CHECKSUM_[NAME]_CHANGED to false for all checksums.
 func convertChangedChecksumMapToEnvForCmd(
-	defaultChecksum string,
 	checksumMap map[string]string,
 	persistedChecksumMap map[string]string,
 ) []string {
 	var envList []string
 
 	for checksumName, checksumValue := range checksumMap {
-		if checksumName == "" { // TODO do we still have this empty key
-			continue
+		normalizedKey := normalizeEnvKey(checksumName)
+
+		envKey := fmt.Sprintf("LETS_CHECKSUM_%s_CHANGED", normalizedKey)
+		if checksumName == checksum.DefaultChecksumKey {
+			envKey = "LETS_CHECKSUM_CHANGED"
 		}
 
-		normalizedKey := normalizeEnvKey(checksumName)
 		persistedChecksum, persistedChecksumExists := persistedChecksumMap[checksumName]
 
 		checksumChanged := isChecksumChanged(persistedChecksum, persistedChecksumExists, checksumValue)
 
 		envList = append(
 			envList,
-			makeEnvEntry(fmt.Sprintf("LETS_CHECKSUM_%s_CHANGED", normalizedKey), strconv.FormatBool(checksumChanged)),
+			makeEnvEntry(envKey, strconv.FormatBool(checksumChanged)),
 		)
 	}
-
-	persistedDefaultChecksum, persistedDefaultChecksumExists := persistedChecksumMap[config.DefaultChecksumName]
-
-	defaultChecksumChanged := isChecksumChanged(persistedDefaultChecksum, persistedDefaultChecksumExists, defaultChecksum)
-
-	envList = append(
-		envList,
-		makeEnvEntry("LETS_CHECKSUM_CHANGED", strconv.FormatBool(defaultChecksumChanged)),
-	)
 
 	return envList
 }

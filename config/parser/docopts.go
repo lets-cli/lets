@@ -58,7 +58,7 @@ func OptsToLetsOpt(opts docopt.Opts) map[string]string {
 	return envMap
 }
 
-func OptsToLetsCli(opts docopt.Opts) map[string]string { //nolint:cyclop
+func OptsToLetsCli(opts docopt.Opts) map[string]string {
 	cliMap := make(map[string]string, len(opts))
 	formatVal := func(k, v string) string {
 		return fmt.Sprintf("%s %s", k, v)

@@ -63,9 +63,11 @@ shell: bash
 
 `key: env`
 
-`type: map string => string`
+`type: map string => string or map with execution mode`
 
 Specify global env for all commands.
+
+Env can be declared as static value or with execution mode:
 
 Example:
 
@@ -73,13 +75,21 @@ Example:
 shell: bash
 env:
   MY_GLOBAL_ENV: "123"
+  MY_GLOBAL_ENV_2: 
+    sh: echo "`id`"
+  MY_GLOBAL_ENV_3:
+    checksum: [Readme.md, package.json]
 ```
 
 ### Global eval_env 
 
-`key: env`
+**`Deprecated`**
 
-`type: map string => string`
+`key: eval_env`
+
+`type: mapping string => string`
+
+> Since `env` now has `sh` execution mode, `eval_env` is deprecated.
 
 Specify global eval_env for all commands.
 
@@ -510,9 +520,11 @@ echo LETSCLI_DEBUG=${LETSCLI_DEBUG} # LETSCLI_DEBUG=--debug
 
 `key: env`
 
-`type: mapping string => string`
+`type: mapping string => string or map with execution mode`
 
 Env is as simple as it sounds. Define additional env for a command: 
+
+Env can be declared as static value or with execution mode:
 
 Example:
 
@@ -523,15 +535,23 @@ commands:
     env:
       GO111MODULE: "on"
       GOPROXY: https://goproxy.io
+      MY_ENV_1:
+        sh: echo "`id`"
+      MY_ENV_2:
+        checksum: [Readme.md, package.json]
     cmd: go build -o lets *.go
 ```
 
 
 ### `eval_env`
 
+**`Deprecated`**
+
 `key: eval_env`
 
 `type: mapping string => string`
+
+> Since `env` now has `sh` execution mode, `eval_env` is deprecated.
 
 Same as env but allows you to dynamically compute env:
 

@@ -20,6 +20,8 @@ title: Changelog
 * [Added] `--init` flag. Run `lets --init` to create new `lets.yaml` with example command
 * [Refactoring] updated `bats` test framework and adjusted all bats tests 
 * [Added] `ref` directive to `command`. Allows to declare existing command with predefined args [See config](/docs/config#ref).
+* [Added] `sh` and `checksum` execution modes for global level `env` and command level `env` [See config](/docs/config#env).
+  `eval_env` is deprecated now, since `env` with `sh` execution mode does exactly the same
 
 
 ## [0.0.33](https://github.com/lets-cli/lets/releases/tag/v0.0.33)

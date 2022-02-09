@@ -1,4 +1,4 @@
-package config
+package checksum
 
 import (
 	"fmt"
@@ -33,7 +33,7 @@ func TestCalculateChecksumSimpleFilename(t *testing.T) {
 		t.Errorf("Can not write test file. Error: %s", err)
 	}
 
-	checksum, err := calculateChecksum(tempDir, []string{
+	checksum, err := CalculateChecksum(tempDir, []string{
 		file1.Name(),
 		file2.Name(),
 	})
@@ -66,7 +66,7 @@ func TestCalculateChecksumGlobPattern(t *testing.T) {
 
 	f1Prefix := getFilePrefix(file1.Name())
 	f2Prefix := getFilePrefix(file2.Name())
-	checksum, err := calculateChecksum(tempDir, []string{
+	checksum, err := CalculateChecksum(tempDir, []string{
 		f1Prefix,
 		f2Prefix,
 	})
@@ -98,42 +98,41 @@ func TestCalculateChecksumFromListOrMap(t *testing.T) {
 	}
 
 	// declare command with checksum as list
-	cmdChAsList := NewCommand("checksum-as-list")
 	f1Prefix := getFilePrefix(file1.Name())
 	f2Prefix := getFilePrefix(file2.Name())
-	cmdChAsList.ChecksumSource = map[string][]string{
-		"": {f1Prefix, f2Prefix},
+	checksumSources := map[string][]string{
+		DefaultChecksumKey: {f1Prefix, f2Prefix},
 	}
 
-	err = calculateChecksumFromSource(tempDir, &cmdChAsList)
+	checksumMap, err := CalculateChecksumFromSources(tempDir, checksumSources)
 	if err != nil {
 		t.Errorf("Checksum is not correct. Error: %s", err)
 	}
 
-	if cmdChAsList.Checksum != expectChecksum {
+	if checksumMap[DefaultChecksumKey] != expectChecksum {
 		t.Errorf(
 			"Checksum is not correct for command with checksum as list. Expect: %s, got: %s",
 			expectChecksum,
-			cmdChAsList.Checksum,
+			checksumMap[DefaultChecksumKey],
 		)
 	}
 
 	// declare command with checksum as map but with same files
-	cmdChAsMap := NewCommand("checksum-as-map")
-	cmdChAsMap.ChecksumSource = map[string][]string{
+	checksumSources1 := map[string][]string{
 		"misc": {f1Prefix, f2Prefix},
 	}
 
-	err = calculateChecksumFromSource(tempDir, &cmdChAsMap)
+	checksumMap1, err := CalculateChecksumFromSources(tempDir, checksumSources1)
+
 	if err != nil {
 		t.Errorf("Checksum is not correct. Error: %s", err)
 	}
 
-	if cmdChAsMap.ChecksumMap["misc"] != expectChecksum {
+	if checksumMap1["misc"] != expectChecksum {
 		t.Errorf(
 			"Checksum is not correct for command with checksum as map. Expect: %s, got: %s",
 			expectChecksum,
-			cmdChAsMap.ChecksumMap["misc"],
+			checksumMap1["misc"],
 		)
 	}
 }

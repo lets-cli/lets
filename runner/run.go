@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/docopt/docopt-go"
+	"github.com/lets-cli/lets/checksum"
 	"github.com/lets-cli/lets/config/config"
 	"github.com/lets-cli/lets/config/parser"
 	"github.com/lets-cli/lets/env"
@@ -209,7 +210,7 @@ func (r *Runner) initCmd() error {
 
 	// if command declared as persist_checksum we must read current persisted checksums into memory
 	if r.cmd.PersistChecksum {
-		if config.ChecksumForCmdPersisted(r.cfg.DotLetsDir, r.cmd.Name) {
+		if checksum.IsChecksumForCmdPersisted(r.cfg.DotLetsDir, r.cmd.Name) {
 			err := r.cmd.ReadChecksumsFromDisk(r.cfg.DotLetsDir, r.cmd.Name, r.cmd.ChecksumMap)
 			if err != nil {
 				return fmt.Errorf("failed to read persisted checksum for command '%s': %w", r.cmd.Name, err)
@@ -273,7 +274,6 @@ func (r *Runner) prepareOsCommandForRun(cmdScript string) *exec.Cmd {
 		convertEnvMapToList(r.cmd.OverrideEnv),
 		convertEnvMapToList(r.cmd.Options),
 		convertEnvMapToList(r.cmd.CliOptions),
-		convertChecksumToEnvForCmd(r.cmd.Checksum),
 		convertChecksumMapToEnvForCmd(r.cmd.ChecksumMap),
 	)
 
@@ -281,7 +281,6 @@ func (r *Runner) prepareOsCommandForRun(cmdScript string) *exec.Cmd {
 		cmd.Env = composeEnvs(
 			cmd.Env,
 			convertChangedChecksumMapToEnvForCmd(
-				r.cmd.Checksum,
 				r.cmd.ChecksumMap,
 				r.cmd.GetPersistedChecksums(),
 			),
@@ -333,7 +332,11 @@ func (r *Runner) persistChecksum() error {
 	if r.cmd.PersistChecksum {
 		debugf("persisting checksum for command '%s'", r.cmd.Name)
 
-		err := config.PersistCommandsChecksumToDisk(r.cfg.DotLetsDir, *r.cmd)
+		err := checksum.PersistCommandsChecksumToDisk(
+			r.cfg.DotLetsDir,
+			r.cmd.ChecksumMap,
+			r.cmd.Name,
+		)
 		if err != nil {
 			return fmt.Errorf("can not persist checksum to disk: %w", err)
 		}
