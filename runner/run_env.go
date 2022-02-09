@@ -12,11 +12,6 @@ func makeEnvEntry(k, v string) string {
 	return fmt.Sprintf("%s=%s", k, v)
 }
 
-// helper function for convenient use with composeEnvs.
-func makeEnvEntryList(k, v string) []string {
-	return []string{makeEnvEntry(k, v)}
-}
-
 func normalizeEnvKey(origKey string) string {
 	key := strings.ReplaceAll(origKey, "-", "_")
 	key = strings.ToUpper(key)
@@ -33,18 +28,18 @@ func convertEnvMapToList(envMap map[string]string) []string {
 	return envList
 }
 
-func convertChecksumMapToEnvForCmd(checksumMap map[string]string) []string {
-	var envList []string
+func getChecksumEnvMap(checksumMap map[string]string) map[string]string {
+	envMap := make(map[string]string)
 
 	for name, value := range checksumMap {
 		envKey := fmt.Sprintf("LETS_CHECKSUM_%s", normalizeEnvKey(name))
 		if name == checksum.DefaultChecksumKey {
 			envKey = "LETS_CHECKSUM"
 		}
-		envList = append(envList, makeEnvEntry(envKey, value))
+		envMap[envKey] = value
 	}
 
-	return envList
+	return envMap
 }
 
 func isChecksumChanged(persistedChecksum string, persistedChecksumExists bool, newChecksum string) bool {
@@ -59,11 +54,11 @@ func isChecksumChanged(persistedChecksum string, persistedChecksumExists bool, n
 }
 
 // persistedChecksumMap can be empty, and if so, we set env var LETS_CHECKSUM_[NAME]_CHANGED to false for all checksums.
-func convertChangedChecksumMapToEnvForCmd(
+func getChangedChecksumEnvMap(
 	checksumMap map[string]string,
 	persistedChecksumMap map[string]string,
-) []string {
-	var envList []string
+) map[string]string {
+	envMap := make(map[string]string)
 
 	for checksumName, checksumValue := range checksumMap {
 		normalizedKey := normalizeEnvKey(checksumName)
@@ -77,20 +72,8 @@ func convertChangedChecksumMapToEnvForCmd(
 
 		checksumChanged := isChecksumChanged(persistedChecksum, persistedChecksumExists, checksumValue)
 
-		envList = append(
-			envList,
-			makeEnvEntry(envKey, strconv.FormatBool(checksumChanged)),
-		)
+		envMap[envKey] = strconv.FormatBool(checksumChanged)
 	}
 
-	return envList
-}
-
-func composeEnvs(envs ...[]string) []string {
-	var composed []string
-	for _, env := range envs {
-		composed = append(composed, env...)
-	}
-
-	return composed
+	return envMap
 }

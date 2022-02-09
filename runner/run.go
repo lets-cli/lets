@@ -229,6 +229,43 @@ func joinBeforeAndScript(before string, script string) string {
 	return strings.Join([]string{before, script}, "\n")
 }
 
+// Setup env for cmd.
+func (r *Runner) setupEnv(cmd *exec.Cmd, shell string) {
+	defaultEnv := map[string]string{
+		GenericCmdNameTpl:   r.cmd.Name,
+		"LETS_COMMAND_ARGS": strings.Join(r.cmd.CommandArgs, " "),
+		"SHELL":             shell,
+	}
+
+	checksumEnvMap := getChecksumEnvMap(r.cmd.ChecksumMap)
+
+	var changedChecksumEnvMap map[string]string
+	if r.cmd.PersistChecksum {
+		changedChecksumEnvMap = getChangedChecksumEnvMap(
+			r.cmd.ChecksumMap,
+			r.cmd.GetPersistedChecksums(),
+		)
+	}
+
+	envMaps := []map[string]string{
+		defaultEnv,
+		r.cfg.Env,
+		r.cmd.Env,
+		r.cmd.OverrideEnv,
+		r.cmd.Options,
+		r.cmd.CliOptions,
+		checksumEnvMap,
+		changedChecksumEnvMap,
+	}
+
+	envList := os.Environ()
+	for _, envMap := range envMaps {
+		envList = append(envList, convertEnvMapToList(envMap)...)
+	}
+
+	cmd.Env = envList
+}
+
 // Prepare cmd to be run:
 // - set in/out
 // - set dir
@@ -263,29 +300,7 @@ func (r *Runner) prepareOsCommandForRun(cmdScript string) *exec.Cmd {
 		cmd.Dir = r.cmd.WorkDir
 	}
 
-	// setup env for command
-	cmd.Env = composeEnvs(
-		os.Environ(),
-		makeEnvEntryList(GenericCmdNameTpl, r.cmd.Name),
-		makeEnvEntryList("LETS_COMMAND_ARGS", strings.Join(r.cmd.CommandArgs, " ")),
-		makeEnvEntryList("SHELL", shell),
-		convertEnvMapToList(r.cfg.Env),
-		convertEnvMapToList(r.cmd.Env),
-		convertEnvMapToList(r.cmd.OverrideEnv),
-		convertEnvMapToList(r.cmd.Options),
-		convertEnvMapToList(r.cmd.CliOptions),
-		convertChecksumMapToEnvForCmd(r.cmd.ChecksumMap),
-	)
-
-	if r.cmd.PersistChecksum {
-		cmd.Env = composeEnvs(
-			cmd.Env,
-			convertChangedChecksumMapToEnvForCmd(
-				r.cmd.ChecksumMap,
-				r.cmd.GetPersistedChecksums(),
-			),
-		)
-	}
+	r.setupEnv(cmd, shell)
 
 	return cmd
 }

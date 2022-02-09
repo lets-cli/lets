@@ -50,7 +50,8 @@ func validateVersion(cfg *config.Config, letsVersion string) error {
 	}
 
 	// in dev (where version is 0.0.0-dev) this predicate will be always false
-	if letsVersionParsed.LessThan(*cfgVersionParsed) {
+	isDev := letsVersionParsed.String() == "0.0.0-dev"
+	if letsVersionParsed.LessThan(*cfgVersionParsed) && !isDev {
 		return fmt.Errorf(
 			"config version '%s' is not compatible with 'lets' version '%s'. "+
 				"Please upgrade 'lets' to '%s' "+

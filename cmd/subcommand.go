@@ -55,7 +55,7 @@ func newCmdGeneric(command config.Command, conf *config.Config, out io.Writer) *
 			commandToRun := command
 			if command.Ref != "" {
 				refCmd := command
-				commandToRun = conf.Commands[refCmd.Ref].FromRef(refCmd)
+				commandToRun = conf.Commands[refCmd.Ref].FromRef(refCmd, conf)
 			}
 
 			return runner.NewRunner(&commandToRun, conf, out).Execute(cmd.Context())
