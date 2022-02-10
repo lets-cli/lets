@@ -5,6 +5,8 @@ title: Changelog
 
 ## [Unreleased]
 
+## [0.0.40](https://github.com/lets-cli/lets/releases/tag/v0.0.40)
+
 * [Added] Allow override command arguments and env when using command in `depends`
 
    See example [in config docs](/docs/config#override-arguments-in-depends-command)
