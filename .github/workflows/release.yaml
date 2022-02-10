@@ -17,21 +17,12 @@ jobs:
         with:
           go-version: 1.17.x
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v1
+        uses: goreleaser/goreleaser-action@v2
         with:
+          distribution: goreleaser
           version: latest
           args: release --rm-dist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.GH_PAT }}
-  aur-sync:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Sync AUR package with Github release
-        uses: maniaciachao/aur-sync-action@master
-        with:
-          package_name: lets-bin
-          github_repo: 'lets-cli/lets'
-          commit_username: 'Github Action Bot'
-          commit_email: kindritskiy.m@gmail.com
-          ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+          AUR_GITHUB_TOKEN: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
