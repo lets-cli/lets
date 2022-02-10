@@ -28,7 +28,9 @@ commands:
       git push --tags
 
   test-unit:
-    description: Run unit tests
+    description: |
+        Run unit tests
+        (-run TestCase to run one test)
     depends: [build-lets-image]
     cmd:
       - docker-compose

@@ -42,6 +42,28 @@ func (m MockRegistry) GetDownloadURL(repoURI string, packageName string, version
 	return ""
 }
 
+type BadRegistry struct {
+	latestVersion string
+}
+
+func (b BadRegistry) GetLatestRelease() (string, error) {
+	return b.latestVersion, nil
+
+}
+
+func (b BadRegistry) DownloadReleaseBinary(packageName string, version string, dstPath string) error {
+	// do not create file at all
+	return nil
+}
+
+func (b BadRegistry) GetPackageName(os string, arch string) (string, error) {
+	return "lets_test_package", nil
+}
+
+func (b BadRegistry) GetDownloadURL(repoURI string, packageName string, version string) string {
+	return ""
+}
+
 func createTempBinary(content string) (*os.File, error) {
 	binary, err := os.CreateTemp("", "lets.*.current")
 	if err != nil {
@@ -105,6 +127,33 @@ func TestSelfUpgrade(t *testing.T) {
 			t.Errorf("expected version %s", latestVersion)
 		}
 	})
+
+	// TODO use https://github.com/spf13/afero#using-afero-for-testing
+	// TODO or use https://godocs.io/testing/fstest
+	// TODO or https://github.com/blang/vfs
+	//  info https://stackoverflow.com/questions/16742331/how-to-mock-abstract-filesystem-in-go
+	//t.Run("should restore original binary if upgrade failed", func(t *testing.T) {
+	//	currentVersion := "v0.0.1"
+	//	latestVersion := "v0.0.2"
+	//
+	//	upgrader, err := newMockUpgrader(&BadRegistry{latestVersion: latestVersion}, currentVersion)
+	//	if err != nil {
+	//		t.Errorf("failed to create upgrader: %s", err)
+	//	}
+	//
+	//	if !testVersion(upgrader.binaryPath, currentVersion) {
+	//		t.Errorf("expected version %s", currentVersion)
+	//	}
+	//
+	//	err = upgrader.Upgrade()
+	//	if err == nil {
+	//		t.Errorf("expected some error if upgrade failed")
+	//	}
+	//
+	//	if !testVersion(upgrader.binaryPath, currentVersion) {
+	//		t.Errorf("expected to preserv current binary version %s", currentVersion)
+	//	}
+	//})
 
 	t.Run("should not self-upgrade same version", func(t *testing.T) {
 		currentVersion := "v0.0.1"

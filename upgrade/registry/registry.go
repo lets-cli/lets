@@ -101,7 +101,7 @@ func (reg *GithubRegistry) DownloadReleaseBinary(
 	}
 
 	dstDir := fmt.Sprintf("%s.dir", dstPath)
-	// cleanup if something abd happens during download/extract/rename flow
+	// cleanup if something bad happens during download/extract/rename flow
 	defer os.RemoveAll(dstDir)
 
 	err = os.RemoveAll(dstDir)
