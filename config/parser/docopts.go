@@ -107,6 +107,10 @@ func OptsToLetsCli(opts docopt.Opts) map[string]string {
 }
 
 func isOptKey(key string) bool {
+	if key == "--" {
+		return false
+	}
+
 	if strings.HasPrefix(key, "--") {
 		return true
 	}
