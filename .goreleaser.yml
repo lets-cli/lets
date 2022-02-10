@@ -43,19 +43,19 @@ brews:
     folder: Formula
 
 aurs:
-  name: lets-bin
-  homepage: "https://lets-cli.org/"
-  description: "CLI task runner for productive developers - a better alternative to make"
-  license: "MIT"
-  maintainers:
-    - 'Kindritskiy Maksym <kindritskiy.m@gmail.com>'
-  private_key: '{{ .Env.AUR_GITHUB_TOKEN }}'
-  git_url: 'ssh://aur@aur.archlinux.org/lets-bin.git'
-  package: |-
-    install -Dm755 "./lets-bin" "${pkgdir}/usr/local/bin/lets-bin"
-  commit_author:
-    name: 'Github Action Bot'
-    email: kindritskiy.m@gmail.com
+  - name: lets-bin
+    homepage: "https://lets-cli.org/"
+    description: "CLI task runner for productive developers - a better alternative to make"
+    license: "MIT"
+    maintainers:
+      - 'Kindritskiy Maksym <kindritskiy.m@gmail.com>'
+    private_key: '{{ .Env.AUR_GITHUB_TOKEN }}'
+    git_url: 'ssh://aur@aur.archlinux.org/lets-bin.git'
+    package: |-
+      install -Dm755 "./lets-bin" "${pkgdir}/usr/local/bin/lets-bin"
+    commit_author:
+      name: 'Github Action Bot'
+      email: kindritskiy.m@gmail.com
 
 checksum:
   name_template: '{{ .ProjectName }}_checksums.txt'
