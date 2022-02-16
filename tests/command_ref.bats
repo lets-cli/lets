@@ -10,3 +10,9 @@ setup() {
     assert_success
     assert_line --index 0 "Hello World"
 }
+
+@test "command ref: run existing command with args as list from ref" {
+    run lets hello-list
+    assert_success
+    assert_line --index 0 "Hello Fellow friend"
+}

@@ -10,7 +10,7 @@ on:
 
 name: Test
 jobs:
-  test:
+  test-unit:
     strategy:
       matrix:
         platform: [ubuntu-latest, macos-latest]
@@ -20,39 +20,36 @@ jobs:
         if: runner.os == 'macOS'
         run: brew install bash
       - name: Setup go
-        uses: actions/setup-go@v1
+        uses: actions/setup-go@v2
         with:
-          go-version: 1.17.x
+          go-version: 1.18.x
       - name: Checkout code
         uses: actions/checkout@v2
       - name: Test unit
         env:
           LETS_CONFIG_DIR: ..
         run: go test ./... -v
+
+  test-bats:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Install Lets
+        uses: lets-cli/lets-action@v1.1
+        with:
+          version: latest
       - name: Test bats
-        env:
-          NO_COLOR: 1
-        run: |
-          git clone git://github.com/bats-core/bats-core
-          git clone git://github.com/bats-core/bats-support.git bats-core/bats-support
-          git clone git://github.com/bats-core/bats-assert.git bats-core/bats-assert
-          cd bats-core
-          ./install.sh ../
-          cd ../
-          PATH=${PATH}:$(pwd)
-          go build -o lets *.go
-          BATS_UTILS_PATH=./bats-core ./bin/bats tests
+        run: lets test-bats
 
   lint:
     runs-on: ubuntu-latest
     steps:
-      - name: Setup go
-        uses: actions/setup-go@v1
-        with:
-          go-version: 1.17.x
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v2
-      - name: Lint
-        run: |
-          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ./bin v1.37.0
-          ./bin/golangci-lint run -v -c .golangci.yaml
+      - name: Install Lets
+        uses: lets-cli/lets-action@v1.1
+        with:
+          version: latest
+      - name: Run lint
+        run: lets lint

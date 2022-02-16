@@ -42,14 +42,15 @@ func GetDotLetsDir(workDir string) (string, error) {
 
 // InitLetsFile creates lets.yaml int the current dir.
 func InitLetsFile(workDir string, version string) error {
-	f := filepath.Join(workDir, "lets.yaml")
+	configfile := filepath.Join(workDir, "lets.yaml")
 
-	if _, err := os.Stat(f); err == nil {
+	if _, err := os.Stat(configfile); err == nil {
 		return fmt.Errorf("lets.yaml already exists in %s", workDir)
 	}
 
 	output := fmt.Sprintf(defaultLetsYaml, version)
-	if err := os.WriteFile(f, []byte(output), 0644); err != nil {
+	//#nosec G306
+	if err := os.WriteFile(configfile, []byte(output), 0o644); err != nil {
 		return err
 	}
 

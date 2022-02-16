@@ -24,7 +24,7 @@ var (
 	ARGS            = "args"
 )
 
-var directives = set.NewStringSetWithValues([]string{
+var directives = set.NewSet[string](
 	CMD,
 	DESCRIPTION,
 	WORKDIR,
@@ -38,7 +38,7 @@ var directives = set.NewStringSetWithValues([]string{
 	AFTER,
 	REF,
 	ARGS,
-})
+)
 
 // parseCommand parses and validates unmarshaled yaml.
 func parseCommand(newCmd *config.Command, rawCommand map[string]interface{}, cfg *config.Config) error {
