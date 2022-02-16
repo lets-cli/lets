@@ -52,13 +52,11 @@ func newCmdGeneric(command config.Command, conf *config.Config, out io.Writer) *
 				1,
 			)
 
-			commandToRun := command
 			if command.Ref != "" {
-				refCmd := command
-				commandToRun = conf.Commands[refCmd.Ref].FromRef(refCmd)
+				command = conf.Commands[command.Ref].FromRef(command)
 			}
 
-			return runner.NewRunner(&commandToRun, conf, out).Execute(cmd.Context())
+			return runner.NewRunner(&command, conf, out).Execute(cmd.Context())
 		},
 		// we use docopt to parse flags on our own, so any flag is valid flag here
 		FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},

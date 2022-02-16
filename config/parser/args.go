@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/kballard/go-shellquote"
@@ -23,6 +24,10 @@ func parseArgs(rawArgs interface{}, newCmd *config.Command) error {
 		newCmd.RefArgs = argsList
 	case []string:
 		newCmd.RefArgs = args
+	case []interface{}:
+		for _, arg := range args {
+			newCmd.RefArgs = append(newCmd.RefArgs, fmt.Sprintf("%s", arg))
+		}
 	default:
 		return parseError(
 			"must be a string or a list of string",

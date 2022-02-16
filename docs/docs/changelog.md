@@ -10,6 +10,7 @@ title: Changelog
 * `[Fixed]` **`Breaking change`** Fix duplicate files for checksum.
   This will change checksum output if the same file has been read multiple times.
 * `[Fixed]` Fix parsing for ref args when declared as string.
+* `[Added]` ref `args` can be a list of string
 
 ## [0.0.44](https://github.com/lets-cli/lets/releases/tag/v0.0.44)
 

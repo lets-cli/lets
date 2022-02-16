@@ -700,19 +700,23 @@ Now:
 
 ```yaml
 commands:
-  ls:
-    cmd: [ls]
+  hello:
+    cmd: echo Hello $@
 
-  ls-table:
-    ref: ls
-    args: -l
+  hello-world:
+    ref: hello
+    args: World
+
+  hello-by-name:
+    ref: hello
+    args: [Dear, Friend]
 ```
 
 ### `args`
 
 `key: args`
 
-`type: string`
+`type: string or list of string`
 
 **`Experimental feature`**
 
