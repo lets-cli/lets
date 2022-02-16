@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"os"
-	"strings"
 
 	"github.com/lets-cli/lets/checksum"
 )
@@ -59,7 +57,7 @@ type Command struct {
 	// ref is basically a command name to use with predefined args, env
 	Ref string
 	// can be specified only with ref
-	RefArgs string
+	RefArgs []string
 }
 
 // NewCommand creates new command struct.
@@ -78,20 +76,13 @@ func (cmd Command) WithArgs(args []string) Command {
 	return newCmd
 }
 
-func (cmd Command) FromRef(refCommand Command, cfg *Config) Command {
+func (cmd Command) FromRef(refCommand Command) Command {
 	newCmd := cmd
 
-	// we have to expand env here on our own, since this args not came from users tty, and not expanded before lets
-	refArgsRaw := os.Expand(refCommand.RefArgs, func(key string) string {
-		return cfg.Env[key]
-	})
-
-	refArgs := strings.Split(refArgsRaw, " ")
-
 	if len(newCmd.Args) == 0 {
-		newCmd.Args = append([]string{cmd.Name}, refArgs...)
+		newCmd.Args = append([]string{cmd.Name}, refCommand.RefArgs...)
 	} else {
-		newCmd.Args = append(newCmd.Args, refArgs...)
+		newCmd.Args = append(newCmd.Args, refCommand.RefArgs...)
 	}
 
 	newCmd.CommandArgs = newCmd.Args[1:]

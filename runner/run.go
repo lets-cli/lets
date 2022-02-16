@@ -69,16 +69,10 @@ func NewRunner(cmd *config.Command, cfg *config.Config, out io.Writer) *Runner {
 }
 
 func NewChildRunner(cmd *config.Command, parentRunner *Runner) *Runner {
-	cfg := parentRunner.cfg
-	if cmd.Ref != "" {
-		newCmd := cfg.Commands[cmd.Ref].FromRef(*cmd, cfg)
-		cmd = &newCmd
-	}
-
 	return &Runner{
 		cmd:       cmd,
 		parentCmd: parentRunner.cmd,
-		cfg:       cfg,
+		cfg:       parentRunner.cfg,
 		out:       parentRunner.out,
 	}
 }
@@ -337,6 +331,11 @@ func (r *Runner) runDepends(ctx context.Context) error {
 		if len(dep.Env) != 0 {
 			dependCmd = dependCmd.WithEnv(dep.Env)
 		}
+
+		if dependCmd.Ref != "" {
+			dependCmd = r.cfg.Commands[dependCmd.Ref].FromRef(dependCmd)
+		}
+
 		err := NewChildRunner(&dependCmd, r).Execute(ctx)
 		if err != nil {
 			// must return error to root

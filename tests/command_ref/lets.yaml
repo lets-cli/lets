@@ -7,3 +7,7 @@ commands:
   hello-world:
     ref: hello
     args: World
+
+  hello-list:
+    ref: hello
+    args: [Fellow, friend]

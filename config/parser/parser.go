@@ -50,26 +50,6 @@ func newConfigParseError(msg string, name string, field string) error {
 }
 
 func parseConfigGeneral(rawKeyValue map[string]interface{}, cfg *config.Config) error {
-	if cmds, ok := rawKeyValue[config.COMMANDS]; ok {
-		cmdsMap, ok := cmds.(map[string]interface{})
-		if !ok {
-			return newConfigParseError(
-				"must be a mapping",
-				config.COMMANDS,
-				"",
-			)
-		}
-
-		commands, err := parseCommands(cmdsMap, cfg)
-		if err != nil {
-			return err
-		}
-
-		for _, c := range commands {
-			cfg.Commands[c.Name] = c
-		}
-	}
-
 	rawEnv := make(map[string]interface{})
 
 	if env, ok := rawKeyValue[ENV]; ok {
@@ -120,6 +100,26 @@ func parseConfigGeneral(rawKeyValue map[string]interface{}, cfg *config.Config) 
 		err := parseBefore(before, cfg)
 		if err != nil {
 			return err
+		}
+	}
+
+	if cmds, ok := rawKeyValue[config.COMMANDS]; ok {
+		cmdsMap, ok := cmds.(map[string]interface{})
+		if !ok {
+			return newConfigParseError(
+				"must be a mapping",
+				config.COMMANDS,
+				"",
+			)
+		}
+
+		commands, err := parseCommands(cmdsMap, cfg)
+		if err != nil {
+			return err
+		}
+
+		for _, c := range commands {
+			cfg.Commands[c.Name] = c
 		}
 	}
 
@@ -175,6 +175,8 @@ func parseConfig(rawKeyValue map[string]interface{}, cfg *config.Config) error {
 			return err
 		}
 	}
+
+	postprocessRefArgs(cfg)
 
 	return nil
 }
