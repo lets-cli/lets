@@ -28,3 +28,10 @@ setup() {
     assert_line --index 0 "Hello world with level DEBUG"
     assert_line --index 1 "Override env"
 }
+
+@test "command_depends: ref works in depends" {
+    run lets with-ref-in-depends
+    assert_success
+    assert_line --index 0 "Hello Developer with level INFO"
+    assert_line --index 1 "I have ref in depends"
+}
