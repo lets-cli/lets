@@ -32,5 +32,13 @@ commands:
       LEVEL: INFO
     cmd: echo Hello ${LETSOPT_NAME:-world} with level ${LEVEL}
 
+  greet-dev:
+    ref: greet
+    args: Developer
+
   bar:
     cmd: echo Bar
+
+  with-ref-in-depends:
+    depends: [greet-dev]
+    cmd: echo I have ref in depends

@@ -69,10 +69,16 @@ func NewRunner(cmd *config.Command, cfg *config.Config, out io.Writer) *Runner {
 }
 
 func NewChildRunner(cmd *config.Command, parentRunner *Runner) *Runner {
+	cfg := parentRunner.cfg
+	if cmd.Ref != "" {
+		newCmd := cfg.Commands[cmd.Ref].FromRef(*cmd, cfg)
+		cmd = &newCmd
+	}
+
 	return &Runner{
 		cmd:       cmd,
 		parentCmd: parentRunner.cmd,
-		cfg:       parentRunner.cfg,
+		cfg:       cfg,
 		out:       parentRunner.out,
 	}
 }

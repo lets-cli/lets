@@ -21,7 +21,12 @@ func withColor(msg string) string {
 }
 
 // Validate loaded config.
+// nolint:revive
 func validate(config *config.Config, letsVersion string) error {
+	if err := validateVersion(config, letsVersion); err != nil {
+		return err
+	}
+
 	if err := validateCommandInDependsExists(config); err != nil {
 		return err
 	}
@@ -30,7 +35,7 @@ func validate(config *config.Config, letsVersion string) error {
 		return err
 	}
 
-	return validateVersion(config, letsVersion)
+	return nil
 }
 
 func validateVersion(cfg *config.Config, letsVersion string) error {
@@ -49,8 +54,7 @@ func validateVersion(cfg *config.Config, letsVersion string) error {
 		return fmt.Errorf("failed to parse lets version: %w", err)
 	}
 
-	// in dev (where version is 0.0.0-dev) this predicate will be always false
-	isDev := letsVersionParsed.String() == "0.0.0-dev"
+	isDev := letsVersionParsed.PreRelease == "dev"
 	if letsVersionParsed.LessThan(*cfgVersionParsed) && !isDev {
 		return fmt.Errorf(
 			"config version '%s' is not compatible with 'lets' version '%s'. "+
