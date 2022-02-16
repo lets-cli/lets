@@ -1,5 +1,7 @@
 package config
 
+import "github.com/lets-cli/lets/set"
+
 var (
 	// COMMANDS is a top-level directive. Includes all commands to run.
 	COMMANDS = "commands"
@@ -12,8 +14,12 @@ var (
 )
 
 var (
-	ValidConfigFields      = []string{COMMANDS, SHELL, ENV, EvalEnv, MIXINS, VERSION, BEFORE}
-	ValidMixinConfigFields = []string{COMMANDS, ENV, EvalEnv, BEFORE}
+	ValidConfigDirectives = set.NewStringSetWithValues(
+		[]string{COMMANDS, SHELL, ENV, EvalEnv, MIXINS, VERSION, BEFORE},
+	)
+	ValidMixinConfigDirectives = set.NewStringSetWithValues(
+		[]string{COMMANDS, ENV, EvalEnv, BEFORE},
+	)
 )
 
 // Config is a struct for loaded config file.

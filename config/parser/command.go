@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/lets-cli/lets/config/config"
-	"github.com/lets-cli/lets/util"
+	"github.com/lets-cli/lets/set"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -24,7 +24,7 @@ var (
 	ARGS            = "args"
 )
 
-var validFields = []string{
+var directives = set.NewStringSetWithValues([]string{
 	CMD,
 	DESCRIPTION,
 	WORKDIR,
@@ -38,11 +38,11 @@ var validFields = []string{
 	AFTER,
 	REF,
 	ARGS,
-}
+})
 
 // parseCommand parses and validates unmarshaled yaml.
 func parseCommand(newCmd *config.Command, rawCommand map[string]interface{}, cfg *config.Config) error {
-	if err := validateCommandFields(rawCommand, validFields); err != nil {
+	if err := validateCommendDirectives(rawCommand); err != nil {
 		return err
 	}
 
@@ -158,9 +158,9 @@ func parseCommand(newCmd *config.Command, rawCommand map[string]interface{}, cfg
 	return nil
 }
 
-func validateCommandFields(rawKeyValue map[string]interface{}, validFields []string) error {
+func validateCommendDirectives(rawKeyValue map[string]interface{}) error {
 	for key := range rawKeyValue {
-		if !util.IsStringInList(key, validFields) {
+		if !directives.Contains(key) {
 			return fmt.Errorf("unknown command field '%s'", key)
 		}
 	}
