@@ -5,9 +5,12 @@ title: Changelog
 
 ## [Unreleased]
 
+* `[Fixed]` **`Breaking change`** Fix duplicate files for checksum.
+  This will change checksum output if the same file has been read multiple times.
+
 ## [0.0.44](https://github.com/lets-cli/lets/releases/tag/v0.0.44)
 
-* ``[Fixed]`` Run ref declared in `depends` directive.
+* `[Fixed]` Run ref declared in `depends` directive.
 
 ## [0.0.43](https://github.com/lets-cli/lets/releases/tag/v0.0.43)
 
@@ -15,7 +18,7 @@ title: Changelog
 
 ## [0.0.42](https://github.com/lets-cli/lets/releases/tag/v0.0.42)
 
-* ``[Fixed]`` Fixed publish to `aur` repository.
+* `[Fixed]` Fixed publish to `aur` repository.
 
 ## [0.0.41](https://github.com/lets-cli/lets/releases/tag/v0.0.41)
 

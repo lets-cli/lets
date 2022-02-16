@@ -126,19 +126,11 @@ func parseConfigGeneral(rawKeyValue map[string]interface{}, cfg *config.Config) 
 	return nil
 }
 
-func validateTopLevelFields(rawKeyValue map[string]interface{}, validFields []string) error {
+func parseConfig(rawKeyValue map[string]interface{}, cfg *config.Config) error {
 	for key := range rawKeyValue {
-		if !util.IsStringInList(key, validFields) {
+		if !config.ValidConfigDirectives.Contains(key) {
 			return fmt.Errorf("unknown top-level field '%s'", key)
 		}
-	}
-
-	return nil
-}
-
-func parseConfig(rawKeyValue map[string]interface{}, cfg *config.Config) error {
-	if err := validateTopLevelFields(rawKeyValue, config.ValidConfigFields); err != nil {
-		return err
 	}
 
 	if err := parseConfigGeneral(rawKeyValue, cfg); err != nil {
@@ -243,8 +235,10 @@ func parseMixinConfig(data []byte, mixinCfg *config.Config) error {
 		return fmt.Errorf("can not decode mixin config file: %w", err)
 	}
 
-	if err := validateTopLevelFields(rawKeyValue, config.ValidMixinConfigFields); err != nil {
-		return err
+	for key := range rawKeyValue {
+		if !config.ValidMixinConfigDirectives.Contains(key) {
+			return fmt.Errorf("unknown top-level field '%s'", key)
+		}
 	}
 
 	return parseConfigGeneral(rawKeyValue, mixinCfg)
