@@ -8,4 +8,4 @@ commands:
 
   build-lint-image:
     description: Build lets lint docker image
-    cmd: docker build -t lets-lint -f docker/Dockerfile.lint .
+    cmd: docker build -t lets-lint -f docker/lint.Dockerfile .

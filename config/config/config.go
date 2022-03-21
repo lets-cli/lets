@@ -14,11 +14,11 @@ var (
 )
 
 var (
-	ValidConfigDirectives = set.NewStringSetWithValues(
-		[]string{COMMANDS, SHELL, ENV, EvalEnv, MIXINS, VERSION, BEFORE},
+	ValidConfigDirectives = set.NewSet(
+		COMMANDS, SHELL, ENV, EvalEnv, MIXINS, VERSION, BEFORE,
 	)
-	ValidMixinConfigDirectives = set.NewStringSetWithValues(
-		[]string{COMMANDS, ENV, EvalEnv, BEFORE},
+	ValidMixinConfigDirectives = set.NewSet(
+		COMMANDS, ENV, EvalEnv, BEFORE,
 	)
 )
 

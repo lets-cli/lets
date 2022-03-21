@@ -1,49 +1,35 @@
 package set
 
-type StringSet struct {
-	entryMap map[string]struct{}
-}
+type Set[T comparable] map[T]struct{}
 
-func (s *StringSet) Add(value string) {
-	s.entryMap[value] = struct{}{}
-}
-
-func (s *StringSet) AddMany(values []string) {
+func (s Set[T]) Add(values ...T) {
 	for _, value := range values {
-		s.entryMap[value] = struct{}{}
+		s[value] = struct{}{}
 	}
 }
 
-func (s *StringSet) ToList() []string {
-	values := make([]string, 0, len(s.entryMap))
-	for k := range s.entryMap {
+func (s Set[T]) ToList() []T {
+	values := make([]T, 0, len(s))
+	for k := range s {
 		values = append(values, k)
 	}
 
 	return values
 }
 
-func (s *StringSet) Remove(value string) {
-	delete(s.entryMap, value)
+func (s Set[T]) Remove(value T) {
+	delete(s, value)
 }
 
-func (s *StringSet) Contains(value string) bool {
-	_, c := s.entryMap[value]
+func (s Set[T]) Contains(value T) bool {
+	_, c := s[value]
 
 	return c
 }
 
-func NewStringSet() *StringSet {
-	return &StringSet{
-		entryMap: make(map[string]struct{}),
-	}
-}
-
-func NewStringSetWithValues(values []string) *StringSet {
-	set := &StringSet{
-		entryMap: make(map[string]struct{}),
-	}
-	set.AddMany(values)
+func NewSet[T comparable](values ...T) Set[T] {
+	set := make(Set[T])
+	set.Add(values...)
 
 	return set
 }

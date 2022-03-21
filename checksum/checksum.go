@@ -27,7 +27,7 @@ var checksumCache = make(map[string][]byte)
 //
 // return sorted list of files read by glob patterns.
 func readFilesFromPatterns(workDir string, patterns []string) ([]string, error) {
-	filesSet := set.NewStringSet()
+	filesSet := set.NewSet[string]()
 
 	for _, pattern := range patterns {
 		absPatternPath := pattern
@@ -40,7 +40,7 @@ func readFilesFromPatterns(workDir string, patterns []string) ([]string, error) 
 			return []string{}, fmt.Errorf("can not read file to calculate checksum: %w", err)
 		}
 
-		filesSet.AddMany(matches)
+		filesSet.Add(matches...)
 	}
 	// sort files list
 	files := filesSet.ToList()

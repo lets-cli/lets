@@ -1,9 +1,12 @@
 run:
   tests: false
+  go: 1.18
 
 linters:
   enable-all: true
   disable:
+    - typecheck
+    - containedctx
     - gochecknoglobals
     - goimports
     - funlen
@@ -19,6 +22,7 @@ linters:
     - cyclop
     - gocyclo
     - gocognit
+    - tagliatelle
 
 linters-settings:
   gomnd:
@@ -27,9 +31,14 @@ linters-settings:
         checks: case,condition,return
   lll:
     line-length: 120
+  varnamelen:
+    min-name-length: 2
 
 issues:
   exclude-rules:
     - path: _test\.go
       linters:
         - gomnd
+    - path: set\.go
+      linters:
+      - typecheck
