@@ -2,6 +2,10 @@ cleanup() {
     rm -rf .lets
 }
 
+cleanup_completion() {
+    rm -rf _lets
+}
+
 # Usage:
 
 # my_array=(2,4,1)
