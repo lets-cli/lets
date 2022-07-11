@@ -288,8 +288,8 @@ func parseCommands(cmds map[string]interface{}, cfg *config.Config) ([]config.Co
 		case map[string]interface{}:
 			rawCmd = rawValue
 		case map[interface{}]interface{}:
-			for k, v := range rawValue {
-				k, ok := k.(string)
+			for key, value := range rawValue {
+				key, ok := key.(string)
 				if !ok {
 					return []config.Command{}, newConfigParseError(
 						"command directive must be a string",
@@ -297,7 +297,7 @@ func parseCommands(cmds map[string]interface{}, cfg *config.Config) ([]config.Co
 						"",
 					)
 				}
-				rawCmd[k] = v
+				rawCmd[key] = value
 			}
 		default:
 			return []config.Command{}, newConfigParseError(

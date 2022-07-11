@@ -35,16 +35,16 @@ func debugf(format string, a ...interface{}) {
 	log.Debugf(colored(prefixed, color))
 }
 
-type RunErr struct {
+type RunError struct {
 	err error
 }
 
-func (e *RunErr) Error() string {
+func (e *RunError) Error() string {
 	return e.err.Error()
 }
 
 // ExitCode will return exit code from underlying ExitError or returns default error code.
-func (e *RunErr) ExitCode() int {
+func (e *RunError) ExitCode() int {
 	var exitErr *exec.ExitError
 	if ok := errors.As(e.err, &exitErr); ok {
 		return exitErr.ExitCode()
@@ -145,7 +145,7 @@ func (r *Runner) runChild(ctx context.Context) error {
 	)
 
 	if err := cmd.Run(); err != nil {
-		return &RunErr{err: fmt.Errorf("failed to run child command '%s' from 'depends': %w", r.cmd.Name, err)}
+		return &RunError{err: fmt.Errorf("failed to run child command '%s' from 'depends': %w", r.cmd.Name, err)}
 	}
 
 	// persist checksum only if exit code 0
@@ -162,8 +162,8 @@ func (r *Runner) runAfterScript() {
 
 	debugf("executing after script:\ncommand: %s\nscript: %s\nenv: %s", r.cmd.Name, r.cmd.After, fmtEnv(cmd.Env))
 
-	if runErr := cmd.Run(); runErr != nil {
-		log.Printf("failed to run `after` script for command '%s': %s", r.cmd.Name, runErr)
+	if RunError := cmd.Run(); RunError != nil {
+		log.Printf("failed to run `after` script for command '%s': %s", r.cmd.Name, RunError)
 	}
 }
 
@@ -314,7 +314,7 @@ func (r *Runner) runDepends(ctx context.Context) error {
 		dependCmd := r.cfg.Commands[depName]
 		if dependCmd.CmdMap != nil {
 			// forbid to run depends command as map
-			return &RunErr{
+			return &RunError{
 				err: fmt.Errorf(
 					"failed to run child command '%s' from 'depends': cmd as map is not allowed in depends yet",
 					r.cmd.Name,
@@ -381,7 +381,7 @@ func (r *Runner) runCmdScript(cmdScript string) error {
 	debugf("executing os command for '%s'\ncmd: %s\nenv: %s\n", r.cmd.Name, r.cmd.Cmd, fmtEnv(cmd.Env))
 
 	if err := cmd.Run(); err != nil {
-		return &RunErr{err: fmt.Errorf("failed to run command '%s': %w", r.cmd.Name, err)}
+		return &RunError{err: fmt.Errorf("failed to run command '%s': %w", r.cmd.Name, err)}
 	}
 
 	return nil
@@ -447,7 +447,7 @@ func (r *Runner) runCmdAsMap(ctx context.Context) (err error) {
 		return err
 	}
 
-	g, _ := errgroup.WithContext(ctx)
+	group, _ := errgroup.WithContext(ctx)
 
 	cmdMap, err := filterCmdMap(r.cmd.Name, r.cmd.CmdMap, r.cmd.Only, r.cmd.Exclude)
 	if err != nil {
@@ -457,12 +457,12 @@ func (r *Runner) runCmdAsMap(ctx context.Context) (err error) {
 	for _, cmdExecScript := range cmdMap {
 		cmdExecScript := cmdExecScript
 		// wait for cmd to end in a goroutine with error propagation
-		g.Go(func() error {
+		group.Go(func() error {
 			return r.runCmdScript(cmdExecScript)
 		})
 	}
 
-	if err = g.Wait(); err != nil {
+	if err = group.Wait(); err != nil {
 		return err //nolint:wrapcheck
 	}
 

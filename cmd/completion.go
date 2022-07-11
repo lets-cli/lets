@@ -74,18 +74,18 @@ complete -o filenames -F _lets_completion lets
 `
 
 // generate bash completion script.
-func genBashCompletion(w io.Writer) error {
+func genBashCompletion(out io.Writer) error {
 	tmpl, err := template.New("Main").Parse(bashCompletionText)
 	if err != nil {
 		return fmt.Errorf("error creating zsh completion template: %w", err)
 	}
 
-	return tmpl.Execute(w, nil)
+	return tmpl.Execute(out, nil)
 }
 
 // generate zsh completion script.
 // if verbose passed - generate completion with description.
-func genZshCompletion(w io.Writer, verbose bool) error {
+func genZshCompletion(out io.Writer, verbose bool) error {
 	tmpl, err := template.New("Main").Parse(zshCompletionText)
 	if err != nil {
 		return fmt.Errorf("error creating zsh completion template: %w", err)
@@ -99,11 +99,11 @@ func genZshCompletion(w io.Writer, verbose bool) error {
 		data.Verbose = "--verbose"
 	}
 
-	return tmpl.Execute(w, data)
+	return tmpl.Execute(out, data)
 }
 
 // generate string of commands joined with \n.
-func getCommandsList(rootCmd *cobra.Command, w io.Writer, verbose bool) error {
+func getCommandsList(rootCmd *cobra.Command, out io.Writer, verbose bool) error {
 	buf := new(bytes.Buffer)
 
 	for _, cmd := range rootCmd.Commands() {
@@ -122,7 +122,7 @@ func getCommandsList(rootCmd *cobra.Command, w io.Writer, verbose bool) error {
 		}
 	}
 
-	_, err := buf.WriteTo(w)
+	_, err := buf.WriteTo(out)
 	if err != nil {
 		return fmt.Errorf("can not generate commands list: %w", err)
 	}
@@ -136,7 +136,7 @@ type option struct {
 }
 
 // generate string of command options joined with \n.
-func getCommandOptions(command config.Command, w io.Writer, verbose bool) error {
+func getCommandOptions(command config.Command, out io.Writer, verbose bool) error {
 	if command.Docopts == "" {
 		return nil
 	}
@@ -174,7 +174,7 @@ func getCommandOptions(command config.Command, w io.Writer, verbose bool) error 
 		}
 	}
 
-	_, err = buf.WriteTo(w)
+	_, err = buf.WriteTo(out)
 	if err != nil {
 		return fmt.Errorf("can not generate command options list: %w", err)
 	}
@@ -221,10 +221,12 @@ func initCompletionCmd(rootCmd *cobra.Command, cfg *config.Config) {
 				if cfg == nil {
 					return fmt.Errorf("can not read config")
 				}
+
 				command, exists := cfg.Commands[optionsForCmd]
 				if !exists {
 					return fmt.Errorf("command %s not declared in config", optionsForCmd)
 				}
+
 				return getCommandOptions(command, cmd.OutOrStdout(), verbose)
 			}
 

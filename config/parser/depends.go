@@ -26,7 +26,7 @@ func parseDependsAsMap(dep map[string]interface{}, cmdName string, idx int) (*co
 	args := []string{}
 	env := map[string]string{}
 
-	for key, v := range dep {
+	for key, rawValue := range dep {
 		if _, exists := depKeysMap[key]; !exists {
 			return nil, parseError(
 				fmt.Sprintf("key of depend must be one of %s", depKeys),
@@ -38,7 +38,7 @@ func parseDependsAsMap(dep map[string]interface{}, cmdName string, idx int) (*co
 
 		switch key {
 		case nameKey:
-			value, ok := v.(string)
+			value, ok := rawValue.(string)
 			if !ok {
 				return nil, &ParseError{
 					CommandName: cmdName,
@@ -51,7 +51,7 @@ func parseDependsAsMap(dep map[string]interface{}, cmdName string, idx int) (*co
 			}
 			name = value
 		case argsKey:
-			switch value := v.(type) {
+			switch value := rawValue.(type) {
 			case string:
 				args = append(args, value)
 			case []interface{}:
@@ -74,12 +74,14 @@ func parseDependsAsMap(dep map[string]interface{}, cmdName string, idx int) (*co
 					Err: fmt.Errorf(
 						"field '%s': %s",
 						fmt.Sprintf("%s.[%d][name:%s]", DEPENDS, idx, name),
-						fmt.Sprintf("value of 'args' must be a string or an array of string, got: %#v", v)),
+						fmt.Sprintf("value of 'args' must be a string or an array of string, got: %#v", value)),
 				}
 			}
 		case envKey:
-			for envName, envValue := range v.(map[string]interface{}) {
-				env[envName] = fmt.Sprintf("%v", envValue)
+			if envMap, ok := rawValue.(map[string]interface{}); ok {
+				for envName, envValue := range envMap {
+					env[envName] = fmt.Sprintf("%v", envValue)
+				}
 			}
 		}
 	}
@@ -107,14 +109,14 @@ func parseDepends(rawDepends interface{}, newCmd *config.Command) error {
 	dependencies := make(map[string]config.Dep, len(depends))
 	dependsNames := make([]string, 0, len(depends))
 
-	for idx, value := range depends {
-		switch v := value.(type) {
+	for idx, rawValue := range depends {
+		switch value := rawValue.(type) {
 		case string:
-			dep := &config.Dep{Name: v, Args: []string{}}
+			dep := &config.Dep{Name: value, Args: []string{}}
 			dependencies[dep.Name] = *dep
 			dependsNames = append(dependsNames, dep.Name)
 		case map[string]interface{}:
-			dep, err := parseDependsAsMap(v, newCmd.Name, idx)
+			dep, err := parseDependsAsMap(value, newCmd.Name, idx)
 			if err != nil {
 				return err
 			}

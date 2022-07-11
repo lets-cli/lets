@@ -6,6 +6,7 @@ linters:
   enable-all: true
   disable:
     - typecheck
+    - gomoddirectives
     - containedctx
     - gochecknoglobals
     - goimports

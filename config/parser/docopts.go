@@ -24,7 +24,7 @@ func ParseDocopts(args []string, docopts string) (docopt.Opts, error) {
 	return docoptParser.ParseArgs(docopts, args, "")
 }
 
-// ParseDocoptsOptions parses docopts only to get all available options for a command
+// ParseDocoptsOptions parses docopts only to get all available options for a command.
 func ParseDocoptsOptions(docopts string, cmdName string) ([]docopt.Option, error) {
 	return docoptParser.ParseOptions(docopts, []string{cmdName})
 }
