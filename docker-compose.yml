@@ -29,13 +29,13 @@ services:
     environment:
       NO_COLOR: 1
       BATS_UTILS_PATH: /bats
-    command: |
-      bash -c '
+    command:
+      - bash 
+      - -c
+      - |
         go build -o /usr/bin/lets *.go
-        ARGS="--tap --verbose-run --trace"
         if [[ -n "${LETSOPT_TEST}" ]]; then
-          bats ${ARGS} tests/"${LETSOPT_TEST}"
+          bats tests/"${LETSOPT_TEST}" ${LETSOPT_OPTS}
         else
-          bats ${ARGS} tests
+          bats tests ${LETSOPT_OPTS}
         fi
-      '

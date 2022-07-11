@@ -1,59 +1,8 @@
 #! /bin/zsh
-
 autoload -Uz compinit && compinit
 
-# source _lets
+eval "$(echo "$(lets completion -s zsh)" | sed 's/#compdef/compdef/')"
 
-#---------------------
-compdef _lets lets
-
-LETS_EXECUTABLE=lets
-
-function _lets {
-    echo "Completing !!!!"
-    local state
-
-	_arguments -C -s \
-		"1: :->cmds" \
-		'*::arg:->args'
-
-	case $state in
-		cmds)
-			_lets_commands
-			;;
-		args)
-			_lets_command_options "${words[1]}"
-			;;
-	esac
-}
-
-# Check if in folder with correct lets.yaml file
-_check_lets_config() {
-	${LETS_EXECUTABLE} 1>/dev/null 2>/dev/null
-	echo $?
-}
-
-_lets_commands () {
-	local cmds
-
-	if [ $(_check_lets_config) -eq 0 ]; then
-		IFS=$'\n' cmds=($(${LETS_EXECUTABLE} completion --commands --verbose))
-	else
-		cmds=()
-	fi
-	_describe -t commands 'Available commands' cmds
-}
-
-_lets_command_options () {
-	local cmd=$1
-
-	if [ $(_check_lets_config) -eq 0 ]; then
-		IFS=$'\n'
-		_arguments -s $(${LETS_EXECUTABLE} completion --options=${cmd} --verbose)
-	fi
-}
-#---------------------
-# Define our test function.
 comptest () {
         # Gather all matching completions in this array.
         # -U discards duplicates.
