@@ -40,7 +40,7 @@ jobs:
         with:
           version: latest
       - name: Test bats
-        run: lets test-bats
+        run: timeout 120 lets test-bats
 
   lint:
     runs-on: ubuntu-latest

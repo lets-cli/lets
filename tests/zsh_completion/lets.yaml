@@ -1,0 +1,11 @@
+shell: bash
+
+commands:
+  run:
+    description: Run application
+    options: |
+      usage: lets run [--debug] [--env=<env>]
+      options:
+        -d, -debug  Run in debug mode
+        --env=<env>  Run with env
+    cmd: echo Run debug=${LETSOPT_DEBUG} env=${LETSOPT_ENV}

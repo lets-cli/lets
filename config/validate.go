@@ -21,7 +21,7 @@ func withColor(msg string) string {
 }
 
 // Validate loaded config.
-// nolint:revive
+
 func validate(config *config.Config, letsVersion string) error {
 	if err := validateVersion(config, letsVersion); err != nil {
 		return err

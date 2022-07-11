@@ -46,8 +46,8 @@ func parseCmd(cmd interface{}, newCmd *config.Command) error {
 
 		cmdList := make([]string, 0, len(cmd)+len(proxyArgs))
 
-		for _, v := range cmd {
-			if v == nil {
+		for _, value := range cmd {
+			if value == nil {
 				return parseError(
 					"got nil in cmd list",
 					newCmd.Name,
@@ -56,11 +56,11 @@ func parseCmd(cmd interface{}, newCmd *config.Command) error {
 				)
 			}
 
-			cmdList = append(cmdList, fmt.Sprintf("%s", v))
+			cmdList = append(cmdList, fmt.Sprintf("%s", value))
 		}
 
-		fullCommandList := append(cmdList, escapeArgs(proxyArgs)...)
-		newCmd.Cmd = strings.TrimSpace(strings.Join(fullCommandList, " "))
+		cmdList = append(cmdList, escapeArgs(proxyArgs)...)
+		newCmd.Cmd = strings.TrimSpace(strings.Join(cmdList, " "))
 	case map[string]interface{}:
 		cmdMap := make(map[string]string, len(cmd))
 

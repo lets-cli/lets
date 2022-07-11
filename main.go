@@ -48,7 +48,7 @@ func main() {
 		log.Error(err.Error())
 
 		exitCode := 1
-		if e, ok := err.(*runner.RunErr); ok { //nolint:errorlint
+		if e, ok := err.(*runner.RunError); ok { //nolint:errorlint
 			exitCode = e.ExitCode()
 		}
 

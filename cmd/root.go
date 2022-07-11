@@ -33,7 +33,7 @@ func newRootCmd(version string) *cobra.Command {
 func CreateRootCommandWithConfig(out io.Writer, cfg *config.Config, version string) *cobra.Command {
 	rootCmd := newRootCmd(version)
 
-	initRootCommand(rootCmd)
+	initRootCommand(rootCmd, cfg)
 	initSubCommands(rootCmd, cfg, out)
 
 	return rootCmd
@@ -43,7 +43,7 @@ func CreateRootCommandWithConfig(out io.Writer, cfg *config.Config, version stri
 func CreateRootCommand(version string) *cobra.Command {
 	rootCmd := newRootCmd(version)
 
-	initRootCommand(rootCmd)
+	initRootCommand(rootCmd, nil)
 
 	return rootCmd
 }
@@ -64,8 +64,8 @@ func ConfigErrorCheck(rootCmd *cobra.Command, err error) {
 	}
 }
 
-func initRootCommand(rootCmd *cobra.Command) {
-	initCompletionCmd(rootCmd)
+func initRootCommand(rootCmd *cobra.Command, cfg *config.Config) {
+	initCompletionCmd(rootCmd, cfg)
 	rootCmd.Flags().StringToStringP("env", "E", nil, "set env variable for running command KEY=VALUE")
 	rootCmd.Flags().StringArray("only", []string{}, "run only specified command(s) described in cmd as map")
 	rootCmd.Flags().StringArray("exclude", []string{}, "run all but excluded command(s) described in cmd as map")

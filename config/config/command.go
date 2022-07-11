@@ -100,7 +100,10 @@ func (cmd Command) WithEnv(env map[string]string) Command {
 }
 
 func (cmd Command) Pretty() string {
-	pretty, _ := json.MarshalIndent(cmd, "", "  ")
+	pretty, err := json.MarshalIndent(cmd, "", "  ")
+	if err != nil {
+		return ""
+	}
 
 	return string(pretty)
 }
