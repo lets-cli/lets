@@ -4,6 +4,17 @@ mixins:
   - build.yaml
   - -lets.my.yaml
 
+plugins:
+  docker-push-pull:
+    repo: lets-cli/lets-plugin-docker-push-pull
+    # TODO version is hashed for cache
+    version: v0.0.45
+    #version: latest
+    # TODO url is hashed for cache
+    url: "https://github.com/lets-cli/lets/releases/download/{{.Version}}/lets_{{.Os}}_{{.Arch}}.tar.gz"
+    # TODO if bin specified, url is ignored
+    bin: ../lets-plugin-docker-push-pull/docker-push-pull
+
 env:
     NAME: "max"
     AGE: 27
@@ -11,11 +22,22 @@ env:
       sh: echo "`id -u`:`id -g`"
     NGINX_DEV:
       checksum: [go.mod, go.sum]
-
-eval_env:
-  CURRENT_UID: echo "`id -u`:`id -g`"
+    LINT_TAG:
+      checksum: [docker/lint.Dockerfile]
 
 commands:
+  build-image:
+    plugins:
+      docker-push-pull:
+        registry_url: "https://registry.evo.dev"
+        build_context: "/home/max/code/lets-workspace/lets"
+        dockerfile: docker/lint.Dockerfile
+#         image: registry.evo.dev/core-team/company-stats/backend
+        image: lets-lint
+        tag: "123" # TODO has to resolve env
+#         tag: ${LINT_TAG} # TODO has to resolve env
+        target: dev
+
   release:
     description: Create tag and push
     options: |

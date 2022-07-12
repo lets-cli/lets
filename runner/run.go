@@ -105,6 +105,10 @@ func (r *Runner) run(ctx context.Context) error {
 		return err
 	}
 
+	if err := r.runPlugins(); err != nil {
+		return err
+	}
+
 	if err := r.runDepends(ctx); err != nil {
 		return err
 	}
@@ -165,6 +169,22 @@ func (r *Runner) runAfterScript() {
 	if runErr := cmd.Run(); runErr != nil {
 		log.Printf("failed to run `after` script for command '%s': %s", r.cmd.Name, runErr)
 	}
+}
+
+func (r *Runner) runPlugin(plugin config.CommandPlugin) error {
+	debugf("executing plugin %s:\ncommand: %s", plugin.Name, r.cmd.Name)
+	return plugin.Run(r.cmd, r.cfg)
+}
+
+func (r *Runner) runPlugins() error {
+	// TODO how to store plugin response ???
+	for _, plugin := range r.cmd.Plugins {
+		debugf("executing plugin %s:\ncommand: %s", plugin.Name, r.cmd.Name)
+		if err := plugin.Run(r.cmd, r.cfg); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 type RunOptions struct {

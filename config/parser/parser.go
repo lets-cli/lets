@@ -164,6 +164,16 @@ func parseConfig(rawKeyValue map[string]interface{}, cfg *config.Config) error {
 		return fmt.Errorf("'shell' field is required")
 	}
 
+	if rawPlugins, ok := rawKeyValue[config.PLUGINS]; ok {
+		plugins, ok := rawPlugins.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("plugins must be a mapping")
+		}
+		if err := parseConfigPlugins(plugins, cfg); err != nil {
+			return err
+		}
+	}
+
 	if mixins, ok := rawKeyValue[config.MIXINS]; ok {
 		mixins, ok := mixins.([]interface{})
 		if !ok {
@@ -275,6 +285,42 @@ func mergeConfigs(mainCfg *config.Config, mixinCfg *config.Config) error {
 
 func parseBefore(before string, cfg *config.Config) error {
 	cfg.Before = before
+
+	return nil
+}
+
+func parseConfigPlugins(rawPlugins map[string]interface{}, cfg *config.Config) error {
+	plugins := make(map[string]config.ConfigPlugin)
+
+	for key, value := range rawPlugins {
+		pluginConfig, ok := value.(map[string]interface{})
+		if !ok {
+			// TODO maybe print plugin configuration schema
+			return fmt.Errorf("plugin %s configuration must be a mapping", key)
+		}
+
+		plugin := config.ConfigPlugin{Name: key}
+
+		for configKey, configVal := range pluginConfig {
+			switch configVal := configVal.(type) {
+			case string:
+				switch configKey {
+				case "version":
+					plugin.Version = configVal
+				case "url":
+					plugin.Url = configVal
+				case "bin":
+					plugin.Bin = configVal
+				case "repo":
+					plugin.Repo = configVal
+				}
+			}
+		}
+
+		plugins[key] = plugin
+	}
+
+	cfg.Plugins = plugins
 
 	return nil
 }

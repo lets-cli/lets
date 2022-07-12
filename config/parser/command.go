@@ -13,6 +13,7 @@ var (
 	DESCRIPTION     = "description"
 	WORKDIR         = "work_dir"
 	SHELL           = "shell"
+	PLUGINS         = "plugins"
 	ENV             = "env"
 	EvalEnv         = "eval_env"
 	OPTIONS         = "options"
@@ -29,6 +30,7 @@ var directives = set.NewSet[string](
 	DESCRIPTION,
 	WORKDIR,
 	SHELL,
+	PLUGINS,
 	ENV,
 	EvalEnv,
 	OPTIONS,
@@ -72,6 +74,16 @@ func parseCommand(newCmd *config.Command, rawCommand map[string]interface{}, cfg
 
 	if shell, ok := rawCommand[SHELL]; ok {
 		if err := parseShell(shell, newCmd); err != nil {
+			return err
+		}
+	}
+
+	if rawPlugins, ok := rawCommand[PLUGINS]; ok {
+		plugins, ok := rawPlugins.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("plugins must be a mapping")
+		}
+		if err := parsePlugins(plugins, newCmd); err != nil {
 			return err
 		}
 	}

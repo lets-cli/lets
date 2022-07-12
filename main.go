@@ -10,6 +10,7 @@ import (
 	"github.com/lets-cli/lets/config"
 	"github.com/lets-cli/lets/env"
 	"github.com/lets-cli/lets/logging"
+	"github.com/lets-cli/lets/plugins"
 	"github.com/lets-cli/lets/runner"
 	"github.com/lets-cli/lets/workdir"
 	log "github.com/sirupsen/logrus"
@@ -42,6 +43,13 @@ func main() {
 
 	if readConfigErr != nil {
 		cmd.ConfigErrorCheck(rootCmd, readConfigErr)
+	}
+
+	if len(cfg.Plugins) > 0 {
+		if err := plugins.Load(cfg); err != nil {
+			log.Error(err)
+			os.Exit(1)
+		}
 	}
 
 	if err := rootCmd.ExecuteContext(ctx); err != nil {

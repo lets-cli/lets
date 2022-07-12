@@ -58,6 +58,7 @@ type Command struct {
 	Ref string
 	// can be specified only with ref
 	RefArgs []string
+	Plugins map[string]CommandPlugin
 }
 
 // NewCommand creates new command struct.
@@ -66,6 +67,7 @@ func NewCommand(name string) Command {
 		Name:        name,
 		Env:         make(map[string]string),
 		SkipDocopts: false,
+		Plugins:     make(map[string]CommandPlugin),
 	}
 }
 

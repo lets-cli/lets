@@ -6,6 +6,7 @@ var (
 	// COMMANDS is a top-level directive. Includes all commands to run.
 	COMMANDS = "commands"
 	SHELL    = "shell"
+	PLUGINS  = "plugins"
 	ENV      = "env"
 	EvalEnv  = "eval_env"
 	MIXINS   = "mixins"
@@ -15,7 +16,7 @@ var (
 
 var (
 	ValidConfigDirectives = set.NewSet(
-		COMMANDS, SHELL, ENV, EvalEnv, MIXINS, VERSION, BEFORE,
+		COMMANDS, SHELL, ENV, EvalEnv, MIXINS, VERSION, BEFORE, PLUGINS,
 	)
 	ValidMixinConfigDirectives = set.NewSet(
 		COMMANDS, ENV, EvalEnv, BEFORE,
@@ -36,6 +37,7 @@ type Config struct {
 	isMixin bool // if true, we consider config as mixin and apply different parsing and validation
 	// absolute path to .lets
 	DotLetsDir string
+	Plugins    map[string]ConfigPlugin
 }
 
 func NewConfig(workDir string, configAbsPath string, dotLetsDir string) *Config {
@@ -45,6 +47,7 @@ func NewConfig(workDir string, configAbsPath string, dotLetsDir string) *Config 
 		WorkDir:    workDir,
 		FilePath:   configAbsPath,
 		DotLetsDir: dotLetsDir,
+		Plugins:    make(map[string]ConfigPlugin),
 	}
 }
 
