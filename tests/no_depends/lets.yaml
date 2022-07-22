@@ -1,0 +1,15 @@
+shell: bash
+
+env:
+  NAME: "John"
+
+commands:
+  ping:
+    cmd: echo Ping
+  pong:
+    cmd: echo Pong
+  ping-pong:
+    depends:
+      - ping
+      - pong
+    cmd: echo Done

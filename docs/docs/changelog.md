@@ -5,6 +5,17 @@ title: Changelog
 
 ## [Unreleased]
 
+## [0.0.48]
+
+* `[Added]` `--no-depends` global option. Lets will skip `depends` for running command
+
+  ```shell
+  lets --no-depends run
+  ```
+## [0.0.47]
+
+* `[Added]` completion for command options
+* `[Dependency]` use fork of docopt.go with extended options parser
 ## [0.0.45]
 
 * `[Fixed]` **`Breaking change`** Fix duplicate files for checksum.

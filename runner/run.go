@@ -58,13 +58,15 @@ type Runner struct {
 	parentCmd *config.Command // child command if parentCmd is not nil
 	cfg       *config.Config
 	out       io.Writer
+	noDepends bool
 }
 
-func NewRunner(cmd *config.Command, cfg *config.Config, out io.Writer) *Runner {
+func NewRunner(cmd *config.Command, cfg *config.Config, out io.Writer, noDepends bool) *Runner {
 	return &Runner{
-		cmd: cmd,
-		cfg: cfg,
-		out: out,
+		cmd:       cmd,
+		cfg:       cfg,
+		out:       out,
+		noDepends: noDepends,
 	}
 }
 
@@ -74,6 +76,9 @@ func NewChildRunner(cmd *config.Command, parentRunner *Runner) *Runner {
 		parentCmd: parentRunner.cmd,
 		cfg:       parentRunner.cfg,
 		out:       parentRunner.out,
+		// if parent command executed without depends, child command will never be executed,
+		// so it is fine to set noDepends to false
+		noDepends: false,
 	}
 }
 
@@ -105,8 +110,10 @@ func (r *Runner) run(ctx context.Context) error {
 		return err
 	}
 
-	if err := r.runDepends(ctx); err != nil {
-		return err
+	if !r.noDepends {
+		if err := r.runDepends(ctx); err != nil {
+			return err
+		}
 	}
 
 	if err := r.runCmdScript(r.cmd.Cmd); err != nil {
@@ -443,8 +450,10 @@ func (r *Runner) runCmdAsMap(ctx context.Context) (err error) {
 		return err
 	}
 
-	if err = r.runDepends(ctx); err != nil {
-		return err
+	if !r.noDepends {
+		if err = r.runDepends(ctx); err != nil {
+			return err
+		}
 	}
 
 	group, _ := errgroup.WithContext(ctx)

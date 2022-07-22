@@ -6,10 +6,15 @@ module.exports = {
       'getting_started',
       'completion',
     ],
-    "Basic usage": ['basic_usage'],
-    "Advanced usage": ['advanced_usage'],
+    "Usage": [
+      'basic_usage',
+      'advanced_usage',
+    ],
     "Config format": ['config'],
-    "Environment": ['env'],
+    "CLI": [
+      'cli',
+      'env',
+    ],
     "Examples": [
       'examples',
       'example_js',
