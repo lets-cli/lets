@@ -7,4 +7,9 @@ commands:
 
   bar:
     description: Print bar
+    options: |
+      Usage: lets bar [--debug] [--env=<env>]
+      Options:
+        --debug  Run with debug
+        --env=<env>, -e  Set env
     cmd: echo "Bar"
