@@ -6,6 +6,31 @@ setup() {
     cd ./tests/help
 }
 
+HELP_MESSAGE=<<EOF
+A CLI command runner
+
+Usage:
+  lets [flags]
+  lets [command]
+
+Available Commands:
+  bar         Print bar
+  foo         Print foo
+  help        Help about any command
+
+Flags:
+  -E, --env stringToString    set env variable for running command KEY=VALUE (default [])
+      --exclude stringArray   run all but excluded command(s) described in cmd as map
+  -h, --help                  help for lets
+      --init                  create a new lets.yaml in the current folder
+      --no-depends            skip 'depends' for running command
+      --only stringArray      run only specified command(s) described in cmd as map
+      --upgrade               upgrade lets to latest version
+  -v, --version               version for lets
+
+Use "lets [command] --help" for more information about a command.
+EOF
+
 @test "help: should create .lets dir" {
     run lets
 
@@ -17,42 +42,12 @@ setup() {
     run lets
     assert_success
 
-    assert_line --index 0 "A CLI command runner"
-    assert_line --index 1 "Usage:"
-    assert_line --index 2 "  lets [flags]"
-    assert_line --index 3 "  lets [command]"
-    assert_line --index 4 "Available Commands:"
-    assert_line --index 5 "  bar         Print bar"
-    assert_line --index 6 "  foo         Print foo"
-    assert_line --index 7 "  help        Help about any command"
-    assert_line --index 8 "Flags:"
-    assert_line --index 9 "  -E, --env stringToString    set env variable for running command KEY=VALUE (default [])"
-    assert_line --index 10 "      --exclude stringArray   run all but excluded command(s) described in cmd as map"
-    assert_line --index 11 "  -h, --help                  help for lets"
-    assert_line --index 12 "      --init                  creates a new lets.yaml in the current folder"
-    assert_line --index 13 "      --only stringArray      run only specified command(s) described in cmd as map"
-    assert_line --index 14 "      --upgrade               upgrade lets to latest version"
-    assert_line --index 15 "  -v, --version               version for lets"
+    assert_output $HELP_MESSAGE
 }
 
 @test "help: run 'lets help' (must be same as running lets as is)" {
     run lets --help
     assert_success
 
-    assert_line --index 0 "A CLI command runner"
-    assert_line --index 1 "Usage:"
-    assert_line --index 2 "  lets [flags]"
-    assert_line --index 3 "  lets [command]"
-    assert_line --index 4 "Available Commands:"
-    assert_line --index 5 "  bar         Print bar"
-    assert_line --index 6 "  foo         Print foo"
-    assert_line --index 7 "  help        Help about any command"
-    assert_line --index 8 "Flags:"
-    assert_line --index 9 "  -E, --env stringToString    set env variable for running command KEY=VALUE (default [])"
-    assert_line --index 10 "      --exclude stringArray   run all but excluded command(s) described in cmd as map"
-    assert_line --index 11 "  -h, --help                  help for lets"
-    assert_line --index 12 "      --init                  creates a new lets.yaml in the current folder"
-    assert_line --index 13 "      --only stringArray      run only specified command(s) described in cmd as map"
-    assert_line --index 14 "      --upgrade               upgrade lets to latest version"
-    assert_line --index 15 "  -v, --version               version for lets"
+    assert_output $HELP_MESSAGE
 }

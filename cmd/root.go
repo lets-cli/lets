@@ -70,7 +70,8 @@ func initRootCommand(rootCmd *cobra.Command, cfg *config.Config) {
 	rootCmd.Flags().StringArray("only", []string{}, "run only specified command(s) described in cmd as map")
 	rootCmd.Flags().StringArray("exclude", []string{}, "run all but excluded command(s) described in cmd as map")
 	rootCmd.Flags().Bool("upgrade", false, "upgrade lets to latest version")
-	rootCmd.Flags().Bool("init", false, "creates a new lets.yaml in the current folder")
+	rootCmd.Flags().Bool("init", false, "create a new lets.yaml in the current folder")
+	rootCmd.Flags().Bool("no-depends", false, "skip 'depends' for running command")
 }
 
 func runRoot(cmd *cobra.Command, version string) error {

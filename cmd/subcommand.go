@@ -40,6 +40,11 @@ func newCmdGeneric(command config.Command, conf *config.Config, out io.Writer) *
 				return err
 			}
 
+			noDepends, err := parseNoDepends(cmd)
+			if err != nil {
+				return err
+			}
+
 			command.Only = only
 			command.Exclude = exclude
 			command.Args = prepareArgs(command.Name, os.Args)
@@ -56,7 +61,7 @@ func newCmdGeneric(command config.Command, conf *config.Config, out io.Writer) *
 				command = conf.Commands[command.Ref].FromRef(command)
 			}
 
-			return runner.NewRunner(&command, conf, out).Execute(cmd.Context())
+			return runner.NewRunner(&command, conf, out, noDepends).Execute(cmd.Context())
 		},
 		// we use docopt to parse flags on our own, so any flag is valid flag here
 		FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},
@@ -108,4 +113,13 @@ func parseEnvFlag(cmd *cobra.Command) (map[string]string, error) {
 	}
 
 	return envs, nil
+}
+
+func parseNoDepends(cmd *cobra.Command) (bool, error) {
+	noDepends, err := cmd.Parent().Flags().GetBool("no-depends")
+	if err != nil {
+		return false, fmt.Errorf("can not get flag 'no-depends': %w", err)
+	}
+
+	return noDepends, nil
 }

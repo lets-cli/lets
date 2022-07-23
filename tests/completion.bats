@@ -25,15 +25,29 @@ setup() {
 }
 
 @test "completion: should return list of commands" {
-    run lets completion --list
+    run lets completion --commands
     assert_success
     assert_line --index 0 "bar"
     assert_line --index 1 "foo"
 }
 
 @test "completion: should return verbose list of commands" {
-    run lets completion --list --verbose
+    run lets completion --commands --verbose
     assert_success
     assert_line --index 0 "bar:Print bar"
     assert_line --index 1 "foo:Print foo"
+}
+
+@test "completion: should return list of options for command" {
+    run lets completion --options bar
+    assert_success
+    assert_line --index 0 "--debug"
+    assert_line --index 1 "--env"
+}
+
+@test "completion: should return verbose list of options for command" {
+    run lets completion --options bar --verbose
+    assert_success
+    assert_line --index 0 "--debug[Run with debug]"
+    assert_line --index 1 "--env[Set env]"
 }
