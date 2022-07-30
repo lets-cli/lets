@@ -5,6 +5,11 @@ title: Changelog
 
 ## [Unreleased]
 
+## [0.0.49]
+
+* `[Added]` remote mixins `experimental` support. See [config](/docs/config#remote-mixins-experimental) for more details.
+
+
 ## [0.0.48]
 
 * `[Added]` `--no-depends` global option. Lets will skip `depends` for running command
