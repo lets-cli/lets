@@ -3,6 +3,38 @@ id: best_practices
 title: Best practices
 ---
 
+### Naming conventions
+
+Prefer single word over plural. 
+
+It is better to leverage semantics of `lets` as an intention to do something. For example it is natural saying `lets test` or `lets build` something.
+
+`bad`
+
+```
+lets runs
+```
+
+`good`
+
+```
+lets run
+```
+
+---
+
+`bad`
+
+```
+lets tests
+```
+
+`good`
+
+```
+lets test
+```
+
 ### Default commands
 
 If you have many projects (lets say - microservices) - it would be great to have one way to run and operate them when developing

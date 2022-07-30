@@ -1,6 +1,12 @@
 package config
 
-import "github.com/lets-cli/lets/set"
+import (
+	"fmt"
+	"path/filepath"
+
+	"github.com/lets-cli/lets/set"
+	"github.com/lets-cli/lets/util"
+)
 
 var (
 	// COMMANDS is a top-level directive. Includes all commands to run.
@@ -36,21 +42,43 @@ type Config struct {
 	isMixin bool // if true, we consider config as mixin and apply different parsing and validation
 	// absolute path to .lets
 	DotLetsDir string
+	// absolute path to .lets/checksums
+	ChecksumsDir string
+	// absolute path to .lets/mixins
+	MixinsDir string
 }
 
 func NewConfig(workDir string, configAbsPath string, dotLetsDir string) *Config {
 	return &Config{
-		Commands:   make(map[string]Command),
-		Env:        make(map[string]string),
-		WorkDir:    workDir,
-		FilePath:   configAbsPath,
-		DotLetsDir: dotLetsDir,
+		Commands:     make(map[string]Command),
+		Env:          make(map[string]string),
+		WorkDir:      workDir,
+		FilePath:     configAbsPath,
+		DotLetsDir:   dotLetsDir,
+		ChecksumsDir: filepath.Join(dotLetsDir, "checksums"),
+		MixinsDir:    filepath.Join(dotLetsDir, "mixins"),
 	}
 }
 
-func NewMixinConfig(workDir string, configAbsPath string, dotLetsDir string) *Config {
-	cfg := NewConfig(workDir, configAbsPath, dotLetsDir)
-	cfg.isMixin = true
+func NewMixinConfig(cfg *Config, configAbsPath string) *Config {
+	mixin := NewConfig(cfg.WorkDir, configAbsPath, cfg.DotLetsDir)
+	mixin.isMixin = true
 
-	return cfg
+	return mixin
+}
+
+func (c *Config) CreateChecksumsDir() error {
+	if err := util.SafeCreateDir(c.ChecksumsDir); err != nil {
+		return fmt.Errorf("can not create %s: %w", c.ChecksumsDir, err)
+	}
+
+	return nil
+}
+
+func (c *Config) CreateMixinsDir() error {
+	if err := util.SafeCreateDir(c.MixinsDir); err != nil {
+		return fmt.Errorf("can not create %s: %w", c.MixinsDir, err)
+	}
+
+	return nil
 }

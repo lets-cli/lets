@@ -2,10 +2,16 @@ package parser
 
 import (
 	"bytes"
+	"context"
+	"crypto/sha256"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/lets-cli/lets/config/config"
 	"github.com/lets-cli/lets/config/path"
@@ -193,15 +199,113 @@ func isIgnoredMixin(filename string) bool {
 	return strings.HasPrefix(filename, "-")
 }
 
+type RemoteMixin struct {
+	URL     string
+	Version string
+
+	mixinsDir string
+}
+
+// Filename is name of mixin file (hash from url).
+func (rm *RemoteMixin) Filename() string {
+	hasher := sha256.New()
+	hasher.Write([]byte(rm.URL))
+
+	if rm.Version != "" {
+		hasher.Write([]byte(rm.Version))
+	}
+
+	return fmt.Sprintf("%x", hasher.Sum(nil))
+}
+
+// Path is abs path to mixin file (.lets/mixins/<filename>).
+func (rm *RemoteMixin) Path() string {
+	return filepath.Join(rm.mixinsDir, rm.Filename())
+}
+
+func (rm *RemoteMixin) persist(data []byte) error {
+	f, err := os.OpenFile(rm.Path(), os.O_CREATE|os.O_WRONLY, 0o755)
+	if err != nil {
+		return fmt.Errorf("can not open file %s to persist mixin: %w", rm.Path(), err)
+	}
+
+	_, err = f.Write(data)
+	if err != nil {
+		return fmt.Errorf("can not write mixin to file %s: %w", rm.Path(), err)
+	}
+
+	return nil
+}
+
+func (rm *RemoteMixin) exists() bool {
+	return util.FileExists(rm.Path())
+}
+
+func (rm *RemoteMixin) tryRead() ([]byte, error) {
+	if !rm.exists() {
+		return nil, nil
+	}
+	data, err := os.ReadFile(rm.Path())
+	if err != nil {
+		return nil, fmt.Errorf("can not read mixin config file at %s: %w", rm.Path(), err)
+	}
+
+	return data, nil
+}
+
+func (rm *RemoteMixin) download() ([]byte, error) {
+	// TODO: maybe create a client for this?
+	ctx, cancel := context.WithTimeout(context.Background(), 60*5*time.Second)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(
+		ctx,
+		"GET",
+		rm.URL,
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	client := &http.Client{
+		Timeout: 15 * 60 * time.Second, // TODO: move to client struct
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to make request: %w", err)
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, fmt.Errorf("no such file at: %s", rm.URL)
+	} else if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		return nil, fmt.Errorf("network error: %s", resp.Status)
+	}
+
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response: %w", err)
+	}
+
+	return data, nil
+}
+
 func readAndValidateMixins(mixins []interface{}, cfg *config.Config) error {
-	for _, filename := range mixins {
-		if filename, ok := filename.(string); ok { //nolint:nestif
+	if err := cfg.CreateMixinsDir(); err != nil {
+		return err
+	}
+
+	for _, mixin := range mixins {
+		if filename, ok := mixin.(string); ok { //nolint:nestif
 			configAbsPath, err := path.GetFullConfigPath(normalizeMixinFilename(filename), cfg.WorkDir)
 			if err != nil {
 				if isIgnoredMixin(filename) && errors.Is(err, path.ErrFileNotExists) {
 					continue
 				} else {
-					// complain non-existed mixin only if its filename does not starts with dash `-`
+					// complain non-existed mixin only if its filename does not start with dash `-`
 					return fmt.Errorf("failed to read mixin config: %w", err)
 				}
 			}
@@ -210,13 +314,51 @@ func readAndValidateMixins(mixins []interface{}, cfg *config.Config) error {
 				return fmt.Errorf("can not read mixin config file: %w", err)
 			}
 
-			mixinCfg := config.NewMixinConfig(cfg.WorkDir, filename, cfg.DotLetsDir)
+			mixinCfg := config.NewMixinConfig(cfg, filename)
 			if err := parseMixinConfig(fileData, mixinCfg); err != nil {
 				return fmt.Errorf("failed to load mixin config '%s': %w", filename, err)
 			}
 
 			if err := mergeConfigs(cfg, mixinCfg); err != nil {
 				return fmt.Errorf("failed to merge mixin config %s with main config: %w", filename, err)
+			}
+		} else if mixinMapping, ok := mixin.(map[string]interface{}); ok {
+			rm := &RemoteMixin{mixinsDir: cfg.MixinsDir}
+			if url, ok := mixinMapping["url"]; ok {
+				// TODO check if url is valid
+				rm.URL, _ = url.(string)
+			}
+
+			if version, ok := mixinMapping["version"]; ok {
+				rm.Version, _ = version.(string)
+			}
+
+			data, err := rm.tryRead()
+			if err != nil {
+				return err
+			}
+
+			if data == nil {
+				data, err = rm.download()
+				if err != nil {
+					return err
+				}
+			}
+
+			// TODO: what if multiple mixins have same commands
+			//  1 option - fail and suggest use to namespace all commands in remote mixin
+			//  2 option - namespace it (this may require specifying namespace in mixin config or in main config mixin section)
+			mixinCfg := config.NewMixinConfig(cfg, rm.Filename())
+			if err := parseMixinConfig(data, mixinCfg); err != nil {
+				return fmt.Errorf("failed to load remote mixin config '%s': %w", rm.URL, err)
+			}
+
+			if err := mergeConfigs(cfg, mixinCfg); err != nil {
+				return fmt.Errorf("failed to merge remote mixin config %s with main config: %w", rm.URL, err)
+			}
+
+			if err := rm.persist(data); err != nil {
+				return fmt.Errorf("failed to persist remote mixin config %s: %w", rm.URL, err)
 			}
 		} else {
 			return newConfigParseError(

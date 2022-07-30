@@ -352,6 +352,10 @@ func (r *Runner) persistChecksum() error {
 	if r.cmd.PersistChecksum {
 		debugf("persisting checksum for command '%s'", r.cmd.Name)
 
+		if err := r.cfg.CreateChecksumsDir(); err != nil {
+			return err
+		}
+
 		err := checksum.PersistCommandsChecksumToDisk(
 			r.cfg.DotLetsDir,
 			r.cmd.ChecksumMap,

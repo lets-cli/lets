@@ -65,12 +65,6 @@ commands:
         go tool cover -func=coverage.out
       fi
 
-  staticcheck:
-    description: Run staticcheck for lets. Staticcheck is go vet on steroids
-    depends: [build-lets-image]
-    cmd:
-      docker-compose run --rm staticheck
-
   lint:
     description: Run golint-ci
     depends: [build-lint-image]

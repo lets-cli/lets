@@ -1,4 +1,4 @@
-FROM golang:1.18.3-bullseye
+FROM golang:1.18.3-bullseye as builder
 
 ENV GOPROXY https://proxy.golang.org
 WORKDIR /app
@@ -21,3 +21,7 @@ COPY go.mod .
 COPY go.sum .
 
 RUN go mod download
+
+FROM golangci/golangci-lint:v1.45-alpine as linter
+
+RUN mkdir -p /.cache && chmod -R 777 /.cache
