@@ -15,7 +15,6 @@ import (
 const (
 	DefaultChecksumKey      = "__default_checksum__"
 	DefaultChecksumFileName = "lets_default_checksum"
-	checksumsDir            = "checksums"
 )
 
 var checksumCache = make(map[string][]byte)
@@ -144,8 +143,8 @@ func CalculateChecksumFromSources(workDir string, checksumSources map[string][]s
 	return checksumMap, nil
 }
 
-func ReadChecksumFromDisk(dotLetsDir, cmdName, checksumName string) (string, error) {
-	_, checksumFilePath := getChecksumPath(dotLetsDir, cmdName, checksumName)
+func ReadChecksumFromDisk(checksumsDir, cmdName, checksumName string) (string, error) {
+	_, checksumFilePath := getChecksumPath(checksumsDir, cmdName, checksumName)
 
 	fileData, err := os.ReadFile(checksumFilePath)
 	if err != nil {
@@ -155,32 +154,27 @@ func ReadChecksumFromDisk(dotLetsDir, cmdName, checksumName string) (string, err
 	return string(fileData), nil
 }
 
-func getCmdChecksumPath(dotLetsDir string, cmdName string) string {
-	return filepath.Join(dotLetsDir, checksumsDir, cmdName)
+func getCmdChecksumPath(checksumsDir string, cmdName string) string {
+	return filepath.Join(checksumsDir, cmdName)
 }
 
 // returns dir path and full file path to checksum
 // (.lets/checksums/[command_name]/, .lets/checksums/[command_name]/[checksum_name]).
-func getChecksumPath(dotLetsDir string, cmdName string, checksumName string) (string, string) {
-	dirPath := getCmdChecksumPath(dotLetsDir, cmdName)
+func getChecksumPath(checksumsDir string, cmdName string, checksumName string) (string, string) {
+	dirPath := getCmdChecksumPath(checksumsDir, cmdName)
 
 	return dirPath, filepath.Join(dirPath, checksumName)
 }
 
 // TODO maybe checksumMap has to be separate struct ?
-func PersistCommandsChecksumToDisk(dotLetsDir string, checksumMap map[string]string, cmdName string) error {
-	checksumPath := filepath.Join(dotLetsDir, checksumsDir)
-	if err := util.SafeCreateDir(checksumPath); err != nil {
-		return fmt.Errorf("can not create %s: %w", checksumPath, err)
-	}
-
+func PersistCommandsChecksumToDisk(checksumsDir string, checksumMap map[string]string, cmdName string) error {
 	// TODO if at least one write failed do we have to revert all writes ???
 	for checksumName, checksum := range checksumMap {
 		filename := checksumName
 		if checksumName == DefaultChecksumKey {
 			filename = DefaultChecksumFileName
 		}
-		err := persistOneChecksum(dotLetsDir, cmdName, filename, checksum)
+		err := persistOneChecksum(checksumsDir, cmdName, filename, checksum)
 		if err != nil {
 			return err
 		}
@@ -189,8 +183,8 @@ func PersistCommandsChecksumToDisk(dotLetsDir string, checksumMap map[string]str
 	return nil
 }
 
-func persistOneChecksum(dotLetsDir string, cmdName string, checksumName string, checksum string) error {
-	checksumDirPath, checksumFilePath := getChecksumPath(dotLetsDir, cmdName, checksumName)
+func persistOneChecksum(checksumsDir string, cmdName string, checksumName string, checksum string) error {
+	checksumDirPath, checksumFilePath := getChecksumPath(checksumsDir, cmdName, checksumName)
 	if err := util.SafeCreateDir(checksumDirPath); err != nil {
 		return fmt.Errorf("can not create checksum dir at %s: %w", checksumDirPath, err)
 	}
@@ -209,9 +203,9 @@ func persistOneChecksum(dotLetsDir string, cmdName string, checksumName string, 
 }
 
 // IsChecksumForCmdPersisted checks if checksums for cmd exists and persisted.
-func IsChecksumForCmdPersisted(dotLetsDir string, cmdName string) bool {
+func IsChecksumForCmdPersisted(checksumsDir string, cmdName string) bool {
 	// check if checksums for cmd exists
-	if _, err := os.Stat(getCmdChecksumPath(dotLetsDir, cmdName)); err != nil {
+	if _, err := os.Stat(getCmdChecksumPath(checksumsDir, cmdName)); err != nil {
 		return !os.IsNotExist(err)
 	}
 

@@ -11,7 +11,6 @@ import (
 	"github.com/lets-cli/lets/env"
 	"github.com/lets-cli/lets/logging"
 	"github.com/lets-cli/lets/runner"
-	"github.com/lets-cli/lets/workdir"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -31,11 +30,6 @@ func main() {
 	var rootCmd *cobra.Command
 	if cfg != nil {
 		rootCmd = cmd.CreateRootCommandWithConfig(os.Stdout, cfg, version)
-
-		if err := workdir.CreateDotLetsDir(cfg.WorkDir); err != nil {
-			log.Error(err)
-			os.Exit(1)
-		}
 	} else {
 		rootCmd = cmd.CreateRootCommand(version)
 	}

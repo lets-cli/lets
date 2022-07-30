@@ -4,8 +4,8 @@ env:
 commands:
   build-lets-image:
     description: Build lets docker image
-    cmd: docker build -t lets -f docker/Dockerfile .
+    cmd: docker build -t lets -f Dockerfile --target builder .
 
   build-lint-image:
     description: Build lets lint docker image
-    cmd: docker build -t lets-lint -f docker/lint.Dockerfile .
+    cmd: docker build -t lets-lint -f Dockerfile --target linter .

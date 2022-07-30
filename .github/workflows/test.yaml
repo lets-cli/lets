@@ -25,10 +25,11 @@ jobs:
           go-version: 1.18.x
       - name: Checkout code
         uses: actions/checkout@v2
+      - run: go install gotest.tools/gotestsum@latest
       - name: Test unit
         env:
           LETS_CONFIG_DIR: ..
-        run: go test ./... -v
+        run: gotestsum --format testname -- ./... -coverprofile=coverage.out
 
   test-bats:
     runs-on: ubuntu-latest

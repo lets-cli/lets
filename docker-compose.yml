@@ -5,7 +5,7 @@ services:
     image: lets
     build:
       context: .
-      dockerfile: docker/Dockerfile
+      dockerfile: Dockerfile
     working_dir: /app
     volumes:
       - ./:/app
