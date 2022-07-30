@@ -210,8 +210,8 @@ func (r *Runner) initCmd() error {
 
 	// if command declared as persist_checksum we must read current persisted checksums into memory
 	if r.cmd.PersistChecksum {
-		if checksum.IsChecksumForCmdPersisted(r.cfg.DotLetsDir, r.cmd.Name) {
-			err := r.cmd.ReadChecksumsFromDisk(r.cfg.DotLetsDir, r.cmd.Name, r.cmd.ChecksumMap)
+		if checksum.IsChecksumForCmdPersisted(r.cfg.ChecksumsDir, r.cmd.Name) {
+			err := r.cmd.ReadChecksumsFromDisk(r.cfg.ChecksumsDir, r.cmd.Name, r.cmd.ChecksumMap)
 			if err != nil {
 				return fmt.Errorf("failed to read persisted checksum for command '%s': %w", r.cmd.Name, err)
 			}
@@ -357,7 +357,7 @@ func (r *Runner) persistChecksum() error {
 		}
 
 		err := checksum.PersistCommandsChecksumToDisk(
-			r.cfg.DotLetsDir,
+			r.cfg.ChecksumsDir,
 			r.cmd.ChecksumMap,
 			r.cmd.Name,
 		)

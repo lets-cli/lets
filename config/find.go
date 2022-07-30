@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/lets-cli/lets/config/path"
+	"github.com/lets-cli/lets/util"
 	"github.com/lets-cli/lets/workdir"
 	log "github.com/sirupsen/logrus"
 )
@@ -69,6 +70,10 @@ func FindConfig(configName string, configDir string) (PathInfo, error) {
 	dotLetsDir, err := workdir.GetDotLetsDir(workDir)
 	if err != nil {
 		return PathInfo{}, fmt.Errorf("can not get .lets absolute path: %w", err)
+	}
+
+	if err := util.SafeCreateDir(dotLetsDir); err != nil {
+		return PathInfo{}, fmt.Errorf("can not create .lets dir: %w", err)
 	}
 
 	pathInfo := PathInfo{

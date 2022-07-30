@@ -143,8 +143,8 @@ func CalculateChecksumFromSources(workDir string, checksumSources map[string][]s
 	return checksumMap, nil
 }
 
-func ReadChecksumFromDisk(dotLetsDir, cmdName, checksumName string) (string, error) {
-	_, checksumFilePath := getChecksumPath(dotLetsDir, cmdName, checksumName)
+func ReadChecksumFromDisk(checksumsDir, cmdName, checksumName string) (string, error) {
+	_, checksumFilePath := getChecksumPath(checksumsDir, cmdName, checksumName)
 
 	fileData, err := os.ReadFile(checksumFilePath)
 	if err != nil {
@@ -203,9 +203,9 @@ func persistOneChecksum(checksumsDir string, cmdName string, checksumName string
 }
 
 // IsChecksumForCmdPersisted checks if checksums for cmd exists and persisted.
-func IsChecksumForCmdPersisted(dotLetsDir string, cmdName string) bool {
+func IsChecksumForCmdPersisted(checksumsDir string, cmdName string) bool {
 	// check if checksums for cmd exists
-	if _, err := os.Stat(getCmdChecksumPath(dotLetsDir, cmdName)); err != nil {
+	if _, err := os.Stat(getCmdChecksumPath(checksumsDir, cmdName)); err != nil {
 		return !os.IsNotExist(err)
 	}
 

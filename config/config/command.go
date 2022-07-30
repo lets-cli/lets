@@ -145,7 +145,7 @@ func (cmd *Command) GetPersistedChecksums() map[string]string {
 }
 
 // ReadChecksumsFromDisk reads all checksums for cmd into map.
-func (cmd *Command) ReadChecksumsFromDisk(dotLetsDir string, cmdName string, checksumMap map[string]string) error {
+func (cmd *Command) ReadChecksumsFromDisk(checksumsDir string, cmdName string, checksumMap map[string]string) error {
 	checksums := make(map[string]string, len(checksumMap)+1)
 
 	for checksumName := range checksumMap {
@@ -153,7 +153,7 @@ func (cmd *Command) ReadChecksumsFromDisk(dotLetsDir string, cmdName string, che
 		if checksumName == checksum.DefaultChecksumKey {
 			filename = checksum.DefaultChecksumFileName
 		}
-		checksumResult, err := checksum.ReadChecksumFromDisk(dotLetsDir, cmdName, filename)
+		checksumResult, err := checksum.ReadChecksumFromDisk(checksumsDir, cmdName, filename)
 		if err != nil {
 			return err
 		}

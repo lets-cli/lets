@@ -5,13 +5,12 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/lets-cli/lets/util"
 	log "github.com/sirupsen/logrus"
 )
 
 const dotLetsDir = ".lets"
 
-const defaultLetsYaml = `version: %s
+const defaultLetsYaml = `version: "%s"
 shell: bash
 
 commands:
@@ -24,17 +23,6 @@ commands:
 			lets hello Friend
 	cmd: echo Hello, "${LETSOPT_NAME:-world}"!
 `
-
-// CreateDotLetsDir creates .lets dir where lets.yaml located.
-// If directory already exists - skip creation.
-func CreateDotLetsDir(workDir string) error {
-	fullPath, err := GetDotLetsDir(workDir)
-	if err != nil {
-		return err
-	}
-
-	return util.SafeCreateDir(fullPath)
-}
 
 func GetDotLetsDir(workDir string) (string, error) {
 	return filepath.Abs(filepath.Join(workDir, dotLetsDir))

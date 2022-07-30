@@ -133,13 +133,25 @@ commands:
 
 `key: mixins`
 
-`type: list of string`
+`type:` 
+- `list of strings`
+- `list of map`
+
+
+`Example`
+
+```
+mixins:
+  - lets.build.yaml
+  - url: https://raw.githubusercontent.com/lets-cli/lets/master/lets.build.yaml
+    version: 1
+```
 
 Allows to split `lets.yaml` into mixins (mixin config files).
 
 To make `lets.yaml` small and readable it is convenient to split main config into many smaller ones and include them
 
-Example:
+`Full example`
 
 ```yaml
 # in lets.yaml
@@ -159,7 +171,6 @@ commands:
     cmd: echo Testing...
 ```
 
-And `lets test` works fine.
 
 ### Ignored mixins
 
@@ -177,6 +188,25 @@ mixins:
 ```
 
 Now if `my.yaml` exists - it will be loaded as a mixin. If it is not exist - `lets` will skip it.
+
+### Remote mixins `(experimental)`
+
+It is possible to specify mixin as url. Lets will download it and load it as a mixin.
+File will be stored in `.lets/mixins` directory.
+
+By default mixin filename will be sha256 hash of url.
+
+You can specify `version` key. If url is not versioned, lets will use `version` for filename hash as well (`hash(url) + hash(version)`).
+
+For example:
+
+```yaml
+shell: bash
+mixins:
+  - url: https://raw.githubusercontent.com/lets-cli/lets/master/lets.build.yaml
+    version: 1
+```
+
 
 ### Commands
 
