@@ -49,10 +49,12 @@ aurs:
     license: "MIT"
     maintainers:
       - 'Kindritskiy Maksym <kindritskiy.m@gmail.com>'
+    contributors:
+      - "Luis Martinez <luis dot martinez at disroot dot org>"
     private_key: '{{ .Env.AUR_GITHUB_TOKEN }}'
     git_url: 'ssh://aur@aur.archlinux.org/lets-bin.git'
     package: |-
-      install -Dm755 "./lets-bin" "${pkgdir}/usr/local/bin/lets-bin"
+      install -Dm755 "./lets-bin" "${pkgdir}/usr/bin/lets"
     commit_author:
       name: 'Github Action Bot'
       email: kindritskiy.m@gmail.com
