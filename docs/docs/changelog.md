@@ -4,11 +4,13 @@ title: Changelog
 ---
 
 ## [Unreleased]
+* `[Dependency]` upgrade cobra to 1.6.0
+* `[Dependency]` upgrade logrus to 1.9.0
+* `[Fixed]` Removed builtin `--help` flag for subcommands. Now using `--help` will pas this flag to underlying `cmd` script.
 
 ## [0.0.49]
 
 * `[Added]` remote mixins `experimental` support. See [config](/docs/config#remote-mixins-experimental) for more details.
-
 
 ## [0.0.48]
 
@@ -54,12 +56,12 @@ title: Changelog
 * `[Refactoring]` Refactored `runner` package, implemented `Runner` struct.
 * `[Added]` Support `NO_COLOR` env variable to disable colored output. See https://no-color.org/
 * `[Added]` `LETS_COMMAND_ARGS` - will contain command's positional args. [See config](/docs/env#default-environment-variables).
-  
-  Also, special bash env variables such as `"$@"` and `"$1"` etc. now available inside `cmd` script and work as expected. 
+
+  Also, special bash env variables such as `"$@"` and `"$1"` etc. now available inside `cmd` script and work as expected.
 * `[Added]` `work_dir` directive for command. See [config](/docs/config#work_dir)
 * `[Added]` `shell` directive for command. See [config](/docs/config#shell-1)
 * `[Added]` `--init` flag. Run `lets --init` to create new `lets.yaml` with example command
-* `[Refactoring]` updated `bats` test framework and adjusted all bats tests 
+* `[Refactoring]` updated `bats` test framework and adjusted all bats tests
 * `[Added]` `ref` directive to `command`. Allows to declare existing command with predefined args [See config](/docs/config#ref).
 * `[Added]` `sh` and `checksum` execution modes for global level `env` and command level `env` [See config](/docs/config#env).
   `eval_env` is deprecated now, since `env` with `sh` execution mode does exactly the same
@@ -101,7 +103,7 @@ title: Changelog
     function @docker-compose() {
       docker-compose --log-level ERROR $@
     }
-  
+
   commands:
     run:
       cmd: @docker-compose up redis
@@ -110,19 +112,19 @@ title: Changelog
 * `[Added]` ignored minixs
   It allows to include mixin only if it exists - otherwise lets will ignore it.
   Useful for git-ignored files.
-  
+
   Just add `-` prefix to mixin filename
-  
+
   ```yaml
   mixins:
     - -my.yaml
-  
+
   commands:
     run:
       cmd: docker-compose up redis
   ```
 
-  
+
 ## 0.0.28
 
 * `[Fixed]` Added environment variable value coercion.
@@ -141,7 +143,7 @@ title: Changelog
 
 * `[Added]` `-E` (`--env`) command-line flag. It allows to set(override) environment variables for a running command.
   Example:
-  
+
   ```bash
   # lets.yaml
   ...
