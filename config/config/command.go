@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/lets-cli/lets/checksum"
 )
@@ -122,7 +123,7 @@ func (cmd *Command) Help() string {
 		buf.WriteString(fmt.Sprintf("No help message for '%s'", cmd.Name))
 	}
 
-	return buf.String()
+	return strings.TrimSuffix(buf.String(), "\n")
 }
 
 func (cmd *Command) ChecksumCalculator(workDir string) error {
