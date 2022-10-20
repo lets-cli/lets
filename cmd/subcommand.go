@@ -66,7 +66,8 @@ func newCmdGeneric(command config.Command, conf *config.Config, out io.Writer) *
 		// we use docopt to parse flags on our own, so any flag is valid flag here
 		FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},
 		Args:               cobra.ArbitraryArgs,
-		DisableFlagParsing: false,
+		// disables builtin --help flag
+		DisableFlagParsing: true,
 		SilenceUsage:       true,
 	}
 
