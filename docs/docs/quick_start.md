@@ -1,7 +1,7 @@
 ---
-id: getting_started
+id: quick_start
 title: Getting started with Lets
-sidebar_label: Getting started with Lets
+sidebar_label: Quick start
 ---
 
 If you already have `lets.yaml` then just go to that directory and run `lets` to see all available commands.
@@ -37,21 +37,20 @@ lets # it will use lets.yaml right here (at /home/me/project/lets.yaml)
 shell: /bin/sh
 
 commands:
-    echo:
-      description: Echo text
-      cmd: |
-        echo "Hello"
-    
-    run:
-      description: Run some command
-      options: |
-        Usage: lets run [--debug] [--level=<level>]
-        
-        Options:
-          --debug, -d     Run with debug
-          --level=<level> Log level
-      cmd: |
-        env
+  echo:
+    description: Echo text
+    cmd: |
+      echo "Hello"
+      echo "World"
+
+  run:
+    description: Run some command
+    options: |
+      Usage: lets run [--debug] [--level=<level>]
+      Options:
+        --debug, -d     Run with debug
+        --level=<level> Log level
+    cmd: env
 ```
 
 3. Run commands

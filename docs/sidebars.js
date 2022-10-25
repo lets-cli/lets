@@ -3,7 +3,7 @@ module.exports = {
     "Introduction": [
       'what_is_lets',
       'installation',
-      'getting_started',
+      'quick_start',
       'completion',
     ],
     "Usage": [

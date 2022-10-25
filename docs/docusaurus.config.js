@@ -7,6 +7,9 @@ module.exports = {
   organizationName: 'lets-cli', // Usually your GitHub org/user name.
   projectName: 'lets', // Usually your repo name.
   themeConfig: {
+    prism: {
+      theme: require('prism-react-renderer/themes/vsDark'),
+    },
     navbar: {
       title: 'Lets',
       logo: {
@@ -14,7 +17,7 @@ module.exports = {
         src: 'img/logo.png',
       },
       items: [
-        {to: 'docs/getting_started', label: 'Getting Started', position: 'right'},
+        {to: 'docs/quick_start', label: 'Docs', position: 'right'},
         {to: 'blog', label: 'Blog', position: 'right'},
         {
           href: 'https://github.com/lets-cli/lets',
@@ -30,8 +33,8 @@ module.exports = {
           title: 'Docs',
           items: [
             {
-              label: 'Getting Started',
-              to: 'docs/getting_started',
+              label: 'Quick start',
+              to: 'docs/quick_start',
             },
           ],
         },
@@ -60,6 +63,11 @@ module.exports = {
       ],
       copyright: `Copyright © ${new Date().getFullYear()} Lets, Inc. Built with Docusaurus.`,
     },
+    // algolia: {
+    //   appId: "",
+    //   apiKey: "",
+    //   indexName: "",
+    // }
   },
   presets: [
     [
@@ -72,6 +80,10 @@ module.exports = {
         },
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
+        },
+        gtag: {
+          trackingID: 'G-DLCLPWY8PL',
+          anonymizeIP: true,
         },
       },
     ],
