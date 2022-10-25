@@ -53,7 +53,7 @@ Now we have to bind our config to `Cobra`.
 
 Cobra has a concept of `cobra.Command`. It is a representation of command in CLI application, for example:
 
-```shell
+```bash
 git commit
 git pull
 ```

@@ -2,50 +2,65 @@
 id: what_is_lets
 title: What is lets ?
 sidebar_label: What is lets ?
+slug: /
 ---
 
-Lets is a task runner.
+### Introduction
+
+`Lets` is a task runner.
 
 You can think of it as a tool with a config where you can write tasks.
 
-The task is usually your set of commands which you can type ten times a day, for example, you want to run tests in your project:
+The task is usually your set of cli commands which you want to group together and gave it a name.
 
-- pull the latest master
-- spinup a database
-- run migrations
-- run tests (maybe run only one test file)
+For example, if you want to run tests in your project you may need to run next commands:
 
-Or some initial setup script for your application:
 
-- docker build -t myapp -f Dockerfile.dev .
-- docker-compose up myapp postgres
+```bash
+# spinup a database for tests
+docker-compose up postgres
+# apply database migrations
+docker-compose run --rm sql alembic upgrdade head
+# run some tets
+docker-compose run --rm app pytest -x "test_login"
+```
 
-This all can be represented in the task.
+This all can be represented in one task - for example `lets test`
 
-So is there are any of such tools out there ? 
+```yaml
+command:
+  test:
+    description: Run integration tests
+    cmd: |
+      docker-compose up postgres
+      docker-compose run --rm sql alembic upgrdade head
+      docker-compose run --rm app pytest -x "test_login"
+```
+
+And execute - `lets test`. Now everyone in you team knows how to run tests.
+
+### Why yet another task runner ?
+
+So is there are any of such tools out there ?
 
 Well, sure there are some.
 
-Many developers know such a tool called Make.
+Many developers know such a tool called `make`.
 
-So why not Make ?
+So why not `make` ?
 
-Make is more like a build tool and was not intended to use as a task runner (but usually used because of the lack of alternatives).
+`make` is more like a build tool and was not intended to be used as a task runner (but usually used because of the lack of alternatives or because it is install on basicaly every developer's machine).
 
-Make has some sort of things which are bad/hard/no convinient for developers which use task runners on a daily basis.
+`make` has some sort of things which are bad/hard/no convinient for developers which use task runners on a daily basis.
 
-Lets is a brand new task runner with a task-centric philosophy and written specifically to meet developers needs.
+Lets is a brand new task runner with a task-centric philosophy and created specifically to meet developers needs.
 
-Lets features:
+### Features
 
-- yaml-based config - human-readable, recognizable and convenient format for such configs (also used by kubernetes, ansible, and many others)
+- `yaml config` - human-readable, recognizable and convenient format for such configs (also used by kubernetes, ansible, and many others)
+- `global and per/command env`
+- `global and per/command dynamic env` - can be computed at runtime
+- `checksum` - a feature which helps to track file changes
+- `written in Go` - which means it is easy to read, write and test as well as contributing to project
 
-- has support for global env
-- has support for global computed env (known as `eval_env`)
-- has support for per-command env 
-- has support for per-command computed env (known as `eval_env`)
-- has `checksum` support - a feature which helps to track file changes
-- has checksum persistence
-- written in Go - which means it is easy to read, write and test as well as contributing to project
-
-
+To see all features, [check out config documentation](config.md)

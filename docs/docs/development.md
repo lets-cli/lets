@@ -35,25 +35,25 @@ It will install `lets-dev` to /usr/local/bin/lets-dev, or wherever you`ve specif
 
 To run all tests:
 
-```shell script
+```bash
 lets test
 ```
 
 To run unit tests:
 
-```shell script
+```bash
 lets test-unit
 ```
 
 To get coverage:
 
-```shell script
+```bash
 lets coverage
 ```
 
 To test `lets` output we are using `bats` - bash automated testing:
 
-```shell script
+```bash
 lets test-bats
 
 # or run one test

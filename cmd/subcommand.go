@@ -11,6 +11,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const (
+	shortLimit = 120
+)
+
 // cut all elements before command name.
 func prepareArgs(cmdName string, originalArgs []string) []string {
 	nameIdx := 0
@@ -24,11 +28,23 @@ func prepareArgs(cmdName string, originalArgs []string) []string {
 	return originalArgs[nameIdx:]
 }
 
+func short(text string) string {
+	if idx := strings.Index(text, "\n"); idx >= 0 {
+		return text[:idx]
+	}
+
+	if len(text) > shortLimit {
+		return text[:shortLimit]
+	}
+
+	return text
+}
+
 // newCmdGeneric creates new cobra root sub command from Command.
 func newCmdGeneric(command config.Command, conf *config.Config, out io.Writer) *cobra.Command {
 	subCmd := &cobra.Command{
 		Use:   command.Name,
-		Short: command.Description,
+		Short: short(command.Description),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			only, exclude, err := parseOnlyAndExclude(cmd)
 			if err != nil {
@@ -48,7 +64,6 @@ func newCmdGeneric(command config.Command, conf *config.Config, out io.Writer) *
 			command.Only = only
 			command.Exclude = exclude
 			command.Args = prepareArgs(command.Name, os.Args)
-			command.CommandArgs = command.Args[1:]
 			command.OverrideEnv = envs
 			// replace only one placeholder in options
 			command.Docopts = strings.Replace(

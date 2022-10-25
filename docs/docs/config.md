@@ -3,9 +3,6 @@ id: config
 title: Config reference
 ---
 
-
-Config schema
-
 * [shell](#shell)
 * [mixins](#mixins)
 * [env](#global-env)
@@ -474,7 +471,7 @@ commands:
 
 Running `lets test` will output: 
 
-```shell
+```bash
 # lets test
 # Hi developer
 # Something is happening

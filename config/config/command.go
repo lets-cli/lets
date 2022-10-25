@@ -40,9 +40,6 @@ type Command struct {
 	// args with command name
 	// e.g. from 'lets run --debug' we will get [run, --debug]
 	Args []string
-	// args without command name
-	// e.g. from 'lets run --debug' we will get [--debug]
-	CommandArgs []string
 
 	// run only specified commands from cmd map
 	Only []string
@@ -59,6 +56,16 @@ type Command struct {
 	Ref string
 	// can be specified only with ref
 	RefArgs []string
+}
+
+// args without command name
+// e.g. from 'lets run --debug' we will get [--debug].
+func (cmd Command) CommandArgs() []string {
+	if len(cmd.Args) == 0 {
+		return []string{}
+	}
+
+	return cmd.Args[1:]
 }
 
 // NewCommand creates new command struct.
@@ -85,8 +92,6 @@ func (cmd Command) FromRef(refCommand Command) Command {
 	} else {
 		newCmd.Args = append(newCmd.Args, refCommand.RefArgs...)
 	}
-
-	newCmd.CommandArgs = newCmd.Args[1:]
 
 	return newCmd
 }

@@ -228,10 +228,13 @@ func (r *Runner) initCmd() error {
 	return nil
 }
 
+// TODO before works not as intended. maybe mvdan/sh will fix this.
 func joinBeforeAndScript(before string, script string) string {
 	if before == "" {
 		return script
 	}
+
+	before = strings.TrimSpace(before)
 
 	return strings.Join([]string{before, script}, "\n")
 }
@@ -240,7 +243,7 @@ func joinBeforeAndScript(before string, script string) string {
 func (r *Runner) setupEnv(cmd *exec.Cmd, shell string) {
 	defaultEnv := map[string]string{
 		GenericCmdNameTpl:   r.cmd.Name,
-		"LETS_COMMAND_ARGS": strings.Join(r.cmd.CommandArgs, " "),
+		"LETS_COMMAND_ARGS": strings.Join(r.cmd.CommandArgs(), " "),
 		"SHELL":             shell,
 	}
 
@@ -288,13 +291,16 @@ func (r *Runner) prepareOsCommandForRun(cmdScript string) *exec.Cmd {
 		shell = r.cmd.Shell
 	}
 
+	args := []string{"-c", script}
+	if len(r.cmd.CommandArgs()) > 0 {
+		// for "--" see https://linux.die.net/man/1/bash
+		args = append(args, "--", strings.Join(r.cmd.CommandArgs(), " "))
+	}
+
 	cmd := exec.Command(
 		shell,
-		"-c",
-		script,
-		"--", // see https://linux.die.net/man/1/bash
-		strings.Join(r.cmd.CommandArgs, " "),
-	) // #nosec G204
+		args...,
+	)
 
 	// setup std out and err
 	cmd.Stdout = r.out
