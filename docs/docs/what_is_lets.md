@@ -58,6 +58,7 @@ Lets is a brand new task runner with a task-centric philosophy and created speci
 ### Features
 
 - `yaml config` - human-readable, recognizable and convenient format for such configs (also used by kubernetes, ansible, and many others)
+- `arguments parsing` - using http://docopt.org
 - `global and per/command env`
 - `global and per/command dynamic env` - can be computed at runtime
 - `checksum` - a feature which helps to track file changes
