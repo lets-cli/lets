@@ -36,6 +36,7 @@ commands:
       Usage: lets test-bats [<test>] [--opts=<opts>]
       Example:
         lets test-bats config_version.bats
+        lets test-bats config_version.bats --opts="-f <regexp>"
     cmd: |
       docker-compose run --rm test-bats
 

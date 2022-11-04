@@ -9,10 +9,9 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/docopt/docopt-go"
 	"github.com/lets-cli/lets/checksum"
 	"github.com/lets-cli/lets/config/config"
-	"github.com/lets-cli/lets/config/parser"
+	"github.com/lets-cli/lets/docopt"
 	"github.com/lets-cli/lets/env"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
@@ -144,7 +143,10 @@ func (r *Runner) runChild(ctx context.Context) error {
 		return err
 	}
 
-	cmd := r.prepareOsCommandForRun(r.cmd.Cmd)
+	cmd, err := r.prepareOsCommandForRun(r.cmd.Cmd)
+	if err != nil {
+		return err
+	}
 
 	debugf(
 		"executing child os command for %s -> %s\ncmd: %s\nenv: %s\n",
@@ -165,7 +167,12 @@ func (r *Runner) runChild(ctx context.Context) error {
 // Even if 'after' script failed we return exit code from 'cmd'.
 // This behavior may change in the future if needed.
 func (r *Runner) runAfterScript() {
-	cmd := r.prepareOsCommandForRun(r.cmd.After)
+	cmd, err := r.prepareOsCommandForRun(r.cmd.After)
+	if err != nil {
+		// TODO we need to return nornal error from here, even in defer
+		log.Printf("failed to run `after` script for command '%s': %s", r.cmd.Name, err)
+		return
+	}
 
 	debugf("executing after script:\ncommand: %s\nscript: %s\nenv: %s", r.cmd.Name, r.cmd.After, fmtEnv(cmd.Env))
 
@@ -197,7 +204,7 @@ func formatOptsUsageError(err error, opts docopt.Opts, cmdName string, rawOption
 func (r *Runner) initCmd() error {
 	if !r.cmd.SkipDocopts {
 		debugf("parse docopt for command '%s'", r.cmd.Name)
-		opts, err := parser.ParseDocopts(r.cmd.Args, r.cmd.Docopts)
+		opts, err := docopt.Parse(r.cmd.Args, r.cmd.Docopts)
 		if err != nil {
 			// TODO if accept_args, just continue with what we got
 			//  but this may  require changes in go-docopt
@@ -206,8 +213,8 @@ func (r *Runner) initCmd() error {
 
 		debugf("raw docopt for command '%s': %#v", r.cmd.Name, opts)
 
-		r.cmd.Options = parser.OptsToLetsOpt(opts)
-		r.cmd.CliOptions = parser.OptsToLetsCli(opts)
+		r.cmd.Options = docopt.OptsToLetsOpt(opts)
+		r.cmd.CliOptions = docopt.OptsToLetsCli(opts)
 	}
 
 	// calculate checksum if needed
@@ -240,7 +247,7 @@ func joinBeforeAndScript(before string, script string) string {
 }
 
 // Setup env for cmd.
-func (r *Runner) setupEnv(cmd *exec.Cmd, shell string) {
+func (r *Runner) setupEnv(cmd *exec.Cmd, shell string) error {
 	defaultEnv := map[string]string{
 		GenericCmdNameTpl:   r.cmd.Name,
 		"LETS_COMMAND_ARGS": strings.Join(r.cmd.CommandArgs(), " "),
@@ -257,11 +264,15 @@ func (r *Runner) setupEnv(cmd *exec.Cmd, shell string) {
 		)
 	}
 
+	cmdEnv, err := r.cmd.GetEnv(*r.cfg)
+	if err != nil {
+		return err
+	}
+
 	envMaps := []map[string]string{
 		defaultEnv,
-		r.cfg.Env,
-		r.cmd.Env,
-		r.cmd.OverrideEnv,
+		r.cfg.Env.Dump(),
+		cmdEnv,
 		r.cmd.Options,
 		r.cmd.CliOptions,
 		checksumEnvMap,
@@ -274,6 +285,8 @@ func (r *Runner) setupEnv(cmd *exec.Cmd, shell string) {
 	}
 
 	cmd.Env = envList
+
+	return nil
 }
 
 // Prepare cmd to be run:
@@ -284,23 +297,31 @@ func (r *Runner) setupEnv(cmd *exec.Cmd, shell string) {
 // NOTE: We intentionally do not passing ctx to exec.Command because we want to wait for process end.
 // Passing ctx will change behavior of program drastically - it will kill process if context will be canceled.
 //
-func (r *Runner) prepareOsCommandForRun(cmdScript string) *exec.Cmd {
+// TODO: rename
+func (r *Runner) prepareOsCommandForRun(cmdScript string) (*exec.Cmd, error) {
 	script := joinBeforeAndScript(r.cfg.Before, cmdScript)
 	shell := r.cfg.Shell
 	if r.cmd.Shell != "" {
 		shell = r.cmd.Shell
 	}
 
-	args := []string{"-c", script}
-	if len(r.cmd.CommandArgs()) > 0 {
-		// for "--" see https://linux.die.net/man/1/bash
-		args = append(args, "--", strings.Join(r.cmd.CommandArgs(), " "))
-	}
+	// args := []string{"-c", script}
+	// if len(r.cmd.CommandArgs()) > 0 {
+	// 	// for "--" see https://linux.die.net/man/1/bash
+	// 	args = append(args, "--", strings.Join(r.cmd.CommandArgs(), " "))
+	// }
 
+	// cmd := exec.Command(
+	// 	shell,
+	// 	args...,
+	// )
 	cmd := exec.Command(
 		shell,
-		args...,
-	)
+		"-c",
+		script,
+		"--", // see https://linux.die.net/man/1/bash
+		strings.Join(r.cmd.CommandArgs(), " "),
+	) // #nosec G204
 
 	// setup std out and err
 	cmd.Stdout = r.out
@@ -313,17 +334,17 @@ func (r *Runner) prepareOsCommandForRun(cmdScript string) *exec.Cmd {
 		cmd.Dir = r.cmd.WorkDir
 	}
 
-	r.setupEnv(cmd, shell)
+	if err := r.setupEnv(cmd, shell); err != nil {
+		return nil, err
+	}
 
-	return cmd
+	return cmd, nil
 }
 
 // Run all commands from Depends in sequential order.
 func (r *Runner) runDepends(ctx context.Context) error {
-	for _, depName := range r.cmd.DependsNames {
-		dep := r.cmd.Depends[depName]
+	return r.cmd.Depends.Range(func(depName string, dep config.Dep) error {
 		debugf("running dependency '%s' for command '%s'", depName, r.cmd.Name)
-
 		dependCmd := r.cfg.Commands[depName]
 		if dependCmd.CmdMap != nil {
 			// forbid to run depends command as map
@@ -338,25 +359,31 @@ func (r *Runner) runDepends(ctx context.Context) error {
 		// by default, if depends command in simple format, skip docopts
 		dependCmd.SkipDocopts = true
 		if len(dep.Args) != 0 {
+			// TODO: to implemet this we need clonnable commands
 			dependCmd = dependCmd.WithArgs(dep.Args)
 			dependCmd.SkipDocopts = false
 		}
-		if len(dep.Env) != 0 {
+
+		if !dep.Env.Empty() {
+			// TODO: to implemet this we need clonnable commands
 			dependCmd = dependCmd.WithEnv(dep.Env)
 		}
 
-		if dependCmd.Ref != "" {
-			dependCmd = r.cfg.Commands[dependCmd.Ref].FromRef(dependCmd)
+		// TODO: move working with ref to parsing
+		if dependCmd.Ref != nil {
+			// TODO: to implemet this we need clonnable commands
+			dependCmd = r.cfg.Commands[dependCmd.Ref.Name].FromRef(dependCmd.Ref)
 		}
 
-		err := NewChildRunner(&dependCmd, r).Execute(ctx)
+		err := NewChildRunner(dependCmd, r).Execute(ctx)
 		if err != nil {
 			// must return error to root
 			return err
 		}
-	}
 
-	return nil
+		return nil
+
+	})
 }
 
 // Persist new calculated checksum to disk.
@@ -393,7 +420,10 @@ func fmtEnv(env []string) string {
 }
 
 func (r *Runner) runCmdScript(cmdScript string) error {
-	cmd := r.prepareOsCommandForRun(cmdScript)
+	cmd, err := r.prepareOsCommandForRun(cmdScript)
+	if err != nil {
+		return err
+	}
 
 	debugf("executing os command for '%s'\ncmd: %s\nenv: %s\n", r.cmd.Name, r.cmd.Cmd, fmtEnv(cmd.Env))
 

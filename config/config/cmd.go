@@ -1,12 +1,22 @@
-package parser
+package config
 
 import (
 	"fmt"
 	"os"
 	"strings"
-
-	"github.com/lets-cli/lets/config/config"
 )
+
+type Cmds struct {
+	commands []*Cmd
+	parallel bool
+}
+// TODO: represend cmdMap as cmdlist with cmds which run in parallel
+// Maybe Cmds is stuc with parallel option
+
+type Cmd struct {
+	Name string
+	Script string // list will be joined
+}
 
 // A workaround function which helps to prevent breaking
 // strings with special symbols (' ', '*', '$', '#'...)
@@ -30,11 +40,16 @@ func escapeArgs(args []string) []string {
 	return escapedArgs
 }
 
-func parseCmd(cmd interface{}, newCmd *config.Command) error {
-	switch cmd := cmd.(type) {
-	case string:
-		newCmd.Cmd = cmd
-	case []interface{}:
+// UnmarshalYAML implements the yaml.Unmarshaler interface.
+func (c *Cmds) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var script string
+	if err := unmarshal(&script); err == nil {
+		c.commands = append(c.commands, &Cmd{Name: "", Script: script})
+		return nil
+	}
+
+	var cmdList []string
+	if err := unmarshal(&cmdList); err == nil {
 		// a list of arguments to be appended to commands in lets.yaml
 		var proxyArgs []string
 		// cut binary path and command name
@@ -44,53 +59,20 @@ func parseCmd(cmd interface{}, newCmd *config.Command) error {
 			proxyArgs = os.Args[1:]
 		}
 
-		cmdList := make([]string, 0, len(cmd)+len(proxyArgs))
-
-		for _, value := range cmd {
-			if value == nil {
-				return parseError(
-					"got nil in cmd list",
-					newCmd.Name,
-					CMD,
-					"",
-				)
-			}
-
-			cmdList = append(cmdList, fmt.Sprintf("%s", value))
-		}
-
 		cmdList = append(cmdList, escapeArgs(proxyArgs)...)
-		newCmd.Cmd = strings.TrimSpace(strings.Join(cmdList, " "))
-	case map[string]interface{}:
-		cmdMap := make(map[string]string, len(cmd))
 
-		for cmdName, cmdScript := range cmd {
-			cmdScript, cmdScriptOK := cmdScript.(string)
-			if !cmdScriptOK {
-				return parseError(
-					"cmd name must be string",
-					newCmd.Name,
-					CMD,
-					cmdScript,
-				)
-			}
+		script := strings.TrimSpace(strings.Join(cmdList, " "))
+		c.commands = append(c.commands, &Cmd{Name: "", Script: script})
+		return nil
+	}
 
-			cmdMap[cmdName] = cmdScript
+	var cmdMap map[string]string
+	if err := unmarshal(&cmdMap); err == nil {
+		for name, script := range cmdMap {
+			c.commands = append(c.commands, &Cmd{Name: name, Script: script})
 		}
-
-		newCmd.CmdMap = cmdMap
-	default:
-		return parseError(
-			`
-must be one of
-  - string
-  - list of string
-  - map of string to string
-`,
-			newCmd.Name,
-			CMD,
-			"",
-		)
+		c.parallel = true
+		return nil
 	}
 
 	return nil

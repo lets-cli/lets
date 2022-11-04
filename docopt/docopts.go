@@ -1,35 +1,39 @@
-package parser
+package docopt
 
 import (
 	"fmt"
 	"strconv"
 	"strings"
 
-	"github.com/docopt/docopt-go"
+	dopt "github.com/docopt/docopt-go"
 )
 
-var docoptParser = &docopt.Parser{
-	HelpHandler:   docopt.NoHelpHandler,
+// aliases for docopt types
+type Opts = dopt.Opts
+type Option = dopt.Option
+
+var docoptParser = &dopt.Parser{
+	HelpHandler:   dopt.NoHelpHandler,
 	OptionsFirst:  false,
 	SkipHelpFlags: false,
 }
 
-// ParseDocopts parses docopts for command options with args from os.Args.
-func ParseDocopts(args []string, docopts string) (docopt.Opts, error) {
+// Parse parses docopts for command options with args from os.Args.
+func Parse(args []string, docopts string) (Opts, error) {
 	// no options at all
 	if docopts == "" {
-		return docopt.Opts{}, nil
+		return Opts{}, nil
 	}
 
 	return docoptParser.ParseArgs(docopts, args, "")
 }
 
-// ParseDocoptsOptions parses docopts only to get all available options for a command.
-func ParseDocoptsOptions(docopts string, cmdName string) ([]docopt.Option, error) {
+// ParseOptions parses docopts only to get all available options for a command.
+func ParseOptions(docopts string, cmdName string) ([]Option, error) {
 	return docoptParser.ParseOptions(docopts, []string{cmdName})
 }
 
-func OptsToLetsOpt(opts docopt.Opts) map[string]string {
+func OptsToLetsOpt(opts Opts) map[string]string {
 	envMap := make(map[string]string, len(opts))
 
 	for origKey, value := range opts {
@@ -63,7 +67,7 @@ func OptsToLetsOpt(opts docopt.Opts) map[string]string {
 	return envMap
 }
 
-func OptsToLetsCli(opts docopt.Opts) map[string]string {
+func OptsToLetsCli(opts Opts) map[string]string {
 	cliMap := make(map[string]string, len(opts))
 	formatVal := func(k, v string) string {
 		return fmt.Sprintf("%s %s", k, v)

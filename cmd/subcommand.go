@@ -41,7 +41,7 @@ func short(text string) string {
 }
 
 // newCmdGeneric creates new cobra root sub command from Command.
-func newCmdGeneric(command config.Command, conf *config.Config, out io.Writer) *cobra.Command {
+func newCmdGeneric(command *config.Command, conf *config.Config, out io.Writer) *cobra.Command {
 	subCmd := &cobra.Command{
 		Use:   command.Name,
 		Short: short(command.Description),
@@ -51,6 +51,7 @@ func newCmdGeneric(command config.Command, conf *config.Config, out io.Writer) *
 				return err
 			}
 
+			// env from -E flag
 			envs, err := parseEnvFlag(cmd)
 			if err != nil {
 				return err
@@ -63,8 +64,10 @@ func newCmdGeneric(command config.Command, conf *config.Config, out io.Writer) *
 
 			command.Only = only
 			command.Exclude = exclude
+
 			command.Args = prepareArgs(command.Name, os.Args)
-			command.OverrideEnv = envs
+			command.Env.MergeMap(envs)
+
 			// replace only one placeholder in options
 			command.Docopts = strings.Replace(
 				command.Docopts,
@@ -72,11 +75,12 @@ func newCmdGeneric(command config.Command, conf *config.Config, out io.Writer) *
 				1,
 			)
 
-			if command.Ref != "" {
-				command = conf.Commands[command.Ref].FromRef(command)
+			if command.Ref != nil {
+				command = conf.Commands[command.Ref.Name].FromRef(command.Ref)
 			}
 
-			return runner.NewRunner(&command, conf, out, noDepends).Execute(cmd.Context())
+			// TODO: maybe no depends must just clone command wo depends ?
+			return runner.NewRunner(command, conf, out, noDepends).Execute(cmd.Context())
 		},
 		// we use docopt to parse flags on our own, so any flag is valid flag here
 		FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},

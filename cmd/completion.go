@@ -9,7 +9,7 @@ import (
 	"text/template"
 
 	"github.com/lets-cli/lets/config/config"
-	"github.com/lets-cli/lets/config/parser"
+	"github.com/lets-cli/lets/docopt"
 	"github.com/spf13/cobra"
 )
 
@@ -136,12 +136,12 @@ type option struct {
 }
 
 // generate string of command options joined with \n.
-func getCommandOptions(command config.Command, out io.Writer, verbose bool) error {
+func getCommandOptions(command *config.Command, out io.Writer, verbose bool) error {
 	if command.Docopts == "" {
 		return nil
 	}
 
-	rawOpts, err := parser.ParseDocoptsOptions(command.Docopts, command.Name)
+	rawOpts, err := docopt.ParseOptions(command.Docopts, command.Name)
 	if err != nil {
 		return fmt.Errorf("can not parse docopts: %w", err)
 	}

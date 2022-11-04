@@ -1,5 +1,7 @@
 package set
 
+// TODOL maybe drop
+
 type Set[T comparable] map[T]struct{}
 
 func (s Set[T]) Add(values ...T) {

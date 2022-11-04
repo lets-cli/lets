@@ -1,31 +1,17 @@
 package config
 
 import (
+	"bytes"
+	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 
-	"github.com/lets-cli/lets/set"
+	"github.com/lets-cli/lets/config/path"
 	"github.com/lets-cli/lets/util"
-)
+	"gopkg.in/yaml.v2"
 
-var (
-	// COMMANDS is a top-level directive. Includes all commands to run.
-	COMMANDS = "commands"
-	SHELL    = "shell"
-	ENV      = "env"
-	EvalEnv  = "eval_env"
-	MIXINS   = "mixins"
-	VERSION  = "version"
-	BEFORE   = "before"
-)
-
-var (
-	ValidConfigDirectives = set.NewSet(
-		COMMANDS, SHELL, ENV, EvalEnv, MIXINS, VERSION, BEFORE,
-	)
-	ValidMixinConfigDirectives = set.NewSet(
-		COMMANDS, ENV, EvalEnv, BEFORE,
-	)
+	log "github.com/sirupsen/logrus"
 )
 
 // Config is a struct for loaded config file.
@@ -33,11 +19,13 @@ type Config struct {
 	// absolute path to work dir - where config is placed
 	WorkDir  string
 	FilePath string
-	Commands map[string]Command
+	Commands Commands
+	// Commands map[string]Command
 	Shell    string
 	// before is a script which will be included before every cmd
 	Before  string
-	Env     map[string]string
+	Env     *Envs
+	// Env     map[string]string
 	Version string
 	isMixin bool // if true, we consider config as mixin and apply different parsing and validation
 	// absolute path to .lets
@@ -48,10 +36,216 @@ type Config struct {
 	MixinsDir string
 }
 
+
+func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var config struct {
+		Version Version
+		Mixins  []*Mixin
+		Commands Commands
+		Shell    string
+		Before  string
+		Env     *Envs
+		EvalEnv *Envs `yaml:"eval_env"`
+	}
+
+	if err := unmarshal(&config); err != nil {
+		return err
+	}
+
+	c.Version = string(config.Version)
+	c.Commands = config.Commands
+	if c.Commands == nil {
+		c.Commands = make(Commands, 0)
+	}
+
+	for name, cmd := range c.Commands {
+		cmd.Name = name
+	}
+
+	c.Shell = config.Shell
+	// TODO: I realy do not want this kind of validation in place
+	if c.Shell == "" && !c.isMixin {
+		return errors.New("'shell' is required")
+	}
+
+	c.Before = config.Before
+	c.Env = config.Env
+	// support deprecated eval_env
+	if !config.EvalEnv.Empty() {
+		log.Debug("eval_env is deprecated, consider using 'env' with 'sh' executor")
+	}
+	config.EvalEnv.Range(func(name string, value Env) error {
+		c.Env.Set(name, Env{Name: name, Sh: value.Value})
+		return nil
+	})
+
+	if err := c.readMixins(config.Mixins); err != nil {
+		return err
+	}
+
+	if err := c.processEnv(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+
+func joinBeforeScripts(beforeScripts ...string) string {
+	buf := new(bytes.Buffer)
+
+	for _, script := range beforeScripts {
+		if script == "" {
+			continue
+		}
+		buf.WriteString(script)
+		buf.WriteString("\n")
+	}
+
+	return buf.String()
+}
+
+// Merge main and mixin configs. If there is a conflict - return error as we do not override values
+func (c *Config) mergeMixin(mixin *Config) error {
+	for _, mixinCmd := range mixin.Commands {
+		if _, conflict := c.Commands[mixinCmd.Name]; conflict {
+			return fmt.Errorf("command '%s' from mixin '%s' is already declared in main config's commands", mixinCmd.Name, mixin.FilePath)
+		}
+
+		c.Commands[mixinCmd.Name] = mixinCmd
+	}
+
+	mixin.Env.Range(func(key string, value Env) error {
+		if c.Env.Has(key) {
+			return fmt.Errorf("env '%s' from mixin '%s' is already declared in main config's env", key, mixin.FilePath)
+		}
+
+		c.Env.Set(key, value)
+		return nil
+	})
+
+	c.Before = joinBeforeScripts(
+		c.Before,
+		mixin.Before,
+	)
+
+	return nil
+}
+
+func (c *Config) readMixin(mixin *Mixin) error {
+	if mixin.IsRemote() {
+		mixin.Remote.mixinsDir = c.MixinsDir
+
+		rm := mixin.Remote
+
+		data, err := rm.tryRead()
+		if err != nil {
+			return err
+		}
+
+		if data == nil {
+			data, err = rm.download()
+			if err != nil {
+				return err
+			}
+		}
+
+		// TODO: what if multiple mixins have same commands
+		//  1 option - fail and suggest use to namespace all commands in remote mixin
+		//  2 option - namespace it (this may require specifying namespace in mixin config or in main config mixin section)
+
+		mixinCfg := NewMixinConfig(c, rm.Filename())
+		reader := bytes.NewReader(data)
+		if err := yaml.NewDecoder(reader).Decode(mixinCfg); err != nil {
+			return fmt.Errorf("failed to parse remote mixin config '%s': %w", rm.URL, err)
+		}
+
+		if err := c.mergeMixin(mixinCfg); err != nil {
+			return fmt.Errorf("failed to merge remote mixin config '%s' with main config: %w", rm.URL, err)
+		}
+
+		if err := rm.persist(data); err != nil {
+			return fmt.Errorf("failed to persist remote mixin config %s: %w", rm.URL, err)
+		}
+	} else {
+		mixinAbsPath, err := path.GetFullConfigPath(mixin.FileName, c.WorkDir)
+		if err != nil {
+			if mixin.Ignored && errors.Is(err, path.ErrFileNotExists) {
+				return nil
+			} else {
+				// complain non-existed mixin only if its filename does not start with dash `-`
+				return err
+			}
+		}
+
+		f, err := os.Open(mixinAbsPath)
+		if err != nil {
+			return fmt.Errorf("failed to read mixin config %s: %w", mixin.FileName, err)
+		}
+
+		// TODO(bug): probably not filename but mixinAbsPath
+		mixinCfg := NewMixinConfig(c, mixin.FileName)
+		if err := yaml.NewDecoder(f).Decode(mixinCfg); err != nil {
+			return fmt.Errorf("can not parse mixin config %s:\n%w", mixin.FileName, err)
+		}
+
+		if err := c.mergeMixin(mixinCfg); err != nil {
+			return fmt.Errorf("failed to merge mixin config '%s' with main config: %w", mixin.FileName, err)
+		}
+	}
+
+	return nil
+}
+
+func (c *Config) readMixins(mixins []*Mixin) error {
+	if c.isMixin {
+		// disallow recursive mixins
+		return nil
+	}
+
+	if len(mixins) == 0 {
+		return nil
+	}
+
+	if err := c.CreateMixinsDir(); err != nil {
+		return err
+	}
+
+	for _, mixin := range mixins {
+		if err := c.readMixin(mixin); err != nil {
+			// TODO: check if error is correct, concise and for humans
+			return err
+		}
+	}
+
+	return nil
+}
+
+
+func (c *Config) GetEnv() (map[string]string, error) {
+	if err := c.processEnv(); err != nil {
+		// TODO: move execution to somevere else. probably make execution lazy and cached
+		return nil, err
+	}
+
+	return c.Env.Dump(), nil
+}
+
+// TODO: not sure it must be public
+func (c *Config) processEnv() error {
+	// TODO: take lock, update env, set envReady = true, release lock
+	// TODO: do we need a cache here ?
+	if err := c.Env.Execute(*c); err != nil {
+		// TODO: move execution to somevere else. probably make execution lazy and cached
+		return err
+	}
+
+	return nil
+}
+
+
 func NewConfig(workDir string, configAbsPath string, dotLetsDir string) *Config {
 	return &Config{
-		Commands:     make(map[string]Command),
-		Env:          make(map[string]string),
 		WorkDir:      workDir,
 		FilePath:     configAbsPath,
 		DotLetsDir:   dotLetsDir,
@@ -75,6 +269,7 @@ func (c *Config) CreateChecksumsDir() error {
 	return nil
 }
 
+// TODO: maybe private
 func (c *Config) CreateMixinsDir() error {
 	if err := util.SafeCreateDir(c.MixinsDir); err != nil {
 		return fmt.Errorf("can not create %s: %w", c.MixinsDir, err)
