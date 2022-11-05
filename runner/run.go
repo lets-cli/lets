@@ -14,7 +14,6 @@ import (
 	"github.com/lets-cli/lets/docopt"
 	"github.com/lets-cli/lets/env"
 	log "github.com/sirupsen/logrus"
-	"golang.org/x/exp/slices"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -427,45 +426,6 @@ func (r *Runner) runCmdScript(script string) error {
 }
 
 
-// Filter cmmds based on --only and --exclude values.
-// Only and Exclude can not be both true at the same time
-// and this is ensured before runner is created.
-func filterCmds(
-	parentCmdName string,
-	cmds config.Cmds,
-	only []string,
-	exclude []string,
-) []*config.Cmd {
-	hasOnly := len(only) > 0
-	hasExclude := len(exclude) > 0
-
-	if !hasOnly && !hasExclude {
-		return cmds.Commands
-	}
-
-	filteredCmds := make([]*config.Cmd, 0)
-
-	if hasOnly {
-		// put only commands which in `only` list
-		for _, cmd := range cmds.Commands {
-			if slices.Contains(only, cmd.Name) {
-				filteredCmds = append(filteredCmds, cmd)
-			}
-		}
-	}
-
-	if hasExclude {
-		// delete all commands which in `exclude` list
-		for _, cmd := range cmds.Commands {
-			if !slices.Contains(exclude, cmd.Name) {
-				filteredCmds = append(filteredCmds, cmd)
-			}
-		}
-	}
-
-	return filteredCmds
-}
-
 // Run all commands from Cmds in parallel and wait for results.
 func (r *Runner) runParallel(ctx context.Context) (err error) {
 	defer func() {
@@ -484,9 +444,7 @@ func (r *Runner) runParallel(ctx context.Context) (err error) {
 
 	group, _ := errgroup.WithContext(ctx)
 
-	cmds := filterCmds(r.cmd.Name, r.cmd.Cmds, r.cmd.Only, r.cmd.Exclude)
-
-	for _, cmd := range cmds {
+	for _, cmd := range r.cmd.Cmds.Commands {
 		cmd := cmd
 		// wait for cmd to end in a goroutine with error propagation
 		group.Go(func() error {

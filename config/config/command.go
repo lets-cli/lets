@@ -38,12 +38,6 @@ type Command struct {
 	// e.g. from 'lets run --debug' we will get [run, --debug]
 	Args []string
 
-	// TODO: only and exclude maybe handle in Cmd, and drop these fields
-	// run only specified commands from cmd map
-	Only []string
-	// run all but excluded commands from cmd map
-	Exclude []string
-
 	ChecksumSources map[string][]string
 	// store loaded persisted checksums here
 	persistedChecksums map[string]string
@@ -186,8 +180,6 @@ func (c *Command) Clone() *Command {
 		persistedChecksums: cloneMap(c.persistedChecksums),
 		Ref: c.Ref.Clone(),
 		Args: cloneArray(c.Args),
-		Only: cloneArray(c.Only),
-		Exclude: cloneArray(c.Exclude),
 	}
 
 	return cmd
