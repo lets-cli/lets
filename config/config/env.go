@@ -152,15 +152,15 @@ func (e *Envs) Execute(cfg Config) error {
 		return nil
 	}
 
-	for _, k := range e.Keys {
-		env := e.Mapping[k]
+	for _, key := range e.Keys {
+		env := e.Mapping[key]
 		if env.Sh != "" {
 			result, err := executeScript(cfg.Shell, env.Sh)
 			if err != nil {
 				return err
 			}
 			env.Value = result
-			e.Mapping[k] = env
+			e.Mapping[key] = env
 		} else if len(env.Checksum) > 0 {
 			result, err := checksum.CalculateChecksum(cfg.WorkDir, env.Checksum[checksum.DefaultChecksumKey])
 			if err != nil {
@@ -168,7 +168,7 @@ func (e *Envs) Execute(cfg Config) error {
 			}
 
 			env.Value = result
-			e.Mapping[k] = env
+			e.Mapping[key] = env
 		}
 	}
 

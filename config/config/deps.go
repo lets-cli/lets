@@ -24,7 +24,7 @@ func (d *Deps) UnmarshalYAML(node *yaml.Node) error {
 		return errors.New("lets: 'depends' must be a sequence")
 	}
 
-	for i := 0; i < len(node.Content); i += 1 {
+	for i := 0; i < len(node.Content); i++ {
 		node := node.Content[i]
 
 		var dep Dep

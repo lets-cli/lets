@@ -16,6 +16,7 @@ func (c *Checksum) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var patterns []string
 	if err := unmarshal(&patterns); err == nil {
 		(*c)[checksum.DefaultChecksumKey] = patterns
+
 		return nil
 	}
 

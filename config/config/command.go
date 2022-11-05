@@ -77,8 +77,9 @@ func (c *Command) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if !cmd.EvalEnv.Empty() {
 		log.Debug("eval_env is deprecated, consider using 'env' with 'sh' executor")
 	}
-	cmd.EvalEnv.Range(func(name string, value Env) error {
+	_ = cmd.EvalEnv.Range(func(name string, value Env) error {
 		c.Env.Set(name, Env{Name: name, Sh: value.Value})
+
 		return nil
 	})
 
@@ -114,12 +115,12 @@ func (c *Command) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 // args without command name
 // e.g. from 'lets run --debug' we will get [--debug].
-func (cmd Command) CommandArgs() []string {
-	if len(cmd.Args) == 0 {
+func (c *Command) CommandArgs() []string {
+	if len(c.Args) == 0 {
 		return []string{}
 	}
 
-	return cmd.Args[1:]
+	return c.Args[1:]
 }
 
 func (c *Command) GetEnv(cfg Config) (map[string]string, error) {
@@ -191,6 +192,7 @@ func (c *Command) Pretty() string {
 	result := string(pretty)
 	result = strings.TrimLeft(result, "{")
 	result = strings.TrimRight(result, "}")
+
 	return strings.TrimSpace(result)
 }
 

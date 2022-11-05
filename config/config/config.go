@@ -9,9 +9,7 @@ import (
 
 	"github.com/lets-cli/lets/config/path"
 	"github.com/lets-cli/lets/util"
-	"gopkg.in/yaml.v2"
-
-	log "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v3"
 )
 
 // Config is a struct for loaded config file.
@@ -20,12 +18,10 @@ type Config struct {
 	WorkDir  string
 	FilePath string
 	Commands Commands
-	// Commands map[string]Command
 	Shell string
 	// before is a script which will be included before every cmd
 	Before string
 	Env    *Envs
-	// Env     map[string]string
 	Version string
 	isMixin bool // if true, we consider config as mixin and apply different parsing and validation
 	// absolute path to .lets
@@ -69,12 +65,11 @@ func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 	c.Before = config.Before
 	c.Env = config.Env
-	// support deprecated eval_env
-	if !config.EvalEnv.Empty() {
-		log.Debug("eval_env is deprecated, consider using 'env' with 'sh' executor")
-	}
-	config.EvalEnv.Range(func(name string, value Env) error {
+
+	// support for deprecated eval_env
+	_ = config.EvalEnv.Range(func(name string, value Env) error {
 		c.Env.Set(name, Env{Name: name, Sh: value.Value})
+
 		return nil
 	})
 
@@ -107,20 +102,27 @@ func joinBeforeScripts(beforeScripts ...string) string {
 func (c *Config) mergeMixin(mixin *Config) error {
 	for _, mixinCmd := range mixin.Commands {
 		if _, conflict := c.Commands[mixinCmd.Name]; conflict {
-			return fmt.Errorf("command '%s' from mixin '%s' is already declared in main config's commands", mixinCmd.Name, mixin.FilePath)
+			return fmt.Errorf(
+				"command '%s' from mixin '%s' is already declared in main config's commands",
+				mixinCmd.Name, mixin.FilePath,
+			)
 		}
 
 		c.Commands[mixinCmd.Name] = mixinCmd
 	}
 
-	mixin.Env.Range(func(key string, value Env) error {
+	err := mixin.Env.Range(func(key string, value Env) error {
 		if c.Env.Has(key) {
 			return fmt.Errorf("env '%s' from mixin '%s' is already declared in main config's env", key, mixin.FilePath)
 		}
 
 		c.Env.Set(key, value)
+
 		return nil
 	})
+	if err != nil {
+		return err
+	}
 
 	c.Before = joinBeforeScripts(
 		c.Before,
@@ -170,20 +172,20 @@ func (c *Config) readMixin(mixin *Mixin) error {
 		if err != nil {
 			if mixin.Ignored && errors.Is(err, path.ErrFileNotExists) {
 				return nil
-			} else {
-				// complain non-existed mixin only if its filename does not start with dash `-`
-				return err
 			}
+
+			// complain non-existed mixin only if its filename does not start with dash `-`
+			return err
 		}
 
-		f, err := os.Open(mixinAbsPath)
+		file, err := os.Open(mixinAbsPath)
 		if err != nil {
 			return fmt.Errorf("failed to read mixin config %s: %w", mixin.FileName, err)
 		}
 
-		// TODO(bug): probably not filename but mixinAbsPath
+		// TODO(maybe bug): probably not filename but mixinAbsPath
 		mixinCfg := NewMixinConfig(c, mixin.FileName)
-		if err := yaml.NewDecoder(f).Decode(mixinCfg); err != nil {
+		if err := yaml.NewDecoder(file).Decode(mixinCfg); err != nil {
 			return fmt.Errorf("can not parse mixin config %s:\n%w", mixin.FileName, err)
 		}
 

@@ -43,6 +43,7 @@ func (c *Cmds) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var script string
 	if err := unmarshal(&script); err == nil {
 		c.Commands = []*Cmd{{Name: "", Script: script}}
+
 		return nil
 	}
 
@@ -61,6 +62,7 @@ func (c *Cmds) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		script := strings.TrimSpace(strings.Join(cmdList, " "))
 
 		c.Commands = []*Cmd{{Name: "", Script: script}}
+
 		return nil
 	}
 
@@ -70,6 +72,7 @@ func (c *Cmds) UnmarshalYAML(unmarshal func(interface{}) error) error {
 			c.Commands = append(c.Commands, &Cmd{Name: name, Script: script})
 		}
 		c.Parallel = true
+
 		return nil
 	}
 
