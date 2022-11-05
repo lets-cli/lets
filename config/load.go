@@ -19,7 +19,6 @@ func postprocessRefArgs(cfg *config.Config) {
 		for idx, arg := range cmd.Ref.Args {
 			// we have to expand env here on our own, since this args not came from users tty, and not expanded before lets
 			cmd.Ref.Args[idx] = os.Expand(arg, func(key string) string {
-				// TODO at this point Value must be resolved
 				return cfg.Env.Mapping[key].Value
 			})
 		}

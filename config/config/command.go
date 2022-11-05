@@ -17,9 +17,9 @@ type Command struct {
 	Cmds Cmds
 	// script to run after cmd finished (cleanup, etc)
 	After string
-	// if specified, overrides global shell for this particular command
+	// overrides global shell for this particular command
 	Shell string
-	// if specified, overrides global workdir (where lets.yaml is located) for this particular command
+	// overrides global workdir (where lets.yaml is located) for this particular command
 	WorkDir     string
 	Description string
 	// env from command
@@ -30,7 +30,6 @@ type Command struct {
 	Options     map[string]string
 	CliOptions  map[string]string
 	Depends     *Deps
-	// store depends commands in order declared in config
 	ChecksumMap     map[string]string
 	PersistChecksum bool
 
@@ -74,7 +73,8 @@ func (c *Command) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	c.Cmds = cmd.Cmd
 	c.Description = cmd.Description
 	c.Env = cmd.Env
-	// support deprecated eval_env
+
+	// support for deprecated eval_env
 	if !cmd.EvalEnv.Empty() {
 		log.Debug("eval_env is deprecated, consider using 'env' with 'sh' executor")
 	}

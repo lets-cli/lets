@@ -163,7 +163,7 @@ func (r *Runner) runChild(ctx context.Context) error {
 func (r *Runner) runAfterScript() {
 	cmd, err := r.newOsCommand(r.cmd.After)
 	if err != nil {
-		// TODO we need to return nornal error from here, even in defer
+		// TODO we need to return normal error from here, even in defer
 		log.Printf("failed to run `after` script for command '%s': %s", r.cmd.Name, err)
 		return
 	}
