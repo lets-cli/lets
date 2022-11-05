@@ -12,6 +12,12 @@ require (
 )
 
 require (
+	github.com/fatih/color v1.13.0 // indirect
+	github.com/mattn/go-colorable v0.1.9 // indirect
+	github.com/mattn/go-isatty v0.0.14 // indirect
+)
+
+require (
 	github.com/h2non/filetype v1.1.1 // indirect
 	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/juju/errors v0.0.0-20200330140219-3fe23663418f // indirect
