@@ -20,7 +20,7 @@ type Mixin struct {
 	FileName string
 	// e.g. .gitignored
 	Ignored bool
-	Remote *RemoteMixin
+	Remote  *RemoteMixin
 }
 
 type RemoteMixin struct {
@@ -138,7 +138,7 @@ func (m *Mixin) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 
 	var remote struct {
-		URL string
+		URL     string
 		Version string
 	}
 
@@ -148,7 +148,7 @@ func (m *Mixin) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 	m.Remote = &RemoteMixin{
 		// TODO check if url is valid
-		URL: remote.URL,
+		URL:     remote.URL,
 		Version: remote.Version,
 	}
 

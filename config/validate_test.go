@@ -14,7 +14,7 @@ func TestValidateCommandInDependsExists(t *testing.T) {
 		deps := &config.Deps{}
 		deps.Set("bar", config.Dep{Name: "bar"})
 		testCfg.Commands["foo"] = &config.Command{
-			Name: "foo",
+			Name:    "foo",
 			Depends: deps,
 		}
 		err := validateCommandInDependsExists(testCfg)
@@ -54,14 +54,14 @@ func TestValidateCircularDeps(t *testing.T) {
 		depsA := &config.Deps{}
 		depsA.Set("b1", config.Dep{Name: "b1"})
 		testCfg.Commands["a"] = &config.Command{
-			Name: "a",
+			Name:    "a",
 			Depends: depsA,
 		}
 
 		depsB := &config.Deps{}
 		depsB.Set("a", config.Dep{Name: "a"})
 		testCfg.Commands["b"] = &config.Command{
-			Name: "b",
+			Name:    "b",
 			Depends: depsB,
 		}
 
@@ -84,14 +84,14 @@ func TestValidateCircularDeps(t *testing.T) {
 		depsA := &config.Deps{}
 		depsA.Set("b", config.Dep{Name: "b"})
 		testCfg.Commands["a"] = &config.Command{
-			Name: "a",
+			Name:    "a",
 			Depends: depsA,
 		}
 
 		depsB := &config.Deps{}
 		depsB.Set("a", config.Dep{Name: "a"})
 		testCfg.Commands["b"] = &config.Command{
-			Name: "b",
+			Name:    "b",
 			Depends: depsB,
 		}
 

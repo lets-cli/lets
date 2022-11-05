@@ -21,10 +21,10 @@ type Config struct {
 	FilePath string
 	Commands Commands
 	// Commands map[string]Command
-	Shell    string
+	Shell string
 	// before is a script which will be included before every cmd
-	Before  string
-	Env     *Envs
+	Before string
+	Env    *Envs
 	// Env     map[string]string
 	Version string
 	isMixin bool // if true, we consider config as mixin and apply different parsing and validation
@@ -36,16 +36,15 @@ type Config struct {
 	MixinsDir string
 }
 
-
 func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var config struct {
-		Version Version
-		Mixins  []*Mixin
+		Version  Version
+		Mixins   []*Mixin
 		Commands Commands
 		Shell    string
-		Before  string
-		Env     *Envs
-		EvalEnv *Envs `yaml:"eval_env"`
+		Before   string
+		Env      *Envs
+		EvalEnv  *Envs `yaml:"eval_env"`
 	}
 
 	if err := unmarshal(&config); err != nil {
@@ -89,7 +88,6 @@ func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 	return nil
 }
-
 
 func joinBeforeScripts(beforeScripts ...string) string {
 	buf := new(bytes.Buffer)
@@ -221,7 +219,6 @@ func (c *Config) readMixins(mixins []*Mixin) error {
 	return nil
 }
 
-
 func (c *Config) GetEnv() (map[string]string, error) {
 	if err := c.processEnv(); err != nil {
 		// TODO: move execution to somevere else. probably make execution lazy and cached
@@ -242,7 +239,6 @@ func (c *Config) processEnv() error {
 
 	return nil
 }
-
 
 func NewConfig(workDir string, configAbsPath string, dotLetsDir string) *Config {
 	return &Config{

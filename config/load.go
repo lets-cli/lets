@@ -8,25 +8,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// TODO 1. find a better place for function
-// TODO 2. find a better place to call this func and ensure oredr of call is fine
-func postprocessRefArgs(cfg *config.Config) {
-	for _, cmd := range cfg.Commands {
-		if cmd.Ref == nil {
-			continue
-		}
-
-		for idx, arg := range cmd.Ref.Args {
-			// we have to expand env here on our own, since this args not came from users tty, and not expanded before lets
-			cmd.Ref.Args[idx] = os.Expand(arg, func(key string) string {
-				return cfg.Env.Mapping[key].Value
-			})
-		}
-	}
-}
-
-
-func Load(configName string, configDir string, version string ) (*config.Config, error) {
+func Load(configName string, configDir string, version string) (*config.Config, error) {
 	configPath, err := FindConfig(configName, configDir)
 	if err != nil {
 		return nil, err
@@ -49,7 +31,7 @@ func Load(configName string, configDir string, version string ) (*config.Config,
 		return nil, err
 	}
 
-	postprocessRefArgs(c)
+	config.ExpandRefArgs(c)
 
 	return c, nil
 }

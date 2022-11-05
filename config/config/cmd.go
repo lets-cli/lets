@@ -12,7 +12,7 @@ type Cmds struct {
 }
 
 type Cmd struct {
-	Name string
+	Name   string
 	Script string // list will be joined
 }
 
@@ -81,7 +81,7 @@ func (c Cmds) Clone() Cmds {
 
 	for idx, cmd := range c.Commands {
 		commands[idx] = &Cmd{
-			Name: cmd.Name,
+			Name:   cmd.Name,
 			Script: cmd.Script,
 		}
 	}

@@ -25,11 +25,11 @@ type Command struct {
 	// env from command
 	Env *Envs
 	// store docopts from options directive
-	Docopts     string
-	SkipDocopts bool // default false
-	Options     map[string]string
-	CliOptions  map[string]string
-	Depends     *Deps
+	Docopts         string
+	SkipDocopts     bool // default false
+	Options         map[string]string
+	CliOptions      map[string]string
+	Depends         *Deps
 	ChecksumMap     map[string]string
 	PersistChecksum bool
 
@@ -45,24 +45,23 @@ type Command struct {
 	Ref *Ref
 }
 
-
 type Commands map[string]*Command
 
 func (c *Command) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	// TODO: implement short cmd syntax
 
 	var cmd struct {
-		Cmd Cmds
-		Description          string
-		Shell string
-		Env           *Envs
-		EvalEnv           *Envs `yaml:"eval_env"`
-		Options string
-		Depends *Deps
-		WorkDir string `yaml:"work_dir"`
-		After string
-		Ref string
-		Checksum *Checksum
+		Cmd             Cmds
+		Description     string
+		Shell           string
+		Env             *Envs
+		EvalEnv         *Envs `yaml:"eval_env"`
+		Options         string
+		Depends         *Deps
+		WorkDir         string `yaml:"work_dir"`
+		After           string
+		Ref             string
+		Checksum        *Checksum
 		PersistChecksum bool `yaml:"persist_checksum"`
 	}
 
@@ -113,7 +112,6 @@ func (c *Command) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
-
 // args without command name
 // e.g. from 'lets run --debug' we will get [--debug].
 func (cmd Command) CommandArgs() []string {
@@ -159,27 +157,26 @@ func (c *Command) WithEnv(env *Envs) *Command {
 	return newCmd
 }
 
-
 func (c *Command) Clone() *Command {
 	cmd := &Command{
-		Name: c.Name,
-		Cmds: c.Cmds.Clone(),
-		After: c.After,
-		Shell: c.Shell,
-		WorkDir: c.WorkDir,
-		Description: c.Description,
-		Env: c.Env.Clone(),
-		Docopts: c.Docopts,
-		SkipDocopts: c.SkipDocopts,
-		Options: cloneMap(c.Options),
-		CliOptions: cloneMap(c.CliOptions),
-		Depends: c.Depends.Clone(),
-		ChecksumMap: cloneMap(c.ChecksumMap),
-		PersistChecksum: c.PersistChecksum,
-		ChecksumSources: cloneMapArray(c.ChecksumSources),
+		Name:               c.Name,
+		Cmds:               c.Cmds.Clone(),
+		After:              c.After,
+		Shell:              c.Shell,
+		WorkDir:            c.WorkDir,
+		Description:        c.Description,
+		Env:                c.Env.Clone(),
+		Docopts:            c.Docopts,
+		SkipDocopts:        c.SkipDocopts,
+		Options:            cloneMap(c.Options),
+		CliOptions:         cloneMap(c.CliOptions),
+		Depends:            c.Depends.Clone(),
+		ChecksumMap:        cloneMap(c.ChecksumMap),
+		PersistChecksum:    c.PersistChecksum,
+		ChecksumSources:    cloneMapArray(c.ChecksumSources),
 		persistedChecksums: cloneMap(c.persistedChecksums),
-		Ref: c.Ref.Clone(),
-		Args: cloneArray(c.Args),
+		Ref:                c.Ref.Clone(),
+		Args:               cloneArray(c.Args),
 	}
 
 	return cmd

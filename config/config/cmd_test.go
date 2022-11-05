@@ -51,7 +51,7 @@ func TestCommandFieldCmd(t *testing.T) {
 	t.Run("as list", func(t *testing.T) {
 		args := []string{"/bin/lets", "hello", "World", "--foo", `--bar='{"age": 20}'`}
 		cmd := CmdFixture(t, "cmd: [echo, Hello]", args)
-	 	exp := `echo Hello 'World' '--foo' '--bar='{"age": 20}''`
+		exp := `echo Hello 'World' '--foo' '--bar='{"age": 20}''`
 		if cmd.Commands[0].Script != exp {
 			t.Errorf("wrong output. \nexpect %s \ngot:  %s", exp, cmd.Commands[0].Script)
 		}
@@ -60,8 +60,8 @@ func TestCommandFieldCmd(t *testing.T) {
 	t.Run("as map", func(t *testing.T) {
 		text := "cmd: \n  foo: echo Foo\n  bar: echo Bar"
 		cmd := CmdFixture(t, text, []string{})
-	 	expFoo := "echo Foo"
-	 	expBar := "echo Bar"
+		expFoo := "echo Foo"
+		expBar := "echo Bar"
 		if cmdLen := len(cmd.Commands); cmdLen != 2 {
 			t.Errorf("expect %d commands\ngot: %d", 2, cmdLen)
 		}

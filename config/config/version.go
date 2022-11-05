@@ -8,7 +8,6 @@ import (
 
 type Version string
 
-
 // UnmarshalYAML implements yaml.Unmarshaler interface.
 func (v *Version) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
@@ -16,7 +15,6 @@ func (v *Version) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err := unmarshal(&ver); err != nil {
 		return errors.New("version must be a valid semver string")
 	}
-
 
 	_, err := util.ParseVersion(ver)
 	if err != nil {

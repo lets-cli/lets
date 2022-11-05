@@ -61,9 +61,9 @@ type Runner struct {
 
 func NewRunner(cmd *config.Command, cfg *config.Config, out io.Writer) *Runner {
 	return &Runner{
-		cmd:       cmd,
-		cfg:       cfg,
-		out:       out,
+		cmd: cmd,
+		cfg: cfg,
+		out: out,
 	}
 }
 
@@ -228,7 +228,6 @@ func (r *Runner) initCmd() error {
 	return nil
 }
 
-// TODO before works not as intended. maybe mvdan/sh will fix this.
 func joinBeforeAndScript(before string, script string) string {
 	if before == "" {
 		return script
@@ -415,7 +414,6 @@ func (r *Runner) runCmdScript(script string) error {
 
 	return nil
 }
-
 
 // Run all commands from Cmds in parallel and wait for results.
 func (r *Runner) runParallel(ctx context.Context) (err error) {

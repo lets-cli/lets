@@ -7,7 +7,6 @@ import (
 // Checksum type for all checksum uses (env, command.env, command,checksum)
 type Checksum map[string][]string
 
-
 // UnmarshalYAML implements yaml.Unmarshaler interface.
 func (c *Checksum) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if *c == nil {

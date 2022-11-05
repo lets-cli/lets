@@ -7,7 +7,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-
 type Dep struct {
 	Name string
 	Args []string
@@ -49,7 +48,7 @@ func (d *Deps) Clone() *Deps {
 	}
 
 	return &Deps{
-		Keys: cloneArray(d.Keys),
+		Keys:    cloneArray(d.Keys),
 		Mapping: mapping,
 	}
 }
@@ -67,7 +66,6 @@ func (d *Deps) Range(yield func(key string, value Dep) error) error {
 	}
 	return nil
 }
-
 
 // Set sets a value to a given key
 func (d *Deps) Set(key string, value Dep) {
@@ -114,7 +112,7 @@ func (d *Dep) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 	var cmd struct {
 		Name string
-		Env *Envs
+		Env  *Envs
 	}
 
 	if err := unmarshal(&cmd); err != nil {
@@ -151,6 +149,6 @@ func (d Dep) Clone() Dep {
 	return Dep{
 		Name: d.Name,
 		Args: cloneArray(d.Args),
-		Env: d.Env.Clone(),
+		Env:  d.Env.Clone(),
 	}
 }

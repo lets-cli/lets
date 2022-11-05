@@ -16,11 +16,10 @@ type Envs struct {
 	Mapping map[string]Env
 }
 
-
 type Env struct {
-	Name string
-	Value string
-	Sh string
+	Name     string
+	Value    string
+	Sh       string
 	Checksum Checksum
 }
 
@@ -47,7 +46,6 @@ func (e *Envs) UnmarshalYAML(node *yaml.Node) error {
 	return nil
 }
 
-
 func (e *Envs) Clone() *Envs {
 	if e == nil {
 		return nil
@@ -59,7 +57,7 @@ func (e *Envs) Clone() *Envs {
 		mapping[k] = v
 	}
 	return &Envs{
-		Keys: cloneArray(e.Keys),
+		Keys:    cloneArray(e.Keys),
 		Mapping: mapping,
 	}
 }
