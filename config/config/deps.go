@@ -43,7 +43,6 @@ func (d *Deps) Clone() *Deps {
 		return nil
 	}
 
-	// TODO: maybe just cloneMap
 	mapping := make(map[string]Dep, len(d.Mapping))
 	for k, v := range d.Mapping {
 		mapping[k] = v.Clone()

@@ -6,9 +6,7 @@ func cloneArray[I comparable](a []I) []I {
 	}
 
 	arr := make([]I, len(a))
-	for idx, item := range a {
-		arr[idx] = item
-	}
+	copy(arr, a)
 
 	return arr
 }
