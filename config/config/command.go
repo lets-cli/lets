@@ -48,7 +48,13 @@ type Command struct {
 type Commands map[string]*Command
 
 func (c *Command) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	// TODO: implement short cmd syntax
+	var short string
+	if err := unmarshal(&short); err == nil {
+		c.Cmds = Cmds{
+			Commands: []*Cmd{{Script: short}},
+		}
+		return nil
+	}
 
 	var cmd struct {
 		Cmd             Cmds

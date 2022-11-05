@@ -12,6 +12,19 @@ title: Changelog
 * `[Refactoring]` `Command.Cmd` script was replaced with `Cmds` struct which represents a list of `Cmd`. This allowed generalizing so-called cmd-as-map into a list of commands that will be executed in parallel (see `Runner.runParallel`).
 * `[Refactoring]` Error reporting has changed in some places and if one is depending on particular error messages it probably will break.
 * `[Refactoring]` Simplified `Runner` by extracting commands filtering by `--only` and `--exclude` flags into `subcommand.go`.
+* `[Added]` Command short syntax. See [config reference for short syntax](/docs/config#short-syntax). Example:
+
+  Before:
+  ```yaml
+  commands:
+    hello:
+      cmd: echo Hello
+  ```
+  After:
+  ```yaml
+  commands:
+    hello: echo Hello
+  ```
 
 ## [0.0.49]
 

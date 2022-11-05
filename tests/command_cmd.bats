@@ -77,3 +77,10 @@ setup() {
     assert_success
     assert_line --index 0 "2 --hello"
 }
+
+@test "command_cmd: short syntax" {
+    run lets short
+
+    assert_success
+    assert_line --index 0 "Hello from short"
+}
