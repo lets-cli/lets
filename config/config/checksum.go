@@ -4,7 +4,7 @@ import (
 	"github.com/lets-cli/lets/checksum"
 )
 
-// Checksum type for all checksum uses (env, command.env, command,checksum)
+// Checksum type for all checksum uses (env, command.env, command,checksum).
 type Checksum map[string][]string
 
 // UnmarshalYAML implements yaml.Unmarshaler interface.

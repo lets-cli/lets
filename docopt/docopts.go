@@ -8,7 +8,7 @@ import (
 	dopt "github.com/docopt/docopt-go"
 )
 
-// aliases for docopt types
+// aliases for docopt types.
 type Opts = dopt.Opts
 type Option = dopt.Option
 

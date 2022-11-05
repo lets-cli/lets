@@ -143,7 +143,7 @@ func (r *Runner) runChild(ctx context.Context) error {
 	}
 
 	debugf(
-		"executing child os command for %s -> %s\ncmd: %s\nenv: %s\n",
+		"executing child os command for %s -> %s\n  cmd: %s\n  env: %s\n",
 		r.parentCmd.Name, r.cmd.Name, script, fmtEnv(cmd.Env),
 	)
 
@@ -363,7 +363,6 @@ func (r *Runner) runDepends(ctx context.Context) error {
 		}
 
 		return nil
-
 	})
 }
 
@@ -394,7 +393,7 @@ func fmtEnv(env []string) string {
 	buf := ""
 
 	for _, entry := range env {
-		buf = fmt.Sprintf("%s\n%s", buf, entry)
+		buf = fmt.Sprintf("%s\n  %s", buf, entry)
 	}
 
 	return buf

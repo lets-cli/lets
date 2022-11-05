@@ -62,7 +62,7 @@ func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 
 	c.Shell = config.Shell
-	// TODO: I realy do not want this kind of validation in place
+	// TODO: we do not want this kind of validation right here
 	if c.Shell == "" && !c.isMixin {
 		return errors.New("'shell' is required")
 	}
@@ -103,7 +103,7 @@ func joinBeforeScripts(beforeScripts ...string) string {
 	return buf.String()
 }
 
-// Merge main and mixin configs. If there is a conflict - return error as we do not override values
+// Merge main and mixin configs. If there is a conflict - return error as we do not override values.
 func (c *Config) mergeMixin(mixin *Config) error {
 	for _, mixinCmd := range mixin.Commands {
 		if _, conflict := c.Commands[mixinCmd.Name]; conflict {
@@ -228,7 +228,7 @@ func (c *Config) GetEnv() (map[string]string, error) {
 	return c.Env.Dump(), nil
 }
 
-// TODO: not sure it must be public
+// TODO: not sure it must be public.
 func (c *Config) processEnv() error {
 	// TODO: take lock, update env, set envReady = true, release lock
 	// TODO: do we need a cache here ?
@@ -265,7 +265,7 @@ func (c *Config) CreateChecksumsDir() error {
 	return nil
 }
 
-// TODO: maybe private
+// TODO: maybe private.
 func (c *Config) CreateMixinsDir() error {
 	if err := util.SafeCreateDir(c.MixinsDir); err != nil {
 		return fmt.Errorf("can not create %s: %w", c.MixinsDir, err)

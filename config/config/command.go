@@ -188,7 +188,10 @@ func (c *Command) Pretty() string {
 		return ""
 	}
 
-	return string(pretty)
+	result := string(pretty)
+	result = strings.TrimLeft(result, "{")
+	result = strings.TrimRight(result, "}")
+	return strings.TrimSpace(result)
 }
 
 func (c *Command) Help() string {

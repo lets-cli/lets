@@ -53,7 +53,7 @@ func (d *Deps) Clone() *Deps {
 	}
 }
 
-// Range allows you to loop into the Deps in its right order
+// Range allows you to loop into the Deps in its right order.
 func (d *Deps) Range(yield func(key string, value Dep) error) error {
 	if d == nil {
 		return nil
@@ -67,7 +67,7 @@ func (d *Deps) Range(yield func(key string, value Dep) error) error {
 	return nil
 }
 
-// Set sets a value to a given key
+// Set sets a value to a given key.
 func (d *Deps) Set(key string, value Dep) {
 	if d.Mapping == nil {
 		d.Mapping = make(map[string]Dep, 1)
@@ -78,7 +78,7 @@ func (d *Deps) Set(key string, value Dep) {
 	d.Mapping[key] = value
 }
 
-// Get get a value by a given key
+// Get get a value by a given key.
 func (d *Deps) Get(key string) *Dep {
 	if d == nil || d.Mapping == nil {
 		return nil
@@ -92,7 +92,7 @@ func (d *Deps) Get(key string) *Dep {
 	return &dep
 }
 
-// Has checks if a value exists by a given key
+// Has checks if a value exists by a given key.
 func (d *Deps) Has(key string) bool {
 	if d == nil || d.Mapping == nil {
 		return false

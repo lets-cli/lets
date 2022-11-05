@@ -51,7 +51,6 @@ func (e *Envs) Clone() *Envs {
 		return nil
 	}
 
-	// TODO: maybe just cloneMap
 	mapping := make(map[string]Env, len(e.Mapping))
 	for k, v := range e.Mapping {
 		mapping[k] = v
@@ -70,7 +69,7 @@ func (e *Envs) Empty() bool {
 	return len(e.Keys) == 0
 }
 
-// Has checks if a value exists by a given key
+// Has checks if a value exists by a given key.
 func (e *Envs) Has(key string) bool {
 	if e == nil || e.Mapping == nil {
 		return false
@@ -93,7 +92,7 @@ func (e *Envs) Dump() map[string]string {
 	return envs
 }
 
-// Range allows you to loop into the envs in its right order
+// Range allows you to loop into the envs in its right order.
 func (e *Envs) Range(yield func(key string, value Env) error) error {
 	if e == nil {
 		return nil
@@ -106,7 +105,7 @@ func (e *Envs) Range(yield func(key string, value Env) error) error {
 	return nil
 }
 
-// Merge merges the given Envs into the existing Envs
+// Merge merges the given Envs into the existing Envs.
 func (e *Envs) Merge(other *Envs) {
 	_ = other.Range(func(key string, value Env) error {
 		e.Set(key, value)
@@ -114,14 +113,14 @@ func (e *Envs) Merge(other *Envs) {
 	})
 }
 
-// MergeMap merges the given map into the existing Envs
+// MergeMap merges the given map into the existing Envs.
 func (e *Envs) MergeMap(other map[string]string) {
 	for key, value := range other {
 		e.Set(key, Env{Name: key, Value: value})
 	}
 }
 
-// Set sets a value to a given key
+// Set sets a value to a given key.
 func (e *Envs) Set(key string, value Env) {
 	if e.Mapping == nil {
 		e.Mapping = make(map[string]Env, 1)
