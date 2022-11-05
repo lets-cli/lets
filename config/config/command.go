@@ -12,15 +12,11 @@ import (
 )
 
 type Command struct {
-	// TODO refactor to have list of cmds as basic strture - it is easier to unify them
 	Name string
-	// script to run
-	Cmd string
+	// Represents a list of commands (scripts)
+	Cmds Cmds
 	// script to run after cmd finished (cleanup, etc)
 	After string
-	// map of named scripts to run in parallel
-	// TODO: refactor and get rid of CmdMap
-	CmdMap map[string]string
 	// if specified, overrides global shell for this particular command
 	Shell string
 	// if specified, overrides global workdir (where lets.yaml is located) for this particular command
@@ -48,9 +44,6 @@ type Command struct {
 	// run all but excluded commands from cmd map
 	Exclude []string
 
-	// if command has declared checksum
-	// TODO drop HasChecksum
-	HasChecksum     bool
 	ChecksumSources map[string][]string
 	// store loaded persisted checksums here
 	persistedChecksums map[string]string
@@ -84,14 +77,7 @@ func (c *Command) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return err
 	}
 
-	if len(cmd.Cmd.commands) == 1 {
-		c.Cmd = cmd.Cmd.commands[0].Script
-	} else if cmd.Cmd.parallel {
-		c.CmdMap = make(map[string]string, len(cmd.Cmd.commands))
-		for _, cmd := range cmd.Cmd.commands {
-			c.CmdMap[cmd.Name] = cmd.Script
-		}
-	}
+	c.Cmds = cmd.Cmd
 	c.Description = cmd.Description
 	c.Env = cmd.Env
 	// support deprecated eval_env
@@ -113,10 +99,8 @@ func (c *Command) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		c.ChecksumSources = *cmd.Checksum
 	}
 
-	//TODO lol, why do we need this field ?
-	c.HasChecksum = len(c.ChecksumSources) > 0
 	c.PersistChecksum = cmd.PersistChecksum
-	if !c.HasChecksum && c.PersistChecksum {
+	if len(c.ChecksumSources) == 0 && c.PersistChecksum {
 		return errors.New("'persist_checksum' must be used with 'checksum'")
 	}
 
@@ -185,7 +169,7 @@ func (c *Command) WithEnv(env *Envs) *Command {
 func (c *Command) Clone() *Command {
 	cmd := &Command{
 		Name: c.Name,
-		Cmd: c.Cmd,
+		Cmds: c.Cmds.Clone(),
 		After: c.After,
 		Shell: c.Shell,
 		WorkDir: c.WorkDir,
@@ -198,14 +182,12 @@ func (c *Command) Clone() *Command {
 		Depends: c.Depends.Clone(),
 		ChecksumMap: cloneMap(c.ChecksumMap),
 		PersistChecksum: c.PersistChecksum,
-		HasChecksum: c.HasChecksum,
 		ChecksumSources: cloneMapArray(c.ChecksumSources),
 		persistedChecksums: cloneMap(c.persistedChecksums),
 		Ref: c.Ref.Clone(),
 		Args: cloneArray(c.Args),
 		Only: cloneArray(c.Only),
 		Exclude: cloneArray(c.Exclude),
-		CmdMap: cloneMap(c.CmdMap),
 	}
 
 	return cmd

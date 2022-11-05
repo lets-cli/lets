@@ -64,6 +64,7 @@ func newCmdGeneric(command *config.Command, conf *config.Config, out io.Writer) 
 
 			command.Only = only
 			command.Exclude = exclude
+			// TODO: validate if only and exclude contains only existing commands (and also that command has Parallel true)
 
 			command.Args = prepareArgs(command.Name, os.Args)
 			command.Env.MergeMap(envs)

@@ -7,8 +7,8 @@ import (
 )
 
 type Cmds struct {
-	commands []*Cmd
-	parallel bool
+	Commands []*Cmd
+	Parallel bool
 }
 
 type Cmd struct {
@@ -42,7 +42,7 @@ func escapeArgs(args []string) []string {
 func (c *Cmds) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var script string
 	if err := unmarshal(&script); err == nil {
-		c.commands = append(c.commands, &Cmd{Name: "", Script: script})
+		c.Commands = []*Cmd{{Name: "", Script: script}}
 		return nil
 	}
 
@@ -58,20 +58,38 @@ func (c *Cmds) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		}
 
 		cmdList = append(cmdList, escapeArgs(proxyArgs)...)
-
 		script := strings.TrimSpace(strings.Join(cmdList, " "))
-		c.commands = append(c.commands, &Cmd{Name: "", Script: script})
+
+		c.Commands = []*Cmd{{Name: "", Script: script}}
 		return nil
 	}
 
 	var cmdMap map[string]string
 	if err := unmarshal(&cmdMap); err == nil {
 		for name, script := range cmdMap {
-			c.commands = append(c.commands, &Cmd{Name: name, Script: script})
+			c.Commands = append(c.Commands, &Cmd{Name: name, Script: script})
 		}
-		c.parallel = true
+		c.Parallel = true
 		return nil
 	}
 
 	return nil
+}
+
+func (c Cmds) Clone() Cmds {
+	commands := make([]*Cmd, len(c.Commands))
+
+	for idx, cmd := range c.Commands {
+		commands[idx] = &Cmd{
+			Name: cmd.Name,
+			Script: cmd.Script,
+		}
+	}
+
+	cmds := Cmds{
+		Commands: commands,
+		Parallel: c.Parallel,
+	}
+
+	return cmds
 }

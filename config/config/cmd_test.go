@@ -43,8 +43,8 @@ func TestCommandFieldCmd(t *testing.T) {
 	t.Run("as string", func(t *testing.T) {
 		cmd := CmdFixture(t, "cmd: echo Hello", []string{})
 		exp := "echo Hello"
-		if cmd.commands[0].Script != exp {
-			t.Errorf("wrong output. \nexpect %s \ngot:  %s", exp, cmd.commands[0].Script)
+		if cmd.Commands[0].Script != exp {
+			t.Errorf("wrong output. \nexpect %s \ngot:  %s", exp, cmd.Commands[0].Script)
 		}
 	})
 
@@ -52,8 +52,8 @@ func TestCommandFieldCmd(t *testing.T) {
 		args := []string{"/bin/lets", "hello", "World", "--foo", `--bar='{"age": 20}'`}
 		cmd := CmdFixture(t, "cmd: [echo, Hello]", args)
 	 	exp := `echo Hello 'World' '--foo' '--bar='{"age": 20}''`
-		if cmd.commands[0].Script != exp {
-			t.Errorf("wrong output. \nexpect %s \ngot:  %s", exp, cmd.commands[0].Script)
+		if cmd.Commands[0].Script != exp {
+			t.Errorf("wrong output. \nexpect %s \ngot:  %s", exp, cmd.Commands[0].Script)
 		}
 	})
 
@@ -62,11 +62,11 @@ func TestCommandFieldCmd(t *testing.T) {
 		cmd := CmdFixture(t, text, []string{})
 	 	expFoo := "echo Foo"
 	 	expBar := "echo Bar"
-		if cmdLen := len(cmd.commands); cmdLen != 2 {
+		if cmdLen := len(cmd.Commands); cmdLen != 2 {
 			t.Errorf("expect %d commands\ngot: %d", 2, cmdLen)
 		}
 
-		for _, command := range cmd.commands {
+		for _, command := range cmd.Commands {
 			switch command.Name {
 			case "foo":
 				if command.Script != expFoo {

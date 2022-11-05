@@ -14,6 +14,7 @@ import (
 	"github.com/lets-cli/lets/docopt"
 	"github.com/lets-cli/lets/env"
 	log "github.com/sirupsen/logrus"
+	"golang.org/x/exp/slices"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -82,8 +83,8 @@ func (r *Runner) Execute(ctx context.Context) error {
 		return r.runChild(ctx)
 	}
 
-	if r.cmd.CmdMap != nil {
-		return r.runCmdAsMap(ctx)
+	if r.cmd.Cmds.Parallel {
+		return r.runParallel(ctx)
 	}
 
 	return r.run(ctx)
@@ -108,7 +109,7 @@ func (r *Runner) run(ctx context.Context) error {
 		return err
 	}
 
-	if err := r.runCmdScript(r.cmd.Cmd); err != nil {
+	if err := r.runCmdScript(r.cmd.Cmds.Commands[0].Script); err != nil {
 		return err
 	}
 
@@ -136,14 +137,15 @@ func (r *Runner) runChild(ctx context.Context) error {
 		return err
 	}
 
-	cmd, err := r.newOsCommand(r.cmd.Cmd)
+	script := r.cmd.Cmds.Commands[0].Script
+	cmd, err := r.newOsCommand(script)
 	if err != nil {
 		return err
 	}
 
 	debugf(
 		"executing child os command for %s -> %s\ncmd: %s\nenv: %s\n",
-		r.parentCmd.Name, r.cmd.Name, r.cmd.Cmd, fmtEnv(cmd.Env),
+		r.parentCmd.Name, r.cmd.Name, script, fmtEnv(cmd.Env),
 	)
 
 	if err := cmd.Run(); err != nil {
@@ -338,8 +340,9 @@ func (r *Runner) runDepends(ctx context.Context) error {
 	return r.cmd.Depends.Range(func(depName string, dep config.Dep) error {
 		debugf("running dependency '%s' for command '%s'", depName, r.cmd.Name)
 		dependCmd := r.cfg.Commands[depName]
-		if dependCmd.CmdMap != nil {
-			// forbid to run depends command as map
+		if dependCmd.Cmds.Parallel {
+			// TODO: this must be ensured at the validation time, not at the runtime
+			// forbid to run parallel command in depends
 			return &RunError{
 				err: fmt.Errorf(
 					"failed to run child command '%s' from 'depends': cmd as map is not allowed in depends yet",
@@ -408,13 +411,13 @@ func fmtEnv(env []string) string {
 	return buf
 }
 
-func (r *Runner) runCmdScript(cmdScript string) error {
-	cmd, err := r.newOsCommand(cmdScript)
+func (r *Runner) runCmdScript(script string) error {
+	cmd, err := r.newOsCommand(script)
 	if err != nil {
 		return err
 	}
 
-	debugf("executing os command for '%s'\ncmd: %s\nenv: %s\n", r.cmd.Name, r.cmd.Cmd, fmtEnv(cmd.Env))
+	debugf("executing os command for '%s'\ncmd: %s\nenv: %s\n", r.cmd.Name, script, fmtEnv(cmd.Env))
 
 	if err := cmd.Run(); err != nil {
 		return &RunError{err: fmt.Errorf("failed to run command '%s': %w", r.cmd.Name, err)}
@@ -423,52 +426,48 @@ func (r *Runner) runCmdScript(cmdScript string) error {
 	return nil
 }
 
-func filterCmdMap(
+
+// Filter cmmds based on --only and --exclude values.
+// Only and Exclude can not be both true at the same time
+// and this is ensured before runner is created.
+func filterCmds(
 	parentCmdName string,
-	cmdMap map[string]string,
+	cmds config.Cmds,
 	only []string,
 	exclude []string,
-) (map[string]string, error) {
+) []*config.Cmd {
 	hasOnly := len(only) > 0
 	hasExclude := len(exclude) > 0
 
 	if !hasOnly && !hasExclude {
-		return cmdMap, nil
+		return cmds.Commands
 	}
 
-	filteredCmdMap := make(map[string]string)
+	filteredCmds := make([]*config.Cmd, 0)
 
 	if hasOnly {
 		// put only commands which in `only` list
-		for _, cmdName := range only {
-			cmdScript, ok := cmdMap[cmdName]
-			if !ok {
-				return nil, fmt.Errorf("no such sub-command '%s' in command '%s' used in 'only' flag", cmdName, parentCmdName)
+		for _, cmd := range cmds.Commands {
+			if slices.Contains(only, cmd.Name) {
+				filteredCmds = append(filteredCmds, cmd)
 			}
-
-			filteredCmdMap[cmdName] = cmdScript
 		}
 	}
 
 	if hasExclude {
-		filteredCmdMap = cmdMap
 		// delete all commands which in `exclude` list
-		for _, cmdName := range exclude {
-			_, ok := cmdMap[cmdName]
-			if !ok {
-				return nil, fmt.Errorf("no such sub-command '%s' in command '%s' used in 'exclude' flag", cmdName, parentCmdName)
+		for _, cmd := range cmds.Commands {
+			if !slices.Contains(exclude, cmd.Name) {
+				filteredCmds = append(filteredCmds, cmd)
 			}
-
-			delete(filteredCmdMap, cmdName)
 		}
 	}
 
-	return filteredCmdMap, nil
+	return filteredCmds
 }
 
-// Run all commands from Command.CmdMap in parallel and wait for results.
-// Must be used only when Command.Cmd is map[string]string.
-func (r *Runner) runCmdAsMap(ctx context.Context) (err error) {
+// Run all commands from Cmds in parallel and wait for results.
+func (r *Runner) runParallel(ctx context.Context) (err error) {
 	defer func() {
 		if r.cmd.After != "" {
 			r.runAfterScript()
@@ -485,16 +484,13 @@ func (r *Runner) runCmdAsMap(ctx context.Context) (err error) {
 
 	group, _ := errgroup.WithContext(ctx)
 
-	cmdMap, err := filterCmdMap(r.cmd.Name, r.cmd.CmdMap, r.cmd.Only, r.cmd.Exclude)
-	if err != nil {
-		return err
-	}
+	cmds := filterCmds(r.cmd.Name, r.cmd.Cmds, r.cmd.Only, r.cmd.Exclude)
 
-	for _, cmdExecScript := range cmdMap {
-		cmdExecScript := cmdExecScript
+	for _, cmd := range cmds {
+		cmd := cmd
 		// wait for cmd to end in a goroutine with error propagation
 		group.Go(func() error {
-			return r.runCmdScript(cmdExecScript)
+			return r.runCmdScript(cmd.Script)
 		})
 	}
 
