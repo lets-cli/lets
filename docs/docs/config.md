@@ -225,21 +225,16 @@ commands:
 
 ## Command directives:
 
-### `description`
+### Short syntax
 
-`key: description`
-
-`type: string`
-
-Short description of command - shown in help message
-
-Example:
+Command can be written using short syntax:
 
 ```yaml
 commands:
-  test:
-    description: Test something
+  test: npm run test
 ```
+
+Alternatively command can be declared using the following directives:
 
 ### `cmd`
 
@@ -321,6 +316,22 @@ There must be used before command name:
 
 ```bash
 lets --only app run
+```
+
+### `description`
+
+`key: description`
+
+`type: string`
+
+Short description of command - shown in help message
+
+Example:
+
+```yaml
+commands:
+  test:
+    description: Test something
 ```
 
 ### `work_dir`

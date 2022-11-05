@@ -43,3 +43,5 @@ commands:
     cmd:
       one: echo "1 ${TEST_ENV}"
       two: echo "2 ${TEST_ENV}"
+
+  short: echo Hello from short
