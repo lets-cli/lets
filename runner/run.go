@@ -297,24 +297,16 @@ func (r *Runner) newOsCommand(cmdScript string) (*exec.Cmd, error) {
 		shell = r.cmd.Shell
 	}
 
-	// args := []string{"-c", script}
-	// if len(r.cmd.CommandArgs()) > 0 {
-	// 	// for "--" see https://linux.die.net/man/1/bash
-	// 	args = append(args, "--", strings.Join(r.cmd.CommandArgs(), " "))
-	// }
-
-	// cmd := exec.Command(
-	// 	shell,
-	// 	args...,
-	// )
+	args := []string{"-c", script}
+	if len(r.cmd.CommandArgs()) > 0 {
+		// for "--" see https://linux.die.net/man/1/bash
+		args = append(args, "--", strings.Join(r.cmd.CommandArgs(), " "))
+	}
 
 	cmd := exec.Command(
 		shell,
-		"-c",
-		script,
-		"--", // see https://linux.die.net/man/1/bash
-		strings.Join(r.cmd.CommandArgs(), " "),
-	) // #nosec G204
+		args...,
+	)
 
 	// setup std out and err
 	cmd.Stdout = r.out
