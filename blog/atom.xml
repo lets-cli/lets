@@ -9,9 +9,15 @@
     <icon>https://lets-cli.org/img/favicon.ico</icon>
     <entry>
         <title type="html"><![CDATA[History of lets]]></title>
-        <id>History of lets</id>
+        <id>/2020/05/24/history-of-lets</id>
         <link href="https://lets-cli.org/blog/2020/05/24/history-of-lets"/>
         <updated>2020-05-24T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[History of Lets.]]></summary>
+        <content type="html"><![CDATA[<p>History of Lets.</p>]]></content>
+        <author>
+            <name>Kindritskiy Max</name>
+            <uri>https://github.com/kindermax</uri>
+        </author>
+        <category label="lets" term="lets"/>
     </entry>
 </feed>
