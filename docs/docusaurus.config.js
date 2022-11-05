@@ -63,10 +63,6 @@ module.exports = {
       ],
       copyright: `Copyright © ${new Date().getFullYear()} Lets, Inc. Built with Docusaurus.`,
     },
-    gtag: {
-      trackingID: 'G-DLCLPWY8PL',
-      anonymizeIP: true,
-    },
     algolia: {
       appId: "B314NWJQO4",
       apiKey: "3103c243857b4a1debe49df0c8206704",
@@ -84,6 +80,10 @@ module.exports = {
         },
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
+        },
+        gtag: {
+          trackingID: 'G-DLCLPWY8PL',
+          anonymizeIP: true,
         },
       },
     ],
