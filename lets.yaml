@@ -80,20 +80,26 @@ commands:
   build-and-install:
     description: Build and install lets-dev version from source code
     options: |
-      Usage: lets build-and-install [--path=<path>]
+      Usage: lets build-and-install [--path=<path>] [--bin=<bin>]
       Options:
         --path=<path>, -p    Custom executable path
+        --bin=<bin>          Binary name (default: lets-dev)
+      Example:
+        lets build-and-install
+        lets build-and-install -p ~/bin
+        lets build-and-install -p ~/bin --bin=my-lets
     cmd: |
       VERSION=$(git describe)
       PATH2LETSDEV="/usr/local/bin"
+      BIN="${LETSOPT_BIN:-lets-dev}"
 
       if [[ -n ${LETSOPT_PATH} ]]; then
         PATH2LETSDEV=$LETSOPT_PATH
       fi
 
-      go build -ldflags="-X main.version=${VERSION:1}-dev" -o lets-dev *.go && \
-      sudo mv ./lets-dev $PATH2LETSDEV/lets-dev && \
-      echo " - build 'lets-dev' successfully installed in ${PATH2LETSDEV}"
+      go build -ldflags="-X main.version=${VERSION:1}-dev" -o "${BIN}" *.go && \
+      sudo mv ./${BIN} $PATH2LETSDEV/${BIN} && \
+      echo " - binary ${BIN} successfully installed in ${PATH2LETSDEV}"
 
   publish-docs:
     work_dir: docs
