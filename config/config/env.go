@@ -135,10 +135,8 @@ func (e *Envs) Set(key string, value Env) {
 }
 
 // eval env value and trim result string.
-func executeScript(script string) (string, error) {
-	// TODO maybe use cfg.Shell instead of sh.
-	// TODO pass env from cfg.env - it will allow to use static env in eval_env
-	cmd := exec.Command("sh", "-c", script)
+func executeScript(shell string, script string) (string, error) {
+	cmd := exec.Command(shell, "-c", script)
 
 	out, err := cmd.Output()
 	if err != nil {
@@ -160,7 +158,7 @@ func (e *Envs) Execute(cfg Config) error {
 	for _, k := range e.Keys {
 		env := e.Mapping[k]
 		if env.Sh != "" {
-			result, err := executeScript(env.Sh)
+			result, err := executeScript(cfg.Shell, env.Sh)
 			if err != nil {
 				return err
 			}
@@ -213,11 +211,9 @@ func (e *Env) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	// TODO: probably we should deprecate command.checksum in favor of
 	// cmd.env.VAR.checksum: [file1, file2]
 	if len(*checksum.Checksum) > 0 {
-		// TODO: probably init map
 		e.Checksum = *checksum.Checksum
 		return nil
 	}
 
-	// TODO: error is none has matched
 	return nil
 }
