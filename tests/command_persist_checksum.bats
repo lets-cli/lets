@@ -143,5 +143,5 @@ TEMP_FILE=foo_test.txt
 
     [[ $status = 1 ]]
 
-    assert_line --index 0 "failed to parse 'use-persist-without-checksum' command: field persist_checksum: you must declare 'checksum' for command to use 'persist_checksum'"
+    assert_line --index 0 "lets: failed to parse lets.yaml: 'persist_checksum' must be used with 'checksum'"
 }

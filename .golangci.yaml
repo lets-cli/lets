@@ -24,6 +24,8 @@ linters:
     - gocyclo
     - gocognit
     - tagliatelle
+    - nestif
+    - nlreturn
 
 linters-settings:
   gomnd:
@@ -33,7 +35,7 @@ linters-settings:
   lll:
     line-length: 120
   varnamelen:
-    min-name-length: 2
+    min-name-length: 1
 
 issues:
   exclude-rules:

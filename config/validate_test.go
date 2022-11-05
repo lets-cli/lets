@@ -9,13 +9,13 @@ import (
 func TestValidateCommandInDependsExists(t *testing.T) {
 	t.Run("command depends on non-existing command", func(t *testing.T) {
 		testCfg := &config.Config{
-			Commands: make(map[string]config.Command),
+			Commands: make(map[string]*config.Command),
 		}
-		testCfg.Commands["foo"] = config.Command{
-			Name: "foo",
-			Depends: map[string]config.Dep{
-				"bar": {Name: "bar"},
-			},
+		deps := &config.Deps{}
+		deps.Set("bar", config.Dep{Name: "bar"})
+		testCfg.Commands["foo"] = &config.Command{
+			Name:    "foo",
+			Depends: deps,
 		}
 		err := validateCommandInDependsExists(testCfg)
 		if err == nil {
@@ -27,17 +27,21 @@ func TestValidateCommandInDependsExists(t *testing.T) {
 func TestValidateCircularDeps(t *testing.T) {
 	t.Run("command skip itself", func(t *testing.T) {
 		testCfg := &config.Config{
-			Commands: make(map[string]config.Command),
+			Commands: make(map[string]*config.Command),
 		}
-		testCfg.Commands["a-cmd"] = config.Command{
-			Name:    "a-cmd",
-			Depends: map[string]config.Dep{},
+		depsA := &config.Deps{}
+		testCfg.Commands["a"] = &config.Command{
+			Name:    "a",
+			Depends: depsA,
 		}
-		testCfg.Commands["b-cmd"] = config.Command{
-			Name:    "b-cmd",
-			Depends: map[string]config.Dep{},
+
+		depsB := &config.Deps{}
+		testCfg.Commands["b"] = &config.Command{
+			Name:    "b",
+			Depends: depsB,
 		}
-		err := validateCircularDepends(testCfg)
+
+		err := validateDependsCycle(testCfg)
 		if err != nil {
 			t.Errorf("checked itself when validation circular depends. got:  %s", err)
 		}
@@ -45,25 +49,29 @@ func TestValidateCircularDeps(t *testing.T) {
 
 	t.Run("command with similar name should not fail validation", func(t *testing.T) {
 		testCfg := &config.Config{
-			Commands: make(map[string]config.Command),
+			Commands: make(map[string]*config.Command),
 		}
-		testCfg.Commands["a-cmd"] = config.Command{
-			Name: "a-cmd",
-			Depends: map[string]config.Dep{
-				"b1-cmd": {Name: "b1-cmd"},
-			},
+		depsA := &config.Deps{}
+		depsA.Set("b1", config.Dep{Name: "b1"})
+		testCfg.Commands["a"] = &config.Command{
+			Name:    "a",
+			Depends: depsA,
 		}
-		testCfg.Commands["b"] = config.Command{
-			Name: "b",
-			Depends: map[string]config.Dep{
-				"a-cmd": {Name: "a-cmd"},
-			},
+
+		depsB := &config.Deps{}
+		depsB.Set("a", config.Dep{Name: "a"})
+		testCfg.Commands["b"] = &config.Command{
+			Name:    "b",
+			Depends: depsB,
 		}
-		testCfg.Commands["b1-cmd"] = config.Command{
-			Name:    "b1-cmd",
-			Depends: map[string]config.Dep{},
+
+		depsB1 := &config.Deps{}
+		testCfg.Commands["b1"] = &config.Command{
+			Name:    "b1",
+			Depends: depsB1,
 		}
-		err := validateCircularDepends(testCfg)
+
+		err := validateDependsCycle(testCfg)
 		if err != nil {
 			t.Errorf("checked itself when validation circular depends. got:  %s", err)
 		}
@@ -71,27 +79,23 @@ func TestValidateCircularDeps(t *testing.T) {
 
 	t.Run("validation should fail", func(t *testing.T) {
 		testCfg := &config.Config{
-			Commands: make(map[string]config.Command),
+			Commands: make(map[string]*config.Command),
 		}
-		testCfg.Commands["a-cmd"] = config.Command{
-			Name: "a-cmd",
-			Depends: map[string]config.Dep{
-				"b1-cmd": {Name: "b1-cmd"},
-			},
+		depsA := &config.Deps{}
+		depsA.Set("b", config.Dep{Name: "b"})
+		testCfg.Commands["a"] = &config.Command{
+			Name:    "a",
+			Depends: depsA,
 		}
-		testCfg.Commands["b"] = config.Command{
-			Name: "b",
-			Depends: map[string]config.Dep{
-				"a-cmd": {Name: "a-cmd"},
-			},
+
+		depsB := &config.Deps{}
+		depsB.Set("a", config.Dep{Name: "a"})
+		testCfg.Commands["b"] = &config.Command{
+			Name:    "b",
+			Depends: depsB,
 		}
-		testCfg.Commands["b1-cmd"] = config.Command{
-			Name: "b1-cmd",
-			Depends: map[string]config.Dep{
-				"a-cmd": {Name: "a-cmd"},
-			},
-		}
-		err := validateCircularDepends(testCfg)
+
+		err := validateDependsCycle(testCfg)
 
 		if err == nil {
 			t.Errorf("validation should fail. got: %s", err)

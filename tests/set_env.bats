@@ -30,7 +30,7 @@ setup() {
     assert_line --index 0 "Hello Morty"
 }
 
-@test "say_command: should set env var $LETS_COMMAND_NAME" {
+@test "say_command: should set env var LETS_COMMAND_NAME" {
     run lets say_command
     assert_success
     assert_line --index 0 "say_command"

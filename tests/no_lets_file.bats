@@ -28,7 +28,9 @@ NOT_EXISTED_LETS_FILE="lets-not-existed.yaml"
     LETS_CONFIG=broken_lets.yaml run lets
 
     assert_failure
-    assert_output "failed to parse config: field 'commands': must be a mapping"
+
+    assert_line --index 0 "lets: failed to parse broken_lets.yaml: yaml: unmarshal errors:"
+    assert_line --index 1 "  line 3: cannot unmarshal !!int \`1\` into config.Commands"
 }
 
 @test "no_lets_file: show help for 'lets help' even if no config file" {

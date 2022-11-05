@@ -4,24 +4,10 @@ import (
 	"fmt"
 
 	"github.com/lets-cli/lets/config/config"
-	"github.com/lets-cli/lets/env"
 	"github.com/lets-cli/lets/util"
 )
 
-const (
-	NoticeColor = "\033[1;36m%s\033[0m"
-)
-
-func withColor(msg string) string {
-	if env.IsNotColorOutput() {
-		return msg
-	}
-
-	return fmt.Sprintf(NoticeColor, msg)
-}
-
 // Validate loaded config.
-
 func validate(config *config.Config, letsVersion string) error {
 	if err := validateVersion(config, letsVersion); err != nil {
 		return err
@@ -31,7 +17,7 @@ func validate(config *config.Config, letsVersion string) error {
 		return err
 	}
 
-	if err := validateCircularDepends(config); err != nil {
+	if err := validateDependsCycle(config); err != nil {
 		return err
 	}
 
@@ -71,14 +57,19 @@ func validateVersion(cfg *config.Config, letsVersion string) error {
 
 func validateCommandInDependsExists(cfg *config.Config) error {
 	for _, cmd := range cfg.Commands {
-		for dependsCmdName := range cmd.Depends {
-			if _, exists := cfg.Commands[dependsCmdName]; !exists {
+		cmd := cmd
+		err := cmd.Depends.Range(func(key string, value config.Dep) error {
+			if _, exists := cfg.Commands[key]; !exists {
 				return fmt.Errorf(
 					"command '%s' depends on command '%s' which is not exist",
-					withColor(cmd.Name),
-					withColor(dependsCmdName),
+					cmd.Name, key,
 				)
 			}
+
+			return nil
+		})
+		if err != nil {
+			return err
 		}
 	}
 
@@ -86,29 +77,21 @@ func validateCommandInDependsExists(cfg *config.Config) error {
 }
 
 // if any two commands have each other command in deps, raise error.
-func validateCircularDepends(cfg *config.Config) error {
+func validateDependsCycle(cfg *config.Config) error {
 	for _, cmdA := range cfg.Commands {
 		for _, cmdB := range cfg.Commands {
 			if cmdA.Name == cmdB.Name {
 				continue
 			}
 
-			if yes := detectCircularDependencies(cmdA, cmdB); yes {
+			if cmdA.Depends.Has(cmdB.Name) && cmdB.Depends.Has(cmdA.Name) {
 				return fmt.Errorf(
 					"command '%s' have circular depends on command '%s'",
-					withColor(cmdA.Name),
-					withColor(cmdB.Name),
+					cmdA.Name, cmdB.Name,
 				)
 			}
 		}
 	}
 
 	return nil
-}
-
-func detectCircularDependencies(cmdA config.Command, cmdB config.Command) bool {
-	_, aDependsOnB := cmdA.Depends[cmdB.Name]
-	_, bDependsOnA := cmdB.Depends[cmdA.Name]
-
-	return aDependsOnB && bDependsOnA
 }

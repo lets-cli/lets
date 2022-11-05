@@ -9,6 +9,7 @@ import (
 	"github.com/lets-cli/lets/config/config"
 	"github.com/lets-cli/lets/runner"
 	"github.com/spf13/cobra"
+	"golang.org/x/exp/slices"
 )
 
 const (
@@ -40,8 +41,68 @@ func short(text string) string {
 	return text
 }
 
+func validateOnlyAndExclude(
+	command *config.Command,
+	only []string,
+	exclude []string,
+) error {
+	commandNames := make([]string, len(command.Cmds.Commands))
+	for idx, cmd := range command.Cmds.Commands {
+		commandNames[idx] = cmd.Name
+	}
+
+	for _, name := range only {
+		if !slices.Contains(commandNames, name) {
+			return fmt.Errorf("no such cmd '%s' in command '%s' used in 'only' flag", name, command.Name)
+		}
+	}
+
+	for _, name := range exclude {
+		if !slices.Contains(commandNames, name) {
+			return fmt.Errorf("no such cmd '%s' in command '%s' used in 'exclude' flag", name, command.Name)
+		}
+	}
+
+	return nil
+}
+
+// Filter cmmds based on --only and --exclude values.
+// Only and Exclude can not be both true at the same time.
+func filterCmds(
+	cmds config.Cmds,
+	only []string,
+	exclude []string,
+) []*config.Cmd {
+	hasOnly := len(only) > 0
+	hasExclude := len(exclude) > 0
+
+	if !hasOnly && !hasExclude {
+		return cmds.Commands
+	}
+
+	filteredCmds := make([]*config.Cmd, 0)
+
+	if hasOnly {
+		// put only commands which in `only` list
+		for _, cmd := range cmds.Commands {
+			if slices.Contains(only, cmd.Name) {
+				filteredCmds = append(filteredCmds, cmd)
+			}
+		}
+	} else if hasExclude {
+		// delete all commands which in `exclude` list
+		for _, cmd := range cmds.Commands {
+			if !slices.Contains(exclude, cmd.Name) {
+				filteredCmds = append(filteredCmds, cmd)
+			}
+		}
+	}
+
+	return filteredCmds
+}
+
 // newCmdGeneric creates new cobra root sub command from Command.
-func newCmdGeneric(command config.Command, conf *config.Config, out io.Writer) *cobra.Command {
+func newCmdGeneric(command *config.Command, conf *config.Config, out io.Writer) *cobra.Command {
 	subCmd := &cobra.Command{
 		Use:   command.Name,
 		Short: short(command.Description),
@@ -51,6 +112,11 @@ func newCmdGeneric(command config.Command, conf *config.Config, out io.Writer) *
 				return err
 			}
 
+			if err := validateOnlyAndExclude(command, only, exclude); err != nil {
+				return err
+			}
+
+			// env from -E flag
 			envs, err := parseEnvFlag(cmd)
 			if err != nil {
 				return err
@@ -61,10 +127,9 @@ func newCmdGeneric(command config.Command, conf *config.Config, out io.Writer) *
 				return err
 			}
 
-			command.Only = only
-			command.Exclude = exclude
 			command.Args = prepareArgs(command.Name, os.Args)
-			command.OverrideEnv = envs
+			command.Env.MergeMap(envs)
+
 			// replace only one placeholder in options
 			command.Docopts = strings.Replace(
 				command.Docopts,
@@ -72,11 +137,18 @@ func newCmdGeneric(command config.Command, conf *config.Config, out io.Writer) *
 				1,
 			)
 
-			if command.Ref != "" {
-				command = conf.Commands[command.Ref].FromRef(command)
+			if command.Ref != nil {
+				command = conf.Commands[command.Ref.Name].FromRef(command.Ref)
 			}
 
-			return runner.NewRunner(&command, conf, out, noDepends).Execute(cmd.Context())
+			command.Cmds.Commands = filterCmds(command.Cmds, only, exclude)
+
+			if noDepends {
+				command = command.Clone()
+				command.Depends = &config.Deps{}
+			}
+
+			return runner.NewRunner(command, conf, out).Execute(cmd.Context())
 		},
 		// we use docopt to parse flags on our own, so any flag is valid flag here
 		FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},

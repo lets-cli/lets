@@ -11,12 +11,6 @@ At the start of lets application, parser tries to find `lets.yaml` file starting
 
 When config file is found, parser tries to read/parse and validate yaml config.
 
-#### Mixins
-Lets has feature called [mixins](config.md#mixins). When parser meets `mixins` directive,
-it basically repeats all read/parse logic on minix files.
-
-Since mixin config files have some limitations, although they are parsed the same way, validation is a bit different.
-
 ### How parsing works ?
 
 `config.go:Config` struct implements `UnmarshalYAML` function, so when `yaml.Unmarshal` called with `Config` instance passed in,
@@ -25,6 +19,14 @@ custom unmarshalling code is executed.
 Its common to make some normalization of commands and its data during parsing phase so the rest of the code
 does not have to do any kind of normalization on its own.
 
+To add a new field you probably must implement `UnmarshalYAML` somehow.
+
+#### Mixins
+Lets has feature called [mixins](config.md#mixins). When parser meets `mixins` directive,
+it basically repeats all read/parse logic on minix files.
+
+Since mixin config files have some limitations, although they are parsed the same way, validation is a bit different.
+
 ### Validation
 
 There are two validation phases.
@@ -32,20 +34,21 @@ There are two validation phases.
 First validation phase happens during unmarshalling and checks if:
   - directives names valid
   - directives types valid (array, map, string, number, etc.)
-  - references to command in `depends` directive points to existing commands 
+  - references to command in `depends` directive points to existing commands
 
 Second phase happens after we ensured that config is syntactically and semantically correct.
 
 Int the second phase we are checking:
   - config version
   - circular dependencies in commands
-  
+
+### Env 
+TODO
 
 ## Cobra CLI Framework
 
 We are using `Cobra` CLI framework and delegating to it most of the work related to parsing
 command line arguments, help messages etc.
-
 
 ### Binding our config with Cobra
 

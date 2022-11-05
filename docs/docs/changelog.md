@@ -7,6 +7,11 @@ title: Changelog
 * `[Dependency]` upgrade cobra to 1.6.0
 * `[Dependency]` upgrade logrus to 1.9.0
 * `[Fixed]` Removed builtin `--help` flag for subcommands. Now using `--help` will pas this flag to underlying `cmd` script.
+* `[Refactoring]` Config parsing is reimplemented using `UnmarhallYAML`. This ends up in reduced size and complexity of parsing code.
+* `[Refactoring]` `Command` now is clonable and this opened a possibility to reimplement `ref`, `depends` as map and `--no-depends` - now we clone a command and modify a brand new struct instead of mutating the same command (which was not safe).
+* `[Refactoring]` `Command.Cmd` script was replaced with `Cmds` struct which represents a list of `Cmd`. This allowed generalizing so-called cmd-as-map into a list of commands that will be executed in parallel (see `Runner.runParallel`).
+* `[Refactoring]` Error reporting has changed in some places and if one is depending on particular error messages it probably will break.
+* `[Refactoring]` Simplified `Runner` by extracting commands filtering by `--only` and `--exclude` flags into `subcommand.go`.
 
 ## [0.0.49]
 

@@ -3,37 +3,33 @@ package config
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/lets-cli/lets/checksum"
+	log "github.com/sirupsen/logrus"
 )
 
 type Command struct {
 	Name string
-	// script to run
-	Cmd string
+	// Represents a list of commands (scripts)
+	Cmds Cmds
 	// script to run after cmd finished (cleanup, etc)
 	After string
-	// map of named scripts to run in parallel
-	CmdMap map[string]string
-	// if specified, overrides global shell for this particular command
+	// overrides global shell for this particular command
 	Shell string
-	// if specified, overrides global workdir (where lets.yaml is located) for this particular command
+	// overrides global workdir (where lets.yaml is located) for this particular command
 	WorkDir     string
 	Description string
 	// env from command
-	Env map[string]string
-	// env from -E flag
-	OverrideEnv map[string]string
+	Env *Envs
 	// store docopts from options directive
-	Docopts     string
-	SkipDocopts bool // default false
-	Options     map[string]string
-	CliOptions  map[string]string
-	Depends     map[string]Dep
-	// store depends commands in order declared in config
-	DependsNames    []string
+	Docopts         string
+	SkipDocopts     bool // default false
+	Options         map[string]string
+	CliOptions      map[string]string
+	Depends         *Deps
 	ChecksumMap     map[string]string
 	PersistChecksum bool
 
@@ -41,117 +37,203 @@ type Command struct {
 	// e.g. from 'lets run --debug' we will get [run, --debug]
 	Args []string
 
-	// run only specified commands from cmd map
-	Only []string
-	// run all but excluded commands from cmd map
-	Exclude []string
-
-	// if command has declared checksum
-	HasChecksum     bool
 	ChecksumSources map[string][]string
 	// store loaded persisted checksums here
 	persistedChecksums map[string]string
 
 	// ref is basically a command name to use with predefined args, env
-	Ref string
-	// can be specified only with ref
-	RefArgs []string
+	Ref *Ref
+}
+
+type Commands map[string]*Command
+
+func (c *Command) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	// TODO: implement short cmd syntax
+
+	var cmd struct {
+		Cmd             Cmds
+		Description     string
+		Shell           string
+		Env             *Envs
+		EvalEnv         *Envs `yaml:"eval_env"`
+		Options         string
+		Depends         *Deps
+		WorkDir         string `yaml:"work_dir"`
+		After           string
+		Ref             string
+		Checksum        *Checksum
+		PersistChecksum bool `yaml:"persist_checksum"`
+	}
+
+	if err := unmarshal(&cmd); err != nil {
+		return err
+	}
+
+	c.Cmds = cmd.Cmd
+	c.Description = cmd.Description
+	c.Env = cmd.Env
+
+	// support for deprecated eval_env
+	if !cmd.EvalEnv.Empty() {
+		log.Debug("eval_env is deprecated, consider using 'env' with 'sh' executor")
+	}
+	_ = cmd.EvalEnv.Range(func(name string, value Env) error {
+		c.Env.Set(name, Env{Name: name, Sh: value.Value})
+
+		return nil
+	})
+
+	c.Shell = cmd.Shell
+	c.Docopts = cmd.Options
+	c.Depends = cmd.Depends
+	c.WorkDir = cmd.WorkDir
+	c.After = cmd.After
+	// TODO: checksum must be refactored, first name of var is misleading
+	if cmd.Checksum != nil {
+		c.ChecksumSources = *cmd.Checksum
+	}
+
+	c.PersistChecksum = cmd.PersistChecksum
+	if len(c.ChecksumSources) == 0 && c.PersistChecksum {
+		return errors.New("'persist_checksum' must be used with 'checksum'")
+	}
+
+	// TODO: validate if ref points to real command ?
+	if cmd.Ref != "" {
+		// only parsing Args when ref is set
+		var refArgs struct {
+			Args *RefArgs
+		}
+		if err := unmarshal(&refArgs); err != nil {
+			return err
+		}
+		c.Ref = &Ref{Name: cmd.Ref, Args: *refArgs.Args}
+	}
+
+	return nil
 }
 
 // args without command name
 // e.g. from 'lets run --debug' we will get [--debug].
-func (cmd Command) CommandArgs() []string {
-	if len(cmd.Args) == 0 {
+func (c *Command) CommandArgs() []string {
+	if len(c.Args) == 0 {
 		return []string{}
 	}
 
-	return cmd.Args[1:]
+	return c.Args[1:]
 }
 
-// NewCommand creates new command struct.
-func NewCommand(name string) Command {
-	return Command{
-		Name:        name,
-		Env:         make(map[string]string),
-		SkipDocopts: false,
+func (c *Command) GetEnv(cfg Config) (map[string]string, error) {
+	if err := c.Env.Execute(cfg); err != nil {
+		// TODO: move execution to somevere else. probably make execution lazy and cached
+		return nil, err
 	}
+
+	return c.Env.Dump(), nil
 }
 
-func (cmd Command) WithArgs(args []string) Command {
-	newCmd := cmd
+func (c *Command) WithArgs(args []string) *Command {
+	newCmd := c.Clone()
 	newCmd.Args = args
 
 	return newCmd
 }
 
-func (cmd Command) FromRef(refCommand Command) Command {
-	newCmd := cmd
+func (c *Command) FromRef(ref *Ref) *Command {
+	newCmd := c.Clone()
 
 	if len(newCmd.Args) == 0 {
-		newCmd.Args = append([]string{cmd.Name}, refCommand.RefArgs...)
+		newCmd.Args = append([]string{c.Name}, ref.Args...)
 	} else {
-		newCmd.Args = append(newCmd.Args, refCommand.RefArgs...)
+		newCmd.Args = append(newCmd.Args, ref.Args...)
 	}
 
 	return newCmd
 }
 
-func (cmd Command) WithEnv(env map[string]string) Command {
-	newCmd := cmd
-	for key, val := range env {
-		newCmd.Env[key] = val
-	}
+func (c *Command) WithEnv(env *Envs) *Command {
+	newCmd := c.Clone()
+	newCmd.Env.Merge(env)
 
 	return newCmd
 }
 
-func (cmd Command) Pretty() string {
-	pretty, err := json.MarshalIndent(cmd, "", "  ")
+func (c *Command) Clone() *Command {
+	cmd := &Command{
+		Name:               c.Name,
+		Cmds:               c.Cmds.Clone(),
+		After:              c.After,
+		Shell:              c.Shell,
+		WorkDir:            c.WorkDir,
+		Description:        c.Description,
+		Env:                c.Env.Clone(),
+		Docopts:            c.Docopts,
+		SkipDocopts:        c.SkipDocopts,
+		Options:            cloneMap(c.Options),
+		CliOptions:         cloneMap(c.CliOptions),
+		Depends:            c.Depends.Clone(),
+		ChecksumMap:        cloneMap(c.ChecksumMap),
+		PersistChecksum:    c.PersistChecksum,
+		ChecksumSources:    cloneMapArray(c.ChecksumSources),
+		persistedChecksums: cloneMap(c.persistedChecksums),
+		Ref:                c.Ref.Clone(),
+		Args:               cloneArray(c.Args),
+	}
+
+	return cmd
+}
+
+func (c *Command) Pretty() string {
+	pretty, err := json.MarshalIndent(c, "", "  ")
 	if err != nil {
 		return ""
 	}
 
-	return string(pretty)
+	result := string(pretty)
+	result = strings.TrimLeft(result, "{")
+	result = strings.TrimRight(result, "}")
+
+	return strings.TrimSpace(result)
 }
 
-func (cmd *Command) Help() string {
+func (c *Command) Help() string {
 	buf := new(bytes.Buffer)
-	if cmd.Description != "" {
-		buf.WriteString(fmt.Sprintf("%s\n\n", cmd.Description))
+	if c.Description != "" {
+		buf.WriteString(fmt.Sprintf("%s\n\n", c.Description))
 	}
 
-	if cmd.Docopts != "" {
-		buf.WriteString(cmd.Docopts)
+	if c.Docopts != "" {
+		buf.WriteString(c.Docopts)
 	}
 
 	if buf.Len() == 0 {
-		buf.WriteString(fmt.Sprintf("No help message for '%s'", cmd.Name))
+		buf.WriteString(fmt.Sprintf("No help message for '%s'", c.Name))
 	}
 
 	return strings.TrimSuffix(buf.String(), "\n")
 }
 
-func (cmd *Command) ChecksumCalculator(workDir string) error {
-	if len(cmd.ChecksumSources) == 0 {
+func (c *Command) ChecksumCalculator(workDir string) error {
+	if len(c.ChecksumSources) == 0 {
 		return nil
 	}
 
-	checksumMap, err := checksum.CalculateChecksumFromSources(workDir, cmd.ChecksumSources)
+	checksumMap, err := checksum.CalculateChecksumFromSources(workDir, c.ChecksumSources)
 	if err != nil {
 		return err
 	}
 
-	cmd.ChecksumMap = checksumMap
+	c.ChecksumMap = checksumMap
 
 	return nil
 }
 
-func (cmd *Command) GetPersistedChecksums() map[string]string {
-	return cmd.persistedChecksums
+func (c *Command) GetPersistedChecksums() map[string]string {
+	return c.persistedChecksums
 }
 
 // ReadChecksumsFromDisk reads all checksums for cmd into map.
-func (cmd *Command) ReadChecksumsFromDisk(checksumsDir string, cmdName string, checksumMap map[string]string) error {
+func (c *Command) ReadChecksumsFromDisk(checksumsDir string, cmdName string, checksumMap map[string]string) error {
 	checksums := make(map[string]string, len(checksumMap)+1)
 
 	for checksumName := range checksumMap {
@@ -167,7 +249,7 @@ func (cmd *Command) ReadChecksumsFromDisk(checksumsDir string, cmdName string, c
 		checksums[checksumName] = checksumResult
 	}
 
-	cmd.persistedChecksums = checksums
+	c.persistedChecksums = checksums
 
 	return nil
 }

@@ -9,30 +9,33 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/docopt/docopt-go"
+	"github.com/fatih/color"
 	"github.com/lets-cli/lets/checksum"
 	"github.com/lets-cli/lets/config/config"
-	"github.com/lets-cli/lets/config/parser"
-	"github.com/lets-cli/lets/env"
+	"github.com/lets-cli/lets/docopt"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 )
 
-const color = "\033[1;36m%s\033[0m"
-
 const GenericCmdNameTpl = "LETS_COMMAND_NAME"
 
-func colored(msg string, color string) string {
-	if env.IsNotColorOutput() {
-		return msg
+type LogFn = func(string, ...interface{})
+
+func cmdLogger(cmd *config.Command, parents ...*config.Command) LogFn {
+	return func(format string, a ...interface{}) {
+		cmdName := cmd.Name
+		for _, p := range parents {
+			if p != nil {
+				cmdName = fmt.Sprintf("%s => %s", p.Name, cmdName)
+			}
+		}
+
+		cmdName = color.GreenString("[%s]", cmdName)
+		lets := color.BlueString("lets:")
+		msg := color.BlueString(fmt.Sprintf(format, a...))
+		msg = fmt.Sprintf("%s %s %s", lets, cmdName, msg)
+		log.Debugf(msg)
 	}
-
-	return fmt.Sprintf(color, msg)
-}
-
-func debugf(format string, a ...interface{}) {
-	prefixed := fmt.Sprintf("lets: %s", fmt.Sprintf(format, a...))
-	log.Debugf(colored(prefixed, color))
 }
 
 type RunError struct {
@@ -58,15 +61,16 @@ type Runner struct {
 	parentCmd *config.Command // child command if parentCmd is not nil
 	cfg       *config.Config
 	out       io.Writer
-	noDepends bool
+	// debug logger with predefined cmd name
+	cmdLog LogFn
 }
 
-func NewRunner(cmd *config.Command, cfg *config.Config, out io.Writer, noDepends bool) *Runner {
+func NewRunner(cmd *config.Command, cfg *config.Config, out io.Writer) *Runner {
 	return &Runner{
-		cmd:       cmd,
-		cfg:       cfg,
-		out:       out,
-		noDepends: noDepends,
+		cmd:    cmd,
+		cfg:    cfg,
+		out:    out,
+		cmdLog: cmdLogger(cmd),
 	}
 }
 
@@ -76,9 +80,7 @@ func NewChildRunner(cmd *config.Command, parentRunner *Runner) *Runner {
 		parentCmd: parentRunner.cmd,
 		cfg:       parentRunner.cfg,
 		out:       parentRunner.out,
-		// if parent command executed without depends, child command will never be executed,
-		// so it is fine to set noDepends to false
-		noDepends: false,
+		cmdLog:    cmdLogger(cmd, parentRunner.cmd, parentRunner.parentCmd),
 	}
 }
 
@@ -88,8 +90,8 @@ func (r *Runner) Execute(ctx context.Context) error {
 		return r.runChild(ctx)
 	}
 
-	if r.cmd.CmdMap != nil {
-		return r.runCmdAsMap(ctx)
+	if r.cmd.Cmds.Parallel {
+		return r.runParallel(ctx)
 	}
 
 	return r.run(ctx)
@@ -98,7 +100,7 @@ func (r *Runner) Execute(ctx context.Context) error {
 // Run main command and wait for result.
 // Must be used only when Command.Cmd is string or []string.
 func (r *Runner) run(ctx context.Context) error {
-	debugf("running command '%s': %s", r.cmd.Name, r.cmd.Pretty())
+	r.cmdLog("command:\n  %s", r.cmd.Pretty())
 
 	defer func() {
 		if r.cmd.After != "" {
@@ -110,14 +112,14 @@ func (r *Runner) run(ctx context.Context) error {
 		return err
 	}
 
-	if !r.noDepends {
-		if err := r.runDepends(ctx); err != nil {
-			return err
-		}
+	if err := r.runDepends(ctx); err != nil {
+		return err
 	}
 
-	if err := r.runCmdScript(r.cmd.Cmd); err != nil {
-		return err
+	if len(r.cmd.Cmds.Commands) > 0 {
+		if err := r.runCmdScript(r.cmd.Cmds.Commands[0].Script); err != nil {
+			return err
+		}
 	}
 
 	// persist checksum only if exit code 0
@@ -127,7 +129,7 @@ func (r *Runner) run(ctx context.Context) error {
 // Run command and wait for result.
 // Must be used only when Command.Cmd is string or []string.
 func (r *Runner) runChild(ctx context.Context) error {
-	debugf("running child command '%s': %s", r.cmd.Name, r.cmd.Pretty())
+	r.cmdLog("command:\n  %s", r.cmd.Pretty())
 
 	defer func() {
 		if r.cmd.After != "" {
@@ -144,12 +146,13 @@ func (r *Runner) runChild(ctx context.Context) error {
 		return err
 	}
 
-	cmd := r.prepareOsCommandForRun(r.cmd.Cmd)
+	script := r.cmd.Cmds.Commands[0].Script
+	cmd, err := r.newOsCommand(script)
+	if err != nil {
+		return err
+	}
 
-	debugf(
-		"executing child os command for %s -> %s\ncmd: %s\nenv: %s\n",
-		r.parentCmd.Name, r.cmd.Name, r.cmd.Cmd, fmtEnv(cmd.Env),
-	)
+	r.cmdLog("executing:\n  cmd: %s\n  env: %s\n", script, fmtEnv(cmd.Env))
 
 	if err := cmd.Run(); err != nil {
 		return &RunError{err: fmt.Errorf("failed to run child command '%s' from 'depends': %w", r.cmd.Name, err)}
@@ -165,9 +168,13 @@ func (r *Runner) runChild(ctx context.Context) error {
 // Even if 'after' script failed we return exit code from 'cmd'.
 // This behavior may change in the future if needed.
 func (r *Runner) runAfterScript() {
-	cmd := r.prepareOsCommandForRun(r.cmd.After)
+	cmd, err := r.newOsCommand(r.cmd.After)
+	if err != nil {
+		log.Printf("failed to run `after` script for command '%s': %s", r.cmd.Name, err)
+		return
+	}
 
-	debugf("executing after script:\ncommand: %s\nscript: %s\nenv: %s", r.cmd.Name, r.cmd.After, fmtEnv(cmd.Env))
+	r.cmdLog("executing 'after':\n  cmd: %s\n  env: %s", r.cmd.After, fmtEnv(cmd.Env))
 
 	if RunError := cmd.Run(); RunError != nil {
 		log.Printf("failed to run `after` script for command '%s': %s", r.cmd.Name, RunError)
@@ -196,18 +203,18 @@ func formatOptsUsageError(err error, opts docopt.Opts, cmdName string, rawOption
 // - calculate checksum.
 func (r *Runner) initCmd() error {
 	if !r.cmd.SkipDocopts {
-		debugf("parse docopt for command '%s'", r.cmd.Name)
-		opts, err := parser.ParseDocopts(r.cmd.Args, r.cmd.Docopts)
+		r.cmdLog("parse docopt")
+		opts, err := docopt.Parse(r.cmd.Args, r.cmd.Docopts)
 		if err != nil {
 			// TODO if accept_args, just continue with what we got
 			//  but this may  require changes in go-docopt
 			return formatOptsUsageError(err, opts, r.cmd.Name, r.cmd.Docopts)
 		}
 
-		debugf("raw docopt for command '%s': %#v", r.cmd.Name, opts)
+		r.cmdLog("docopt parsed: %#v", opts)
 
-		r.cmd.Options = parser.OptsToLetsOpt(opts)
-		r.cmd.CliOptions = parser.OptsToLetsCli(opts)
+		r.cmd.Options = docopt.OptsToLetsOpt(opts)
+		r.cmd.CliOptions = docopt.OptsToLetsCli(opts)
 	}
 
 	// calculate checksum if needed
@@ -228,7 +235,6 @@ func (r *Runner) initCmd() error {
 	return nil
 }
 
-// TODO before works not as intended. maybe mvdan/sh will fix this.
 func joinBeforeAndScript(before string, script string) string {
 	if before == "" {
 		return script
@@ -240,7 +246,7 @@ func joinBeforeAndScript(before string, script string) string {
 }
 
 // Setup env for cmd.
-func (r *Runner) setupEnv(cmd *exec.Cmd, shell string) {
+func (r *Runner) setupEnv(cmd *exec.Cmd, shell string) error {
 	defaultEnv := map[string]string{
 		GenericCmdNameTpl:   r.cmd.Name,
 		"LETS_COMMAND_ARGS": strings.Join(r.cmd.CommandArgs(), " "),
@@ -257,11 +263,15 @@ func (r *Runner) setupEnv(cmd *exec.Cmd, shell string) {
 		)
 	}
 
+	cmdEnv, err := r.cmd.GetEnv(*r.cfg)
+	if err != nil {
+		return err
+	}
+
 	envMaps := []map[string]string{
 		defaultEnv,
-		r.cfg.Env,
-		r.cmd.Env,
-		r.cmd.OverrideEnv,
+		r.cfg.Env.Dump(),
+		cmdEnv,
 		r.cmd.Options,
 		r.cmd.CliOptions,
 		checksumEnvMap,
@@ -274,6 +284,8 @@ func (r *Runner) setupEnv(cmd *exec.Cmd, shell string) {
 	}
 
 	cmd.Env = envList
+
+	return nil
 }
 
 // Prepare cmd to be run:
@@ -283,8 +295,7 @@ func (r *Runner) setupEnv(cmd *exec.Cmd, shell string) {
 //
 // NOTE: We intentionally do not passing ctx to exec.Command because we want to wait for process end.
 // Passing ctx will change behavior of program drastically - it will kill process if context will be canceled.
-//
-func (r *Runner) prepareOsCommandForRun(cmdScript string) *exec.Cmd {
+func (r *Runner) newOsCommand(cmdScript string) (*exec.Cmd, error) {
 	script := joinBeforeAndScript(r.cfg.Before, cmdScript)
 	shell := r.cfg.Shell
 	if r.cmd.Shell != "" {
@@ -313,20 +324,21 @@ func (r *Runner) prepareOsCommandForRun(cmdScript string) *exec.Cmd {
 		cmd.Dir = r.cmd.WorkDir
 	}
 
-	r.setupEnv(cmd, shell)
+	if err := r.setupEnv(cmd, shell); err != nil {
+		return nil, err
+	}
 
-	return cmd
+	return cmd, nil
 }
 
 // Run all commands from Depends in sequential order.
 func (r *Runner) runDepends(ctx context.Context) error {
-	for _, depName := range r.cmd.DependsNames {
-		dep := r.cmd.Depends[depName]
-		debugf("running dependency '%s' for command '%s'", depName, r.cmd.Name)
-
+	return r.cmd.Depends.Range(func(depName string, dep config.Dep) error {
+		r.cmdLog("running dependency '%s'", depName)
 		dependCmd := r.cfg.Commands[depName]
-		if dependCmd.CmdMap != nil {
-			// forbid to run depends command as map
+		if dependCmd.Cmds.Parallel {
+			// TODO: this must be ensured at the validation time, not at the runtime
+			// forbid to run parallel command in depends
 			return &RunError{
 				err: fmt.Errorf(
 					"failed to run child command '%s' from 'depends': cmd as map is not allowed in depends yet",
@@ -341,29 +353,31 @@ func (r *Runner) runDepends(ctx context.Context) error {
 			dependCmd = dependCmd.WithArgs(dep.Args)
 			dependCmd.SkipDocopts = false
 		}
-		if len(dep.Env) != 0 {
+
+		if !dep.Env.Empty() {
 			dependCmd = dependCmd.WithEnv(dep.Env)
 		}
 
-		if dependCmd.Ref != "" {
-			dependCmd = r.cfg.Commands[dependCmd.Ref].FromRef(dependCmd)
+		// TODO: move working with ref to parsing
+		if dependCmd.Ref != nil {
+			dependCmd = r.cfg.Commands[dependCmd.Ref.Name].FromRef(dependCmd.Ref)
 		}
 
-		err := NewChildRunner(&dependCmd, r).Execute(ctx)
+		err := NewChildRunner(dependCmd, r).Execute(ctx)
 		if err != nil {
 			// must return error to root
 			return err
 		}
-	}
 
-	return nil
+		return nil
+	})
 }
 
 // Persist new calculated checksum to disk.
 // This function mus be called only after command finished(exited) with status 0.
 func (r *Runner) persistChecksum() error {
 	if r.cmd.PersistChecksum {
-		debugf("persisting checksum for command '%s'", r.cmd.Name)
+		r.cmdLog("persisting checksum")
 
 		if err := r.cfg.CreateChecksumsDir(); err != nil {
 			return err
@@ -386,16 +400,19 @@ func fmtEnv(env []string) string {
 	buf := ""
 
 	for _, entry := range env {
-		buf = fmt.Sprintf("%s\n%s", buf, entry)
+		buf = fmt.Sprintf("%s\n  %s", buf, entry)
 	}
 
 	return buf
 }
 
-func (r *Runner) runCmdScript(cmdScript string) error {
-	cmd := r.prepareOsCommandForRun(cmdScript)
+func (r *Runner) runCmdScript(script string) error {
+	cmd, err := r.newOsCommand(script)
+	if err != nil {
+		return err
+	}
 
-	debugf("executing os command for '%s'\ncmd: %s\nenv: %s\n", r.cmd.Name, r.cmd.Cmd, fmtEnv(cmd.Env))
+	r.cmdLog("executing:\n  cmd: %s\n  env: %s\n", script, fmtEnv(cmd.Env))
 
 	if err := cmd.Run(); err != nil {
 		return &RunError{err: fmt.Errorf("failed to run command '%s': %w", r.cmd.Name, err)}
@@ -404,52 +421,8 @@ func (r *Runner) runCmdScript(cmdScript string) error {
 	return nil
 }
 
-func filterCmdMap(
-	parentCmdName string,
-	cmdMap map[string]string,
-	only []string,
-	exclude []string,
-) (map[string]string, error) {
-	hasOnly := len(only) > 0
-	hasExclude := len(exclude) > 0
-
-	if !hasOnly && !hasExclude {
-		return cmdMap, nil
-	}
-
-	filteredCmdMap := make(map[string]string)
-
-	if hasOnly {
-		// put only commands which in `only` list
-		for _, cmdName := range only {
-			cmdScript, ok := cmdMap[cmdName]
-			if !ok {
-				return nil, fmt.Errorf("no such sub-command '%s' in command '%s' used in 'only' flag", cmdName, parentCmdName)
-			}
-
-			filteredCmdMap[cmdName] = cmdScript
-		}
-	}
-
-	if hasExclude {
-		filteredCmdMap = cmdMap
-		// delete all commands which in `exclude` list
-		for _, cmdName := range exclude {
-			_, ok := cmdMap[cmdName]
-			if !ok {
-				return nil, fmt.Errorf("no such sub-command '%s' in command '%s' used in 'exclude' flag", cmdName, parentCmdName)
-			}
-
-			delete(filteredCmdMap, cmdName)
-		}
-	}
-
-	return filteredCmdMap, nil
-}
-
-// Run all commands from Command.CmdMap in parallel and wait for results.
-// Must be used only when Command.Cmd is map[string]string.
-func (r *Runner) runCmdAsMap(ctx context.Context) (err error) {
+// Run all commands from Cmds in parallel and wait for results.
+func (r *Runner) runParallel(ctx context.Context) (err error) {
 	defer func() {
 		if r.cmd.After != "" {
 			r.runAfterScript()
@@ -460,24 +433,17 @@ func (r *Runner) runCmdAsMap(ctx context.Context) (err error) {
 		return err
 	}
 
-	if !r.noDepends {
-		if err = r.runDepends(ctx); err != nil {
-			return err
-		}
+	if err = r.runDepends(ctx); err != nil {
+		return err
 	}
 
 	group, _ := errgroup.WithContext(ctx)
 
-	cmdMap, err := filterCmdMap(r.cmd.Name, r.cmd.CmdMap, r.cmd.Only, r.cmd.Exclude)
-	if err != nil {
-		return err
-	}
-
-	for _, cmdExecScript := range cmdMap {
-		cmdExecScript := cmdExecScript
+	for _, cmd := range r.cmd.Cmds.Commands {
+		cmd := cmd
 		// wait for cmd to end in a goroutine with error propagation
 		group.Go(func() error {
-			return r.runCmdScript(cmdExecScript)
+			return r.runCmdScript(cmd.Script)
 		})
 	}
 
