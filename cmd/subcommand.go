@@ -79,8 +79,12 @@ func newCmdGeneric(command *config.Command, conf *config.Config, out io.Writer) 
 				command = conf.Commands[command.Ref.Name].FromRef(command.Ref)
 			}
 
-			// TODO: maybe no depends must just clone command wo depends ?
-			return runner.NewRunner(command, conf, out, noDepends).Execute(cmd.Context())
+			if noDepends {
+				command = command.Clone()
+				command.Depends = &config.Deps{}
+			}
+
+			return runner.NewRunner(command, conf, out).Execute(cmd.Context())
 		},
 		// we use docopt to parse flags on our own, so any flag is valid flag here
 		FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},
