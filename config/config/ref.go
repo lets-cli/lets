@@ -41,3 +41,14 @@ func (a *RefArgs) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 	return nil
 }
+
+func (r *Ref) Clone() *Ref {
+	if r == nil {
+		return nil
+	}
+
+	return &Ref{
+		Name: r.Name,
+		Args: cloneArray(r.Args),
+	}
+}

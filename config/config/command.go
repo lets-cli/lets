@@ -19,6 +19,7 @@ type Command struct {
 	// script to run after cmd finished (cleanup, etc)
 	After string
 	// map of named scripts to run in parallel
+	// TODO: refactor and get rid of CmdMap
 	CmdMap map[string]string
 	// if specified, overrides global shell for this particular command
 	Shell string
@@ -41,6 +42,7 @@ type Command struct {
 	// e.g. from 'lets run --debug' we will get [run, --debug]
 	Args []string
 
+	// TODO: only and exclude maybe handle in Cmd, and drop these fields
 	// run only specified commands from cmd map
 	Only []string
 	// run all but excluded commands from cmd map
@@ -154,16 +156,14 @@ func (c *Command) GetEnv(cfg Config) (map[string]string, error) {
 }
 
 func (c *Command) WithArgs(args []string) *Command {
-	// TODO: use c.Clone() here
-	newCmd := c
+	newCmd := c.Clone()
 	newCmd.Args = args
 
 	return newCmd
 }
 
 func (c *Command) FromRef(ref *Ref) *Command {
-	// TODO: use c.Clone() here
-	newCmd := c
+	newCmd := c.Clone()
 
 	if len(newCmd.Args) == 0 {
 		newCmd.Args = append([]string{c.Name}, ref.Args...)
@@ -175,15 +175,44 @@ func (c *Command) FromRef(ref *Ref) *Command {
 }
 
 func (c *Command) WithEnv(env *Envs) *Command {
-	// TODO: use c.Clone() here
-	newCmd := c
+	newCmd := c.Clone()
 	newCmd.Env.Merge(env)
 
 	return newCmd
 }
 
-func (cmd Command) Pretty() string {
-	pretty, err := json.MarshalIndent(cmd, "", "  ")
+
+func (c *Command) Clone() *Command {
+	cmd := &Command{
+		Name: c.Name,
+		Cmd: c.Cmd,
+		After: c.After,
+		Shell: c.Shell,
+		WorkDir: c.WorkDir,
+		Description: c.Description,
+		Env: c.Env.Clone(),
+		Docopts: c.Docopts,
+		SkipDocopts: c.SkipDocopts,
+		Options: cloneMap(c.Options),
+		CliOptions: cloneMap(c.CliOptions),
+		Depends: c.Depends.Clone(),
+		ChecksumMap: cloneMap(c.ChecksumMap),
+		PersistChecksum: c.PersistChecksum,
+		HasChecksum: c.HasChecksum,
+		ChecksumSources: cloneMapArray(c.ChecksumSources),
+		persistedChecksums: cloneMap(c.persistedChecksums),
+		Ref: c.Ref.Clone(),
+		Args: cloneArray(c.Args),
+		Only: cloneArray(c.Only),
+		Exclude: cloneArray(c.Exclude),
+		CmdMap: cloneMap(c.CmdMap),
+	}
+
+	return cmd
+}
+
+func (c *Command) Pretty() string {
+	pretty, err := json.MarshalIndent(c, "", "  ")
 	if err != nil {
 		return ""
 	}
@@ -191,44 +220,44 @@ func (cmd Command) Pretty() string {
 	return string(pretty)
 }
 
-func (cmd *Command) Help() string {
+func (c *Command) Help() string {
 	buf := new(bytes.Buffer)
-	if cmd.Description != "" {
-		buf.WriteString(fmt.Sprintf("%s\n\n", cmd.Description))
+	if c.Description != "" {
+		buf.WriteString(fmt.Sprintf("%s\n\n", c.Description))
 	}
 
-	if cmd.Docopts != "" {
-		buf.WriteString(cmd.Docopts)
+	if c.Docopts != "" {
+		buf.WriteString(c.Docopts)
 	}
 
 	if buf.Len() == 0 {
-		buf.WriteString(fmt.Sprintf("No help message for '%s'", cmd.Name))
+		buf.WriteString(fmt.Sprintf("No help message for '%s'", c.Name))
 	}
 
 	return strings.TrimSuffix(buf.String(), "\n")
 }
 
-func (cmd *Command) ChecksumCalculator(workDir string) error {
-	if len(cmd.ChecksumSources) == 0 {
+func (c *Command) ChecksumCalculator(workDir string) error {
+	if len(c.ChecksumSources) == 0 {
 		return nil
 	}
 
-	checksumMap, err := checksum.CalculateChecksumFromSources(workDir, cmd.ChecksumSources)
+	checksumMap, err := checksum.CalculateChecksumFromSources(workDir, c.ChecksumSources)
 	if err != nil {
 		return err
 	}
 
-	cmd.ChecksumMap = checksumMap
+	c.ChecksumMap = checksumMap
 
 	return nil
 }
 
-func (cmd *Command) GetPersistedChecksums() map[string]string {
-	return cmd.persistedChecksums
+func (c *Command) GetPersistedChecksums() map[string]string {
+	return c.persistedChecksums
 }
 
 // ReadChecksumsFromDisk reads all checksums for cmd into map.
-func (cmd *Command) ReadChecksumsFromDisk(checksumsDir string, cmdName string, checksumMap map[string]string) error {
+func (c *Command) ReadChecksumsFromDisk(checksumsDir string, cmdName string, checksumMap map[string]string) error {
 	checksums := make(map[string]string, len(checksumMap)+1)
 
 	for checksumName := range checksumMap {
@@ -244,7 +273,7 @@ func (cmd *Command) ReadChecksumsFromDisk(checksumsDir string, cmdName string, c
 		checksums[checksumName] = checksumResult
 	}
 
-	cmd.persistedChecksums = checksums
+	c.persistedChecksums = checksums
 
 	return nil
 }

@@ -38,6 +38,22 @@ func (d *Deps) UnmarshalYAML(node *yaml.Node) error {
 	return nil
 }
 
+func (d *Deps) Clone() *Deps {
+	if d == nil {
+		return nil
+	}
+
+	// TODO: maybe just cloneMap
+	mapping := make(map[string]Dep, len(d.Mapping))
+	for k, v := range d.Mapping {
+		mapping[k] = v.Clone()
+	}
+
+	return &Deps{
+		Keys: cloneArray(d.Keys),
+		Mapping: mapping,
+	}
+}
 
 // Range allows you to loop into the Deps in its right order
 func (d *Deps) Range(yield func(key string, value Dep) error) error {
@@ -130,4 +146,12 @@ func (d *Dep) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	d.Args = append([]string{cmd.Name}, cmdArgs.Args...)
 
 	return nil
+}
+
+func (d Dep) Clone() Dep {
+	return Dep{
+		Name: d.Name,
+		Args: cloneArray(d.Args),
+		Env: d.Env.Clone(),
+	}
 }

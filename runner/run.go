@@ -143,7 +143,7 @@ func (r *Runner) runChild(ctx context.Context) error {
 		return err
 	}
 
-	cmd, err := r.prepareOsCommandForRun(r.cmd.Cmd)
+	cmd, err := r.newOsCommand(r.cmd.Cmd)
 	if err != nil {
 		return err
 	}
@@ -167,7 +167,7 @@ func (r *Runner) runChild(ctx context.Context) error {
 // Even if 'after' script failed we return exit code from 'cmd'.
 // This behavior may change in the future if needed.
 func (r *Runner) runAfterScript() {
-	cmd, err := r.prepareOsCommandForRun(r.cmd.After)
+	cmd, err := r.newOsCommand(r.cmd.After)
 	if err != nil {
 		// TODO we need to return nornal error from here, even in defer
 		log.Printf("failed to run `after` script for command '%s': %s", r.cmd.Name, err)
@@ -296,9 +296,7 @@ func (r *Runner) setupEnv(cmd *exec.Cmd, shell string) error {
 //
 // NOTE: We intentionally do not passing ctx to exec.Command because we want to wait for process end.
 // Passing ctx will change behavior of program drastically - it will kill process if context will be canceled.
-//
-// TODO: rename
-func (r *Runner) prepareOsCommandForRun(cmdScript string) (*exec.Cmd, error) {
+func (r *Runner) newOsCommand(cmdScript string) (*exec.Cmd, error) {
 	script := joinBeforeAndScript(r.cfg.Before, cmdScript)
 	shell := r.cfg.Shell
 	if r.cmd.Shell != "" {
@@ -315,6 +313,7 @@ func (r *Runner) prepareOsCommandForRun(cmdScript string) (*exec.Cmd, error) {
 	// 	shell,
 	// 	args...,
 	// )
+
 	cmd := exec.Command(
 		shell,
 		"-c",
@@ -359,19 +358,16 @@ func (r *Runner) runDepends(ctx context.Context) error {
 		// by default, if depends command in simple format, skip docopts
 		dependCmd.SkipDocopts = true
 		if len(dep.Args) != 0 {
-			// TODO: to implemet this we need clonnable commands
 			dependCmd = dependCmd.WithArgs(dep.Args)
 			dependCmd.SkipDocopts = false
 		}
 
 		if !dep.Env.Empty() {
-			// TODO: to implemet this we need clonnable commands
 			dependCmd = dependCmd.WithEnv(dep.Env)
 		}
 
 		// TODO: move working with ref to parsing
 		if dependCmd.Ref != nil {
-			// TODO: to implemet this we need clonnable commands
 			dependCmd = r.cfg.Commands[dependCmd.Ref.Name].FromRef(dependCmd.Ref)
 		}
 
@@ -420,7 +416,7 @@ func fmtEnv(env []string) string {
 }
 
 func (r *Runner) runCmdScript(cmdScript string) error {
-	cmd, err := r.prepareOsCommandForRun(cmdScript)
+	cmd, err := r.newOsCommand(cmdScript)
 	if err != nil {
 		return err
 	}

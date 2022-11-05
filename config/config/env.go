@@ -48,6 +48,22 @@ func (e *Envs) UnmarshalYAML(node *yaml.Node) error {
 }
 
 
+func (e *Envs) Clone() *Envs {
+	if e == nil {
+		return nil
+	}
+
+	// TODO: maybe just cloneMap
+	mapping := make(map[string]Env, len(e.Mapping))
+	for k, v := range e.Mapping {
+		mapping[k] = v
+	}
+	return &Envs{
+		Keys: cloneArray(e.Keys),
+		Mapping: mapping,
+	}
+}
+
 func (e *Envs) Empty() bool {
 	if e == nil {
 		return true
