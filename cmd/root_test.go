@@ -19,14 +19,10 @@ func newTestRootCmdWithConfig(args []string) (rootCmd *cobra.Command, out *bytes
 	bufOut := new(bytes.Buffer)
 
 	testCfg := &config.Config{
-		Commands: make(map[string]config.Command),
+		Commands: make(map[string]*config.Command),
 	}
-	testCfg.Commands["foo"] = config.Command{
-		Name: "foo",
-	}
-	testCfg.Commands["bar"] = config.Command{
-		Name: "bar",
-	}
+	testCfg.Commands["foo"] = &config.Command{Name: "foo"}
+	testCfg.Commands["bar"] = &config.Command{Name: "bar"}
 
 	rootCommand := CreateRootCommandWithConfig(bufOut, testCfg, "v0.0.0-test")
 	rootCommand.SetOut(bufOut)

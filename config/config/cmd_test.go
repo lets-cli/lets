@@ -1,9 +1,12 @@
 package config
 
 import (
+	"bytes"
 	"os"
 	"strings"
 	"testing"
+
+	"gopkg.in/yaml.v3"
 )
 
 // that's how shell does it.
@@ -23,55 +26,59 @@ func simulateProcessShellArgs(inputCmdList []string) []string {
 	return cmdList
 }
 
+func CmdFixture(t *testing.T, text string, args []string) Cmds {
+	buf := bytes.NewBufferString(text)
+	var cmd struct {
+		Cmd Cmds
+	}
+	os.Args = args
+	if err := yaml.NewDecoder(buf).Decode(&cmd); err != nil {
+		t.Fatalf("cmd fixture decode error: %s", err)
+	}
 
-// TODO: make a better test fixtures
-// TODO: probably just unmarshal some text into Cmd
+	return cmd.Cmd
+}
+
 func TestCommandFieldCmd(t *testing.T) {
-	t.Run("so subcommand in os.Args", func(t *testing.T) {
-		testCmd := NewCommand("test-cmd")
-		cmdArgs := "echo Hello"
-		// mock args
-		os.Args = []string{"bin_to_run"}
-		err := parseCmd(cmdArgs, &testCmd)
-		if err != nil {
-			t.Fatalf("unexpected error: %s", err)
-		}
-
-		if testCmd.Cmd != cmdArgs {
-			t.Errorf("wrong output. \nexpect %s \ngot:  %s", cmdArgs, testCmd.Cmd)
-		}
-	})
-
 	t.Run("as string", func(t *testing.T) {
-		testCmd := NewCommand("test-cmd")
-		cmdArgs := "echo Hello"
-
-		err := parseCmd(cmdArgs, &testCmd)
-		if err != nil {
-			t.Fatalf("unexpected error: %s", err)
-		}
-
-		if testCmd.Cmd != cmdArgs {
-			t.Errorf("wrong output. \nexpect %s \ngot:  %s", cmdArgs, testCmd.Cmd)
+		cmd := CmdFixture(t, "cmd: echo Hello", []string{})
+		exp := "echo Hello"
+		if cmd.commands[0].Script != exp {
+			t.Errorf("wrong output. \nexpect %s \ngot:  %s", exp, cmd.commands[0].Script)
 		}
 	})
 
 	t.Run("as list", func(t *testing.T) {
-		testCmd := NewCommand("test-cmd")
-		var cmdArgs []interface{}
-		cmdArgs = append(cmdArgs, "echo", "Hello")
-
-		appendArgs := []string{"one", "two", "--there", `--four='{"age": 20}'`}
-		// mock args
-		os.Args = append([]string{"bin_to_run", "test-cmd"}, appendArgs...)
-
-		err := parseCmd(cmdArgs, &testCmd)
-		if err != nil {
-			t.Fatalf("unexpected error: %s", err)
+		args := []string{"/bin/lets", "hello", "World", "--foo", `--bar='{"age": 20}'`}
+		cmd := CmdFixture(t, "cmd: [echo, Hello]", args)
+	 	exp := `echo Hello 'World' '--foo' '--bar='{"age": 20}''`
+		if cmd.commands[0].Script != exp {
+			t.Errorf("wrong output. \nexpect %s \ngot:  %s", exp, cmd.commands[0].Script)
 		}
-		exp := strings.Join(append([]string{"echo", "Hello"}, "'one'", "'two'", "'--there'", `'--four='{"age": 20}''`), " ")
-		if testCmd.Cmd != exp {
-			t.Errorf("wrong output. \nexpect: %s \ngot:    %s", exp, testCmd.Cmd)
+	})
+
+	t.Run("as map", func(t *testing.T) {
+		text := "cmd: \n  foo: echo Foo\n  bar: echo Bar"
+		cmd := CmdFixture(t, text, []string{})
+	 	expFoo := "echo Foo"
+	 	expBar := "echo Bar"
+		if cmdLen := len(cmd.commands); cmdLen != 2 {
+			t.Errorf("expect %d commands\ngot: %d", 2, cmdLen)
+		}
+
+		for _, command := range cmd.commands {
+			switch command.Name {
+			case "foo":
+				if command.Script != expFoo {
+					t.Errorf("wrong output. \nexpect %s \ngot:  %s", expFoo, command.Script)
+				}
+			case "bar":
+				if command.Script != expBar {
+					t.Errorf("wrong output. \nexpect %s \ngot:  %s", expBar, command.Script)
+				}
+			default:
+				t.Fatalf("unexpected command %s", command.Name)
+			}
 		}
 	})
 }

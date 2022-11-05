@@ -21,7 +21,6 @@ func withColor(msg string) string {
 }
 
 // Validate loaded config.
-
 func validate(config *config.Config, letsVersion string) error {
 	if err := validateVersion(config, letsVersion); err != nil {
 		return err
@@ -31,7 +30,7 @@ func validate(config *config.Config, letsVersion string) error {
 		return err
 	}
 
-	if err := validateCircularDepends(config); err != nil {
+	if err := validateDependsCycle(config); err != nil {
 		return err
 	}
 
@@ -92,15 +91,14 @@ func validateCommandInDependsExists(cfg *config.Config) error {
 }
 
 // if any two commands have each other command in deps, raise error.
-// TODO: rename in validateDependenciesCycle
-func validateCircularDepends(cfg *config.Config) error {
+func validateDependsCycle(cfg *config.Config) error {
 	for _, cmdA := range cfg.Commands {
 		for _, cmdB := range cfg.Commands {
 			if cmdA.Name == cmdB.Name {
 				continue
 			}
 
-			if yes := detectCircularDependencies(cmdA, cmdB); yes {
+			if cmdA.Depends.Has(cmdB.Name) && cmdB.Depends.Has(cmdA.Name) {
 				return fmt.Errorf(
 					"command '%s' have circular depends on command '%s'",
 					withColor(cmdA.Name),
@@ -111,8 +109,4 @@ func validateCircularDepends(cfg *config.Config) error {
 	}
 
 	return nil
-}
-
-func detectCircularDependencies(cmdA *config.Command, cmdB *config.Command) bool {
-	return cmdA.Depends.Has(cmdB.Name) && cmdB.Depends.Has(cmdA.Name)
 }

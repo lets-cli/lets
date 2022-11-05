@@ -153,14 +153,6 @@ func (c *Command) GetEnv(cfg Config) (map[string]string, error) {
 	return c.Env.Dump(), nil
 }
 
-// NewCommand creates new command struct.
-func NewCommand(name string) Command {
-	return Command{
-		Name:        name,
-		SkipDocopts: false,
-	}
-}
-
 func (c *Command) WithArgs(args []string) *Command {
 	// TODO: use c.Clone() here
 	newCmd := c

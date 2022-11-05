@@ -10,8 +10,6 @@ type Cmds struct {
 	commands []*Cmd
 	parallel bool
 }
-// TODO: represend cmdMap as cmdlist with cmds which run in parallel
-// Maybe Cmds is stuc with parallel option
 
 type Cmd struct {
 	Name string
