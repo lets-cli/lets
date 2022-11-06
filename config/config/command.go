@@ -91,6 +91,9 @@ func (c *Command) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 	c.Shell = cmd.Shell
 	c.Docopts = cmd.Options
+	if c.Docopts == "" {
+		c.SkipDocopts = true
+	}
 	c.Depends = cmd.Depends
 	c.WorkDir = cmd.WorkDir
 	c.After = cmd.After
@@ -131,37 +134,18 @@ func (c *Command) CommandArgs() []string {
 
 func (c *Command) GetEnv(cfg Config) (map[string]string, error) {
 	if err := c.Env.Execute(cfg); err != nil {
-		// TODO: move execution to somevere else. probably make execution lazy and cached
 		return nil, err
 	}
 
 	return c.Env.Dump(), nil
 }
 
-func (c *Command) WithArgs(args []string) *Command {
-	newCmd := c.Clone()
-	newCmd.Args = args
-
-	return newCmd
-}
-
-func (c *Command) FromRef(ref *Ref) *Command {
-	newCmd := c.Clone()
-
-	if len(newCmd.Args) == 0 {
-		newCmd.Args = append([]string{c.Name}, ref.Args...)
+func (c *Command) FromRef(ref *Ref) {
+	if len(c.Args) == 0 {
+		c.Args = append([]string{c.Name}, ref.Args...)
 	} else {
-		newCmd.Args = append(newCmd.Args, ref.Args...)
+		c.Args = append(c.Args, ref.Args...)
 	}
-
-	return newCmd
-}
-
-func (c *Command) WithEnv(env *Envs) *Command {
-	newCmd := c.Clone()
-	newCmd.Env.Merge(env)
-
-	return newCmd
 }
 
 func (c *Command) Clone() *Command {
@@ -180,10 +164,10 @@ func (c *Command) Clone() *Command {
 		Depends:            c.Depends.Clone(),
 		ChecksumMap:        cloneMap(c.ChecksumMap),
 		PersistChecksum:    c.PersistChecksum,
-		ChecksumSources:    cloneMapArray(c.ChecksumSources),
+		ChecksumSources:    cloneMapSlice(c.ChecksumSources),
 		persistedChecksums: cloneMap(c.persistedChecksums),
 		Ref:                c.Ref.Clone(),
-		Args:               cloneArray(c.Args),
+		Args:               cloneSlice(c.Args),
 	}
 
 	return cmd

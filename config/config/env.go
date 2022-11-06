@@ -14,6 +14,7 @@ import (
 type Envs struct {
 	Keys    []string
 	Mapping map[string]Env
+	ready   bool
 }
 
 type Env struct {
@@ -56,7 +57,7 @@ func (e *Envs) Clone() *Envs {
 		mapping[k] = v
 	}
 	return &Envs{
-		Keys:    cloneArray(e.Keys),
+		Keys:    cloneSlice(e.Keys),
 		Mapping: mapping,
 	}
 }
@@ -106,7 +107,17 @@ func (e *Envs) Range(yield func(key string, value Env) error) error {
 }
 
 // Merge merges the given Envs into the existing Envs.
+// If current env not exists bu other exists we just init current env
+// with other env.
 func (e *Envs) Merge(other *Envs) {
+	if other == nil {
+		return
+	}
+
+	if e == nil {
+		e = &Envs{}
+	}
+
 	_ = other.Range(func(key string, value Env) error {
 		e.Set(key, value)
 		return nil
@@ -141,7 +152,6 @@ func executeScript(shell string, script string) (string, error) {
 	}
 
 	res := string(out)
-	// TODO get rid of TrimSpace
 	return strings.TrimSpace(res), nil
 }
 
@@ -149,6 +159,10 @@ func executeScript(shell string, script string) (string, error) {
 // It is lazy and caches data on first call.
 func (e *Envs) Execute(cfg Config) error {
 	if e == nil {
+		return nil
+	}
+
+	if e.ready {
 		return nil
 	}
 
@@ -171,6 +185,7 @@ func (e *Envs) Execute(cfg Config) error {
 			e.Mapping[key] = env
 		}
 	}
+	e.ready = true
 
 	return nil
 }

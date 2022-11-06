@@ -30,7 +30,7 @@ services:
       NO_COLOR: 1
       BATS_UTILS_PATH: /bats
     command:
-      - bash 
+      - bash
       - -c
       - |
         go build -o /usr/bin/lets *.go

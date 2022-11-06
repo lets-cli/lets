@@ -104,11 +104,8 @@ func filterCmds(
 // Replace command name placeholder if present
 // E.g. if command name is foo, lets ${LETS_COMMAND_NAME} will be lets foo
 func setDocoptNamePlaceholder(c *config.Command) {
-	c.Docopts = strings.Replace(
-		c.Docopts,
-		fmt.Sprintf("${%s}", executor.GenericCmdNameTpl), c.Name,
-		1,
-	)
+	c.Docopts = strings.Replace(c.Docopts, "${LETS_COMMAND_NAME}", c.Name, 1)
+	c.Docopts = strings.Replace(c.Docopts, "$LETS_COMMAND_NAME", c.Name, 1)
 }
 
 // newCmdGeneric creates new cobra root sub command from Command.
@@ -142,8 +139,9 @@ func newCmdGeneric(command *config.Command, conf *config.Config, out io.Writer) 
 
 			setDocoptNamePlaceholder(command)
 
-			if command.Ref != nil {
-				command = conf.Commands[command.Ref.Name].FromRef(command.Ref)
+			if ref := command.Ref; ref != nil {
+				command = conf.Commands[ref.Name].Clone()
+				command.FromRef(ref)
 			}
 
 			command.Cmds.Commands = filterCmds(command.Cmds, only, exclude)

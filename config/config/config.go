@@ -77,10 +77,6 @@ func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return err
 	}
 
-	if err := c.processEnv(); err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -221,22 +217,29 @@ func (c *Config) readMixins(mixins []*Mixin) error {
 	return nil
 }
 
-func (c *Config) GetEnv() (map[string]string, error) {
-	if err := c.processEnv(); err != nil {
-		// TODO: move execution to somevere else. probably make execution lazy and cached
-		return nil, err
-	}
-
-	return c.Env.Dump(), nil
+func (c *Config) GetEnv() map[string]string {
+	return c.Env.Dump()
 }
 
-// TODO: not sure it must be public.
-func (c *Config) processEnv() error {
-	// TODO: take lock, update env, set envReady = true, release lock
-	// TODO: do we need a cache here ?
+// SetupEnv must be called once. It is not intended to be called
+// multiple times hence does not have mutex.
+func (c *Config) SetupEnv() error {
 	if err := c.Env.Execute(*c); err != nil {
-		// TODO: move execution to somevere else. probably make execution lazy and cached
 		return err
+	}
+
+	// expand env for ref.args
+	for _, cmd := range c.Commands {
+		if cmd.Ref == nil {
+			continue
+		}
+
+		for idx, arg := range cmd.Ref.Args {
+			// we have to expand env here on our own, since this args not came from users tty, and not expanded before lets
+			cmd.Ref.Args[idx] = os.Expand(arg, func(key string) string {
+				return c.Env.Mapping[key].Value
+			})
+		}
 	}
 
 	return nil

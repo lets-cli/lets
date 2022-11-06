@@ -9,7 +9,7 @@ setup() {
 @test "command_depends: should run all depends commands before main command" {
     run lets run-with-depends
     assert_success
-    assert_line --index 0 "Hello world with level INFO"
+    assert_line --index 0 "Hello World with level INFO"
     assert_line --index 1 "Bar"
     assert_line --index 2 "Main"
 }
@@ -25,13 +25,20 @@ setup() {
 @test "command_depends: should override env" {
     run lets override-env
     assert_success
-    assert_line --index 0 "Hello world with level DEBUG"
+    assert_line --index 0 "Hello World with level DEBUG"
     assert_line --index 1 "Override env"
 }
 
 @test "command_depends: ref works in depends" {
+    # checks that original command does not overrides ref to original
+    # command. The order in depends is essential to test behavior.
     run lets with-ref-in-depends
     assert_success
-    assert_line --index 0 "Hello Developer with level INFO"
-    assert_line --index 1 "I have ref in depends"
+    assert_line --index 0 "Hello World with level INFO"
+    # World -> Developer by ref.args
+    # INFO -> DEBUG by depends[1].env.INFO
+    assert_line --index 1 "Hello Developer with level DEBUG"
+    # World -> Bar (because dep args has more priority over ref args)
+    assert_line --index 2 "Hello Bar with level INFO"
+    assert_line --index 3 "I have ref in depends"
 }

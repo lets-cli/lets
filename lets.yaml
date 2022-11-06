@@ -41,7 +41,7 @@ commands:
       docker-compose run --rm test-bats
 
   test-completions:
-    ref: test-bats 
+    ref: test-bats
     args: zsh_completion.bats_
     description: |
       Run completions tests

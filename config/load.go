@@ -31,7 +31,9 @@ func Load(configName string, configDir string, version string) (*config.Config, 
 		return nil, err
 	}
 
-	config.ExpandRefArgs(c)
+	if err := c.SetupEnv(); err != nil {
+		return nil, err
+	}
 
 	return c, nil
 }
