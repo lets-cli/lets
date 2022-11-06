@@ -25,7 +25,9 @@ func newRootCmd(version string) *cobra.Command {
 		},
 		TraverseChildren: true,
 		Version:          version,
+		// handle errors manually
 		SilenceErrors:    true,
+		// print help message manyally
 		SilenceUsage:     true,
 	}
 }
