@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/lets-cli/lets/config/config"
 	"github.com/lets-cli/lets/upgrade"
@@ -74,6 +75,14 @@ func initRootCommand(rootCmd *cobra.Command, cfg *config.Config) {
 	rootCmd.Flags().Bool("no-depends", false, "skip 'depends' for running command")
 }
 
+
+func printHelpMessage(cmd *cobra.Command) error {
+	help := cmd.UsageString()
+	help = strings.Replace(help, "lets [command] --help", "lets help [command]", 1)
+	_, err := fmt.Fprint(cmd.OutOrStdout(), help)
+	return err
+}
+
 func runRoot(cmd *cobra.Command, version string) error {
 	selfUpgrade, err := cmd.Flags().GetBool("upgrade")
 	if err != nil {
@@ -106,5 +115,5 @@ func runRoot(cmd *cobra.Command, version string) error {
 		return nil
 	}
 
-	return cmd.Help()
+	return printHelpMessage(cmd)
 }
