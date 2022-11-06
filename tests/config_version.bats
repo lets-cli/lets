@@ -18,7 +18,7 @@ teardown() {
     LETS_CONFIG=lets-with-version-0.0.1.yaml run ./lets
 
     assert_success
-    assert_line --index 0 "A CLI command runner"
+    assert_line --index 0 "A CLI task runner"
 }
 
 @test "config_version: if config version greater than lets version - fail - require upgrade" {
@@ -31,5 +31,5 @@ teardown() {
 @test "config_version: no version specified" {
     LETS_CONFIG=lets-without-version.yaml run ./lets
     assert_success
-    assert_line --index 0 "A CLI command runner"
+    assert_line --index 0 "A CLI task runner"
 }

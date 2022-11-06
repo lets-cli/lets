@@ -7,7 +7,7 @@ setup() {
 }
 
 HELP_MESSAGE=<<EOF
-A CLI command runner
+A CLI task runner
 
 Usage:
   lets [flags]
@@ -28,7 +28,7 @@ Flags:
       --upgrade               upgrade lets to latest version
   -v, --version               version for lets
 
-Use "lets [command] --help" for more information about a command.
+Use "lets help [command]" for more information about a command.
 EOF
 
 @test "help: should create .lets dir" {

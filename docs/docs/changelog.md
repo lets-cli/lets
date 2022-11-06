@@ -9,9 +9,9 @@ title: Changelog
 * `[Fixed]` Removed builtin `--help` flag for subcommands. Now using `--help` will pas this flag to underlying `cmd` script.
 * `[Refactoring]` Config parsing is reimplemented using `UnmarhallYAML`. This ends up in reduced size and complexity of parsing code.
 * `[Refactoring]` `Command` now is clonable and this opened a possibility to reimplement `ref`, `depends` as map and `--no-depends` - now we clone a command and modify a brand new struct instead of mutating the same command (which was not safe).
-* `[Refactoring]` `Command.Cmd` script was replaced with `Cmds` struct which represents a list of `Cmd`. This allowed generalizing so-called cmd-as-map into a list of commands that will be executed in parallel (see `Runner.runParallel`).
+* `[Refactoring]` `Command.Cmd` script was replaced with `Cmds` struct which represents a list of `Cmd`. This allowed generalizing so-called cmd-as-map into a list of commands that will be executed in parallel (see `Executor.executeParallel`).
 * `[Refactoring]` Error reporting has changed in some places and if one is depending on particular error messages it probably will break.
-* `[Refactoring]` Simplified `Runner` by extracting commands filtering by `--only` and `--exclude` flags into `subcommand.go`.
+* `[Refactoring]` Simplified `Executor` by extracting commands filtering by `--only` and `--exclude` flags into `subcommand.go`.
 * `[Added]` Command short syntax. See [config reference for short syntax](/docs/config#short-syntax). Example:
 
   Before:
@@ -71,7 +71,7 @@ title: Changelog
    See example [in config docs](/docs/config#override-arguments-in-depends-command)
 
 * `[Added]` Validate if commands declared in `depends` actually exist.
-* `[Refactoring]` Refactored `runner` package, implemented `Runner` struct.
+* `[Refactoring]` Refactored `executor` package, implemented `Executor` struct.
 * `[Added]` Support `NO_COLOR` env variable to disable colored output. See https://no-color.org/
 * `[Added]` `LETS_COMMAND_ARGS` - will contain command's positional args. [See config](/docs/env#default-environment-variables).
 

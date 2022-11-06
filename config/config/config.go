@@ -18,10 +18,10 @@ type Config struct {
 	WorkDir  string
 	FilePath string
 	Commands Commands
-	Shell string
+	Shell    string
 	// before is a script which will be included before every cmd
-	Before string
-	Env    *Envs
+	Before  string
+	Env     *Envs
 	Version string
 	isMixin bool // if true, we consider config as mixin and apply different parsing and validation
 	// absolute path to .lets

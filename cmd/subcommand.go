@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/lets-cli/lets/config/config"
-	"github.com/lets-cli/lets/runner"
+	"github.com/lets-cli/lets/executor"
 	"github.com/spf13/cobra"
 	"golang.org/x/exp/slices"
 )
@@ -101,6 +101,16 @@ func filterCmds(
 	return filteredCmds
 }
 
+// Replace command name placeholder if present
+// E.g. if command name is foo, lets ${LETS_COMMAND_NAME} will be lets foo
+func setDocoptNamePlaceholder(c *config.Command) {
+	c.Docopts = strings.Replace(
+		c.Docopts,
+		fmt.Sprintf("${%s}", executor.GenericCmdNameTpl), c.Name,
+		1,
+	)
+}
+
 // newCmdGeneric creates new cobra root sub command from Command.
 func newCmdGeneric(command *config.Command, conf *config.Config, out io.Writer) *cobra.Command {
 	subCmd := &cobra.Command{
@@ -130,12 +140,7 @@ func newCmdGeneric(command *config.Command, conf *config.Config, out io.Writer) 
 			command.Args = prepareArgs(command.Name, os.Args)
 			command.Env.MergeMap(envs)
 
-			// replace only one placeholder in options
-			command.Docopts = strings.Replace(
-				command.Docopts,
-				fmt.Sprintf("${%s}", runner.GenericCmdNameTpl), command.Name,
-				1,
-			)
+			setDocoptNamePlaceholder(command)
 
 			if command.Ref != nil {
 				command = conf.Commands[command.Ref.Name].FromRef(command.Ref)
@@ -148,14 +153,15 @@ func newCmdGeneric(command *config.Command, conf *config.Config, out io.Writer) 
 				command.Depends = &config.Deps{}
 			}
 
-			return runner.NewRunner(command, conf, out).Execute(cmd.Context())
+			return executor.NewExecutor(command, conf, out).Execute(cmd.Context())
 		},
 		// we use docopt to parse flags on our own, so any flag is valid flag here
 		FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},
 		Args:               cobra.ArbitraryArgs,
 		// disables builtin --help flag
 		DisableFlagParsing: true,
-		SilenceUsage:       true,
+		// print help message manyally
+		SilenceUsage: true,
 	}
 
 	subCmd.SetHelpFunc(func(c *cobra.Command, strings []string) {

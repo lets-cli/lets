@@ -9,8 +9,8 @@ import (
 	"github.com/lets-cli/lets/cmd"
 	"github.com/lets-cli/lets/config"
 	"github.com/lets-cli/lets/env"
+	"github.com/lets-cli/lets/executor"
 	"github.com/lets-cli/lets/logging"
-	"github.com/lets-cli/lets/runner"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -42,7 +42,7 @@ func main() {
 		log.Error(err.Error())
 
 		exitCode := 1
-		if e, ok := err.(*runner.RunError); ok { //nolint:errorlint
+		if e, ok := err.(*executor.ExecuteError); ok { //nolint:errorlint
 			exitCode = e.ExitCode()
 		}
 

@@ -1,4 +1,4 @@
-package runner
+package executor
 
 import (
 	"fmt"
@@ -76,4 +76,14 @@ func getChangedChecksumEnvMap(
 	}
 
 	return envMap
+}
+
+func fmtEnv(env []string) string {
+	buf := ""
+
+	for _, entry := range env {
+		buf = fmt.Sprintf("%s\n  %s", buf, entry)
+	}
+
+	return buf
 }

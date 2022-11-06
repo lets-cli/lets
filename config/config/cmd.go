@@ -96,3 +96,12 @@ func (c Cmds) Clone() Cmds {
 
 	return cmds
 }
+
+// SingleCommand returns Cmd only if there is only one command.
+func (c Cmds) SingleCommand() *Cmd {
+	if len(c.Commands) == 1 {
+		return c.Commands[0]
+	}
+
+	return nil
+}

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/lets-cli/lets/config/config"
 	"github.com/lets-cli/lets/upgrade"
@@ -17,15 +18,17 @@ import (
 func newRootCmd(version string) *cobra.Command {
 	return &cobra.Command{
 		Use:   "lets",
-		Short: "A CLI command runner",
+		Short: "A CLI task runner",
 		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runRoot(cmd, version)
 		},
 		TraverseChildren: true,
 		Version:          version,
-		SilenceErrors:    true,
-		SilenceUsage:     true,
+		// handle errors manually
+		SilenceErrors: true,
+		// print help message manyally
+		SilenceUsage: true,
 	}
 }
 
@@ -74,6 +77,14 @@ func initRootCommand(rootCmd *cobra.Command, cfg *config.Config) {
 	rootCmd.Flags().Bool("no-depends", false, "skip 'depends' for running command")
 }
 
+func printHelpMessage(cmd *cobra.Command) error {
+	help := cmd.UsageString()
+	help = fmt.Sprintf("%s\n\n%s", cmd.Short, help)
+	help = strings.Replace(help, "lets [command] --help", "lets help [command]", 1)
+	_, err := fmt.Fprint(cmd.OutOrStdout(), help)
+	return err
+}
+
 func runRoot(cmd *cobra.Command, version string) error {
 	selfUpgrade, err := cmd.Flags().GetBool("upgrade")
 	if err != nil {
@@ -106,5 +117,5 @@ func runRoot(cmd *cobra.Command, version string) error {
 		return nil
 	}
 
-	return cmd.Help()
+	return printHelpMessage(cmd)
 }
