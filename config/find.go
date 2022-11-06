@@ -42,7 +42,7 @@ func FindConfig(configName string, configDir string) (PathInfo, error) {
 		return fmt.Errorf("failed to find config file %s in %s: %w", filename, workDir, err)
 	}
 
-	log.Debugf("lets: using %s config file in %s directory\n", configName, workDir)
+	log.Debugf("lets: using %s config file in %s directory", configName, workDir)
 
 	configAbsPath := ""
 

@@ -124,7 +124,7 @@ func (d *Dep) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 	// args always must start with a dependency name, otherwise docopt will fail
 	// NOTE: if dep points to ref, then cmd.Name is not the final
-	// and be overriden in executor when command will be reolved by ref
+	// and be overridden in executor when command will be reolved by ref
 	d.Args = []string{cmd.Name}
 
 	var cmdArgsStr struct {

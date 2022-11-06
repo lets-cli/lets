@@ -74,8 +74,7 @@ commands:
 
   fmt:
     description: Run sfmt
-    cmd:
-      go fmt ./...
+    cmd: go fmt ./...
 
   build-and-install:
     description: Build and install lets-dev version from source code

@@ -102,7 +102,7 @@ func filterCmds(
 }
 
 // Replace command name placeholder if present
-// E.g. if command name is foo, lets ${LETS_COMMAND_NAME} will be lets foo
+// E.g. if command name is foo, lets ${LETS_COMMAND_NAME} will be lets foo.
 func setDocoptNamePlaceholder(c *config.Command) {
 	c.Docopts = strings.Replace(c.Docopts, "${LETS_COMMAND_NAME}", c.Name, 1)
 	c.Docopts = strings.Replace(c.Docopts, "$LETS_COMMAND_NAME", c.Name, 1)
@@ -151,7 +151,7 @@ func newCmdGeneric(command *config.Command, conf *config.Config, out io.Writer) 
 				command.Depends = &config.Deps{}
 			}
 
-			return executor.NewExecutor(command, conf, out).Execute(cmd.Context())
+			return executor.NewExecutor(conf, out).Execute(cmd.Context(), command)
 		},
 		// we use docopt to parse flags on our own, so any flag is valid flag here
 		FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},
