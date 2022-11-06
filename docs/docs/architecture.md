@@ -79,14 +79,14 @@ Root command is responsible for:
 Subcommand is created from our `Config.Commands` (see `initSubCommands` function).
 
 In subcommand's `RunE` callback we are parsing/validation/normalizing command line arguments for this subcommand
-and then finally executing command with `Runner`.
+and then finally executing command with `Executor`.
 
 Since we are using `docopt` as an argument parser for subcommands, we don't let `Cobra` parse and interpret args,
-and instead we are passing raw arguments as is to `Runner`.
+and instead we are passing raw arguments as is to `Executor`.
 
-## Runner
+## Executor
 
-`Runner` is responsible for:
+`Executor` is responsible for:
 
 - parsing and preparing args using `docopt`
 - calculating and storing command's checksums
