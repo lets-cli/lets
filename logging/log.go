@@ -51,7 +51,7 @@ type ExecLogger struct {
 	name string
 	// lets: [a=>b]
 	prefix string
-	cache  map[string]ExecLogger
+	cache  map[string]*ExecLogger
 }
 
 func NewExecLogger() *ExecLogger {
@@ -66,11 +66,11 @@ func NewExecLogger() *ExecLogger {
 	return &ExecLogger{
 		log:    l,
 		prefix: color.BlueString("lets:"),
-		cache:  make(map[string]ExecLogger),
+		cache:  make(map[string]*ExecLogger),
 	}
 }
 
-func (l *ExecLogger) Child(name string) ExecLogger {
+func (l *ExecLogger) Child(name string) *ExecLogger {
 	if _, ok := l.cache[name]; ok {
 		return l.cache[name]
 	}
@@ -79,21 +79,22 @@ func (l *ExecLogger) Child(name string) ExecLogger {
 		name = fmt.Sprintf("%s => %s", l.name, name)
 	}
 
-	l.cache[name] = ExecLogger{
+	l.cache[name] = &ExecLogger{
 		log:    l.log,
 		name:   name,
 		prefix: color.BlueString("lets: %s", color.GreenString("[%s]", name)),
+		cache:  make(map[string]*ExecLogger),
 	}
 
 	return l.cache[name]
 }
 
-func (l ExecLogger) Info(format string, a ...interface{}) {
+func (l *ExecLogger) Info(format string, a ...interface{}) {
 	format = fmt.Sprintf("%s %s", l.prefix, color.BlueString(format))
 	l.log.Logf(log.InfoLevel, format, a...)
 }
 
-func (l ExecLogger) Debug(format string, a ...interface{}) {
+func (l *ExecLogger) Debug(format string, a ...interface{}) {
 	format = fmt.Sprintf("%s %s", l.prefix, color.BlueString(format))
 	l.log.Logf(log.DebugLevel, format, a...)
 }

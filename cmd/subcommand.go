@@ -17,16 +17,17 @@ const (
 )
 
 // cut all elements before command name.
-func prepareArgs(cmdName string, originalArgs []string) []string {
+// [/bin/lets foo -x] will be [foo, -x]
+func prepareArgs(cmdName string, osArgs []string) []string {
 	nameIdx := 0
 
-	for idx, arg := range originalArgs {
+	for idx, arg := range osArgs {
 		if arg == cmdName {
 			nameIdx = idx
 		}
 	}
 
-	return originalArgs[nameIdx:]
+	return osArgs[nameIdx:]
 }
 
 func short(text string) string {
@@ -135,11 +136,16 @@ func newCmdGeneric(command *config.Command, conf *config.Config, out io.Writer) 
 			}
 
 			command.Args = prepareArgs(command.Name, os.Args)
+
+			// TODO: fails on using lets -E A=1 test-unti
 			command.Env.MergeMap(envs)
 
 			setDocoptNamePlaceholder(command)
 
 			if ref := command.Ref; ref != nil {
+				// TODO: maybe FromRef must create new command with name from ref instead SO this will be a brand new command, and maybe it must be stored
+				// in config, and maybe ref resolving must happen at config parsing phase and
+				// not in execution phase. This will simplify executor
 				command = conf.Commands[ref.Name].Clone()
 				command.FromRef(ref)
 			}
@@ -151,7 +157,8 @@ func newCmdGeneric(command *config.Command, conf *config.Config, out io.Writer) 
 				command.Depends = &config.Deps{}
 			}
 
-			return executor.NewExecutor(conf, out).Execute(cmd.Context(), command)
+			execCtx := executor.NewExecutorCtx(command)
+			return executor.NewExecutor(conf, out).Execute(cmd.Context(), execCtx)
 		},
 		// we use docopt to parse flags on our own, so any flag is valid flag here
 		FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},

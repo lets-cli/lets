@@ -75,6 +75,7 @@ func initRootCommand(rootCmd *cobra.Command, cfg *config.Config) {
 	rootCmd.Flags().Bool("upgrade", false, "upgrade lets to latest version")
 	rootCmd.Flags().Bool("init", false, "create a new lets.yaml in the current folder")
 	rootCmd.Flags().Bool("no-depends", false, "skip 'depends' for running command")
+	rootCmd.Flags().BoolP("debug", "d", false, "show debug logs (or use LETS_DEBUG=1). If used multiple times, shows more verbose logs")
 }
 
 func printHelpMessage(cmd *cobra.Command) error {

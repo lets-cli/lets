@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/lithammer/dedent"
 	"gopkg.in/yaml.v3"
 )
 
@@ -49,16 +50,20 @@ func TestCommandFieldCmd(t *testing.T) {
 	})
 
 	t.Run("as list", func(t *testing.T) {
-		args := []string{"/bin/lets", "hello", "World", "--foo", `--bar='{"age": 20}'`}
+		args := []string{"/bin/lets", "hello", "World"}
 		cmd := CmdFixture(t, "cmd: [echo, Hello]", args)
-		exp := `echo Hello 'World' '--foo' '--bar='{"age": 20}''`
+		exp := `echo Hello`
 		if cmd.Commands[0].Script != exp {
 			t.Errorf("wrong output. \nexpect %s \ngot:  %s", exp, cmd.Commands[0].Script)
 		}
 	})
 
 	t.Run("as map", func(t *testing.T) {
-		text := "cmd: \n  foo: echo Foo\n  bar: echo Bar"
+		text := dedent.Dedent(`
+		cmd:
+		  foo: echo Foo
+		  bar: echo Bar
+		`)
 		cmd := CmdFixture(t, text, []string{})
 		expFoo := "echo Foo"
 		expBar := "echo Bar"

@@ -27,6 +27,9 @@ func main() {
 
 	cfg, readConfigErr := config.Load(configFile, configDir, version)
 
+	// TODO: create root command before config loading
+	// This will allow to use --debug before config parsing
+	// Then if config exists, continue init root cmd, else error
 	var rootCmd *cobra.Command
 	if cfg != nil {
 		rootCmd = cmd.CreateRootCommandWithConfig(os.Stdout, cfg, version)

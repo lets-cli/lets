@@ -12,6 +12,7 @@ import (
 	"github.com/lets-cli/lets/checksum"
 	"github.com/lets-cli/lets/config/config"
 	"github.com/lets-cli/lets/docopt"
+	"github.com/lets-cli/lets/env"
 	"github.com/lets-cli/lets/logging"
 	"golang.org/x/sync/errgroup"
 )
@@ -35,56 +36,78 @@ func (e *ExecuteError) ExitCode() int {
 }
 
 type Executor struct {
-	cfg    *config.Config
-	out    io.Writer
-	logger *logging.ExecLogger
+	cfg *config.Config
+	out io.Writer
 }
 
 func NewExecutor(cfg *config.Config, out io.Writer) *Executor {
 	return &Executor{
-		cfg:    cfg,
-		out:    out,
-		logger: logging.NewExecLogger(),
+		cfg: cfg,
+		out: out,
+	}
+}
+
+type ExecutorContext struct {
+	command *config.Command
+	logger  *logging.ExecLogger
+}
+
+func NewExecutorCtx(command *config.Command) *ExecutorContext {
+	return &ExecutorContext{
+		command: command,
+		logger:  logging.NewExecLogger().Child(command.Name),
+	}
+}
+
+func ChildExecutorCtx(execCtx *ExecutorContext, command *config.Command) *ExecutorContext {
+	return &ExecutorContext{
+		command: command,
+		logger:  execCtx.logger.Child(command.Name),
 	}
 }
 
 // Execute executes command and it depends recursively
 // Command can be executed in parallel.
-func (e *Executor) Execute(ctx context.Context, cmd *config.Command) error {
-	if cmd.Cmds.Parallel {
-		return e.executeParallel(ctx, cmd)
+func (e *Executor) Execute(ctx context.Context, execCtx *ExecutorContext) error {
+	if execCtx.command.Cmds.Parallel {
+		return e.executeParallel(ctx, execCtx)
 	}
 
-	return e.execute(ctx, cmd)
+	return e.execute(ctx, execCtx)
 }
 
 // Execute main command and wait for result.
 // Must be used only when Command.Cmd is string or []string.
-func (e *Executor) execute(ctx context.Context, command *config.Command) error {
-	e.logger.Child(command.Name).Debug("command:\n  %s", command.Pretty())
+func (e *Executor) execute(ctx context.Context, execCtx *ExecutorContext) error {
+	command := execCtx.command
+
+	if env.DebugLevel() > 1 {
+	}
 
 	defer func() {
 		if command.After != "" {
-			e.executeAfterScript(command)
+			e.executeAfterScript(execCtx)
 		}
 	}()
 
-	if err := e.initCmd(command); err != nil {
+	if err := e.initCmd(execCtx); err != nil {
 		return err
 	}
 
-	if err := e.executeDepends(ctx, command); err != nil {
+	if err := e.executeDepends(ctx, execCtx); err != nil {
 		return err
 	}
 
+	// TODO: maybe instead of SingleCommand, just run all using loop ? This will allow implement
+	// cmds list like in task
 	if cmd := command.Cmds.SingleCommand(); cmd != nil {
-		if err := e.runCmd(command, cmd); err != nil {
+		if err := e.runCmd(execCtx, cmd); err != nil {
 			return err
 		}
 	}
 
 	// persist checksum only if exit code 0
-	return e.persistChecksum(command)
+	return e.persistChecksum(execCtx)
 }
 
 // Executes 'after' script after main 'cmd' script
@@ -92,18 +115,19 @@ func (e *Executor) execute(ctx context.Context, command *config.Command) error {
 // Do not return error directly to root because we consider only 'cmd' exit code.
 // Even if 'after' script failed we return exit code from 'cmd'.
 // This behavior may change in the future if needed.
-func (e *Executor) executeAfterScript(cmd *config.Command) {
-	logger := e.logger.Child(cmd.Name)
-	osCmd, err := e.newOsCommand(cmd, cmd.After)
+func (e *Executor) executeAfterScript(execCtx *ExecutorContext) {
+	command := execCtx.command
+
+	osCmd, err := e.newOsCommand(command, command.After)
 	if err != nil {
-		logger.Info("failed to run `after` script: %s", err)
+		execCtx.logger.Info("failed to run `after` script: %s", err)
 		return
 	}
 
-	logger.Debug("executing 'after':\n  cmd: %s\n  env: %s", cmd.After, fmtEnv(osCmd.Env))
+	execCtx.logger.Debug("executing 'after':\n  cmd: %s\n  env: %s", command.After, fmtEnv(osCmd.Env))
 
 	if ExecuteError := osCmd.Run(); ExecuteError != nil {
-		logger.Info("failed to run `after` script: %s", ExecuteError)
+		execCtx.logger.Info("failed to run `after` script: %s", ExecuteError)
 	}
 }
 
@@ -122,10 +146,11 @@ func formatOptsUsageError(err error, opts docopt.Opts, cmdName string, rawOption
 // Init Command before execution:
 // - parse docopt
 // - calculate checksum.
-func (e *Executor) initCmd(cmd *config.Command) error {
-	logger := e.logger.Child(cmd.Name)
+func (e *Executor) initCmd(execCtx *ExecutorContext) error {
+	cmd := execCtx.command
+
 	if !cmd.SkipDocopts {
-		logger.Debug("parse docopt: docopt: %s, args: %s", cmd.Docopts, cmd.Args)
+		execCtx.logger.Debug("parse docopt: docopt: %s, args: %s", cmd.Docopts, cmd.Args)
 		opts, err := docopt.Parse(cmd.Args, cmd.Docopts)
 		if err != nil {
 			// TODO if accept_args, just continue with what we got
@@ -133,7 +158,7 @@ func (e *Executor) initCmd(cmd *config.Command) error {
 			return formatOptsUsageError(err, opts, cmd.Name, cmd.Docopts)
 		}
 
-		logger.Debug("docopt parsed: %#v", opts)
+		execCtx.logger.Debug("docopt parsed: %v", opts)
 
 		cmd.Options = docopt.OptsToLetsOpt(opts)
 		cmd.CliOptions = docopt.OptsToLetsCli(opts)
@@ -254,11 +279,9 @@ func (e *Executor) newOsCommand(command *config.Command, cmdScript string) (*exe
 }
 
 // Run all commands from Depends in sequential order.
-func (e *Executor) executeDepends(ctx context.Context, cmd *config.Command) error {
-	logger := e.logger.Child(cmd.Name)
-
-	return cmd.Depends.Range(func(depName string, dep config.Dep) error {
-		logger.Debug("running dependency '%s'", depName)
+func (e *Executor) executeDepends(ctx context.Context, execCtx *ExecutorContext) error {
+	return execCtx.command.Depends.Range(func(depName string, dep config.Dep) error {
+		execCtx.logger.Debug("running dependency '%s'", depName)
 		cmd := e.cfg.Commands[depName]
 		if cmd.Cmds.Parallel {
 			// TODO: this must be ensured at the validation time, not at the runtime
@@ -280,7 +303,7 @@ func (e *Executor) executeDepends(ctx context.Context, cmd *config.Command) erro
 			cmd = e.cfg.Commands[ref.Name].Clone()
 			cmd.FromRef(ref)
 			cmd.SkipDocopts = false
-			logger.Debug("dependency from ref: args: %s, env: %s", cmd.Args, cmd.Env.Dump())
+			execCtx.logger.Debug("dependency from ref: args: %s, env: %s", cmd.Args, cmd.Env.Dump())
 			dep = dep.FromCmd(cmd.Name)
 		}
 
@@ -288,24 +311,26 @@ func (e *Executor) executeDepends(ctx context.Context, cmd *config.Command) erro
 		if dep.HasArgs() {
 			cmd.Args = dep.Args
 			cmd.SkipDocopts = false
-			logger.Debug("dependency args overridden: '%s'", cmd.Args)
+			execCtx.logger.Debug("dependency args overridden: '%s'", cmd.Args)
 		}
 
 		if !dep.Env.Empty() {
 			cmd.Env.Merge(dep.Env)
-			logger.Debug("dependency env overridden: '%s'", cmd.Env.Dump())
+			execCtx.logger.Debug("dependency env overridden: '%s'", cmd.Env.Dump())
 		}
 
-		return e.Execute(ctx, cmd)
+		execCtx = ChildExecutorCtx(execCtx, cmd)
+		return e.Execute(ctx, execCtx)
 	})
 }
 
 // Persist new calculated checksum to disk.
 // This function mus be called only after command finished(exited) with status 0.
-func (e *Executor) persistChecksum(cmd *config.Command) error {
-	logger := e.logger.Child(cmd.Name)
+func (e *Executor) persistChecksum(execCtx *ExecutorContext) error {
+	cmd := execCtx.command
+
 	if cmd.PersistChecksum {
-		logger.Debug("persisting checksum")
+		execCtx.logger.Debug("persisting checksum")
 
 		if err := e.cfg.CreateChecksumsDir(); err != nil {
 			return err
@@ -324,14 +349,18 @@ func (e *Executor) persistChecksum(cmd *config.Command) error {
 	return nil
 }
 
-func (e *Executor) runCmd(command *config.Command, cmd *config.Cmd) error {
-	logger := e.logger.Child(command.Name)
+func (e *Executor) runCmd(execCtx *ExecutorContext, cmd *config.Cmd) error {
+	command := execCtx.command
 	osCmd, err := e.newOsCommand(command, cmd.Script)
 	if err != nil {
 		return err
 	}
 
-	logger.Debug("executing:\n  cmd: %s\n  env: %s\n", cmd.Script, fmtEnv(osCmd.Env))
+	if env.DebugLevel() == 1 {
+		execCtx.logger.Debug("executing script: %s\n", cmd.Script)
+	} else if env.DebugLevel() > 1 {
+		execCtx.logger.Debug("executing:\nscript: %s\nenv: %s\n", cmd.Script, fmtEnv(osCmd.Env))
+	}
 
 	if err := osCmd.Run(); err != nil {
 		return &ExecuteError{err: fmt.Errorf("failed to run command '%s': %w", command.Name, err)}
@@ -341,18 +370,20 @@ func (e *Executor) runCmd(command *config.Command, cmd *config.Cmd) error {
 }
 
 // Execute all commands from Cmds in parallel and wait for results.
-func (e *Executor) executeParallel(ctx context.Context, command *config.Command) (err error) {
+func (e *Executor) executeParallel(ctx context.Context, execCtx *ExecutorContext) (err error) {
+	command := execCtx.command
+
 	defer func() {
 		if command.After != "" {
-			e.executeAfterScript(command)
+			e.executeAfterScript(execCtx)
 		}
 	}()
 
-	if err = e.initCmd(command); err != nil {
+	if err = e.initCmd(execCtx); err != nil {
 		return err
 	}
 
-	if err = e.executeDepends(ctx, command); err != nil {
+	if err = e.executeDepends(ctx, execCtx); err != nil {
 		return err
 	}
 
@@ -362,7 +393,7 @@ func (e *Executor) executeParallel(ctx context.Context, command *config.Command)
 		cmd := cmd
 		// wait for cmd to end in a goroutine with error propagation
 		group.Go(func() error {
-			return e.runCmd(command, cmd)
+			return e.runCmd(execCtx, cmd)
 		})
 	}
 
@@ -371,7 +402,7 @@ func (e *Executor) executeParallel(ctx context.Context, command *config.Command)
 	}
 
 	// persist checksum only if exit code 0
-	if err = e.persistChecksum(command); err != nil {
+	if err = e.persistChecksum(execCtx); err != nil {
 		return fmt.Errorf("persist checksum error in command '%s': %w", command.Name, err)
 	}
 

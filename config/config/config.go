@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/lets-cli/lets/config/path"
 	"github.com/lets-cli/lets/util"
@@ -55,6 +56,17 @@ func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 	for name, cmd := range c.Commands {
 		cmd.Name = name
+
+		if cmd.Cmds.Append {
+			args := escapeArgs(prepareArgs(name, os.Args))
+			script := fmt.Sprintf(
+				"%s %s",
+				cmd.Cmds.Commands[0].Script,
+				strings.Join(args, " "),
+			)
+
+			cmd.Cmds.Commands[0].Script = script
+		}
 	}
 
 	c.Shell = config.Shell

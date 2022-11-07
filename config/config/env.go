@@ -126,9 +126,11 @@ func (e *Envs) Merge(other *Envs) {
 
 // MergeMap merges the given map into the existing Envs.
 func (e *Envs) MergeMap(other map[string]string) {
+	envs := &Envs{}
 	for key, value := range other {
-		e.Set(key, Env{Name: key, Value: value})
+		envs.Set(key, Env{Name: key, Value: value})
 	}
+	e.Merge(envs)
 }
 
 // Set sets a value to a given key.

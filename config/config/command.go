@@ -180,9 +180,6 @@ func (c *Command) Pretty() string {
 	}
 
 	result := string(pretty)
-	result = strings.TrimLeft(result, "{")
-	result = strings.TrimRight(result, "}")
-
 	return strings.TrimSpace(result)
 }
 

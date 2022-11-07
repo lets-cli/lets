@@ -37,8 +37,7 @@ commands:
       Example:
         lets test-bats config_version.bats
         lets test-bats config_version.bats --opts="-f <regexp>"
-    cmd: |
-      docker-compose run --rm test-bats
+    cmd: docker-compose run --rm test-bats
 
   test-completions:
     ref: test-bats
