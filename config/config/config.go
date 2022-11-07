@@ -56,17 +56,6 @@ func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 	for name, cmd := range c.Commands {
 		cmd.Name = name
-
-		if cmd.Cmds.Append {
-			args := escapeArgs(prepareArgs(name, os.Args))
-			script := fmt.Sprintf(
-				"%s %s",
-				cmd.Cmds.Commands[0].Script,
-				strings.Join(args, " "),
-			)
-
-			cmd.Cmds.Commands[0].Script = script
-		}
 	}
 
 	c.Shell = config.Shell
@@ -104,6 +93,21 @@ func joinBeforeScripts(beforeScripts ...string) string {
 	}
 
 	return buf.String()
+}
+
+func (c *Config) InitArgs(args []string) {
+	for _, cmd := range c.Commands {
+		if cmd.Cmds.Append {
+			args := escapeArgs(args)
+			script := fmt.Sprintf(
+				"%s %s",
+				cmd.Cmds.Commands[0].Script,
+				strings.Join(args, " "),
+			)
+
+			cmd.Cmds.Commands[0].Script = script
+		}
+	}
 }
 
 // Merge main and mixin configs. If there is a conflict - return error as we do not override values.

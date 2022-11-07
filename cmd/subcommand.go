@@ -115,6 +115,8 @@ func newCmdGeneric(command *config.Command, conf *config.Config, out io.Writer) 
 		Use:   command.Name,
 		Short: short(command.Description),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			conf.InitArgs(args)
+
 			only, exclude, err := parseOnlyAndExclude(cmd)
 			if err != nil {
 				return err
