@@ -10,7 +10,6 @@ import (
 
 var (
 	ErrFileNotExists  = errors.New("file not exists")
-	ErrConfigNotFound = errors.New("config not exists")
 )
 
 // find config file non-recursively
@@ -43,7 +42,7 @@ func GetFullConfigPathRecursive(filename string, workDir string) (string, error)
 	// else we get parent and try again up until we reach roof of fs
 	parentDir := filepath.Dir(workDir)
 	if parentDir == "/" {
-		return "", ErrConfigNotFound
+		return "", fmt.Errorf("file does not exist: %s", filename)
 	}
 
 	return GetFullConfigPathRecursive(filename, parentDir)

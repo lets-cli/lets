@@ -5,24 +5,18 @@ import (
 	"io"
 
 	"github.com/fatih/color"
-	"github.com/lets-cli/lets/env"
 	log "github.com/sirupsen/logrus"
 )
 
 // Log is the main application logger.
 // InitLogging for logrus.
 func InitLogging(
-	verbose bool,
 	stdWriter io.Writer,
 	errWriter io.Writer,
 ) {
 	log.SetOutput(io.Discard)
 
 	log.SetLevel(log.InfoLevel)
-
-	if verbose {
-		log.SetLevel(log.DebugLevel)
-	}
 
 	log.AddHook(&WriterHook{
 		Writer: stdWriter,
@@ -45,6 +39,9 @@ func InitLogging(
 	log.SetFormatter(&Formatter{})
 }
 
+// ExecLogger is used in Executor.
+// If adds command chain in message like this:
+// lets: [foo=>bar] message.
 type ExecLogger struct {
 	log *log.Logger
 	// command name
@@ -55,16 +52,8 @@ type ExecLogger struct {
 }
 
 func NewExecLogger() *ExecLogger {
-	l := log.New()
-
-	if env.IsDebug() {
-		l.SetLevel(log.DebugLevel)
-	}
-
-	l.SetFormatter(&Formatter{})
-
 	return &ExecLogger{
-		log:    l,
+		log:    log.StandardLogger(),
 		prefix: color.BlueString("lets:"),
 		cache:  make(map[string]*ExecLogger),
 	}

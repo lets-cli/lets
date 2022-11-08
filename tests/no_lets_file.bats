@@ -12,7 +12,6 @@ NOT_EXISTED_LETS_FILE="lets-not-existed.yaml"
 @test "no_lets_file: should not create .lets dir" {
     LETS_CONFIG=${NOT_EXISTED_LETS_FILE} run lets
 
-
     assert_failure
     [[ ! -d .lets ]]
 }
@@ -21,7 +20,7 @@ NOT_EXISTED_LETS_FILE="lets-not-existed.yaml"
     LETS_CONFIG=${NOT_EXISTED_LETS_FILE} run lets
 
     assert_failure
-    assert_output --partial "failed to find config file ${NOT_EXISTED_LETS_FILE} in"
+    assert_output --partial "lets: config error: file does not exist: ${NOT_EXISTED_LETS_FILE}"
 }
 
 @test "no_lets_file: show config read error (broken config)" {
@@ -29,7 +28,7 @@ NOT_EXISTED_LETS_FILE="lets-not-existed.yaml"
 
     assert_failure
 
-    assert_line --index 0 "lets: failed to parse broken_lets.yaml: yaml: unmarshal errors:"
+    assert_line --index 0 "lets: config error: failed to parse broken_lets.yaml: yaml: unmarshal errors:"
     assert_line --index 1 "  line 3: cannot unmarshal !!int \`1\` into config.Commands"
 }
 

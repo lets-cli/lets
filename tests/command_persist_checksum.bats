@@ -143,5 +143,5 @@ TEMP_FILE=foo_test.txt
 
     [[ $status = 1 ]]
 
-    assert_line --index 0 "lets: failed to parse lets.yaml: 'persist_checksum' must be used with 'checksum'"
+    assert_line --index 0 "lets: config error: failed to parse lets.yaml: 'persist_checksum' must be used with 'checksum'"
 }

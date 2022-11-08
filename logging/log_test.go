@@ -16,7 +16,7 @@ func TestLoggingToStd(t *testing.T) {
 
 		var errBuff bytes.Buffer
 
-		InitLogging(false, &stdBuff, &errBuff)
+		InitLogging(&stdBuff, &errBuff)
 
 		log.Info(stdOutMsg)
 		log.Error(stdErrMsg)

@@ -20,25 +20,50 @@ var version = "0.0.0-dev"
 func main() {
 	ctx := getContext()
 
-	logging.InitLogging(env.IsDebug(), os.Stdout, os.Stderr)
-
 	configFile := os.Getenv("LETS_CONFIG")
 	configDir := os.Getenv("LETS_CONFIG_DIR")
 
-	cfg, readConfigErr := config.Load(configFile, configDir, version)
+	logging.InitLogging(os.Stdout, os.Stderr)
 
-	// TODO: create root command before config loading
-	// This will allow to use --debug before config parsing
-	// Then if config exists, continue init root cmd, else error
-	var rootCmd *cobra.Command
-	if cfg != nil {
-		rootCmd = cmd.CreateRootCommandWithConfig(os.Stdout, cfg, version)
-	} else {
-		rootCmd = cmd.CreateRootCommand(version)
+	rootCmd := cmd.CreateRootCommand(version)
+	rootCmd.InitDefaultHelpFlag()
+	rootCmd.InitDefaultVersionFlag()
+	reinitCompletionCmd := cmd.InitCompletionCmd(rootCmd, nil)
+	rootCmd.InitDefaultHelpCmd()
+
+	command, args, err := rootCmd.Traverse(os.Args[1:])
+	if err != nil {
+		log.Errorf("lets: traverse flags error: %s", err)
+		os.Exit(1)
 	}
 
-	if readConfigErr != nil {
-		cmd.ConfigErrorCheck(rootCmd, readConfigErr)
+	if err = rootCmd.ParseFlags(args); err != nil {
+		log.Errorf("lets: parse flags error: %s", err)
+		os.Exit(1)
+	}
+
+	_, err = env.ParseDebugLevel(rootCmd)
+	if err != nil {
+		log.Errorf("lets: parse debug level error: %s", err)
+		os.Exit(1)
+	}
+
+	if env.IsDebug() {
+		log.SetLevel(log.DebugLevel)
+	}
+
+	cfg, err := config.Load(configFile, configDir, version)
+
+	if err != nil {
+		if failOnConfigError(rootCmd, command) {
+			log.Errorf("lets: config error: %s", err)
+			os.Exit(1)
+		}
+	}
+
+	if cfg != nil {
+		reinitCompletionCmd(cfg)
+		cmd.InitSubCommands(rootCmd, cfg, os.Stdout)
 	}
 
 	if err := rootCmd.ExecuteContext(ctx); err != nil {
@@ -72,4 +97,10 @@ func getContext() context.Context {
 	}()
 
 	return ctx
+}
+
+func failOnConfigError(root *cobra.Command, current *cobra.Command) bool {
+	return root.Flags().NFlag() == 0 &&
+		current.Name() != "completion" &&
+		current.Name() != "help"
 }

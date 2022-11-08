@@ -24,7 +24,7 @@ func Load(configName string, configDir string, version string) (*config.Config, 
 		configPath.DotLetsDir,
 	)
 	if err := yaml.NewDecoder(f).Decode(c); err != nil {
-		return nil, fmt.Errorf("lets: failed to parse %s: %w", configPath.Filename, err)
+		return nil, fmt.Errorf("failed to parse %s: %w", configPath.Filename, err)
 	}
 
 	if err = validate(c, version); err != nil {

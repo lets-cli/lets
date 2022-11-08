@@ -9,31 +9,35 @@ import (
 )
 
 func newTestRootCmd(args []string) (rootCmd *cobra.Command) {
-	rootCommand := CreateRootCommand("v0.0.0-test")
-	rootCommand.SetArgs(args)
+	root := CreateRootCommand("v0.0.0-test")
+	root.SetArgs(args)
+	InitCompletionCmd(root, nil)
 
-	return rootCommand
+	return root
 }
 
 func newTestRootCmdWithConfig(args []string) (rootCmd *cobra.Command, out *bytes.Buffer) {
 	bufOut := new(bytes.Buffer)
 
-	testCfg := &config.Config{
+	cfg := &config.Config{
 		Commands: make(map[string]*config.Command),
 	}
-	testCfg.Commands["foo"] = &config.Command{Name: "foo"}
-	testCfg.Commands["bar"] = &config.Command{Name: "bar"}
+	cfg.Commands["foo"] = &config.Command{Name: "foo"}
+	cfg.Commands["bar"] = &config.Command{Name: "bar"}
 
-	rootCommand := CreateRootCommandWithConfig(bufOut, testCfg, "v0.0.0-test")
-	rootCommand.SetOut(bufOut)
-	rootCommand.SetErr(bufOut)
-	rootCommand.SetArgs(args)
+	root := CreateRootCommand("v0.0.0-test")
+	root.SetArgs(args)
+	root.SetOut(bufOut)
+	root.SetErr(bufOut)
 
-	return rootCommand, bufOut
+	InitCompletionCmd(root, cfg)
+	InitSubCommands(root, cfg, out)
+
+	return root, bufOut
 }
 
 func TestRootCmd(t *testing.T) {
-	t.Run("should init sub commands", func(t *testing.T) {
+	t.Run("should init completion subcommand", func(t *testing.T) {
 		var args []string
 		rootCmd := newTestRootCmd(args)
 

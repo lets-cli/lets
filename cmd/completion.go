@@ -84,22 +84,13 @@ func genBashCompletion(out io.Writer) error {
 }
 
 // generate zsh completion script.
-// if verbose passed - generate completion with description.
-func genZshCompletion(out io.Writer, verbose bool) error {
+func genZshCompletion(out io.Writer) error {
 	tmpl, err := template.New("Main").Parse(zshCompletionText)
 	if err != nil {
 		return fmt.Errorf("error creating zsh completion template: %w", err)
 	}
 
-	data := struct {
-		Verbose string
-	}{Verbose: ""}
-
-	if verbose {
-		data.Verbose = "--verbose"
-	}
-
-	return tmpl.Execute(out, data)
+	return tmpl.Execute(out, nil)
 }
 
 // generate string of commands joined with \n.
@@ -182,7 +173,11 @@ func getCommandOptions(command *config.Command, out io.Writer, verbose bool) err
 	return nil
 }
 
-func initCompletionCmd(rootCmd *cobra.Command, cfg *config.Config) {
+// InitCompletionCmd intializes root 'completion' subcommand.
+// config can be nil, but will fail if we generation completions for
+// specific subcommand's options.
+// Returns reinit function which must be called when config is parsed
+func InitCompletionCmd(rootCmd *cobra.Command, cfg *config.Config) func (cfg *config.Config) {
 	completionCmd := &cobra.Command{
 		Use:    "completion",
 		Hidden: true,
@@ -193,45 +188,43 @@ func initCompletionCmd(rootCmd *cobra.Command, cfg *config.Config) {
 				return fmt.Errorf("can not get flag 'shell': %w", err)
 			}
 
-			verbose, err := cmd.Flags().GetBool("verbose")
-			if err != nil {
-				return fmt.Errorf("can not get flag 'verbose': %w", err)
-			}
-
-			list, err := cmd.Flags().GetBool("list")
-			if err != nil {
-				return fmt.Errorf("can not get flag 'list': %w", err)
-			}
-
-			commands, err := cmd.Flags().GetBool("commands")
-			if err != nil {
-				return fmt.Errorf("can not get flag 'commands': %w", err)
-			}
-
-			if list {
-				commands = true
-			}
-
-			optionsForCmd, err := cmd.Flags().GetString("options")
-			if err != nil {
-				return fmt.Errorf("can not get flag 'options': %w", err)
-			}
-
-			if optionsForCmd != "" {
-				if cfg == nil {
-					return fmt.Errorf("can not read config")
+			if cfg != nil {
+				verbose, err := cmd.Flags().GetBool("verbose")
+				if err != nil {
+					return fmt.Errorf("can not get flag 'verbose': %w", err)
 				}
 
-				command, exists := cfg.Commands[optionsForCmd]
-				if !exists {
-					return fmt.Errorf("command %s not declared in config", optionsForCmd)
+				list, err := cmd.Flags().GetBool("list")
+				if err != nil {
+					return fmt.Errorf("can not get flag 'list': %w", err)
 				}
 
-				return getCommandOptions(command, cmd.OutOrStdout(), verbose)
-			}
+				commands, err := cmd.Flags().GetBool("commands")
+				if err != nil {
+					return fmt.Errorf("can not get flag 'commands': %w", err)
+				}
 
-			if commands {
-				return getCommandsList(rootCmd, cmd.OutOrStdout(), verbose)
+				if list {
+					commands = true
+				}
+
+				optionsForCmd, err := cmd.Flags().GetString("options")
+				if err != nil {
+					return fmt.Errorf("can not get flag 'options': %w", err)
+				}
+
+				if optionsForCmd != "" {
+					command, exists := cfg.Commands[optionsForCmd]
+					if !exists {
+						return fmt.Errorf("command %s not declared in config", optionsForCmd)
+					}
+
+					return getCommandOptions(command, cmd.OutOrStdout(), verbose)
+				}
+
+				if commands {
+					return getCommandsList(rootCmd, cmd.OutOrStdout(), verbose)
+				}
 			}
 
 			if shellType == "" {
@@ -242,7 +235,7 @@ func initCompletionCmd(rootCmd *cobra.Command, cfg *config.Config) {
 			case "bash":
 				return genBashCompletion(cmd.OutOrStdout())
 			case "zsh":
-				return genZshCompletion(cmd.OutOrStdout(), verbose)
+				return genZshCompletion(cmd.OutOrStdout())
 			default:
 				return fmt.Errorf("unsupported shell type %q", shellType)
 			}
@@ -250,10 +243,17 @@ func initCompletionCmd(rootCmd *cobra.Command, cfg *config.Config) {
 	}
 
 	completionCmd.Flags().StringP("shell", "s", "", "The type of shell (bash or zsh)")
-	completionCmd.Flags().Bool("list", false, "Show list of commands [deprecated, use --commands]")
-	completionCmd.Flags().Bool("commands", false, "Show list of commands")
-	completionCmd.Flags().String("options", "", "Show list of options for command")
-	completionCmd.Flags().Bool("verbose", false, "Verbose list of commands or options (with description) (only for zsh)")
+	if cfg != nil {
+		completionCmd.Flags().Bool("list", false, "Show list of commands [deprecated, use --commands]")
+		completionCmd.Flags().Bool("commands", false, "Show list of commands")
+		completionCmd.Flags().String("options", "", "Show list of options for command")
+		completionCmd.Flags().Bool("verbose", false, "Verbose list of commands or options (with description) (only for zsh)")
+	}
 
 	rootCmd.AddCommand(completionCmd)
+
+	return func (cfg *config.Config) {
+		rootCmd.RemoveCommand(completionCmd)
+		InitCompletionCmd(rootCmd, cfg)
+	}
 }

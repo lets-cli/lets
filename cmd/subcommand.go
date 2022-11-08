@@ -17,7 +17,7 @@ const (
 )
 
 // cut all elements before command name.
-// [/bin/lets foo -x] will be [foo, -x]
+// [/bin/lets foo -x] will be [foo, -x].
 func prepareArgs(cmdName string, osArgs []string) []string {
 	nameIdx := 0
 
@@ -145,7 +145,8 @@ func newCmdGeneric(command *config.Command, conf *config.Config, out io.Writer) 
 			setDocoptNamePlaceholder(command)
 
 			if ref := command.Ref; ref != nil {
-				// TODO: maybe FromRef must create new command with name from ref instead SO this will be a brand new command, and maybe it must be stored
+				// TODO: maybe FromRef must create new command with name from ref instead
+				// SO this will be a brand new command, and maybe it must be stored
 				// in config, and maybe ref resolving must happen at config parsing phase and
 				// not in execution phase. This will simplify executor
 				command = conf.Commands[ref.Name].Clone()
@@ -159,8 +160,8 @@ func newCmdGeneric(command *config.Command, conf *config.Config, out io.Writer) 
 				command.Depends = &config.Deps{}
 			}
 
-			execCtx := executor.NewExecutorCtx(command)
-			return executor.NewExecutor(conf, out).Execute(cmd.Context(), execCtx)
+			execCtx := executor.NewExecutorCtx(cmd.Context(), command)
+			return executor.NewExecutor(conf, out).Execute(execCtx)
 		},
 		// we use docopt to parse flags on our own, so any flag is valid flag here
 		FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},
@@ -181,7 +182,7 @@ func newCmdGeneric(command *config.Command, conf *config.Config, out io.Writer) 
 }
 
 // initialize all commands dynamically from config.
-func initSubCommands(rootCmd *cobra.Command, conf *config.Config, out io.Writer) {
+func InitSubCommands(rootCmd *cobra.Command, conf *config.Config, out io.Writer) {
 	for _, cmdToRun := range conf.Commands {
 		rootCmd.AddCommand(newCmdGeneric(cmdToRun, conf, out))
 	}

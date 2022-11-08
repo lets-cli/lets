@@ -38,20 +38,6 @@ func escapeArgs(args []string) []string {
 	return escapedArgs
 }
 
-// cut all elements including command name.
-// [/bin/lets foo -x] will be [-x]
-func prepareArgs(cmdName string, osArgs []string) []string {
-	nameIdx := 0
-
-	for idx, arg := range osArgs {
-		if arg == cmdName {
-			nameIdx = idx + 1
-		}
-	}
-
-	return osArgs[nameIdx:]
-}
-
 // UnmarshalYAML implements the yaml.Unmarshaler interface.
 func (c *Cmds) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var script string

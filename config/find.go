@@ -16,7 +16,7 @@ type PathInfo struct {
 	Filename string
 	AbsPath  string
 	WorkDir  string
-	// .lets
+	// .lets abs path
 	DotLetsDir string
 }
 
@@ -38,11 +38,7 @@ func FindConfig(configName string, configDir string) (PathInfo, error) {
 		return PathInfo{}, err
 	}
 
-	failedFindErr := func(err error, filename string) error {
-		return fmt.Errorf("failed to find config file %s in %s: %w", filename, workDir, err)
-	}
-
-	log.Debugf("lets: using %s config file in %s directory", configName, workDir)
+	log.Debugf("lets: found %s config file in %s directory", configName, workDir)
 
 	configAbsPath := ""
 
@@ -53,13 +49,13 @@ func FindConfig(configName string, configDir string) (PathInfo, error) {
 		if configDirSpecifiedByUser {
 			configAbsPath, err = path.GetFullConfigPath(configName, workDir)
 			if err != nil {
-				return PathInfo{}, failedFindErr(err, configName)
+				return PathInfo{}, err
 			}
 		} else {
 			// try to find abs config path up in parent dir tree
 			configAbsPath, err = path.GetFullConfigPathRecursive(configName, workDir)
 			if err != nil {
-				return PathInfo{}, failedFindErr(err, configName)
+				return PathInfo{}, err
 			}
 		}
 	}
