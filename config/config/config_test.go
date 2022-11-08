@@ -28,10 +28,11 @@ func TestParseConfig(t *testing.T) {
 		    cmd: [echo, Hello]
 		`)
 		cfg := ConfigFixture(t, text)
-		cfg.InitArgs(args)
+		cmd := cfg.Commands["hello"]
+		cmd.AppendArgs(args)
 
 		exp := `echo Hello 'World' '--foo' '--bar='{"age": 20}''`
-		if script := cfg.Commands["hello"].Cmds.Commands[0].Script; script != exp {
+		if script := cmd.Cmds.Commands[0].Script; script != exp {
 			t.Errorf("wrong output. \nexpect %s \ngot:  %s", exp, script)
 		}
 	})

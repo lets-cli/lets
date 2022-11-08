@@ -176,8 +176,8 @@ func getCommandOptions(command *config.Command, out io.Writer, verbose bool) err
 // InitCompletionCmd intializes root 'completion' subcommand.
 // config can be nil, but will fail if we generation completions for
 // specific subcommand's options.
-// Returns reinit function which must be called when config is parsed
-func InitCompletionCmd(rootCmd *cobra.Command, cfg *config.Config) func (cfg *config.Config) {
+// Returns reinit function which must be called when config is parsed.
+func InitCompletionCmd(rootCmd *cobra.Command, cfg *config.Config) func(cfg *config.Config) {
 	completionCmd := &cobra.Command{
 		Use:    "completion",
 		Hidden: true,
@@ -252,7 +252,7 @@ func InitCompletionCmd(rootCmd *cobra.Command, cfg *config.Config) func (cfg *co
 
 	rootCmd.AddCommand(completionCmd)
 
-	return func (cfg *config.Config) {
+	return func(cfg *config.Config) {
 		rootCmd.RemoveCommand(completionCmd)
 		InitCompletionCmd(rootCmd, cfg)
 	}

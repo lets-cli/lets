@@ -53,7 +53,6 @@ func main() {
 	}
 
 	cfg, err := config.Load(configFile, configDir, version)
-
 	if err != nil {
 		if failOnConfigError(rootCmd, command) {
 			log.Errorf("lets: config error: %s", err)

@@ -54,12 +54,35 @@ func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		c.Commands = make(Commands, 0)
 	}
 
+	commandsFromRef := []*Command{}
+
 	for name, cmd := range c.Commands {
 		cmd.Name = name
+
+		// resolve command by ref
+		if ref := cmd.ref; ref != nil {
+			command := c.Commands[ref.Name].Clone()
+			command.Name = cmd.Name
+			command.Args = append(command.Args, ref.Args...)
+			// fixing docopt string
+			if command.Docopts != "" {
+				command.Docopts = strings.Replace(
+					command.Docopts,
+					fmt.Sprintf("lets %s", ref.Name),
+					fmt.Sprintf("lets %s", command.Name),
+					1,
+				)
+			}
+			commandsFromRef = append(commandsFromRef, command)
+		}
+	}
+
+	for _, cmd := range commandsFromRef {
+		c.Commands[cmd.Name] = cmd
 	}
 
 	c.Shell = config.Shell
-	// TODO: we do not want this kind of validation right here
+
 	if c.Shell == "" && !c.isMixin {
 		return errors.New("'shell' is required")
 	}
@@ -93,21 +116,6 @@ func joinBeforeScripts(beforeScripts ...string) string {
 	}
 
 	return buf.String()
-}
-
-func (c *Config) InitArgs(args []string) {
-	for _, cmd := range c.Commands {
-		if cmd.Cmds.Append {
-			args := escapeArgs(args)
-			script := fmt.Sprintf(
-				"%s %s",
-				cmd.Cmds.Commands[0].Script,
-				strings.Join(args, " "),
-			)
-
-			cmd.Cmds.Commands[0].Script = script
-		}
-	}
 }
 
 // Merge main and mixin configs. If there is a conflict - return error as we do not override values.
@@ -244,15 +252,11 @@ func (c *Config) SetupEnv() error {
 		return err
 	}
 
-	// expand env for ref.args
+	// expand env for args
 	for _, cmd := range c.Commands {
-		if cmd.Ref == nil {
-			continue
-		}
-
-		for idx, arg := range cmd.Ref.Args {
+		for idx, arg := range cmd.Args {
 			// we have to expand env here on our own, since this args not came from users tty, and not expanded before lets
-			cmd.Ref.Args[idx] = os.Expand(arg, func(key string) string {
+			cmd.Args[idx] = os.Expand(arg, func(key string) string {
 				return c.Env.Mapping[key].Value
 			})
 		}

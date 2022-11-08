@@ -6,17 +6,17 @@ import (
 	"github.com/kballard/go-shellquote"
 )
 
-type Ref struct {
+type ref struct {
 	Name string
 	Args []string
 }
 
-type RefArgs []string
+type refArgs []string
 
 // UnmarshalYAML implements yaml.Unmarshaler interface.
-func (a *RefArgs) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (a *refArgs) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if *a == nil {
-		*a = make(RefArgs, 0)
+		*a = make(refArgs, 0)
 	}
 
 	var arg string
@@ -39,15 +39,4 @@ func (a *RefArgs) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	*a = append(*a, args...)
 
 	return nil
-}
-
-func (r *Ref) Clone() *Ref {
-	if r == nil {
-		return nil
-	}
-
-	return &Ref{
-		Name: r.Name,
-		Args: cloneSlice(r.Args),
-	}
 }

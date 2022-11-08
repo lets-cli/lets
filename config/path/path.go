@@ -8,9 +8,7 @@ import (
 	"github.com/lets-cli/lets/util"
 )
 
-var (
-	ErrFileNotExists  = errors.New("file not exists")
-)
+var ErrFileNotExists = errors.New("file not exists")
 
 // find config file non-recursively
 // filename is a file to find and work dir is where to start.

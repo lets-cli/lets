@@ -122,18 +122,13 @@ func (d *Dep) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	d.Name = cmd.Name
 	d.Env = cmd.Env
 
-	// args always must start with a dependency name, otherwise docopt will fail
-	// NOTE: if dep points to ref, then cmd.Name is not the final
-	// and be overridden in executor when command will be reolved by ref
-	d.Args = []string{cmd.Name}
-
 	var cmdArgsStr struct {
 		Args string
 	}
 
 	if err := unmarshal(&cmdArgsStr); err == nil {
 		if cmdArgsStr.Args != "" {
-			d.Args = append(d.Args, cmdArgsStr.Args)
+			d.Args = []string{cmdArgsStr.Args}
 		}
 		return nil
 	}
@@ -146,7 +141,7 @@ func (d *Dep) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return err
 	}
 
-	d.Args = append(d.Args, cmdArgs.Args...)
+	d.Args = cmdArgs.Args
 
 	return nil
 }
@@ -159,16 +154,6 @@ func (d Dep) Clone() Dep {
 	}
 }
 
-func (d Dep) FromCmd(cmdName string) Dep {
-	dep := d.Clone()
-	dep.Name = cmdName
-	dep.Args = []string{cmdName}
-	if len(d.Args) > 1 {
-		dep.Args = append(dep.Args, d.Args[1:]...)
-	}
-	return dep
-}
-
 func (d Dep) HasArgs() bool {
-	return len(d.Args) > 1
+	return len(d.Args) > 0
 }

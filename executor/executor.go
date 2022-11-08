@@ -84,6 +84,7 @@ func (e *Executor) execute(ctx *Context) error {
 	command := ctx.command
 
 	if env.DebugLevel() > 1 {
+		ctx.logger.Debug("command %s", command.Dump())
 	}
 
 	defer func() {
@@ -100,9 +101,7 @@ func (e *Executor) execute(ctx *Context) error {
 		return err
 	}
 
-	// TODO: maybe instead of SingleCommand, just run all using loop ? This will allow implement
-	// cmds list like in task
-	if cmd := command.Cmds.SingleCommand(); cmd != nil {
+	for _, cmd := range command.Cmds.Commands {
 		if err := e.runCmd(ctx, cmd); err != nil {
 			return err
 		}
@@ -117,19 +116,19 @@ func (e *Executor) execute(ctx *Context) error {
 // Do not return error directly to root because we consider only 'cmd' exit code.
 // Even if 'after' script failed we return exit code from 'cmd'.
 // This behavior may change in the future if needed.
-func (e *Executor) executeAfterScript(execCtx *Context) {
-	command := execCtx.command
+func (e *Executor) executeAfterScript(ctx *Context) {
+	command := ctx.command
 
 	osCmd, err := e.newOsCommand(command, command.After)
 	if err != nil {
-		execCtx.logger.Info("failed to run `after` script: %s", err)
+		ctx.logger.Info("failed to run `after` script: %s", err)
 		return
 	}
 
-	execCtx.logger.Debug("executing 'after':\n  cmd: %s\n  env: %s", command.After, fmtEnv(osCmd.Env))
+	ctx.logger.Debug("executing 'after':\n  cmd: %s\n  env: %s", command.After, fmtEnv(osCmd.Env))
 
 	if ExecuteError := osCmd.Run(); ExecuteError != nil {
-		execCtx.logger.Info("failed to run `after` script: %s", ExecuteError)
+		ctx.logger.Info("failed to run `after` script: %s", ExecuteError)
 	}
 }
 
@@ -148,19 +147,19 @@ func formatOptsUsageError(err error, opts docopt.Opts, cmdName string, rawOption
 // Init Command before execution:
 // - parse docopt
 // - calculate checksum.
-func (e *Executor) initCmd(execCtx *Context) error {
-	cmd := execCtx.command
+func (e *Executor) initCmd(ctx *Context) error {
+	cmd := ctx.command
 
 	if !cmd.SkipDocopts {
-		execCtx.logger.Debug("parse docopt: docopt: %s, args: %s", cmd.Docopts, cmd.Args)
-		opts, err := docopt.Parse(cmd.Args, cmd.Docopts)
+		ctx.logger.Debug("parse docopt: docopt: %s, args: %s", cmd.Docopts, cmd.Args)
+		opts, err := docopt.Parse(cmd.Name, cmd.Args, cmd.Docopts)
 		if err != nil {
 			// TODO if accept_args, just continue with what we got
 			//  but this may  require changes in go-docopt
 			return formatOptsUsageError(err, opts, cmd.Name, cmd.Docopts)
 		}
 
-		execCtx.logger.Debug("docopt parsed: %v", opts)
+		ctx.logger.Debug("docopt parsed: %v", opts)
 
 		cmd.Options = docopt.OptsToLetsOpt(opts)
 		cmd.CliOptions = docopt.OptsToLetsCli(opts)
@@ -198,7 +197,7 @@ func joinBeforeAndScript(before string, script string) string {
 func (e *Executor) setupEnv(osCmd *exec.Cmd, command *config.Command, shell string) error {
 	defaultEnv := map[string]string{
 		"LETS_COMMAND_NAME": command.Name,
-		"LETS_COMMAND_ARGS": strings.Join(command.CommandArgs(), " "),
+		"LETS_COMMAND_ARGS": strings.Join(command.Args, " "),
 		"SHELL":             shell,
 	}
 
@@ -252,9 +251,9 @@ func (e *Executor) newOsCommand(command *config.Command, cmdScript string) (*exe
 	}
 
 	args := []string{"-c", script}
-	if len(command.CommandArgs()) > 0 {
+	if len(command.Args) > 0 {
 		// for "--" see https://linux.die.net/man/1/bash
-		args = append(args, "--", strings.Join(command.CommandArgs(), " "))
+		args = append(args, "--", strings.Join(command.Args, " "))
 	}
 
 	osCmd := exec.Command(
@@ -298,21 +297,9 @@ func (e *Executor) executeDepends(ctx *Context) error {
 
 		cmd = cmd.Clone()
 
-		// by default, if depends command in simple format, skip docopts
-		cmd.SkipDocopts = true
-
-		if ref := cmd.Ref; ref != nil {
-			cmd = e.cfg.Commands[ref.Name].Clone()
-			cmd.FromRef(ref)
-			cmd.SkipDocopts = false
-			ctx.logger.Debug("dependency from ref: args: %s, env: %s", cmd.Args, cmd.Env.Dump())
-			dep = dep.FromCmd(cmd.Name)
-		}
-
 		// dep args have priority over ref args
 		if dep.HasArgs() {
 			cmd.Args = dep.Args
-			cmd.SkipDocopts = false
 			ctx.logger.Debug("dependency args overridden: '%s'", cmd.Args)
 		}
 

@@ -32,9 +32,7 @@ type Command struct {
 	Depends         *Deps
 	ChecksumMap     map[string]string
 	PersistChecksum bool
-
-	// args with command name
-	// e.g. from 'lets run --debug' we will get [run, --debug]
+	// args from 'lets run --debug' will become [--debug]
 	Args []string
 
 	ChecksumSources map[string][]string
@@ -42,7 +40,7 @@ type Command struct {
 	persistedChecksums map[string]string
 
 	// ref is basically a command name to use with predefined args, env
-	Ref *Ref
+	ref *ref
 }
 
 type Commands map[string]*Command
@@ -111,25 +109,15 @@ func (c *Command) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if cmd.Ref != "" {
 		// only parsing Args when ref is set
 		var refArgs struct {
-			Args *RefArgs
+			Args *refArgs
 		}
 		if err := unmarshal(&refArgs); err != nil {
 			return err
 		}
-		c.Ref = &Ref{Name: cmd.Ref, Args: *refArgs.Args}
+		c.ref = &ref{Name: cmd.Ref, Args: *refArgs.Args}
 	}
 
 	return nil
-}
-
-// args without command name
-// e.g. from 'lets run --debug' we will get [--debug].
-func (c *Command) CommandArgs() []string {
-	if len(c.Args) == 0 {
-		return []string{}
-	}
-
-	return c.Args[1:]
 }
 
 func (c *Command) GetEnv(cfg Config) (map[string]string, error) {
@@ -140,12 +128,12 @@ func (c *Command) GetEnv(cfg Config) (map[string]string, error) {
 	return c.Env.Dump(), nil
 }
 
-func (c *Command) FromRef(ref *Ref) {
-	if len(c.Args) == 0 {
-		c.Args = append([]string{c.Name}, ref.Args...)
-	} else {
-		c.Args = append(c.Args, ref.Args...)
-	}
+func (c *Command) AppendArgs(args []string) {
+	c.Cmds.Commands[0].Script = fmt.Sprintf(
+		"%s %s",
+		c.Cmds.Commands[0].Script,
+		strings.Join(escapeArgs(args), " "),
+	)
 }
 
 func (c *Command) Clone() *Command {
@@ -166,14 +154,13 @@ func (c *Command) Clone() *Command {
 		PersistChecksum:    c.PersistChecksum,
 		ChecksumSources:    cloneMapSlice(c.ChecksumSources),
 		persistedChecksums: cloneMap(c.persistedChecksums),
-		Ref:                c.Ref.Clone(),
 		Args:               cloneSlice(c.Args),
 	}
 
 	return cmd
 }
 
-func (c *Command) Pretty() string {
+func (c *Command) Dump() string {
 	pretty, err := json.MarshalIndent(c, "", "  ")
 	if err != nil {
 		return ""
