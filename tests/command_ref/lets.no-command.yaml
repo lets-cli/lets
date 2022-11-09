@@ -1,0 +1,4 @@
+shell: bash
+commands:
+  hi:
+    ref: hello

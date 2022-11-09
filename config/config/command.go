@@ -100,7 +100,7 @@ func (c *Command) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 	c.WorkDir = workDir
 	c.After = cmd.After
-	// TODO: checksum must be refactored, first name of var is misleading
+	// TODO: checksum must be refactored
 	if cmd.Checksum != nil {
 		c.ChecksumSources = *cmd.Checksum
 	}
@@ -110,16 +110,17 @@ func (c *Command) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return errors.New("'persist_checksum' must be used with 'checksum'")
 	}
 
-	// TODO: validate if ref points to real command ?
 	if cmd.Ref != "" {
-		// only parsing Args when ref is set
 		var refArgs struct {
 			Args *refArgs
 		}
 		if err := unmarshal(&refArgs); err != nil {
 			return err
 		}
-		c.ref = &ref{Name: cmd.Ref, Args: *refArgs.Args}
+		c.ref = &ref{Name: cmd.Ref}
+		if refArgs.Args != nil {
+			c.ref.Args = *refArgs.Args
+		}
 	}
 
 	return nil

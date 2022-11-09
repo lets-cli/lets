@@ -25,7 +25,7 @@ var debugLevel = &debug{}
 // If LETS_DEBUG set to int - then verbosity is 1 or 2
 // If --debug or -d used multiple times - then verbosity is 1 or 2
 // If -dd used - then verbosity is 2.
-// When determined - set debug level globally
+// When determined - set debug level globally.
 func SetDebugLevel(level int) int {
 	if level == 0 {
 		envValue := os.Getenv("LETS_DEBUG")

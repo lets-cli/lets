@@ -62,7 +62,12 @@ func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 		// resolve command by ref
 		if ref := cmd.ref; ref != nil {
-			command := c.Commands[ref.Name].Clone()
+			command, exists := c.Commands[ref.Name]
+			if !exists {
+				return fmt.Errorf("ref points to command '%s' which is not exist", ref.Name)
+			}
+
+			command = command.Clone()
 			command.Name = cmd.Name
 			command.Args = append(command.Args, ref.Args...)
 			// fixing docopt string
@@ -228,7 +233,7 @@ func (c *Config) readMixins(mixins []*Mixin) error {
 		return nil
 	}
 
-	if err := c.CreateMixinsDir(); err != nil {
+	if err := c.createMixinsDir(); err != nil {
 		return err
 	}
 
@@ -291,8 +296,7 @@ func (c *Config) CreateChecksumsDir() error {
 	return nil
 }
 
-// TODO: maybe private.
-func (c *Config) CreateMixinsDir() error {
+func (c *Config) createMixinsDir() error {
 	if err := util.SafeCreateDir(c.MixinsDir); err != nil {
 		return fmt.Errorf("can not create %s: %w", c.MixinsDir, err)
 	}

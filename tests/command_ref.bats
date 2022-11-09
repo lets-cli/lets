@@ -16,3 +16,9 @@ setup() {
     assert_success
     assert_line --index 0 "Hello Fellow friend"
 }
+
+@test "command ref: ref points to non-existing command" {
+    run lets -c lets.no-command.yaml hi
+    assert_failure
+    assert_line --index 0 "lets: config error: failed to parse lets.no-command.yaml: ref points to command 'hello' which is not exist"
+}
