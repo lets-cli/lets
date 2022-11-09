@@ -42,3 +42,10 @@ setup() {
     assert_line --index 2 "Hello Bar with level INFO"
     assert_line --index 3 "I have ref in depends"
 }
+
+
+@test "command_depends: disallow parallel cmd in depends" {
+    LETS_CONFIG=lets-parallel-in-depends.yaml run lets parallel-in-depends
+    assert_failure
+    assert_line --index 0 "lets: config error: command 'parallel-in-depends' depends on command 'parallel', but parallel cmd is not allowed in depends yet"
+}

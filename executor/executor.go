@@ -284,20 +284,9 @@ func (e *Executor) executeDepends(ctx *Context) error {
 	return ctx.command.Depends.Range(func(depName string, dep config.Dep) error {
 		ctx.logger.Debug("running dependency '%s'", depName)
 		cmd := e.cfg.Commands[depName]
-		if cmd.Cmds.Parallel {
-			// TODO: this must be ensured at the validation time, not at the runtime
-			// forbid to run parallel command in depends
-			return &ExecuteError{
-				err: fmt.Errorf(
-					"failed to run child command '%s' from 'depends': cmd as map is not allowed in depends yet",
-					cmd.Name,
-				),
-			}
-		}
 
 		cmd = cmd.Clone()
 
-		// dep args have priority over ref args
 		if dep.HasArgs() {
 			cmd.Args = dep.Args
 			ctx.logger.Debug("dependency args overridden: '%s'", cmd.Args)

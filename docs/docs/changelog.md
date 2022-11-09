@@ -25,6 +25,8 @@ title: Changelog
   commands:
     hello: echo Hello
   ```
+* `[Added]` Add `-d` debug flags. It works same as `LETS_DEBUG=1` env variable. It can be specified as `-dd` (or `LETS_DEBUG=2`). Lets then prints more verbose logs.
+
 
 ## [0.0.49]
 

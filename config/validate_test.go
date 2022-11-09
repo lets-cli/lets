@@ -17,7 +17,7 @@ func TestValidateCommandInDependsExists(t *testing.T) {
 			Name:    "foo",
 			Depends: deps,
 		}
-		err := validateCommandInDependsExists(testCfg)
+		err := validateDepends(testCfg)
 		if err == nil {
 			t.Error("command foo depends on non-existing command bar. Must fail")
 		}
@@ -41,7 +41,7 @@ func TestValidateCircularDeps(t *testing.T) {
 			Depends: depsB,
 		}
 
-		err := validateDependsCycle(testCfg)
+		err := validateDepends(testCfg)
 		if err != nil {
 			t.Errorf("checked itself when validation circular depends. got:  %s", err)
 		}
@@ -71,7 +71,7 @@ func TestValidateCircularDeps(t *testing.T) {
 			Depends: depsB1,
 		}
 
-		err := validateDependsCycle(testCfg)
+		err := validateDepends(testCfg)
 		if err != nil {
 			t.Errorf("checked itself when validation circular depends. got:  %s", err)
 		}
@@ -95,7 +95,7 @@ func TestValidateCircularDeps(t *testing.T) {
 			Depends: depsB,
 		}
 
-		err := validateDependsCycle(testCfg)
+		err := validateDepends(testCfg)
 
 		if err == nil {
 			t.Errorf("validation should fail. got: %s", err)

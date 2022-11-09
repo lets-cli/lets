@@ -1,0 +1,10 @@
+shell: bash
+
+commands:
+  parallel:
+    cmd:
+      foo: echo foo
+      bar: echo bar
+
+  parallel-in-depends:
+    depends: [parallel]
