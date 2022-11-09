@@ -81,17 +81,22 @@ func (c Cmds) Clone() Cmds {
 
 	cmds := Cmds{
 		Commands: commands,
+		Append: c.Append,
 		Parallel: c.Parallel,
 	}
 
 	return cmds
 }
 
-// SingleCommand returns Cmd only if there is only one command.
-func (c Cmds) SingleCommand() *Cmd {
-	if len(c.Commands) == 1 {
-		return c.Commands[0]
+// AppendArgs appends arguments to cmd script
+func (c Cmds) AppendArgs(args []string) {
+	if !c.Append {
+		return
 	}
 
-	return nil
+	c.Commands[0].Script = fmt.Sprintf(
+		"%s %s",
+		c.Commands[0].Script,
+		strings.Join(escapeArgs(args), " "),
+	)
 }

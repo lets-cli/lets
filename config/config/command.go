@@ -128,13 +128,6 @@ func (c *Command) GetEnv(cfg Config) (map[string]string, error) {
 	return c.Env.Dump(), nil
 }
 
-func (c *Command) AppendArgs(args []string) {
-	c.Cmds.Commands[0].Script = fmt.Sprintf(
-		"%s %s",
-		c.Cmds.Commands[0].Script,
-		strings.Join(escapeArgs(args), " "),
-	)
-}
 
 func (c *Command) Clone() *Command {
 	cmd := &Command{

@@ -29,7 +29,7 @@ func TestParseConfig(t *testing.T) {
 		`)
 		cfg := ConfigFixture(t, text)
 		cmd := cfg.Commands["hello"]
-		cmd.AppendArgs(args)
+		cmd.Cmds.AppendArgs(args)
 
 		exp := `echo Hello 'World' '--foo' '--bar='{"age": 20}''`
 		if script := cmd.Cmds.Commands[0].Script; script != exp {

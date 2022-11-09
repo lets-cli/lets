@@ -109,45 +109,67 @@ func setDocoptNamePlaceholder(c *config.Command) {
 	c.Docopts = strings.Replace(c.Docopts, "$LETS_COMMAND_NAME", c.Name, 1)
 }
 
-// newCmdGeneric creates new cobra root sub command from Command.
-func newCmdGeneric(command *config.Command, conf *config.Config, out io.Writer) *cobra.Command {
+type cmdFlags struct {
+	only      []string
+	exclude   []string
+	env       map[string]string
+	noDepends bool
+}
+
+func parseFlags(cmd *cobra.Command) (*cmdFlags, error) {
+	flags := &cmdFlags{}
+
+	only, exclude, err := parseOnlyAndExclude(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	flags.only = only
+	flags.exclude = exclude
+
+	// env from -E flag
+	env, err := parseEnvFlag(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	flags.env = env
+
+	noDepends, err := parseNoDepends(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	flags.noDepends = noDepends
+
+	return flags, nil
+}
+
+// newSubcommand creates new cobra root subcommand from config.Command.
+func newSubcommand(command *config.Command, conf *config.Config, out io.Writer) *cobra.Command {
 	subCmd := &cobra.Command{
 		Use:   command.Name,
 		Short: short(command.Description),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			command.Args = append(command.Args, prepareArgs(command.Name, os.Args)...)
+			command.Cmds.AppendArgs(args)
 
-			if command.Cmds.Append {
-				command.AppendArgs(args)
-			}
-
-			only, exclude, err := parseOnlyAndExclude(cmd)
+			flags, err := parseFlags(cmd)
 			if err != nil {
 				return err
 			}
 
-			if err := validateOnlyAndExclude(command, only, exclude); err != nil {
+			if err := validateOnlyAndExclude(command, flags.only, flags.exclude); err != nil {
 				return err
 			}
 
-			// env from -E flag
-			envs, err := parseEnvFlag(cmd)
-			if err != nil {
-				return err
-			}
-
-			noDepends, err := parseNoDepends(cmd)
-			if err != nil {
-				return err
-			}
-
-			command.Env.MergeMap(envs)
+			command.Env.MergeMap(flags.env)
 
 			setDocoptNamePlaceholder(command)
 
-			command.Cmds.Commands = filterCmds(command.Cmds, only, exclude)
+			command.Cmds.Commands = filterCmds(command.Cmds, flags.only, flags.exclude)
 
-			if noDepends {
+			if flags.noDepends {
 				command = command.Clone()
 				command.Depends = &config.Deps{}
 			}
@@ -176,7 +198,7 @@ func newCmdGeneric(command *config.Command, conf *config.Config, out io.Writer) 
 // initialize all commands dynamically from config.
 func InitSubCommands(rootCmd *cobra.Command, conf *config.Config, out io.Writer) {
 	for _, cmdToRun := range conf.Commands {
-		rootCmd.AddCommand(newCmdGeneric(cmdToRun, conf, out))
+		rootCmd.AddCommand(newSubcommand(cmdToRun, conf, out))
 	}
 }
 
