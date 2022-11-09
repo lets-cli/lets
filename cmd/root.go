@@ -2,11 +2,9 @@ package cmd
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"strings"
 
-	"github.com/lets-cli/lets/config/config"
 	"github.com/lets-cli/lets/upgrade"
 	"github.com/lets-cli/lets/upgrade/registry"
 	"github.com/lets-cli/lets/workdir"
@@ -23,8 +21,9 @@ func newRootCmd(version string) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runRoot(cmd, version)
 		},
-		TraverseChildren: true,
-		Version:          version,
+		TraverseChildren:   true,
+		FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},
+		Version:            version,
 		// handle errors manually
 		SilenceErrors: true,
 		// print help message manyally
@@ -32,52 +31,27 @@ func newRootCmd(version string) *cobra.Command {
 	}
 }
 
-// CreateRootCommandWithConfig used to run root command with all subcommands.
-func CreateRootCommandWithConfig(out io.Writer, cfg *config.Config, version string) *cobra.Command {
-	rootCmd := newRootCmd(version)
-
-	initRootCommand(rootCmd, cfg)
-	initSubCommands(rootCmd, cfg, out)
-
-	return rootCmd
-}
-
 // CreateRootCommand used to run only root command without config.
 func CreateRootCommand(version string) *cobra.Command {
 	rootCmd := newRootCmd(version)
 
-	initRootCommand(rootCmd, nil)
+	initRootFlags(rootCmd)
 
 	return rootCmd
 }
 
-// ConfigErrorCheck will print error only if no args passed
-// Main reason to do it in PreRun allows us to run root cmd as usual,
-//	parse help flags if any provided or check if its help command.
-//
-// For example if config load failed with error (no lets.yaml in current dir) - print error and exit.
-func ConfigErrorCheck(rootCmd *cobra.Command, err error) {
-	rootCmd.PreRun = func(cmd *cobra.Command, args []string) {
-		if cmd.Flags().NFlag() > 0 {
-			return
-		}
-
-		log.Error(err)
-		os.Exit(1)
-	}
-}
-
-func initRootCommand(rootCmd *cobra.Command, cfg *config.Config) {
-	initCompletionCmd(rootCmd, cfg)
+func initRootFlags(rootCmd *cobra.Command) {
 	rootCmd.Flags().StringToStringP("env", "E", nil, "set env variable for running command KEY=VALUE")
 	rootCmd.Flags().StringArray("only", []string{}, "run only specified command(s) described in cmd as map")
 	rootCmd.Flags().StringArray("exclude", []string{}, "run all but excluded command(s) described in cmd as map")
 	rootCmd.Flags().Bool("upgrade", false, "upgrade lets to latest version")
 	rootCmd.Flags().Bool("init", false, "create a new lets.yaml in the current folder")
 	rootCmd.Flags().Bool("no-depends", false, "skip 'depends' for running command")
+	rootCmd.Flags().CountP("debug", "d", "show debug logs (or use LETS_DEBUG=1). If used multiple times, shows more verbose logs") //nolint:lll
+	rootCmd.Flags().StringP("config", "c", "", "config file (default is lets.yaml)")
 }
 
-func printHelpMessage(cmd *cobra.Command) error {
+func PrintHelpMessage(cmd *cobra.Command) error {
 	help := cmd.UsageString()
 	help = fmt.Sprintf("%s\n\n%s", cmd.Short, help)
 	help = strings.Replace(help, "lets [command] --help", "lets help [command]", 1)
@@ -117,5 +91,5 @@ func runRoot(cmd *cobra.Command, version string) error {
 		return nil
 	}
 
-	return printHelpMessage(cmd)
+	return PrintHelpMessage(cmd)
 }

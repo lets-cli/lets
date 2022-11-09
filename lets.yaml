@@ -37,11 +37,10 @@ commands:
       Example:
         lets test-bats config_version.bats
         lets test-bats config_version.bats --opts="-f <regexp>"
-    cmd: |
-      docker-compose run --rm test-bats
+    cmd: docker-compose run --rm test-bats
 
   test-completions:
-    ref: test-bats 
+    ref: test-bats
     args: zsh_completion.bats_
     description: |
       Run completions tests
@@ -74,8 +73,7 @@ commands:
 
   fmt:
     description: Run sfmt
-    cmd:
-      go fmt ./...
+    cmd: go fmt ./...
 
   build-and-install:
     description: Build and install lets-dev version from source code

@@ -8,10 +8,7 @@ import (
 	"github.com/lets-cli/lets/util"
 )
 
-var (
-	ErrFileNotExists  = errors.New("file not exists")
-	ErrConfigNotFound = errors.New("config not exists")
-)
+var ErrFileNotExists = errors.New("file not exists")
 
 // find config file non-recursively
 // filename is a file to find and work dir is where to start.
@@ -43,7 +40,7 @@ func GetFullConfigPathRecursive(filename string, workDir string) (string, error)
 	// else we get parent and try again up until we reach roof of fs
 	parentDir := filepath.Dir(workDir)
 	if parentDir == "/" {
-		return "", ErrConfigNotFound
+		return "", fmt.Errorf("file does not exist: %s", filename)
 	}
 
 	return GetFullConfigPathRecursive(filename, parentDir)

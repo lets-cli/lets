@@ -25,7 +25,7 @@ teardown() {
     LETS_CONFIG=lets-with-version-0.0.3.yaml run ./lets
 
     assert_failure
-    assert_line --index 0 "config version '0.0.3' is not compatible with 'lets' version '0.0.2'. Please upgrade 'lets' to '0.0.3' using 'lets --upgrade' command or following documentation at https://lets-cli.org/docs/installation'"
+    assert_line --index 0 "lets: config error: config version '0.0.3' is not compatible with 'lets' version '0.0.2'. Please upgrade 'lets' to '0.0.3' using 'lets --upgrade' command or following documentation at https://lets-cli.org/docs/installation'"
 }
 
 @test "config_version: no version specified" {

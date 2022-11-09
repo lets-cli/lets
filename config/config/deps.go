@@ -48,7 +48,7 @@ func (d *Deps) Clone() *Deps {
 	}
 
 	return &Deps{
-		Keys:    cloneArray(d.Keys),
+		Keys:    cloneSlice(d.Keys),
 		Mapping: mapping,
 	}
 }
@@ -127,7 +127,9 @@ func (d *Dep) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 
 	if err := unmarshal(&cmdArgsStr); err == nil {
-		d.Args = append([]string{cmd.Name}, cmdArgsStr.Args)
+		if cmdArgsStr.Args != "" {
+			d.Args = []string{cmdArgsStr.Args}
+		}
 		return nil
 	}
 
@@ -139,8 +141,7 @@ func (d *Dep) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return err
 	}
 
-	// args always must start with a dependency name, otherwise docopt will fail
-	d.Args = append([]string{cmd.Name}, cmdArgs.Args...)
+	d.Args = cmdArgs.Args
 
 	return nil
 }
@@ -148,7 +149,11 @@ func (d *Dep) UnmarshalYAML(unmarshal func(interface{}) error) error {
 func (d Dep) Clone() Dep {
 	return Dep{
 		Name: d.Name,
-		Args: cloneArray(d.Args),
+		Args: cloneSlice(d.Args),
 		Env:  d.Env.Clone(),
 	}
+}
+
+func (d Dep) HasArgs() bool {
+	return len(d.Args) > 0
 }

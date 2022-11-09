@@ -20,6 +20,9 @@ jobs:
         run: npm install
         working-directory: ./docs
 
+      - name: Copy install.sh to static
+        run: cp ./install.sh ./docs/static/install.sh
+
       - name: Build website
         run: npm run build
         working-directory: ./docs

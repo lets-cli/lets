@@ -1,0 +1,11 @@
+shell: bash
+
+commands:
+  print-env:
+    options: |
+      Usage: lets print-env <env>
+    cmd: echo ${LETSOPT_ENV}=`printenv ${LETSOPT_ENV}`
+
+  print-workdir:
+    work_dir: b
+    cmd: echo LETS_COMMAND_WORK_DIR=${LETS_COMMAND_WORK_DIR}

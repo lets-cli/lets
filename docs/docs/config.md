@@ -7,6 +7,7 @@ title: Config reference
 * [mixins](#mixins)
 * [env](#global-env)
 * [eval_env](#global-eval_env)
+* [init](#init)
 * [before](#before)
 * [commands](#commands)
     * [description](#description)
@@ -106,15 +107,21 @@ eval_env:
 
 Specify global before script for all commands.
 
-Example:
+A script from `before` will be prepended to each command's script.
 
-Run `redis` with docker-compose using log level ERROR
+> Be carefull to not execute some heavy commands in before as it will be executed cmd + depends (recursively) times.
+
+Lets say, we want set log `level` for all docker-compose calls.
+
+In the example below, we overriding `docker-compose` with an *alias* which has log level set to `ERROR` by default.
+
+> If you need to run a script at lets startup only once - use `init` deirective instead
 
 ```yaml
 shell: bash
 
 before:
-  function @docker-compose() {
+  function docker-compose() {
     docker-compose --log-level ERROR $@
   }
 
@@ -123,7 +130,45 @@ before:
 commands:
   redis: |
     echo $XXX
-    @docker-compose up redis
+    docker-compose up redis
+```
+
+### Global init
+
+`key: init`
+
+`type: string`
+
+Specify init script which will be executed only once. It is execured right before first command call.
+
+`init` script is a good place for some intialization that sould be done once, for example,
+
+create docker network, check if some directory exist, clear caches, etc.
+
+```yaml
+shell: bash
+
+init: |
+  echo From init
+
+before: |
+  echo From before
+
+commands:
+  foo: echo Foo
+  bar: 
+    depends: [foo]
+    cmd: echo Bar
+```
+
+Calling `lets bar` will print:
+
+```bash
+From init
+From before
+Foo
+From before
+Bar
 ```
 
 ### Mixins

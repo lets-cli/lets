@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/lets-cli/lets/checksum"
@@ -32,9 +33,7 @@ type Command struct {
 	Depends         *Deps
 	ChecksumMap     map[string]string
 	PersistChecksum bool
-
-	// args with command name
-	// e.g. from 'lets run --debug' we will get [run, --debug]
+	// args from 'lets run --debug' will become [--debug]
 	Args []string
 
 	ChecksumSources map[string][]string
@@ -42,7 +41,7 @@ type Command struct {
 	persistedChecksums map[string]string
 
 	// ref is basically a command name to use with predefined args, env
-	Ref *Ref
+	ref *ref
 }
 
 type Commands map[string]*Command
@@ -53,6 +52,7 @@ func (c *Command) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		c.Cmds = Cmds{
 			Commands: []*Cmd{{Script: short}},
 		}
+		c.SkipDocopts = true
 		return nil
 	}
 
@@ -91,10 +91,17 @@ func (c *Command) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 	c.Shell = cmd.Shell
 	c.Docopts = cmd.Options
+	if c.Docopts == "" {
+		c.SkipDocopts = true
+	}
 	c.Depends = cmd.Depends
-	c.WorkDir = cmd.WorkDir
+	workDir, err := filepath.Abs(cmd.WorkDir)
+	if err != nil {
+		return err
+	}
+	c.WorkDir = workDir
 	c.After = cmd.After
-	// TODO: checksum must be refactored, first name of var is misleading
+	// TODO: checksum must be refactored
 	if cmd.Checksum != nil {
 		c.ChecksumSources = *cmd.Checksum
 	}
@@ -104,64 +111,28 @@ func (c *Command) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return errors.New("'persist_checksum' must be used with 'checksum'")
 	}
 
-	// TODO: validate if ref points to real command ?
 	if cmd.Ref != "" {
-		// only parsing Args when ref is set
 		var refArgs struct {
-			Args *RefArgs
+			Args *refArgs
 		}
 		if err := unmarshal(&refArgs); err != nil {
 			return err
 		}
-		c.Ref = &Ref{Name: cmd.Ref, Args: *refArgs.Args}
+		c.ref = &ref{Name: cmd.Ref}
+		if refArgs.Args != nil {
+			c.ref.Args = *refArgs.Args
+		}
 	}
 
 	return nil
 }
 
-// args without command name
-// e.g. from 'lets run --debug' we will get [--debug].
-func (c *Command) CommandArgs() []string {
-	if len(c.Args) == 0 {
-		return []string{}
-	}
-
-	return c.Args[1:]
-}
-
 func (c *Command) GetEnv(cfg Config) (map[string]string, error) {
 	if err := c.Env.Execute(cfg); err != nil {
-		// TODO: move execution to somevere else. probably make execution lazy and cached
 		return nil, err
 	}
 
 	return c.Env.Dump(), nil
-}
-
-func (c *Command) WithArgs(args []string) *Command {
-	newCmd := c.Clone()
-	newCmd.Args = args
-
-	return newCmd
-}
-
-func (c *Command) FromRef(ref *Ref) *Command {
-	newCmd := c.Clone()
-
-	if len(newCmd.Args) == 0 {
-		newCmd.Args = append([]string{c.Name}, ref.Args...)
-	} else {
-		newCmd.Args = append(newCmd.Args, ref.Args...)
-	}
-
-	return newCmd
-}
-
-func (c *Command) WithEnv(env *Envs) *Command {
-	newCmd := c.Clone()
-	newCmd.Env.Merge(env)
-
-	return newCmd
 }
 
 func (c *Command) Clone() *Command {
@@ -180,25 +151,21 @@ func (c *Command) Clone() *Command {
 		Depends:            c.Depends.Clone(),
 		ChecksumMap:        cloneMap(c.ChecksumMap),
 		PersistChecksum:    c.PersistChecksum,
-		ChecksumSources:    cloneMapArray(c.ChecksumSources),
+		ChecksumSources:    cloneMapSlice(c.ChecksumSources),
 		persistedChecksums: cloneMap(c.persistedChecksums),
-		Ref:                c.Ref.Clone(),
-		Args:               cloneArray(c.Args),
+		Args:               cloneSlice(c.Args),
 	}
 
 	return cmd
 }
 
-func (c *Command) Pretty() string {
+func (c *Command) Dump() string {
 	pretty, err := json.MarshalIndent(c, "", "  ")
 	if err != nil {
 		return ""
 	}
 
 	result := string(pretty)
-	result = strings.TrimLeft(result, "{")
-	result = strings.TrimRight(result, "}")
-
 	return strings.TrimSpace(result)
 }
 

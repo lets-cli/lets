@@ -13,11 +13,7 @@ func validate(config *config.Config, letsVersion string) error {
 		return err
 	}
 
-	if err := validateCommandInDependsExists(config); err != nil {
-		return err
-	}
-
-	if err := validateDependsCycle(config); err != nil {
+	if err := validateDepends(config); err != nil {
 		return err
 	}
 
@@ -55,14 +51,23 @@ func validateVersion(cfg *config.Config, letsVersion string) error {
 	return nil
 }
 
-func validateCommandInDependsExists(cfg *config.Config) error {
+func validateDepends(cfg *config.Config) error {
 	for _, cmd := range cfg.Commands {
 		cmd := cmd
 		err := cmd.Depends.Range(func(key string, value config.Dep) error {
-			if _, exists := cfg.Commands[key]; !exists {
+			dependency, exists := cfg.Commands[key]
+
+			if !exists {
 				return fmt.Errorf(
 					"command '%s' depends on command '%s' which is not exist",
 					cmd.Name, key,
+				)
+			}
+
+			if dependency.Cmds.Parallel {
+				return fmt.Errorf(
+					"command '%s' depends on command '%s', but parallel cmd is not allowed in depends yet",
+					cmd.Name, dependency.Name,
 				)
 			}
 
@@ -71,23 +76,17 @@ func validateCommandInDependsExists(cfg *config.Config) error {
 		if err != nil {
 			return err
 		}
-	}
 
-	return nil
-}
-
-// if any two commands have each other command in deps, raise error.
-func validateDependsCycle(cfg *config.Config) error {
-	for _, cmdA := range cfg.Commands {
-		for _, cmdB := range cfg.Commands {
-			if cmdA.Name == cmdB.Name {
+		for _, other := range cfg.Commands {
+			if cmd.Name == other.Name {
 				continue
 			}
 
-			if cmdA.Depends.Has(cmdB.Name) && cmdB.Depends.Has(cmdA.Name) {
+			// if any two commands have each other command in deps, raise error.
+			if cmd.Depends.Has(other.Name) && other.Depends.Has(cmd.Name) {
 				return fmt.Errorf(
 					"command '%s' have circular depends on command '%s'",
-					cmdA.Name, cmdB.Name,
+					cmd.Name, other.Name,
 				)
 			}
 		}

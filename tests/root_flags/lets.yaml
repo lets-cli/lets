@@ -1,0 +1,10 @@
+shell: bash
+
+commands:
+  foo:
+    options: |
+      Usage: lets foo [--debug] [--config=<config>] [--only=<only>]
+    cmd: |
+      echo DEBUG=${LETSOPT_DEBUG}
+      echo CONFIG=${LETSOPT_CONFIG}
+      echo ONLY=${LETSOPT_ONLY}

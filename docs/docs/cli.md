@@ -1,6 +1,6 @@
 ---
 id: cli
-title: Lets cli
+title: CLI options
 ---
 
 ### Global options
@@ -13,5 +13,7 @@ title: Lets cli
 |`--exclude`|`stringArray`||run all but excluded command(s) described in cmd as map|
 |`--upgrade`|`bool`|false|upgrade lets to latest version|
 |`--no-depends`|`bool`|false|skip 'depends' for running command|
+|`-c, --config`|`string`|lets.yaml|specify config|
+|`-d, --debug`|`bool`|false|verbose logs|
 |`-h, --help`|||help for lets|
 |`-v, --version`|||version for lets|

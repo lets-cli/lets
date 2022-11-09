@@ -11,7 +11,7 @@ module.exports = {
       'advanced_usage',
     ],
     "Config format": ['config'],
-    "CLI": [
+    "Api Reference": [
       'cli',
       'env',
     ],

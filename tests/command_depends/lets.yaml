@@ -10,35 +10,45 @@ commands:
       echo "Main"
 
   override-args:
-      description: Test override args
-      depends:
-        - name: greet
-          args: Developer
-        - bar
-      cmd: echo "Override args"
+    description: Test override args
+    depends:
+      - name: greet
+        args: Developer
+      - bar
+    cmd: echo "Override args"
 
   override-env:
-      description: Test override env
-      depends:
-        - name: greet
-          env:
-            LEVEL: DEBUG
-      cmd: echo "Override env"
+    description: Test override env
+    depends:
+      - name: greet
+        env:
+          LEVEL: DEBUG
+    cmd: echo "Override env"
 
   greet:
     options: |
       Usage: lets greet [<name>]
     env:
       LEVEL: INFO
-    cmd: echo Hello ${LETSOPT_NAME:-world} with level ${LEVEL}
+    cmd: echo Hello ${LETSOPT_NAME:-World} with level ${LEVEL}
 
   greet-dev:
     ref: greet
     args: Developer
 
+  greet-foo:
+    ref: greet
+    args: Foo
+
   bar:
     cmd: echo Bar
 
   with-ref-in-depends:
-    depends: [greet-dev]
+    depends:
+      - greet
+      - name: greet-dev
+        env:
+          LEVEL: DEBUG
+      - name: greet-foo
+        args: Bar
     cmd: echo I have ref in depends

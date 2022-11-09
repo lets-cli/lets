@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
+	"errors"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/lets-cli/lets/cmd"
@@ -11,6 +13,7 @@ import (
 	"github.com/lets-cli/lets/env"
 	"github.com/lets-cli/lets/executor"
 	"github.com/lets-cli/lets/logging"
+	"github.com/lets-cli/lets/set"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -20,22 +23,57 @@ var version = "0.0.0-dev"
 func main() {
 	ctx := getContext()
 
-	logging.InitLogging(env.IsDebug(), os.Stdout, os.Stderr)
-
-	configFile := os.Getenv("LETS_CONFIG")
 	configDir := os.Getenv("LETS_CONFIG_DIR")
 
-	cfg, readConfigErr := config.Load(configFile, configDir, version)
+	logging.InitLogging(os.Stdout, os.Stderr)
 
-	var rootCmd *cobra.Command
-	if cfg != nil {
-		rootCmd = cmd.CreateRootCommandWithConfig(os.Stdout, cfg, version)
-	} else {
-		rootCmd = cmd.CreateRootCommand(version)
+	rootCmd := cmd.CreateRootCommand(version)
+	rootCmd.InitDefaultHelpFlag()
+	rootCmd.InitDefaultVersionFlag()
+	reinitCompletionCmd := cmd.InitCompletionCmd(rootCmd, nil)
+	rootCmd.InitDefaultHelpCmd()
+
+	command, args, err := rootCmd.Traverse(os.Args[1:])
+	if err != nil {
+		log.Errorf("lets: traverse commands error: %s", err)
+		os.Exit(1)
 	}
 
-	if readConfigErr != nil {
-		cmd.ConfigErrorCheck(rootCmd, readConfigErr)
+	rootFlags, err := parseRootFlags(rootCmd, args)
+	if err != nil {
+		log.Errorf("lets: parse flags error: %s", err)
+		os.Exit(1)
+	}
+
+	if rootFlags.help {
+		if err := cmd.PrintHelpMessage(rootCmd); err != nil {
+			log.Errorf("lets: print help error: %s", err)
+			os.Exit(1)
+		}
+		os.Exit(0)
+	}
+
+	debugLevel := env.SetDebugLevel(rootFlags.debug)
+
+	if debugLevel > 0 {
+		log.SetLevel(log.DebugLevel)
+	}
+
+	if rootFlags.config == "" {
+		rootFlags.config = os.Getenv("LETS_CONFIG")
+	}
+
+	cfg, err := config.Load(rootFlags.config, configDir, version)
+	if err != nil {
+		if failOnConfigError(rootCmd, command) {
+			log.Errorf("lets: config error: %s", err)
+			os.Exit(1)
+		}
+	}
+
+	if cfg != nil {
+		reinitCompletionCmd(cfg)
+		cmd.InitSubCommands(rootCmd, cfg, os.Stdout)
 	}
 
 	if err := rootCmd.ExecuteContext(ctx); err != nil {
@@ -69,4 +107,79 @@ func getContext() context.Context {
 	}()
 
 	return ctx
+}
+
+func failOnConfigError(root *cobra.Command, current *cobra.Command) bool {
+	rootCommands := set.NewSet("completion", "help")
+	return root.Flags().NFlag() == 0 && !rootCommands.Contains(current.Name())
+}
+
+type flags struct {
+	config string
+	debug  int
+	help   bool
+}
+
+// We can not parse --config and --debug flags using cobra.Command.ParseFlags
+//  until we read config and initialize all subcommands.
+//  Otherwise root command will parse all flags gready.
+// For example in 'lets --config lets.my.yaml mysubcommand --config=myconfig'
+//  cobra will parse all --config flags, but take only latest
+// --config=myconfig, and this is wrong.
+func parseRootFlags(root *cobra.Command, args []string) (*flags, error) {
+	f := &flags{}
+	// if first arg is not a flag, then it is subcommand
+	if len(args) > 0 && !strings.HasPrefix(args[0], "-") {
+		return f, nil
+	}
+
+	visited := map[string]bool{
+		"config": false,
+		"debug":  false,
+		"help":   false,
+	}
+
+	idx := 0
+	for idx < len(args) {
+		arg := args[idx]
+		if !strings.HasPrefix(arg, "-") {
+			// stop if arg is not a flag, it is probably a subcommand
+			break
+		}
+
+		name, value, found := strings.Cut(arg, "=")
+		switch name {
+		case "--config", "-c":
+			if !visited["config"] {
+				visited["config"] = true
+				if found {
+					if value == "" {
+						return nil, errors.New("--config must be set to value")
+					}
+					f.config = value
+				} else if len(args[idx:]) > 0 {
+					f.config = args[idx+1]
+					idx += 2
+					continue
+				}
+			}
+		case "--debug", "-d", "-dd":
+			if !visited["debug"] {
+				f.debug = 1
+				if arg == "-dd" {
+					f.debug = 2
+				}
+				visited["debug"] = true
+			}
+		case "--help", "-h":
+			if !visited["help"] {
+				f.help = true
+				visited["help"] = true
+			}
+		}
+
+		idx += 1 //nolint:revive,golint
+	}
+
+	return f, nil
 }

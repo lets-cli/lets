@@ -11,6 +11,9 @@ setup() {
     assert_success
     [[ -f lets.yaml ]]
     assert_line --index 0 "lets.yaml created in the current directory"
+    run lets hello bro
+    assert_success
+    assert_line --index 0 "Hello, bro!"
 }
 
 @test "--init: do not init config if already exist" {
@@ -19,4 +22,8 @@ setup() {
     run lets --init
     assert_failure
     assert_output --partial "lets.yaml already exists in"
+
+    run lets hi
+    assert_success
+    assert_line --index 0 "Hi"
 }

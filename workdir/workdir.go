@@ -5,24 +5,27 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/lithammer/dedent"
 	log "github.com/sirupsen/logrus"
 )
 
 const dotLetsDir = ".lets"
 
-const defaultLetsYaml = `version: "%s"
-shell: bash
-
-commands:
-  hello:
-	description: Say hello
-	options: |
-		Usage: lets hello [<name>]
-		Examples:
-			lets hello
-			lets hello Friend
-	cmd: echo Hello, "${LETSOPT_NAME:-world}"!
-`
+func getDefaltLetsConfig(version string) string {
+	return dedent.Dedent(fmt.Sprintf(`
+	version: "%s"
+	shell: bash
+	commands:
+	  hello:
+	    description: Say hello
+	    options: |
+	      Usage: lets hello [<name>]
+	      Examples:
+	        lets hello
+	        lets hello Friend
+	    cmd: echo Hello, "${LETSOPT_NAME:-world}"!
+	`, version))
+}
 
 func GetDotLetsDir(workDir string) (string, error) {
 	return filepath.Abs(filepath.Join(workDir, dotLetsDir))
@@ -36,7 +39,7 @@ func InitLetsFile(workDir string, version string) error {
 		return fmt.Errorf("lets.yaml already exists in %s", workDir)
 	}
 
-	output := fmt.Sprintf(defaultLetsYaml, version)
+	output := getDefaltLetsConfig(version)
 	//#nosec G306
 	if err := os.WriteFile(configfile, []byte(output), 0o644); err != nil {
 		return err

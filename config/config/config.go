@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/lets-cli/lets/config/path"
 	"github.com/lets-cli/lets/util"
@@ -15,12 +16,15 @@ import (
 // Config is a struct for loaded config file.
 type Config struct {
 	// absolute path to work dir - where config is placed
-	WorkDir  string
+	WorkDir string
+	// absolute path for lets config file
 	FilePath string
 	Commands Commands
 	Shell    string
 	// before is a script which will be included before every cmd
-	Before  string
+	Before string
+	// init is a script which will be called exactly once before any command calls
+	Init    string
 	Env     *Envs
 	Version string
 	isMixin bool // if true, we consider config as mixin and apply different parsing and validation
@@ -39,6 +43,7 @@ func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		Commands Commands
 		Shell    string
 		Before   string
+		Init     string
 		Env      *Envs
 		EvalEnv  *Envs `yaml:"eval_env"`
 	}
@@ -48,17 +53,46 @@ func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 
 	c.Version = string(config.Version)
+	c.Init = config.Init
 	c.Commands = config.Commands
 	if c.Commands == nil {
 		c.Commands = make(Commands, 0)
 	}
 
+	commandsFromRef := []*Command{}
+
 	for name, cmd := range c.Commands {
 		cmd.Name = name
+
+		// resolve command by ref
+		if ref := cmd.ref; ref != nil {
+			command, exists := c.Commands[ref.Name]
+			if !exists {
+				return fmt.Errorf("ref points to command '%s' which is not exist", ref.Name)
+			}
+
+			command = command.Clone()
+			command.Name = cmd.Name
+			command.Args = append(command.Args, ref.Args...)
+			// fixing docopt string
+			if command.Docopts != "" {
+				command.Docopts = strings.Replace(
+					command.Docopts,
+					fmt.Sprintf("lets %s", ref.Name),
+					fmt.Sprintf("lets %s", command.Name),
+					1,
+				)
+			}
+			commandsFromRef = append(commandsFromRef, command)
+		}
+	}
+
+	for _, cmd := range commandsFromRef {
+		c.Commands[cmd.Name] = cmd
 	}
 
 	c.Shell = config.Shell
-	// TODO: we do not want this kind of validation right here
+
 	if c.Shell == "" && !c.isMixin {
 		return errors.New("'shell' is required")
 	}
@@ -74,10 +108,6 @@ func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	})
 
 	if err := c.readMixins(config.Mixins); err != nil {
-		return err
-	}
-
-	if err := c.processEnv(); err != nil {
 		return err
 	}
 
@@ -207,7 +237,7 @@ func (c *Config) readMixins(mixins []*Mixin) error {
 		return nil
 	}
 
-	if err := c.CreateMixinsDir(); err != nil {
+	if err := c.createMixinsDir(); err != nil {
 		return err
 	}
 
@@ -221,22 +251,25 @@ func (c *Config) readMixins(mixins []*Mixin) error {
 	return nil
 }
 
-func (c *Config) GetEnv() (map[string]string, error) {
-	if err := c.processEnv(); err != nil {
-		// TODO: move execution to somevere else. probably make execution lazy and cached
-		return nil, err
-	}
-
-	return c.Env.Dump(), nil
+func (c *Config) GetEnv() map[string]string {
+	return c.Env.Dump()
 }
 
-// TODO: not sure it must be public.
-func (c *Config) processEnv() error {
-	// TODO: take lock, update env, set envReady = true, release lock
-	// TODO: do we need a cache here ?
+// SetupEnv must be called once. It is not intended to be called
+// multiple times hence does not have mutex.
+func (c *Config) SetupEnv() error {
 	if err := c.Env.Execute(*c); err != nil {
-		// TODO: move execution to somevere else. probably make execution lazy and cached
 		return err
+	}
+
+	// expand env for args
+	for _, cmd := range c.Commands {
+		for idx, arg := range cmd.Args {
+			// we have to expand env here on our own, since this args not came from users tty, and not expanded before lets
+			cmd.Args[idx] = os.Expand(arg, func(key string) string {
+				return c.Env.Mapping[key].Value
+			})
+		}
 	}
 
 	return nil
@@ -267,8 +300,7 @@ func (c *Config) CreateChecksumsDir() error {
 	return nil
 }
 
-// TODO: maybe private.
-func (c *Config) CreateMixinsDir() error {
+func (c *Config) createMixinsDir() error {
 	if err := util.SafeCreateDir(c.MixinsDir); err != nil {
 		return fmt.Errorf("can not create %s: %w", c.MixinsDir, err)
 	}

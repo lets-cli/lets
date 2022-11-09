@@ -1,10 +1,6 @@
 shell: bash
 
 commands:
-  foo:
-    description: Print foo
-    cmd: echo "foo"
-
   hi:
     description: Print config filename
     options: |

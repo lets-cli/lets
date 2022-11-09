@@ -19,13 +19,13 @@ var docoptParser = &dopt.Parser{
 }
 
 // Parse parses docopts for command options with args from os.Args.
-func Parse(args []string, docopts string) (Opts, error) {
+func Parse(cmdName string, args []string, docopts string) (Opts, error) {
 	// no options at all
 	if docopts == "" {
 		return Opts{}, nil
 	}
 
-	return docoptParser.ParseArgs(docopts, args, "")
+	return docoptParser.ParseArgs(docopts, append([]string{cmdName}, args...), "")
 }
 
 // ParseOptions parses docopts only to get all available options for a command.
