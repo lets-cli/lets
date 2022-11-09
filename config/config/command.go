@@ -52,6 +52,7 @@ func (c *Command) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		c.Cmds = Cmds{
 			Commands: []*Cmd{{Script: short}},
 		}
+		c.SkipDocopts = true
 		return nil
 	}
 

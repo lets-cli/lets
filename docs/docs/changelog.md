@@ -3,10 +3,17 @@ id: changelog
 title: Changelog
 ---
 
-## [Unreleased]
+## [Unreleased](https://github.com/lets-cli/lets/releases/tag/v0.0.X)
+
 * `[Dependency]` upgrade cobra to 1.6.0
 * `[Dependency]` upgrade logrus to 1.9.0
-* `[Fixed]` Removed builtin `--help` flag for subcommands. Now using `--help` will pas this flag to underlying `cmd` script.
+* `[Fixed]` Removed builtin `--help` flag for subcommands. Now using `--help` will pass this flag to underlying `cmd` script.
+* `[Added]` Add `--debug` (`-d`) debug flag. It works same as `LETS_DEBUG=1` env variable. It can be specified as `-dd` (or `LETS_DEBUG=2`). Lets then prints more verbose logs.
+* `[Added]` Add `--config` `-c` flag. It works same as `LETS_CONFIG=<path to lets file>` env variable.
+* `[Added]` `LETS_CONFIG` env variable now present at command runtime, and contains lets config filename. Default is `lets.yaml`.
+* `[Added]` `LETS_CONFIG_DIR` env variable now present at command runtime, and contains absolute path to dir where lets config found.
+* `[Added]` `LETS_COMMAND_WORKDIR` env variable now present at command runtime, and contains absolute path to dir where `command.work_dir` points.
+* `[Added]` Add `init` directive to config. It is a script that will be executed only once before any other commands. It differs from `before` in a way that `before` is a script that is prepended to each command's script and thus will be execured every time a command executes.
 * `[Refactoring]` Config parsing is reimplemented using `UnmarhallYAML`. This ends up in reduced size and complexity of parsing code.
 * `[Refactoring]` `Command` now is clonable and this opened a possibility to reimplement `ref`, `depends` as map and `--no-depends` - now we clone a command and modify a brand new struct instead of mutating the same command (which was not safe).
 * `[Refactoring]` `Command.Cmd` script was replaced with `Cmds` struct which represents a list of `Cmd`. This allowed generalizing so-called cmd-as-map into a list of commands that will be executed in parallel (see `Executor.executeParallel`).
@@ -25,29 +32,23 @@ title: Changelog
   commands:
     hello: echo Hello
   ```
-* `[Added]` Add `--debug` (`-d`) debug flag. It works same as `LETS_DEBUG=1` env variable. It can be specified as `-dd` (or `LETS_DEBUG=2`). Lets then prints more verbose logs.
-* `[Added]` Add `--config` `-c` flag. It works same as `LETS_CONFIG=<path to lets file>` env variable.
-* `[Added]` Add `LETS_CONFIG` env variable which contains lets config filename. Default is `lets.yaml`.
-* `[Added]` Add `LETS_CONFIG_DIR` env variable which contains absolute path to dir where lets config found.
-* `[Added]` Add `LETS_COMMAND_WORKDIR` env variable which contains absolute path to dir where `command.work_dir` points.
-* `[Added]` Add `init` directive to config. It is a script that will be executed only once before any other commands. It differs from `before` in a way that `before` is a script that is prepended to each command's script and thus will be execured every time a command executes.
 
-## [0.0.49]
+## [0.0.49](https://github.com/lets-cli/lets/releases/tag/v0.0.49)
 
 * `[Added]` remote mixins `experimental` support. See [config](/docs/config#remote-mixins-experimental) for more details.
 
-## [0.0.48]
+## [0.0.48](https://github.com/lets-cli/lets/releases/tag/v0.0.48)
 
 * `[Added]` `--no-depends` global option. Lets will skip `depends` for running command
 
   ```shell
   lets --no-depends run
   ```
-## [0.0.47]
+## [0.0.47](https://github.com/lets-cli/lets/releases/tag/v0.0.47)
 
 * `[Added]` completion for command options
 * `[Dependency]` use fork of docopt.go with extended options parser
-## [0.0.45]
+## [0.0.45](https://github.com/lets-cli/lets/releases/tag/v0.0.45)
 
 * `[Fixed]` **`Breaking change`** Fix duplicate files for checksum.
   This will change checksum output if the same file has been read multiple times.

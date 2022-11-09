@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"os"
 	"os/signal"
 	"strings"
@@ -152,6 +153,9 @@ func parseRootFlags(root *cobra.Command, args []string) (*flags, error) {
 			if !visited["config"] {
 				visited["config"] = true
 				if found {
+					if value == "" {
+						return nil, errors.New("--config must be set to value")
+					}
 					f.config = value
 				} else if len(args[idx:]) > 0 {
 					f.config = args[idx+1]

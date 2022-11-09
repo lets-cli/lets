@@ -59,7 +59,7 @@ func min(x, y int) int {
 
 func DebugLevel() int {
 	if !debugLevel.ready {
-		panic("must run ParseDebugLevel first")
+		panic("must run SetDebugLevel first")
 	}
 
 	return debugLevel.level

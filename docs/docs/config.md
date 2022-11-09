@@ -109,7 +109,7 @@ Specify global before script for all commands.
 
 A script from `before` will be prepended to each command's script.
 
-Be carefull to not execute some heavy commands in before as it will be executed cmd + depends (recursively) times.
+> Be carefull to not execute some heavy commands in before as it will be executed cmd + depends (recursively) times.
 
 Lets say, we want set log `level` for all docker-compose calls.
 
