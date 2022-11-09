@@ -16,7 +16,8 @@ import (
 // Config is a struct for loaded config file.
 type Config struct {
 	// absolute path to work dir - where config is placed
-	WorkDir  string
+	WorkDir string
+	// absolute path for lets config file
 	FilePath string
 	Commands Commands
 	Shell    string

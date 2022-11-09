@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/lets-cli/lets/checksum"
@@ -196,9 +197,12 @@ func joinBeforeAndScript(before string, script string) string {
 // Setup env for cmd.
 func (e *Executor) setupEnv(osCmd *exec.Cmd, command *config.Command, shell string) error {
 	defaultEnv := map[string]string{
-		"LETS_COMMAND_NAME": command.Name,
-		"LETS_COMMAND_ARGS": strings.Join(command.Args, " "),
-		"SHELL":             shell,
+		"LETS_COMMAND_NAME":     command.Name,
+		"LETS_COMMAND_ARGS":     strings.Join(command.Args, " "),
+		"LETS_COMMAND_WORK_DIR": osCmd.Dir,
+		"LETS_CONFIG":           filepath.Base(e.cfg.FilePath),
+		"LETS_CONFIG_DIR":       filepath.Dir(e.cfg.FilePath),
+		"SHELL":                 shell,
 	}
 
 	checksumEnvMap := getChecksumEnvMap(command.ChecksumMap)
@@ -334,7 +338,7 @@ func (e *Executor) runCmd(ctx *Context, cmd *config.Cmd) error {
 	}
 
 	if env.DebugLevel() == 1 {
-		ctx.logger.Debug("executing script: %s\n", cmd.Script)
+		ctx.logger.Debug("executing script:\n%s", cmd.Script)
 	} else if env.DebugLevel() > 1 {
 		ctx.logger.Debug("executing:\nscript: %s\nenv: %s\n", cmd.Script, fmtEnv(osCmd.Env))
 	}

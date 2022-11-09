@@ -9,3 +9,8 @@ commands:
 
   print-shell-args:
     cmd: echo $@
+
+  print-env:
+    options: |
+      Usage: lets print-env <env>
+    cmd: echo ${LETSOPT_ENV}=`printenv ${LETSOPT_ENV}`

@@ -81,7 +81,7 @@ func (c Cmds) Clone() Cmds {
 
 	cmds := Cmds{
 		Commands: commands,
-		Append: c.Append,
+		Append:   c.Append,
 		Parallel: c.Parallel,
 	}
 

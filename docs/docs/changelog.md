@@ -26,7 +26,9 @@ title: Changelog
     hello: echo Hello
   ```
 * `[Added]` Add `-d` debug flags. It works same as `LETS_DEBUG=1` env variable. It can be specified as `-dd` (or `LETS_DEBUG=2`). Lets then prints more verbose logs.
-
+* `[Added]` Add `LETS_CONFIG` env variable which contains lets config filename. Default is `lets.yaml`.
+* `[Added]` Add `LETS_CONFIG_DIR` env variable which contains absolute path to dir where lets config found.
+* `[Added]` Add `LETS_COMMAND_WORKDIR` env variable which contains absolute path to dir where `command.work_dir` points.
 
 ## [0.0.49]
 

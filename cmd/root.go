@@ -48,9 +48,10 @@ func initRootFlags(rootCmd *cobra.Command) {
 	rootCmd.Flags().Bool("init", false, "create a new lets.yaml in the current folder")
 	rootCmd.Flags().Bool("no-depends", false, "skip 'depends' for running command")
 	rootCmd.Flags().CountP("debug", "d", "show debug logs (or use LETS_DEBUG=1). If used multiple times, shows more verbose logs") //nolint:lll
+	rootCmd.Flags().StringP("config", "c", "", "config file (default is lets.yaml)")
 }
 
-func printHelpMessage(cmd *cobra.Command) error {
+func PrintHelpMessage(cmd *cobra.Command) error {
 	help := cmd.UsageString()
 	help = fmt.Sprintf("%s\n\n%s", cmd.Short, help)
 	help = strings.Replace(help, "lets [command] --help", "lets help [command]", 1)
@@ -90,5 +91,5 @@ func runRoot(cmd *cobra.Command, version string) error {
 		return nil
 	}
 
-	return printHelpMessage(cmd)
+	return PrintHelpMessage(cmd)
 }

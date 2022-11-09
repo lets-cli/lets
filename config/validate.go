@@ -56,7 +56,7 @@ func validateDepends(cfg *config.Config) error {
 		cmd := cmd
 		err := cmd.Depends.Range(func(key string, value config.Dep) error {
 			dependency, exists := cfg.Commands[key]
-			
+
 			if !exists {
 				return fmt.Errorf(
 					"command '%s' depends on command '%s' which is not exist",

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/lets-cli/lets/checksum"
@@ -93,7 +94,11 @@ func (c *Command) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		c.SkipDocopts = true
 	}
 	c.Depends = cmd.Depends
-	c.WorkDir = cmd.WorkDir
+	workDir, err := filepath.Abs(cmd.WorkDir)
+	if err != nil {
+		return err
+	}
+	c.WorkDir = workDir
 	c.After = cmd.After
 	// TODO: checksum must be refactored, first name of var is misleading
 	if cmd.Checksum != nil {
@@ -127,7 +132,6 @@ func (c *Command) GetEnv(cfg Config) (map[string]string, error) {
 
 	return c.Env.Dump(), nil
 }
-
 
 func (c *Command) Clone() *Command {
 	cmd := &Command{

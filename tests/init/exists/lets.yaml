@@ -1,0 +1,4 @@
+shell: bash
+commands:
+  hi:
+    cmd: echo Hi
