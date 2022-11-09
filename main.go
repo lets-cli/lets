@@ -45,7 +45,10 @@ func main() {
 	}
 
 	if rootFlags.help {
-		cmd.PrintHelpMessage(rootCmd)
+		if err := cmd.PrintHelpMessage(rootCmd); err != nil {
+			log.Errorf("lets: print help error: %s", err)
+			os.Exit(1)
+		}
 		os.Exit(0)
 	}
 
@@ -117,7 +120,7 @@ type flags struct {
 }
 
 // We can not parse --config and --debug flags using cobra.Command.ParseFlags
-//  untill we read config and initialize all subcommands.
+//  until we read config and initialize all subcommands.
 //  Otherwise root command will parse all flags gready.
 // For example in 'lets --config lets.my.yaml mysubcommand --config=myconfig'
 //  cobra will parse all --config flags, but take only latest
@@ -171,7 +174,7 @@ func parseRootFlags(root *cobra.Command, args []string) (*flags, error) {
 			}
 		}
 
-		idx += 1
+		idx += 1 //nolint:revive,golint
 	}
 
 	return f, nil

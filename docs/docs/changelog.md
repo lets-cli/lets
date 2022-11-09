@@ -25,10 +25,12 @@ title: Changelog
   commands:
     hello: echo Hello
   ```
-* `[Added]` Add `-d` debug flags. It works same as `LETS_DEBUG=1` env variable. It can be specified as `-dd` (or `LETS_DEBUG=2`). Lets then prints more verbose logs.
+* `[Added]` Add `--debug` (`-d`) debug flag. It works same as `LETS_DEBUG=1` env variable. It can be specified as `-dd` (or `LETS_DEBUG=2`). Lets then prints more verbose logs.
+* `[Added]` Add `--config` `-c` flag. It works same as `LETS_CONFIG=<path to lets file>` env variable.
 * `[Added]` Add `LETS_CONFIG` env variable which contains lets config filename. Default is `lets.yaml`.
 * `[Added]` Add `LETS_CONFIG_DIR` env variable which contains absolute path to dir where lets config found.
 * `[Added]` Add `LETS_COMMAND_WORKDIR` env variable which contains absolute path to dir where `command.work_dir` points.
+* `[Added]` Add `init` directive to config. It is a script that will be executed only once before any other commands. It differs from `before` in a way that `before` is a script that is prepended to each command's script and thus will be execured every time a command executes.
 
 ## [0.0.49]
 

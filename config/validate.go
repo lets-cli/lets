@@ -73,7 +73,6 @@ func validateDepends(cfg *config.Config) error {
 
 			return nil
 		})
-
 		if err != nil {
 			return err
 		}

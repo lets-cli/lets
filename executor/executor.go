@@ -72,6 +72,12 @@ func ChildExecutorCtx(ctx *Context, command *config.Command) *Context {
 // Execute executes command and it depends recursively
 // Command can be executed in parallel.
 func (e *Executor) Execute(ctx *Context) error {
+	if e.cfg.Init != "" {
+		if err := e.runCmd(ctx, &config.Cmd{Script: e.cfg.Init}); err != nil {
+			return err
+		}
+	}
+
 	if ctx.command.Cmds.Parallel {
 		return e.executeParallel(ctx)
 	}

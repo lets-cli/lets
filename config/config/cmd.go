@@ -88,7 +88,7 @@ func (c Cmds) Clone() Cmds {
 	return cmds
 }
 
-// AppendArgs appends arguments to cmd script
+// AppendArgs appends arguments to cmd script.
 func (c Cmds) AppendArgs(args []string) {
 	if !c.Append {
 		return

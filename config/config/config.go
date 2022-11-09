@@ -22,7 +22,9 @@ type Config struct {
 	Commands Commands
 	Shell    string
 	// before is a script which will be included before every cmd
-	Before  string
+	Before string
+	// init is a script which will be called exactly once before any command calls
+	Init    string
 	Env     *Envs
 	Version string
 	isMixin bool // if true, we consider config as mixin and apply different parsing and validation
@@ -41,6 +43,7 @@ func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		Commands Commands
 		Shell    string
 		Before   string
+		Init     string
 		Env      *Envs
 		EvalEnv  *Envs `yaml:"eval_env"`
 	}
@@ -50,6 +53,7 @@ func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 
 	c.Version = string(config.Version)
+	c.Init = config.Init
 	c.Commands = config.Commands
 	if c.Commands == nil {
 		c.Commands = make(Commands, 0)
