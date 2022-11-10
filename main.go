@@ -53,6 +53,15 @@ func main() {
 		os.Exit(0)
 	}
 
+	// TODO add tests
+	if rootFlags.version {
+		if err := cmd.PrintVersionMessage(rootCmd); err != nil {
+			log.Errorf("lets: print version error: %s", err)
+			os.Exit(1)
+		}
+		os.Exit(0)
+	}
+
 	debugLevel := env.SetDebugLevel(rootFlags.debug)
 
 	if debugLevel > 0 {
@@ -115,9 +124,10 @@ func failOnConfigError(root *cobra.Command, current *cobra.Command) bool {
 }
 
 type flags struct {
-	config string
-	debug  int
-	help   bool
+	config  string
+	debug   int
+	help    bool
+	version bool
 }
 
 // We can not parse --config and --debug flags using cobra.Command.ParseFlags
@@ -134,9 +144,10 @@ func parseRootFlags(root *cobra.Command, args []string) (*flags, error) {
 	}
 
 	visited := map[string]bool{
-		"config": false,
-		"debug":  false,
-		"help":   false,
+		"config":  false,
+		"debug":   false,
+		"help":    false,
+		"version": false,
 	}
 
 	idx := 0
@@ -175,6 +186,11 @@ func parseRootFlags(root *cobra.Command, args []string) (*flags, error) {
 			if !visited["help"] {
 				f.help = true
 				visited["help"] = true
+			}
+		case "--version", "-v":
+			if !visited["version"] {
+				f.version = true
+				visited["version"] = true
 			}
 		}
 

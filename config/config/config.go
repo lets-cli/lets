@@ -59,16 +59,47 @@ func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		c.Commands = make(Commands, 0)
 	}
 
-	commandsFromRef := []*Command{}
+	c.Shell = config.Shell
+
+	if c.Shell == "" && !c.isMixin {
+		return errors.New("'shell' is required")
+	}
+
+	c.Before = config.Before
+	c.Env = config.Env
+
+	// support for deprecated eval_env
+	_ = config.EvalEnv.Range(func(name string, value Env) error {
+		c.Env.Set(name, Env{Name: name, Sh: value.Value})
+
+		return nil
+	})
 
 	for name, cmd := range c.Commands {
 		cmd.Name = name
+	}
 
+	if err := c.readMixins(config.Mixins); err != nil {
+		return err
+	}
+
+	if !c.isMixin {
+		if err := c.resolveRefs(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (c *Config) resolveRefs() error {
+	commandsFromRef := []*Command{}
+	for _, cmd := range c.Commands {
 		// resolve command by ref
 		if ref := cmd.ref; ref != nil {
 			command, exists := c.Commands[ref.Name]
 			if !exists {
-				return fmt.Errorf("ref points to command '%s' which is not exist", ref.Name)
+				return fmt.Errorf("ref '%s' points to command '%s' which is not exist", cmd.Name, ref.Name)
 			}
 
 			command = command.Clone()
@@ -91,26 +122,6 @@ func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		c.Commands[cmd.Name] = cmd
 	}
 
-	c.Shell = config.Shell
-
-	if c.Shell == "" && !c.isMixin {
-		return errors.New("'shell' is required")
-	}
-
-	c.Before = config.Before
-	c.Env = config.Env
-
-	// support for deprecated eval_env
-	_ = config.EvalEnv.Range(func(name string, value Env) error {
-		c.Env.Set(name, Env{Name: name, Sh: value.Value})
-
-		return nil
-	})
-
-	if err := c.readMixins(config.Mixins); err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -130,15 +141,16 @@ func joinBeforeScripts(beforeScripts ...string) string {
 
 // Merge main and mixin configs. If there is a conflict - return error as we do not override values.
 func (c *Config) mergeMixin(mixin *Config) error {
-	for _, mixinCmd := range mixin.Commands {
-		if _, conflict := c.Commands[mixinCmd.Name]; conflict {
+	for cmdName, cmd := range mixin.Commands {
+		if _, conflict := c.Commands[cmdName]; conflict {
 			return fmt.Errorf(
 				"command '%s' from mixin '%s' is already declared in main config's commands",
-				mixinCmd.Name, mixin.FilePath,
+				cmdName, mixin.FilePath,
 			)
 		}
 
-		c.Commands[mixinCmd.Name] = mixinCmd
+		cmd.Name = cmdName
+		c.Commands[cmdName] = cmd
 	}
 
 	err := mixin.Env.Range(func(key string, value Env) error {

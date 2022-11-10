@@ -97,7 +97,7 @@ commands:
 
       go build -ldflags="-X main.version=${VERSION:1}-dev" -o "${BIN}" *.go && \
       sudo mv ./${BIN} $PATH2LETSDEV/${BIN} && \
-      echo " - binary ${BIN} successfully installed in ${PATH2LETSDEV}"
+      echo " - binary ${BIN} version ${VERSION} successfully installed in ${PATH2LETSDEV}"
 
   publish-docs:
     work_dir: docs

@@ -59,6 +59,11 @@ func PrintHelpMessage(cmd *cobra.Command) error {
 	return err
 }
 
+func PrintVersionMessage(cmd *cobra.Command) error {
+	_, err := fmt.Fprintf(cmd.OutOrStdout(), "lets version %s\n", cmd.Version)
+	return err
+}
+
 func runRoot(cmd *cobra.Command, version string) error {
 	selfUpgrade, err := cmd.Flags().GetBool("upgrade")
 	if err != nil {

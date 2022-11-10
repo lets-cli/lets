@@ -1,9 +1,9 @@
 shell: bash
 
-commands:
-  hello:
-    cmd: echo Hello $@
+mixins:
+  - lets.mixin.yaml
 
+commands:
   hello-world:
     ref: hello
     args: World
