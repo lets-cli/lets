@@ -158,7 +158,7 @@ func (e *Executor) initCmd(ctx *Context) error {
 	cmd := ctx.command
 
 	if !cmd.SkipDocopts {
-		ctx.logger.Debug("parse docopt: docopt: %s, args: %s", cmd.Docopts, cmd.Args)
+		ctx.logger.Debug("parse docopt: %s, args: %s", cmd.Docopts, cmd.Args)
 		opts, err := docopt.Parse(cmd.Name, cmd.Args, cmd.Docopts)
 		if err != nil {
 			// TODO if accept_args, just continue with what we got
@@ -357,7 +357,7 @@ func (e *Executor) runCmd(ctx *Context, cmd *config.Cmd) error {
 }
 
 // Execute all commands from Cmds in parallel and wait for results.
-func (e *Executor) executeParallel(ctx *Context) (err error) {
+func (e *Executor) executeParallel(ctx *Context) error {
 	command := ctx.command
 
 	defer func() {
@@ -366,11 +366,11 @@ func (e *Executor) executeParallel(ctx *Context) (err error) {
 		}
 	}()
 
-	if err = e.initCmd(ctx); err != nil {
+	if err := e.initCmd(ctx); err != nil {
 		return err
 	}
 
-	if err = e.executeDepends(ctx); err != nil {
+	if err := e.executeDepends(ctx); err != nil {
 		return err
 	}
 
@@ -384,14 +384,14 @@ func (e *Executor) executeParallel(ctx *Context) (err error) {
 		})
 	}
 
-	if err = group.Wait(); err != nil {
+	if err := group.Wait(); err != nil {
 		return err //nolint:wrapcheck
 	}
 
 	// persist checksum only if exit code 0
-	if err = e.persistChecksum(ctx); err != nil {
+	if err := e.persistChecksum(ctx); err != nil {
 		return fmt.Errorf("persist checksum error in command '%s': %w", command.Name, err)
 	}
 
-	return err
+	return nil
 }

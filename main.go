@@ -131,10 +131,14 @@ type flags struct {
 }
 
 // We can not parse --config and --debug flags using cobra.Command.ParseFlags
-//  until we read config and initialize all subcommands.
-//  Otherwise root command will parse all flags gready.
+//
+//	until we read config and initialize all subcommands.
+//	Otherwise root command will parse all flags gready.
+//
 // For example in 'lets --config lets.my.yaml mysubcommand --config=myconfig'
-//  cobra will parse all --config flags, but take only latest
+//
+//	cobra will parse all --config flags, but take only latest
+//
 // --config=myconfig, and this is wrong.
 func parseRootFlags(root *cobra.Command, args []string) (*flags, error) {
 	f := &flags{}

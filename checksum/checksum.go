@@ -189,7 +189,7 @@ func persistOneChecksum(checksumsDir string, cmdName string, checksumName string
 		return fmt.Errorf("can not create checksum dir at %s: %w", checksumDirPath, err)
 	}
 
-	f, err := os.OpenFile(checksumFilePath, os.O_CREATE|os.O_WRONLY, 0o755)
+	f, err := os.OpenFile(checksumFilePath, os.O_CREATE|os.O_WRONLY, 0o755) //nolint:nosnakecase
 	if err != nil {
 		return fmt.Errorf("can not open file %s to persist checksum: %w", checksumFilePath, err)
 	}

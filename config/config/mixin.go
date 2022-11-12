@@ -48,7 +48,7 @@ func (rm *RemoteMixin) Path() string {
 }
 
 func (rm *RemoteMixin) persist(data []byte) error {
-	f, err := os.OpenFile(rm.Path(), os.O_CREATE|os.O_WRONLY, 0o755)
+	f, err := os.OpenFile(rm.Path(), os.O_CREATE|os.O_WRONLY, 0o755) //nolint:nosnakecase
 	if err != nil {
 		return fmt.Errorf("can not open file %s to persist mixin: %w", rm.Path(), err)
 	}
@@ -84,7 +84,7 @@ func (rm *RemoteMixin) download() ([]byte, error) {
 
 	req, err := http.NewRequestWithContext(
 		ctx,
-		"GET",
+		http.MethodGet,
 		rm.URL,
 		nil,
 	)
