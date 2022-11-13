@@ -27,6 +27,7 @@ linters:
     - nestif
     - nlreturn
     - goprintffuncname
+    - exhaustruct
 
 linters-settings:
   gomnd:

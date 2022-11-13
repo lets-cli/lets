@@ -202,23 +202,23 @@ func InitSubCommands(rootCmd *cobra.Command, conf *config.Config, out io.Writer)
 	}
 }
 
-func parseOnlyAndExclude(cmd *cobra.Command) (only []string, exclude []string, err error) {
-	onlyCmds, err := cmd.Parent().Flags().GetStringArray("only")
+func parseOnlyAndExclude(cmd *cobra.Command) ([]string, []string, error) {
+	only, err := cmd.Parent().Flags().GetStringArray("only")
 	if err != nil {
 		return []string{}, []string{}, fmt.Errorf("can not get flag 'only': %w", err)
 	}
 
-	excludeCmds, err := cmd.Parent().Flags().GetStringArray("exclude")
+	exclude, err := cmd.Parent().Flags().GetStringArray("exclude")
 	if err != nil {
 		return []string{}, []string{}, fmt.Errorf("can not get flag 'exclude': %w", err)
 	}
 
-	if len(excludeCmds) > 0 && len(onlyCmds) > 0 {
+	if len(exclude) > 0 && len(only) > 0 {
 		return []string{}, []string{}, fmt.Errorf(
 			"can not use '--only' and '--exclude' at the same time")
 	}
 
-	return onlyCmds, excludeCmds, nil
+	return only, exclude, nil
 }
 
 func parseEnvFlag(cmd *cobra.Command) (map[string]string, error) {

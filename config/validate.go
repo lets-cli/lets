@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/lets-cli/lets/config/config"
@@ -15,6 +16,10 @@ func validate(config *config.Config, letsVersion string) error {
 
 	if err := validateDepends(config); err != nil {
 		return err
+	}
+
+	if len(config.Commands) == 0 {
+		return errors.New("'commands' can not be empty")
 	}
 
 	return nil

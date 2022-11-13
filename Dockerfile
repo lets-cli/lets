@@ -22,6 +22,6 @@ COPY go.sum .
 
 RUN go mod download
 
-FROM golangci/golangci-lint:v1.45-alpine as linter
+FROM golangci/golangci-lint:v1.50-alpine as linter
 
 RUN mkdir -p /.cache && chmod -R 777 /.cache

@@ -9,8 +9,10 @@ import (
 )
 
 // aliases for docopt types.
-type Opts = dopt.Opts
-type Option = dopt.Option
+type (
+	Opts   = dopt.Opts
+	Option = dopt.Option
+)
 
 var docoptParser = &dopt.Parser{
 	HelpHandler:   dopt.NoHelpHandler,

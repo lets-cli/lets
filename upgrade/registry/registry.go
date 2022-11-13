@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os"
 	"path"
-	"strings"
 	"time"
 
 	"github.com/codeclysm/extract"
@@ -17,6 +16,11 @@ import (
 var archAdaptMap = map[string]string{
 	"386":   "i386",
 	"amd64": "x86_64",
+}
+
+var osMap = map[string]string{
+	"linux":  "Linux",
+	"darwin": "Darwin",
 }
 
 type RepoRegistry interface {
@@ -57,7 +61,7 @@ func (reg *GithubRegistry) GetDownloadURL(repoURI string, packageName string, ve
 }
 
 func (reg *GithubRegistry) GetPackageName(os string, arch string) (string, error) {
-	os = strings.Title(os)
+	os = osMap[os]
 
 	arch, archExists := archAdaptMap[arch]
 	if !archExists {
@@ -79,7 +83,7 @@ func (reg *GithubRegistry) DownloadReleaseBinary(
 
 	req, err := http.NewRequestWithContext(
 		ctx,
-		"GET",
+		http.MethodGet,
 		downloadURL,
 		nil,
 	)
@@ -146,7 +150,7 @@ func (reg *GithubRegistry) GetLatestRelease() (string, error) {
 
 	req, err := http.NewRequestWithContext(
 		ctx,
-		"GET",
+		http.MethodGet,
 		url,
 		nil,
 	)
