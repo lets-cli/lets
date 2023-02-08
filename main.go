@@ -45,14 +45,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	if rootFlags.help {
-		if err := cmd.PrintHelpMessage(rootCmd); err != nil {
-			log.Errorf("lets: print help error: %s", err)
-			os.Exit(1)
-		}
-		os.Exit(0)
-	}
-
 	// TODO add tests
 	if rootFlags.version {
 		if err := cmd.PrintVersionMessage(rootCmd); err != nil {
@@ -74,7 +66,7 @@ func main() {
 
 	cfg, err := config.Load(rootFlags.config, configDir, version)
 	if err != nil {
-		if failOnConfigError(rootCmd, command) {
+		if failOnConfigError(rootCmd, command, rootFlags) {
 			log.Errorf("lets: config error: %s", err)
 			os.Exit(1)
 		}
@@ -82,7 +74,17 @@ func main() {
 
 	if cfg != nil {
 		reinitCompletionCmd(cfg)
-		cmd.InitSubCommands(rootCmd, cfg, os.Stdout)
+		cmd.InitSubCommands(rootCmd, cfg, rootFlags.all, os.Stdout)
+	}
+
+	showUsage := rootFlags.help || (command.Name() == "help" && len(args) == 0)
+
+	if showUsage {
+		if err := cmd.PrintHelpMessage(rootCmd); err != nil {
+			log.Errorf("lets: print help error: %s", err)
+			os.Exit(1)
+		}
+		os.Exit(0)
 	}
 
 	if err := rootCmd.ExecuteContext(ctx); err != nil {
@@ -118,9 +120,10 @@ func getContext() context.Context {
 	return ctx
 }
 
-func failOnConfigError(root *cobra.Command, current *cobra.Command) bool {
+// do not fail on config error in it is help (-h, --help) or completion command
+func failOnConfigError(root *cobra.Command, current *cobra.Command, rootFlags *flags) bool {
 	rootCommands := set.NewSet("completion", "help")
-	return root.Flags().NFlag() == 0 && !rootCommands.Contains(current.Name())
+	return (root.Flags().NFlag() == 0 && !rootCommands.Contains(current.Name())) && !rootFlags.help
 }
 
 type flags struct {
@@ -128,6 +131,7 @@ type flags struct {
 	debug   int
 	help    bool
 	version bool
+	all     bool
 }
 
 // We can not parse --config and --debug flags using cobra.Command.ParseFlags
@@ -152,6 +156,7 @@ func parseRootFlags(root *cobra.Command, args []string) (*flags, error) {
 		"debug":   false,
 		"help":    false,
 		"version": false,
+		"all":     false,
 	}
 
 	idx := 0
@@ -195,6 +200,11 @@ func parseRootFlags(root *cobra.Command, args []string) (*flags, error) {
 			if !visited["version"] {
 				f.version = true
 				visited["version"] = true
+			}
+		case "--all":
+			if !visited["all"] {
+				f.all = true
+				visited["all"] = true
 			}
 		}
 

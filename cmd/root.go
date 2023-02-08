@@ -49,6 +49,7 @@ func initRootFlags(rootCmd *cobra.Command) {
 	rootCmd.Flags().Bool("no-depends", false, "skip 'depends' for running command")
 	rootCmd.Flags().CountP("debug", "d", "show debug logs (or use LETS_DEBUG=1). If used multiple times, shows more verbose logs") //nolint:lll
 	rootCmd.Flags().StringP("config", "c", "", "config file (default is lets.yaml)")
+	rootCmd.Flags().Bool("all", false, "show all commands (including the ones with _)")
 }
 
 func PrintHelpMessage(cmd *cobra.Command) error {

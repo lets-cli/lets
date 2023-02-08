@@ -31,7 +31,7 @@ func newTestRootCmdWithConfig(args []string) (rootCmd *cobra.Command, out *bytes
 	root.SetErr(bufOut)
 
 	InitCompletionCmd(root, cfg)
-	InitSubCommands(root, cfg, out)
+	InitSubCommands(root, cfg, true, out)
 
 	return root, bufOut
 }
