@@ -369,14 +369,37 @@ lets --only app run
 
 `type: string`
 
-Short description of command - shown in help message
+Short description of command - shown in help message.
+
+When used in `lets help` usage message the text will be stripped to `120` chars and only text up to first `\n` will be taken.
 
 Example:
 
 ```yaml
 commands:
-  test:
-    description: Test something
+  hello:
+    description: |
+      Say hello
+      Such a nice command.
+    options: |
+      Usage: lets hello <name> 
+    cmd: echo Hello ${LETSOPT_NAME}
+```
+
+In this case `Say hello` will be used in `lets help` message:
+
+```bash
+Available commands:
+  hello   Say hello
+```
+
+But whole `description` + `options` docopt will be printed in `lets help hello` message:
+
+```bash
+Say hello.
+Such a nice command.
+
+Usage: lets hello <name>
 ```
 
 ### `work_dir`
