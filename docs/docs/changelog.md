@@ -32,6 +32,7 @@ title: Changelog
   commands:
     hello: echo Hello
   ```
+* `[Added]` If command starts with `_` it is considered as a hidden command and will not be printed in help message unless `--all` root flag is provided.
 
 ## [0.0.49](https://github.com/lets-cli/lets/releases/tag/v0.0.49)
 

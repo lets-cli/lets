@@ -1,6 +1,10 @@
 shell: bash
 
 commands:
+  _x:
+    description: Hidden x
+    cmd: echo "x"
+
   foo:
     description: Print foo
     cmd: echo "Foo"

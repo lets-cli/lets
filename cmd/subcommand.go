@@ -145,11 +145,20 @@ func parseFlags(cmd *cobra.Command) (*cmdFlags, error) {
 	return flags, nil
 }
 
+func isHidden(cmdName string, showAll bool) bool {
+	if strings.HasPrefix(cmdName, "_") {
+		return !showAll
+	}
+
+	return false
+}
+
 // newSubcommand creates new cobra root subcommand from config.Command.
-func newSubcommand(command *config.Command, conf *config.Config, out io.Writer) *cobra.Command {
+func newSubcommand(command *config.Command, conf *config.Config, showAll bool, out io.Writer) *cobra.Command {
 	subCmd := &cobra.Command{
 		Use:   command.Name,
 		Short: short(command.Description),
+		Hidden: isHidden(command.Name, showAll),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			command.Args = append(command.Args, prepareArgs(command.Name, os.Args)...)
 			command.Cmds.AppendArgs(args)
@@ -196,9 +205,9 @@ func newSubcommand(command *config.Command, conf *config.Config, out io.Writer) 
 }
 
 // initialize all commands dynamically from config.
-func InitSubCommands(rootCmd *cobra.Command, conf *config.Config, out io.Writer) {
+func InitSubCommands(rootCmd *cobra.Command, conf *config.Config, showAll bool, out io.Writer) {
 	for _, cmdToRun := range conf.Commands {
-		rootCmd.AddCommand(newSubcommand(cmdToRun, conf, out))
+		rootCmd.AddCommand(newSubcommand(cmdToRun, conf, showAll, out))
 	}
 }
 
