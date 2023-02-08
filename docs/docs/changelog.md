@@ -8,7 +8,7 @@ title: Changelog
 * `[Dependency]` upgrade cobra to 1.6.0
 * `[Dependency]` upgrade logrus to 1.9.0
 * `[Fixed]` Removed builtin `--help` flag for subcommands. Now using `--help` will pass this flag to underlying `cmd` script.
-* `[Added]` Add `--debug` (`-d`) debug flag. It works same as `LETS_DEBUG=1` env variable. It can be specified as `-dd` (or `LETS_DEBUG=2`). Lets then prints more verbose logs.
+* `[Added]` Add `--debug` (`-d`) debug flag. It works same as `LETS_DEBUG=1` env variable. It can be specified as `-dd` (or `LETS_DEBUG=2`). Lets then prints more verbose logs. Also debug logs are nicer now.
 * `[Added]` Add `--config` `-c` flag. It works same as `LETS_CONFIG=<path to lets file>` env variable.
 * `[Added]` `LETS_CONFIG` env variable now present at command runtime, and contains lets config filename. Default is `lets.yaml`.
 * `[Added]` `LETS_CONFIG_DIR` env variable now present at command runtime, and contains absolute path to dir where lets config found.
