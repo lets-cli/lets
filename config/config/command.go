@@ -172,7 +172,8 @@ func (c *Command) Dump() string {
 func (c *Command) Help() string {
 	buf := new(bytes.Buffer)
 	if c.Description != "" {
-		buf.WriteString(fmt.Sprintf("%s\n\n", c.Description))
+		desc := strings.TrimSuffix(c.Description, "\n")
+		buf.WriteString(fmt.Sprintf("%s\n\n", desc))
 	}
 
 	if c.Docopts != "" {

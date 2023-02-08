@@ -1,0 +1,18 @@
+shell: bash
+
+commands:
+  test:
+    description: |
+      Run tests
+      Unit tests are essention for success.
+
+      Example: lets test
+    options: |
+      Usage: lets test [<test_name>]
+    cmd: echo "Tests"
+
+  test2:
+    description: Run tests
+    options: |
+      Usage: lets test2 [<test_name>]
+    cmd: echo "Tests"

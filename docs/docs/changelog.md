@@ -32,7 +32,8 @@ title: Changelog
   commands:
     hello: echo Hello
   ```
-* `[Added]` If command starts with `_` it is considered as a hidden command and will not be printed in help message unless `--all` root flag is provided.
+* `[Added]` If command starts with `_` it is considered *hidden* and will not be printed in help message unless `--all` root flag is provided.
+* `[Changed]` Improved rendering of `description` directive. When used in `lets help` usage message the text will be stripped to 120 chars and only text up to first `\n` will be taken. Thus help message will be rendered cosnsistently in width. It is still possible to have a lot of text in `description` and all this text will be used in `lets help [command]` help message. See [config reference for how help messages works](/docs/config#description)
 
 ## [0.0.49](https://github.com/lets-cli/lets/releases/tag/v0.0.49)
 
