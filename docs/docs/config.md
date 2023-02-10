@@ -7,8 +7,8 @@ title: Config reference
 * [mixins](#mixins)
 * [env](#global-env)
 * [eval_env](#global-eval_env)
-* [init](#init)
-* [before](#before)
+* [init](#global-init)
+* [before](#global-before)
 * [commands](#commands)
     * [description](#description)
     * [cmd](#cmd)
@@ -26,7 +26,7 @@ title: Config reference
 
 ## Top-level directives:
 
-### Version 
+### Version
 
 `key: version`
 
@@ -41,7 +41,7 @@ version: '0.0.20'
 ```
 
 
-### Shell 
+### Shell
 
 `key: shell`
 
@@ -57,7 +57,7 @@ Example:
 shell: bash
 ```
 
-### Global env 
+### Global env
 
 `key: env`
 
@@ -73,13 +73,13 @@ Example:
 shell: bash
 env:
   MY_GLOBAL_ENV: "123"
-  MY_GLOBAL_ENV_2: 
+  MY_GLOBAL_ENV_2:
     sh: echo "`id`"
   MY_GLOBAL_ENV_3:
     checksum: [Readme.md, package.json]
 ```
 
-### Global eval_env 
+### Global eval_env
 
 **`Deprecated`**
 
@@ -99,7 +99,7 @@ eval_env:
   CURRENT_UID: echo "`id -u`:`id -g`"
 ```
 
-### Global before 
+### Global before
 
 `key: before`
 
@@ -156,7 +156,7 @@ before: |
 
 commands:
   foo: echo Foo
-  bar: 
+  bar:
     depends: [foo]
     cmd: echo Bar
 ```
@@ -175,7 +175,7 @@ Bar
 
 `key: mixins`
 
-`type:` 
+`type:`
 - `list of strings`
 - `list of map`
 
@@ -205,7 +205,7 @@ mixins:
 commands:
   echo:
     cmd: echo Hi
-    
+
 # in test.yaml
 ...
 commands:
@@ -286,7 +286,7 @@ Alternatively command can be declared using the following directives:
 `key: cmd`
 
 ```
-type: 
+type:
   - string
   - array of strings
   - map of string => string (experimental)
@@ -326,7 +326,7 @@ Example array of strings:
 commands:
   test:
     description: Test something
-    cmd: 
+    cmd:
       - go
       - test
       - ./...
@@ -349,7 +349,7 @@ Example of map of string => string
 commands:
   run:
     description: Test something
-    cmd: 
+    cmd:
       app: npm run app
       nginx: docker-compose up nginx
       redis: docker-compsoe up redis
@@ -382,7 +382,7 @@ commands:
       Say hello
       Such a nice command.
     options: |
-      Usage: lets hello <name> 
+      Usage: lets hello <name>
     cmd: echo Hello ${LETSOPT_NAME}
 ```
 
@@ -438,7 +438,7 @@ commands:
   run-sh:
     shell: /bin/sh
     cmd: echo Hi
-    
+
   run-py:
     shell: python
     cmd: print('hi')
@@ -466,7 +466,7 @@ commands:
 
   run:
     description: Run app and services
-    cmd: 
+    cmd:
       app: node server.js
       redis: docker-compose up redis
     after: |
@@ -548,7 +548,7 @@ commands:
     cmd: go test ./... -v
 ```
 
-Running `lets test` will output: 
+Running `lets test` will output:
 
 ```bash
 # lets test
@@ -628,7 +628,7 @@ echo LETSCLI_DEBUG=${LETSCLI_DEBUG} # LETSCLI_DEBUG=--debug
 
 `type: mapping string => string or map with execution mode`
 
-Env is as simple as it sounds. Define additional env for a command: 
+Env is as simple as it sounds. Define additional env for a command:
 
 Env can be declared as static value or with execution mode:
 
@@ -686,13 +686,13 @@ Checksum used for computing file hashes. It is useful when you depend on some fi
 
 In `checksum` you can specify:
 
-- a list of file names 
+- a list of file names
 - a list of file regexp patterns (parsed via go `path/filepath.Glob`)
 
 or
 
 - a mapping where key is name of env variable and value is:
-    - a list of file names 
+    - a list of file names
     - a list of file regexp patterns (parsed via go `path/filepath.Glob`)
 
 Each time a command runs, `lets` will calculate the checksum of all files specified in `checksum`.
@@ -727,11 +727,11 @@ Example:
 shell: bash
 commands:
   app-build:
-    checksum: 
+    checksum:
       - requirements-*.txt
     cmd: |
       docker pull myrepo/app:${LETS_CHECKSUM}
-      docker run --rm myrepo/app${LETS_CHECKSUM} python -m app       
+      docker run --rm myrepo/app${LETS_CHECKSUM} python -m app
 ```
 
 
@@ -749,9 +749,9 @@ If set to `true`, each run all calculated checksums will be stored to disk.
 
 After each subsequent run `lets` will check if new checksum and stored checksum are different.
 
-Result of that check will be exposed via `LETS_CHECKSUM_CHANGED` and `LETS_CHECKSUM_[checksum-name]_CHANGED` env variables. 
+Result of that check will be exposed via `LETS_CHECKSUM_CHANGED` and `LETS_CHECKSUM_[checksum-name]_CHANGED` env variables.
 
-**IMPORTANT**: New checksum will override old checksum only if cmd has exit code **0** 
+**IMPORTANT**: New checksum will override old checksum only if cmd has exit code **0**
 
 `LETS_CHECKSUM_CHANGED` will be true after the very first execution, because when you first run command, there is no checksum yet, so we are calculating new checksum - that means that checksum has changed.
 
