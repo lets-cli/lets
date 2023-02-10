@@ -5,6 +5,8 @@ title: Changelog
 
 ## [Unreleased](https://github.com/lets-cli/lets/releases/tag/v0.0.X)
 
+## [0.0.50](https://github.com/lets-cli/lets/releases/tag/v0.0.50)
+
 * `[Dependency]` upgrade cobra to 1.6.0
 * `[Dependency]` upgrade logrus to 1.9.0
 * `[Fixed]` Removed builtin `--help` flag for subcommands. Now using `--help` will pass this flag to underlying `cmd` script.
