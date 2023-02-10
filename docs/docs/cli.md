@@ -8,6 +8,7 @@ title: CLI options
 |Option|Type|Default|Description|
 |------|:--:|:-----:|-----------|
 |`-E, --env`|`stringToString`||set env variable for running command KEY=VALUE (default [])|
+|`--all`|`bool`|false|show all commands (include hidden commands which start with `_`)|
 |`--init`|`bool`|false|creates a new lets.yaml in the current folder|
 |`--only`|`stringArray`||run only specified command(s) described in cmd as map|
 |`--exclude`|`stringArray`||run all but excluded command(s) described in cmd as map|

@@ -15,11 +15,11 @@ title: Changelog
 * `[Added]` `LETS_CONFIG` env variable now present at command runtime, and contains lets config filename. Default is `lets.yaml`.
 * `[Added]` `LETS_CONFIG_DIR` env variable now present at command runtime, and contains absolute path to dir where lets config found.
 * `[Added]` `LETS_COMMAND_WORKDIR` env variable now present at command runtime, and contains absolute path to dir where `command.work_dir` points.
-* `[Added]` Add `init` directive to config. It is a script that will be executed only once before any other commands. It differs from `before` in a way that `before` is a script that is prepended to each command's script and thus will be execured every time a command executes.
+* `[Added]` Add `init` directive to config. It is a script that will be executed only once before any other commands. It differs from `before` in a way that `before` is a script that is prepended to each command's script and thus will be execured every time a command executes. See [config reference for init](/docs/config#init)
 * `[Refactoring]` Config parsing is reimplemented using `UnmarhallYAML`. This ends up in reduced size and complexity of parsing code.
 * `[Refactoring]` `Command` now is clonable and this opened a possibility to reimplement `ref`, `depends` as map and `--no-depends` - now we clone a command and modify a brand new struct instead of mutating the same command (which was not safe).
 * `[Refactoring]` `Command.Cmd` script was replaced with `Cmds` struct which represents a list of `Cmd`. This allowed generalizing so-called cmd-as-map into a list of commands that will be executed in parallel (see `Executor.executeParallel`).
-* `[Refactoring]` Error reporting has changed in some places and if one is depending on particular error messages it probably will break.
+* `[Refactoring]` Error reporting has changed in some places and if one is depending on particular error messages it will probably reak.
 * `[Refactoring]` Simplified `Executor` by extracting commands filtering by `--only` and `--exclude` flags into `subcommand.go`.
 * `[Added]` Command short syntax. See [config reference for short syntax](/docs/config#short-syntax). Example:
 
