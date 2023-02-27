@@ -67,6 +67,9 @@ func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 	c.Before = config.Before
 	c.Env = config.Env
+	if c.Env == nil {
+		c.Env = &Envs{}
+	}
 
 	// support for deprecated eval_env
 	_ = config.EvalEnv.Range(func(name string, value Env) error {

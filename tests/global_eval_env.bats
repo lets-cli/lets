@@ -10,7 +10,5 @@ setup() {
     run lets global-eval_env
     assert_success
     assert_line --index 0 "ONE=1"
-    assert_line --index 1 "TWO=two"
-    assert_line --index 2 "THREE=3"
-    assert_line --index 3 "FROM_EVAL_ENV=computed in eval env"
+    assert_line --index 1 "TWO=2"
 }

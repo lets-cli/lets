@@ -1,11 +1,7 @@
 shell: bash
 
-env:
-  TWO: two
-  THREE: "3"
-
 eval_env:
-  FROM_EVAL_ENV: echo "computed in eval env"
+  TWO: echo "2"
 
 commands:
   global-eval_env:
@@ -15,5 +11,3 @@ commands:
     cmd: |
       echo ONE=${ONE}
       echo TWO=${TWO}
-      echo THREE=${THREE}
-      echo FROM_EVAL_ENV=${FROM_EVAL_ENV}
