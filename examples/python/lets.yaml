@@ -16,7 +16,7 @@ commands:
       - Dockerfile
     persist_checksum: true  
     cmd: |
-      if [[ ${LETS_CHECKSUM_CHANGED} ]]; then
+      if [[ "${LETS_CHECKSUM_CHANGED}" == "true" ]]; then
         docker build -t server . -f Dockerfile
       fi
 
