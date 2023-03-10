@@ -63,6 +63,7 @@ execute() {
 get_binaries() {
   case "$PLATFORM" in
     darwin/amd64) BINARIES="lets" ;;
+    darwin/arm64) BINARIES="lets" ;;
     linux/386) BINARIES="lets" ;;
     linux/amd64) BINARIES="lets" ;;
     *)
