@@ -9,7 +9,7 @@ require (
 	github.com/fatih/color v1.15.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/cobra v1.6.1
-	golang.org/x/sync v0.0.0-20200317015054-43a5402ce75a
+	golang.org/x/sync v0.1.0
 )
 
 require (
