@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/codeclysm/extract v2.2.0+incompatible
-	github.com/coreos/go-semver v0.3.0
+	github.com/coreos/go-semver v0.3.1
 	github.com/docopt/docopt-go v0.0.0-20180111231733-ee0de3bc6815
 	github.com/fatih/color v1.15.0
 	github.com/sirupsen/logrus v1.9.0
@@ -28,7 +28,6 @@ require (
 	golang.org/x/exp v0.0.0-20221028150844-83b7d23a625f
 	golang.org/x/sys v0.6.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b // indirect
-	gopkg.in/yaml.v2 v2.3.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1
 )
 
