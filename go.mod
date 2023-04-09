@@ -8,7 +8,7 @@ require (
 	github.com/docopt/docopt-go v0.0.0-20180111231733-ee0de3bc6815
 	github.com/fatih/color v1.15.0
 	github.com/sirupsen/logrus v1.9.0
-	github.com/spf13/cobra v1.6.1
+	github.com/spf13/cobra v1.7.0
 	golang.org/x/sync v0.0.0-20200317015054-43a5402ce75a
 )
 
@@ -19,7 +19,7 @@ require (
 
 require (
 	github.com/h2non/filetype v1.1.1 // indirect
-	github.com/inconshreveable/mousetrap v1.0.1 // indirect
+	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/juju/errors v0.0.0-20200330140219-3fe23663418f // indirect
 	github.com/juju/testing v0.0.0-20201216035041-2be42bba85f3 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
