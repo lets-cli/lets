@@ -78,6 +78,9 @@ func (c *Command) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	c.Cmds = cmd.Cmd
 	c.Description = cmd.Description
 	c.Env = cmd.Env
+	if c.Env == nil {
+		c.Env = &Envs{}
+	}
 
 	// support for deprecated eval_env
 	if !cmd.EvalEnv.Empty() {
