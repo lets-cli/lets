@@ -4,11 +4,11 @@ env:
   NAME: "John"
 
 commands:
-  say_hello_global:
+  say_hello_global_env:
     description: Say hello
     cmd: echo "Hello ${NAME}"
 
-  say_hello:
+  say_hello_command_env:
     description: Say hello
     env:
       NAME: Rick
@@ -17,3 +17,6 @@ commands:
   say_command:
     description: Say command name
     cmd: echo $LETS_COMMAND_NAME
+
+  print-foo:
+    cmd: echo FOO=${FOO}
