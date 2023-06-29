@@ -13,7 +13,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const zshCompletionText = `#compdef _lets lets
+const zshCompletionText = `#compdef lets
 
 LETS_EXECUTABLE=lets
 
@@ -59,6 +59,12 @@ _lets_command_options () {
 		_arguments -s $(${LETS_EXECUTABLE} completion --options=${cmd} --verbose)
 	fi
 }
+
+if ! command -v compinit >/dev/null; then
+    autoload -U compinit && compinit
+fi
+
+compdef _lets lets
 `
 
 const bashCompletionText = `_lets_completion() {
