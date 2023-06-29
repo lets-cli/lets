@@ -5,6 +5,10 @@ title: Changelog
 
 ## [Unreleased](https://github.com/lets-cli/lets/releases/tag/v0.0.X)
 
+## [0.0.51](https://github.com/lets-cli/lets/releases/tag/v0.0.51)
+
+* `[Fixed]` `-E` flag now overrides env not only when env variable already declared in command's `env`, but also it overrides env variables that declared in global `env`. Also it sets env variable even if no env variable was declared either in global or command's `env`.
+
 ## [0.0.50](https://github.com/lets-cli/lets/releases/tag/v0.0.50)
 
 * `[Dependency]` upgrade cobra to 1.6.0
