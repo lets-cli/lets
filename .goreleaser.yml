@@ -23,20 +23,21 @@ builds:
     - -X main.version={{.Version}}
 
 archives:
-- name_template: '{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}'
-  replacements:
-    darwin: Darwin
-    linux: Linux
-    windows: Windows
-    386: i386
-    amd64: x86_64
+- name_template: >-
+    {{ .ProjectName }}_
+    {{- title .Os }}_
+    {{- if eq .Arch "amd64" }}x86_64
+    {{- else if eq .Arch "386" }}i386
+    {{- else if eq .Arch "darwin" }}Darwin
+    {{- else if eq .Arch "linux" }}Linux
+    {{- else }}{{ .Arch }}{{ end }}
 
 brews:
   - name: lets
     description: "CLI task runner for productive developers - a better alternative to make"
     homepage: "https://lets-cli.org/"
     license: "MIT"
-    tap:
+    repository:
       owner: lets-cli
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
