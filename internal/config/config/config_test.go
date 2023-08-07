@@ -88,4 +88,26 @@ func TestParseConfig(t *testing.T) {
 			t.Errorf("config must not allow custom keywords")
 		}
 	})
+
+	t.Run("allow persist checksum with checksum cmd", func(t *testing.T) {
+		text := dedent.Dedent(`
+		shell: bash
+		commands:
+		  checksum-cmd:
+		    persist_checksum: true
+		    checksum_cmd: echo checksum
+		    cmd: echo ok
+		`)
+
+		cfg := ConfigFixture(t, text)
+		cmd := cfg.Commands["checksum-cmd"]
+
+		if !cmd.PersistChecksum {
+			t.Fatalf("expected persist_checksum to be enabled")
+		}
+
+		if cmd.ChecksumCmd != "echo checksum" {
+			t.Fatalf("wrong checksum_cmd. Expect: %s, got: %s", "echo checksum", cmd.ChecksumCmd)
+		}
+	})
 }

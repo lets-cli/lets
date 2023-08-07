@@ -156,6 +156,22 @@ func formatOptsUsageError(err error, opts docopt.Opts, cmdName string, rawOption
 	return fmt.Errorf("%s\n\n%s", errTpl, rawOptions)
 }
 
+func (e *Executor) shellForCommand(command *config.Command) string {
+	if command.Shell != "" {
+		return command.Shell
+	}
+
+	return e.cfg.Shell
+}
+
+func (e *Executor) workDirForCommand(command *config.Command) string {
+	if command.WorkDir != "" {
+		return command.WorkDir
+	}
+
+	return e.cfg.WorkDir
+}
+
 // Init Command before execution:
 // - parse docopt
 // - calculate checksum.
@@ -179,7 +195,7 @@ func (e *Executor) initCmd(ctx *Context) error {
 	}
 
 	// calculate checksum if needed
-	if err := cmd.ChecksumCalculator(e.cfg.WorkDir); err != nil {
+	if err := cmd.ChecksumCalculator(e.shellForCommand(cmd), e.workDirForCommand(cmd)); err != nil {
 		return fmt.Errorf("failed to calculate checksum for command '%s': %w", cmd.Name, err)
 	}
 
@@ -254,11 +270,7 @@ func (e *Executor) setupEnv(osCmd *exec.Cmd, command *config.Command, shell stri
 // Passing ctx will change behavior of program drastically - it will kill process if context will be canceled.
 func (e *Executor) newOsCommand(command *config.Command, cmdScript string) (*exec.Cmd, error) {
 	script := joinBeforeAndScript(e.cfg.Before, cmdScript)
-
-	shell := e.cfg.Shell
-	if command.Shell != "" {
-		shell = command.Shell
-	}
+	shell := e.shellForCommand(command)
 
 	args := []string{"-c", script}
 	if len(command.Args) > 0 {
@@ -277,10 +289,7 @@ func (e *Executor) newOsCommand(command *config.Command, cmdScript string) (*exe
 	osCmd.Stdin = os.Stdin
 
 	// set working directory for command
-	osCmd.Dir = e.cfg.WorkDir
-	if command.WorkDir != "" {
-		osCmd.Dir = command.WorkDir
-	}
+	osCmd.Dir = e.workDirForCommand(command)
 
 	if err := e.setupEnv(osCmd, command, shell); err != nil {
 		return nil, err

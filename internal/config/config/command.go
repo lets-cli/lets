@@ -36,6 +36,7 @@ type Command struct {
 	Depends         *Deps
 	ChecksumMap     map[string]string
 	PersistChecksum bool
+	ChecksumCmd     string
 	// args from 'lets run --debug' will become [--debug]
 	Args []string
 
@@ -73,7 +74,8 @@ func (c *Command) UnmarshalYAML(unmarshal func(any) error) error {
 		After           string
 		Ref             string
 		Checksum        *Checksum
-		PersistChecksum bool `yaml:"persist_checksum"`
+		ChecksumCmd     string `yaml:"checksum_cmd"`
+		PersistChecksum bool   `yaml:"persist_checksum"`
 	}
 
 	if err := unmarshal(&cmd); err != nil {
@@ -120,9 +122,13 @@ func (c *Command) UnmarshalYAML(unmarshal func(any) error) error {
 		c.ChecksumSources = *cmd.Checksum
 	}
 
+	if cmd.ChecksumCmd != "" {
+		c.ChecksumCmd = cmd.ChecksumCmd
+	}
+
 	c.PersistChecksum = cmd.PersistChecksum
-	if len(c.ChecksumSources) == 0 && c.PersistChecksum {
-		return errors.New("'persist_checksum' must be used with 'checksum'")
+	if len(c.ChecksumSources) == 0 && c.ChecksumCmd == "" && c.PersistChecksum {
+		return errors.New("'persist_checksum' must be used with 'checksum' or 'checksum_cmd'")
 	}
 
 	if cmd.Ref != "" {
@@ -189,6 +195,7 @@ func (c *Command) Clone() *Command {
 		Depends:            c.Depends.Clone(),
 		ChecksumMap:        cloneMap(c.ChecksumMap),
 		PersistChecksum:    c.PersistChecksum,
+		ChecksumCmd:        c.ChecksumCmd,
 		ChecksumSources:    cloneMapSlice(c.ChecksumSources),
 		persistedChecksums: cloneMap(c.persistedChecksums),
 		Args:               cloneSlice(c.Args),
@@ -227,7 +234,17 @@ func (c *Command) Help() string {
 	return strings.TrimSuffix(buf.String(), "\n")
 }
 
-func (c *Command) ChecksumCalculator(workDir string) error {
+func (c *Command) ChecksumCalculator(shell, workDir string) error {
+	if c.ChecksumCmd != "" {
+		checksumResult, err := checksum.CalculateChecksumFromCmd(shell, workDir, c.ChecksumCmd)
+		if err != nil {
+			return err
+		}
+		c.ChecksumMap = make(map[string]string, 1)
+		c.ChecksumMap[checksum.DefaultChecksumKey] = checksumResult
+		return nil
+	}
+
 	if len(c.ChecksumSources) == 0 {
 		return nil
 	}

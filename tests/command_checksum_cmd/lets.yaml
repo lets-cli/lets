@@ -1,0 +1,12 @@
+shell: sh
+
+commands:
+  checksum-cmd:
+    shell: bash
+    work_dir: project
+    persist_checksum: true
+    checksum_cmd: |
+      [[ -f checksum.txt ]] && cat checksum.txt
+    cmd: |
+      echo LETS_CHECKSUM=${LETS_CHECKSUM}
+      echo LETS_CHECKSUM_CHANGED=${LETS_CHECKSUM_CHANGED}

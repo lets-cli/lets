@@ -3,35 +3,25 @@ id: config
 title: Config reference
 ---
 
-- [Top-level directives:](#top-level-directives)
-  - [Version](#version)
-  - [Shell](#shell)
-  - [Global env](#global-env)
-  - [Global before](#global-before)
-  - [Global init](#global-init)
-    - [Conditional init](#conditional-init)
-  - [Mixins](#mixins)
-  - [Ignored mixins](#ignored-mixins)
-  - [Remote mixins `(experimental)`](#remote-mixins-experimental)
-  - [Commands](#commands)
-- [Command directives:](#command-directives)
-  - [Short syntax](#short-syntax)
-  - [`cmd`](#cmd)
-  - [`description`](#description)
-  - [`work_dir`](#work_dir)
-  - [`shell`](#shell-1)
-  - [`after`](#after)
-  - [`depends`](#depends)
-    - [Override arguments in depends command](#override-arguments-in-depends-command)
-  - [`options`](#options)
-  - [`env`](#env)
-  - [`checksum`](#checksum)
-  - [`persist_checksum`](#persist_checksum)
-  - [`ref`](#ref)
-  - [`args`](#args)
-  - [`group`](#group)
-- [Aliasing:](#aliasing)
-  - [Env aliasing](#env-aliasing)
+* [shell](#shell)
+* [mixins](#mixins)
+* [env](#global-env)
+* [eval_env](#global-eval_env)
+* [init](#global-init)
+* [before](#global-before)
+* [commands](#commands)
+    * [description](#description)
+    * [cmd](#cmd)
+    * [work_dir](#work_dir)
+    * [after](#after)
+    * [depends](#depends)
+    * [options](#options)
+    * [env](#env)
+    * [eval_env](#eval_env)
+    * [checksum](#checksum)
+    * [persist_checksum](#persist_checksum)
+    * [ref](#ref)
+    * [args](#args)
 
 
 ## Top-level directives:
@@ -843,6 +833,31 @@ commands:
       docker run --rm myrepo/app${LETS_CHECKSUM} python -m app
 ```
 
+### `checksum_cmd`
+
+`key: checksum_cmd`
+
+`type: string`
+
+Use `checksum_cmd` when checksum should come from a shell command instead of a list of files.
+
+The command runs with the same effective `shell` and `work_dir` as the command itself, so command-level overrides apply here too.
+
+Result then can be accessed via `LETS_CHECKSUM` env variable.
+
+Example:
+
+```yaml
+shell: sh
+
+commands:
+  build-image:
+    shell: bash
+    work_dir: backend
+    checksum_cmd: |
+      [[ -f package-lock.json ]] && sha1sum package-lock.json | cut -d' ' -f1
+    cmd: docker build -t myrepo/app:${LETS_CHECKSUM} .
+```
 
 ### `persist_checksum`
 
@@ -852,7 +867,7 @@ commands:
 
 This feature is useful when you want to know that something has changed between two executions of a command.
 
-`persist_checksum` can be used only if `checksum` declared for command.
+`persist_checksum` can be used only if `checksum` or `checksum_cmd` declared for command.
 
 If set to `true`, each run all calculated checksums will be stored to disk.
 
@@ -875,6 +890,19 @@ commands:
         - package.json
       doc:
         - Readme.md
+```
+
+`checksum_cmd` can be persisted too:
+
+```yaml
+commands:
+  build-image:
+    persist_checksum: true
+    checksum_cmd: git rev-parse HEAD
+    cmd: |
+      if [[ ${LETS_CHECKSUM_CHANGED} == true ]]; then
+        docker build -t myrepo/app:${LETS_CHECKSUM} .
+      fi
 ```
 
 Resulting env will be:
@@ -937,64 +965,3 @@ commands:
 
 `args` is used only with [ref](#ref) and allows to set additional positional args to referenced command. See [ref](#ref) example.
 
-
-### `group`
-
-`key: group`
-
-`type: string`
-
-Commands can be organized into groups for better readability in the help output. To assign a command to a group, use the `group` key:
-
-```yaml
-commands:
-  build:
-    group: Build & Deploy
-    description: Build the project
-    cmd: npm run build
-
-  deploy:
-    group: Build & Deploy
-    description: Deploy the project
-    cmd: npm run deploy
-
-  test:
-    group: Testing
-    description: Run tests
-    cmd: npm test
-```
-
-When you run `lets help`, commands will be listed under their respective groups, making it easier to find related commands.
-
-```
-Commands:
-
-  Build & Deploy
-    build       Build the project
-    deploy      Deploy the project
-
-  Testing
-    test        Run tests
-```
-
-
-## Aliasing:
-
-Lets supports YAML aliasing in various places in the config
-
-### Env aliasing
-
-You can define any mapping and alias it in `env` configuration:
-
-```yaml
-shell: bash
-
-.default-env: &default-env
-  FOO: BAR
-
-env:
-  <<: *default-env
-  HELLO: WORLD
-```
-
-This will merge `env` and `.default-env`. Any environment variables declarations after `<<: ` will override variables defined in aliased map.
