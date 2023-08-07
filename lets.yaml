@@ -115,3 +115,7 @@ commands:
   run-docs:
     work_dir: docs
     cmd: npm start
+
+  x:
+    checksum_cmd: echo xxx_checksum
+    cmd: echo checksum for x is ${LETS_CHECKSUM}

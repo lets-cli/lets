@@ -26,3 +26,4 @@ _lets
 coverage.out
 node_modules
 TODO
+.DS_Store

@@ -5,8 +5,10 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	"github.com/lets-cli/lets/set"
 	"github.com/lets-cli/lets/util"
@@ -97,6 +99,18 @@ func getChecksumsKeys(mapping map[string][]string) []string {
 	}
 
 	return keys
+}
+
+func CalculateChecksumFromCmd(shell string, workDir string, script string) (string, error) {
+	cmd := exec.Command(shell, "-c", script)
+
+	out, err := cmd.Output()
+	if err != nil {
+		return "", fmt.Errorf("can not calculate checksum from cmd: %s: %w", script, err)
+	}
+
+	res := string(out)
+	return strings.TrimSpace(res), nil
 }
 
 // CalculateChecksumFromSources calculates checksum from checksumSources.
