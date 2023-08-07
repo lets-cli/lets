@@ -173,7 +173,7 @@ func (e *Executor) initCmd(ctx *Context) error {
 	}
 
 	// calculate checksum if needed
-	if err := cmd.ChecksumCalculator(e.cfg.WorkDir); err != nil {
+	if err := cmd.ChecksumCalculator(e.cfg.Shell, e.cfg.WorkDir); err != nil {
 		return fmt.Errorf("failed to calculate checksum for command '%s': %w", cmd.Name, err)
 	}
 
