@@ -208,7 +208,7 @@ func (e *Executor) setupEnv(osCmd *exec.Cmd, command *config.Command, shell stri
 		"LETS_COMMAND_WORK_DIR": osCmd.Dir,
 		"LETS_CONFIG":           filepath.Base(e.cfg.FilePath),
 		"LETS_CONFIG_DIR":       filepath.Dir(e.cfg.FilePath),
-		"SHELL":                 shell,
+		"LETS_SHELL":                 shell,
 	}
 
 	checksumEnvMap := getChecksumEnvMap(command.ChecksumMap)

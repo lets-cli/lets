@@ -15,6 +15,7 @@
 # vendor/
 .idea
 .vscode
+!.vscode/launch.json
 .history
 dist
 
@@ -26,3 +27,6 @@ _lets
 coverage.out
 node_modules
 TODO
+
+.DS_Store
+__debug_bin*

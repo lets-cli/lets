@@ -3,4 +3,4 @@ shell: bash
 commands:
   show-shell:
     shell: /bin/sh
-    cmd: echo "$SHELL"
+    cmd: echo "$LETS_SHELL"
