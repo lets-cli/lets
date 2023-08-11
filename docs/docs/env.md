@@ -19,7 +19,7 @@ title: Environment
 * `LETS_COMMAND_WORK_DIR` - absolute path to `work_dir` specified in command.
 * `LETS_CONFIG` - absolute path to lets config file.
 * `LETS_CONFIG_DIR` - absolute path to lets config file firectory.
-* `SHELL` - shell from config or command.
+* `LETS_SHELL` - shell from config or command.
 * `LETSOPT_<>` - options parsed from command `options` (docopt string). E.g `lets run --env=prod --reload` will be `LETSOPT_ENV=prod` and `LETSOPT_RELOAD=true`
 * `LETSCLI_<>` - options which values is a options usage. E.g `lets run --env=prod --reload` will be `LETSCLI_ENV=--env=prod` and `LETSCLI_RELOAD=--reload`
 

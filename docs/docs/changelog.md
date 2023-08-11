@@ -5,6 +5,10 @@ title: Changelog
 
 ## [Unreleased](https://github.com/lets-cli/lets/releases/tag/v0.0.X)
 
+## [0.0.53](https://github.com/lets-cli/lets/releases/tag/v0.0.53)
+
+* `[Fixed]` change `SHELL` env to `LETS_SHELL` because setting system variable `SHELL` to just `bash` without full path to binary cases and error in some cases.
+
 ## [0.0.52](https://github.com/lets-cli/lets/releases/tag/v0.0.52)
 
 * `[Dependency]` update and pin goreleaser
