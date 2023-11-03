@@ -54,3 +54,8 @@ jobs:
           version: latest
       - name: Run lint
         run: lets lint
+      - name: Qodana Scan
+        uses: JetBrains/qodana-action@main
+        env:
+          QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
+            
