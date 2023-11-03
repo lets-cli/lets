@@ -119,11 +119,31 @@ func replaceBinaries(downloadPath string, executablePath string, backupPath stri
 	defer os.RemoveAll(downloadPath)
 	defer os.RemoveAll(backupPath)
 
-	err := os.Rename(downloadPath, executablePath)
-	if err != nil {
-		// restore original file from backup
-		err := os.Rename(backupPath, executablePath)
+	newBinary, err := os.Open(downloadPath)
+	defer newBinary.Close()
 
+	if err != nil {
+		return fmt.Errorf("failed to open new lets binary: %w", err)
+	}
+
+	currentBinary, err := os.OpenFile(executablePath, os.O_WRONLY, 0755)
+	defer currentBinary.Close()
+
+	if err != nil {
+		return fmt.Errorf("failed to open current lets binary: %w", err)
+	}
+
+	_, err = io.Copy(currentBinary, newBinary)
+	if err != nil {
+		backupBinary, err := os.Open(backupPath)
+		defer backupBinary.Close()
+
+		if err != nil {
+			return fmt.Errorf("failed to open backup lets binary: %w", err)
+		}
+
+		// restore original file from backup
+		_, err = io.Copy(currentBinary, backupBinary)
 		return fmt.Errorf("failed to update lets binary: %w", err)
 	}
 
