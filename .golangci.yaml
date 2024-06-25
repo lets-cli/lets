@@ -1,6 +1,6 @@
 run:
   tests: false
-  go: 1.18
+  go: 1.22
 
 linters:
   enable-all: true
