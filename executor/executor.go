@@ -37,8 +37,8 @@ func (e *ExecuteError) ExitCode() int {
 }
 
 type Executor struct {
-	cfg *config.Config
-	out io.Writer
+	cfg        *config.Config
+	out        io.Writer
 	initCalled bool
 }
 
