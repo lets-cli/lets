@@ -1,9 +1,11 @@
 shell: bash
 
 env:
-  ONE: 1
-  TWO: two
-  THREE: "3"
+  INT: 1
+  STR: "hi"
+  STR_INT: "1"
+  BOOL: true
+  ORIGINAL: "a"
   BAR:
     sh: echo Bar
   FOO:
@@ -13,11 +15,12 @@ commands:
   global-env:
     description: Test global env
     env:
-      FOUR: "4"
+      ORIGINAL: "b"
     cmd: |
-      echo ONE=${ONE}
-      echo TWO=${TWO}
-      echo THREE=${THREE}
-      echo FOUR=${FOUR}
+      echo INT=${INT}
+      echo STR=${STR}
+      echo STR_INT=${STR_INT}
+      echo BOOL=${BOOL}
+      echo ORIGINAL=${ORIGINAL}
       echo BAR=${BAR}
       echo FOO=${FOO}

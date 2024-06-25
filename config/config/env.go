@@ -36,12 +36,44 @@ func (e *Envs) UnmarshalYAML(node *yaml.Node) error {
 		keyNode := node.Content[i]
 		valueNode := node.Content[i+1]
 
-		var env Env
-		if err := valueNode.Decode(&env); err != nil {
+		envAsStr := ""
+
+		if err := valueNode.Decode(&envAsStr); err == nil {
+			e.Set(keyNode.Value, Env{Name: keyNode.Value, Value: envAsStr})
+			continue
+		}
+
+		envAsMap := struct {
+			Sh       *string
+			Checksum *Checksum
+		}{}
+
+		if err := valueNode.Decode(&envAsMap); err != nil {
 			return err
 		}
-		env.Name = keyNode.Value
-		e.Set(keyNode.Value, env)
+
+		env := Env{
+			Name:     keyNode.Value,
+			Value:    "",
+			Sh:       "",
+			Checksum: Checksum{},
+		}
+
+		if envAsMap.Sh == nil && envAsMap.Checksum == nil {
+			return fmt.Errorf("lets: environment variable '%s' must have value or 'sh' or 'checksum'", keyNode.Value)
+		}
+
+		if envAsMap.Sh != nil && envAsMap.Checksum != nil {
+			return fmt.Errorf("lets: environment variable '%s' must have only 'sh' or 'checksum'", keyNode.Value)
+		}
+
+		if envAsMap.Sh != nil {
+			env.Sh = *envAsMap.Sh
+		} else if envAsMap.Checksum != nil {
+			env.Checksum = *envAsMap.Checksum
+		}
+
+		e.Set(env.Name, env)
 	}
 
 	return nil

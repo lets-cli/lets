@@ -9,10 +9,11 @@ setup() {
 @test "global_env: should provide env to command" {
     run lets global-env
     assert_success
-    assert_line --index 0 "ONE=1"
-    assert_line --index 1 "TWO=two"
-    assert_line --index 2 "THREE=3"
-    assert_line --index 3 "FOUR=4"
-    assert_line --index 4 "BAR=Bar"
-    assert_line --index 5 "FOO=bb1da47569d9fbe3b5f2216fdbd4c9b040ccb5c1"
+    assert_line --index 0 "INT=1"
+    assert_line --index 1 "STR=hi"
+    assert_line --index 2 "STR_INT=1"
+    assert_line --index 3 "BOOL=true"
+    assert_line --index 4 "ORIGINAL=b"
+    assert_line --index 5 "BAR=Bar"
+    assert_line --index 6 "FOO=bb1da47569d9fbe3b5f2216fdbd4c9b040ccb5c1"
 }
