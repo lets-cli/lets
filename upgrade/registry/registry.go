@@ -16,6 +16,7 @@ import (
 var archAdaptMap = map[string]string{
 	"386":   "i386",
 	"amd64": "x86_64",
+	"arm64": "arm64",
 }
 
 var osMap = map[string]string{
@@ -63,12 +64,12 @@ func (reg *GithubRegistry) GetDownloadURL(repoURI string, packageName string, ve
 func (reg *GithubRegistry) GetPackageName(os string, arch string) (string, error) {
 	os = osMap[os]
 
-	arch, archExists := archAdaptMap[arch]
+	archAdapted, archExists := archAdaptMap[arch]
 	if !archExists {
-		return "", fmt.Errorf("arch %s is not supported", arch)
+		return "", fmt.Errorf("architechture '%s' is not supported", arch)
 	}
 
-	return fmt.Sprintf("lets_%s_%s", os, arch), nil
+	return fmt.Sprintf("lets_%s_%s", os, archAdapted), nil
 }
 
 func (reg *GithubRegistry) DownloadReleaseBinary(
