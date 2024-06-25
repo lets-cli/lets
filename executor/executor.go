@@ -39,6 +39,7 @@ func (e *ExecuteError) ExitCode() int {
 type Executor struct {
 	cfg *config.Config
 	out io.Writer
+	initCalled bool
 }
 
 func NewExecutor(cfg *config.Config, out io.Writer) *Executor {
@@ -72,7 +73,8 @@ func ChildExecutorCtx(ctx *Context, command *config.Command) *Context {
 // Execute executes command and it depends recursively
 // Command can be executed in parallel.
 func (e *Executor) Execute(ctx *Context) error {
-	if e.cfg.Init != "" {
+	if e.cfg.Init != "" && !e.initCalled {
+		e.initCalled = true
 		if err := e.runCmd(ctx, &config.Cmd{Script: e.cfg.Init}); err != nil {
 			return err
 		}
@@ -208,7 +210,7 @@ func (e *Executor) setupEnv(osCmd *exec.Cmd, command *config.Command, shell stri
 		"LETS_COMMAND_WORK_DIR": osCmd.Dir,
 		"LETS_CONFIG":           filepath.Base(e.cfg.FilePath),
 		"LETS_CONFIG_DIR":       filepath.Dir(e.cfg.FilePath),
-		"LETS_SHELL":                 shell,
+		"LETS_SHELL":            shell,
 	}
 
 	checksumEnvMap := getChecksumEnvMap(command.ChecksumMap)
