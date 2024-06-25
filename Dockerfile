@@ -1,4 +1,4 @@
-FROM golang:1.18.3-bullseye as builder
+FROM golang:1.22.4-bookworm as builder
 
 ENV GOPROXY https://proxy.golang.org
 WORKDIR /app
