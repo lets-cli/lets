@@ -5,6 +5,14 @@ title: Changelog
 
 ## [Unreleased](https://github.com/lets-cli/lets/releases/tag/v0.0.X)
 
+## [0.0.54](https://github.com/lets-cli/lets/releases/tag/v0.0.54)
+
+* `[Fixed]` `lets --init` now properly creates `lets.yaml`. Issue [#263](https://github.com/lets-cli/lets/issues/263)
+* `[Dependency]` update go to `1.22`
+* `[Fixed]` ensure `init` script does not get called twice. Issue [#256](https://github.com/lets-cli/lets/issues/256)
+* `[Fixed]` do not fail if `sh` in env is empty. Issue [#235](https://github.com/lets-cli/lets/issues/235)
+* `[Fixed]` support `arm64` in `lets --upgrade`. Issue [#254](https://github.com/lets-cli/lets/issues/254)
+
 ## [0.0.53](https://github.com/lets-cli/lets/releases/tag/v0.0.53)
 
 * `[Fixed]` change `SHELL` env to `LETS_SHELL` because setting system variable `SHELL` to just `bash` without full path to binary cases and error in some cases.
