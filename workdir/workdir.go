@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/lithammer/dedent"
 	log "github.com/sirupsen/logrus"
@@ -12,7 +13,7 @@ import (
 const dotLetsDir = ".lets"
 
 func getDefaltLetsConfig(version string) string {
-	return dedent.Dedent(fmt.Sprintf(`
+	template := dedent.Dedent(fmt.Sprintf(`
 	version: "%s"
 	shell: bash
 	commands:
@@ -25,6 +26,7 @@ func getDefaltLetsConfig(version string) string {
 	        lets hello Friend
 	    cmd: echo Hello, "${LETSOPT_NAME:-world}"!
 	`, version))
+	return strings.TrimLeft(template, "\n")
 }
 
 func GetDotLetsDir(workDir string) (string, error) {
