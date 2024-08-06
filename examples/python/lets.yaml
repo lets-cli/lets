@@ -26,17 +26,17 @@ commands:
     depends:
       - build-server
     cmd: |
-      docker-compose up server
+      docker compose up server
 
   postgres:
     description: Run postgres
-    cmd: docker-compose up postgres
+    cmd: docker compose up postgres
 
   ishell:
     description: Run ipython shell
     depends:
       - build-server
-    cmd: docker-compose run --rm -T ishell
+    cmd: docker compose run --rm -T ishell
 
   init-venv:
     description: Run to init python virtual env in this repo

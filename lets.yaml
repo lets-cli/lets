@@ -33,7 +33,8 @@ commands:
     description: Run unit tests
     depends: [build-lets-image]
     cmd:
-      - docker-compose
+      - docker
+      - compose
       - run
       - --rm
       - test
@@ -46,7 +47,7 @@ commands:
       Example:
         lets test-bats config_version.bats
         lets test-bats config_version.bats --opts="-f <regexp>"
-    cmd: docker-compose run --rm test-bats
+    cmd: docker compose run --rm test-bats
 
   test-completions:
     ref: test-bats
@@ -78,7 +79,7 @@ commands:
     description: Run golint-ci
     depends: [build-lint-image]
     cmd:
-      - docker-compose run --rm lint
+      - docker compose run --rm lint
 
   fmt:
     description: Run sfmt

@@ -14,6 +14,9 @@ import (
 	"github.com/lets-cli/lets/executor"
 	"github.com/lets-cli/lets/logging"
 	"github.com/lets-cli/lets/set"
+	"github.com/lets-cli/lets/upgrade"
+	"github.com/lets-cli/lets/upgrade/registry"
+	"github.com/lets-cli/lets/workdir"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -39,13 +42,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	rootFlags, err := parseRootFlags(rootCmd, args)
+	rootFlags, err := parseRootFlags(args)
 	if err != nil {
 		log.Errorf("lets: parse flags error: %s", err)
 		os.Exit(1)
 	}
 
-	// TODO add tests
 	if rootFlags.version {
 		if err := cmd.PrintVersionMessage(rootCmd); err != nil {
 			log.Errorf("lets: print version error: %s", err)
@@ -75,6 +77,34 @@ func main() {
 	if cfg != nil {
 		reinitCompletionCmd(cfg)
 		cmd.InitSubCommands(rootCmd, cfg, rootFlags.all, os.Stdout)
+	}
+
+	if rootFlags.init {
+		wd, err := os.Getwd()
+		if err == nil {
+			err = workdir.InitLetsFile(wd, version)
+		}
+
+		if err != nil {
+			log.Errorf("lets: can not create lets.yaml: %s", err)
+			os.Exit(1)
+		}
+
+		os.Exit(0)
+	}
+
+	if rootFlags.upgrade {
+		upgrader, err := upgrade.NewBinaryUpgrader(registry.NewGithubRegistry(ctx), version)
+		if err == nil {
+			err = upgrader.Upgrade()
+		}
+
+		if err != nil {
+			log.Errorf("lets: can not self-upgrade binary: %s", err)
+			os.Exit(1)
+		}
+
+		os.Exit(0)
 	}
 
 	showUsage := rootFlags.help || (command.Name() == "help" && len(args) == 0)
@@ -120,10 +150,10 @@ func getContext() context.Context {
 	return ctx
 }
 
-// do not fail on config error in it is help (-h, --help) or completion command
+// do not fail on config error in it is help (-h, --help) or --init or completion command
 func failOnConfigError(root *cobra.Command, current *cobra.Command, rootFlags *flags) bool {
 	rootCommands := set.NewSet("completion", "help")
-	return (root.Flags().NFlag() == 0 && !rootCommands.Contains(current.Name())) && !rootFlags.help
+	return (root.Flags().NFlag() == 0 && !rootCommands.Contains(current.Name())) && !rootFlags.help && !rootFlags.init
 }
 
 type flags struct {
@@ -132,6 +162,8 @@ type flags struct {
 	help    bool
 	version bool
 	all     bool
+	init    bool
+	upgrade bool
 }
 
 // We can not parse --config and --debug flags using cobra.Command.ParseFlags
@@ -144,19 +176,21 @@ type flags struct {
 //	cobra will parse all --config flags, but take only latest
 //
 // --config=myconfig, and this is wrong.
-func parseRootFlags(root *cobra.Command, args []string) (*flags, error) {
+func parseRootFlags(args []string) (*flags, error) {
 	f := &flags{}
 	// if first arg is not a flag, then it is subcommand
 	if len(args) > 0 && !strings.HasPrefix(args[0], "-") {
 		return f, nil
 	}
 
-	visited := map[string]bool{
-		"config":  false,
-		"debug":   false,
-		"help":    false,
-		"version": false,
-		"all":     false,
+	visited := set.NewSet[string]()
+
+	isFlagVisited := func(name string) bool {
+		if visited.Contains(name) {
+			return true
+		}
+		visited.Add(name)
+		return false
 	}
 
 	idx := 0
@@ -170,8 +204,7 @@ func parseRootFlags(root *cobra.Command, args []string) (*flags, error) {
 		name, value, found := strings.Cut(arg, "=")
 		switch name {
 		case "--config", "-c":
-			if !visited["config"] {
-				visited["config"] = true
+			if !isFlagVisited("config") {
 				if found {
 					if value == "" {
 						return nil, errors.New("--config must be set to value")
@@ -184,27 +217,31 @@ func parseRootFlags(root *cobra.Command, args []string) (*flags, error) {
 				}
 			}
 		case "--debug", "-d", "-dd":
-			if !visited["debug"] {
+			if !isFlagVisited("debug") {
 				f.debug = 1
 				if arg == "-dd" {
 					f.debug = 2
 				}
-				visited["debug"] = true
 			}
 		case "--help", "-h":
-			if !visited["help"] {
+			if !isFlagVisited("help") {
 				f.help = true
-				visited["help"] = true
 			}
 		case "--version", "-v":
-			if !visited["version"] {
+			if !isFlagVisited("version") {
 				f.version = true
-				visited["version"] = true
 			}
 		case "--all":
-			if !visited["all"] {
+			if !isFlagVisited("all") {
 				f.all = true
-				visited["all"] = true
+			}
+		case "--init":
+			if !isFlagVisited("init") {
+				f.init = true
+			}
+		case "--upgrade":
+			if !isFlagVisited("upgrade") {
+				f.upgrade = true
 			}
 		}
 
