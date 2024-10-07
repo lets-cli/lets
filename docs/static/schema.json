@@ -107,10 +107,7 @@
               "type": "string",
               "description": "A directory to run the command in."
             }
-          },
-          "required": [
-            "cmd"
-          ]
+          }
         }
       }
     }
