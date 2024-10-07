@@ -1,0 +1,170 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Lets yaml schema",
+  "description": "Schema for Lets files.",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "The version of the configuration."
+    },
+    "shell": {
+      "type": "string",
+      "description": "The shell to use for commands."
+    },
+    "mixins": {
+      "type": "array",
+      "description": "List of mixin files to include.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "env": {
+      "$ref": "#/definitions/env"
+    },
+    "before": {
+      "type": "string",
+      "description": "Commands to run before the main script."
+    },
+    "init": {
+      "type": "string",
+      "description": "Init script will be executed only once before any commands."
+    },
+    "commands": {
+      "type": "object",
+      "description": "Set of commands to execute.",
+      "patternProperties": {
+        "^[a-zA-Z][a-zA-Z0-9_:-]*$": {
+          "type": "object",
+          "properties": {
+            "description": {
+              "type": "string",
+              "description": "A description of the command."
+            },
+            "options": {
+              "type": "string",
+              "description": "Options for the command in docopt format."
+            },
+            "cmd": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "description": "Command as a string."
+                },
+                {
+                  "type": "array",
+                  "description": "Command as a list of strings.",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "object",
+                  "description": "Command as an object with key as named command and value as a script",
+                  "patternProperties": {
+                    "^[a-zA-Z_][a-zA-Z0-9_]*$": {
+                      "oneOf": [
+                        {
+                          "type": "string",
+                          "description": "Command as a string."
+                        },
+                        {
+                          "type": "array",
+                          "description": "Command as a list of strings.",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            "depends": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "persist_checksum": {
+              "type": "boolean"
+            },
+            "checksum": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "env": {
+              "$ref": "#/definitions/env"
+            },
+            "after": {
+              "type": "string",
+              "description": "A shell sctipt to run after the command."
+            },
+            "work_dir": {
+              "type": "string",
+              "description": "A directory to run the command in."
+            }
+          },
+          "required": [
+            "cmd"
+          ]
+        }
+      }
+    }
+  },
+  "required": [
+    "commands"
+  ],
+  "definitions": {
+    "env": {
+      "type": "object",
+      "description": "Environment variables to set.",
+      "patternProperties": {
+        "^[a-zA-Z_][a-zA-Z0-9_]*$": {
+          "oneOf": [
+            {
+              "type": "string",
+              "description": "Simple environment variable with a string value."
+            },
+            {
+              "type": "object",
+              "description": "Environment variable with a 'sh' key to run a shell command.",
+              "properties": {
+                "sh": {
+                  "type": "string",
+                  "description": "Shell command to execute."
+                }
+              },
+              "required": [
+                "sh"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "description": "Environment variable with a 'checksum' key to calculate checksum of all provided files.",
+              "properties": {
+                "checksum": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "List of files to calculate checksum."
+                }
+              },
+              "required": [
+                "checksum"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
