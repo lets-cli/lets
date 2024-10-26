@@ -35,79 +35,15 @@
       "description": "Set of commands to execute.",
       "patternProperties": {
         "^[a-zA-Z][a-zA-Z0-9_:-]*$": {
-          "type": "object",
-          "properties": {
-            "description": {
+          "oneOf": [
+            {
               "type": "string",
-              "description": "A description of the command."
+              "description": "Command as a string."
             },
-            "options": {
-              "type": "string",
-              "description": "Options for the command in docopt format."
-            },
-            "cmd": {
-              "oneOf": [
-                {
-                  "type": "string",
-                  "description": "Command as a string."
-                },
-                {
-                  "type": "array",
-                  "description": "Command as a list of strings.",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                {
-                  "type": "object",
-                  "description": "Command as an object with key as named command and value as a script",
-                  "patternProperties": {
-                    "^[a-zA-Z_][a-zA-Z0-9_]*$": {
-                      "oneOf": [
-                        {
-                          "type": "string",
-                          "description": "Command as a string."
-                        },
-                        {
-                          "type": "array",
-                          "description": "Command as a list of strings.",
-                          "items": {
-                            "type": "string"
-                          }
-                        }
-                      ]
-                    }
-                  }
-                }
-              ]
-            },
-            "depends": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            },
-            "persist_checksum": {
-              "type": "boolean"
-            },
-            "checksum": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            },
-            "env": {
-              "$ref": "#/definitions/env"
-            },
-            "after": {
-              "type": "string",
-              "description": "A shell sctipt to run after the command."
-            },
-            "work_dir": {
-              "type": "string",
-              "description": "A directory to run the command in."
+            {
+              "$ref": "#/definitions/command_object"
             }
-          }
+          ]
         }
       }
     }
@@ -116,6 +52,81 @@
     "commands"
   ],
   "definitions": {
+    "command_object": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "A description of the command."
+        },
+        "options": {
+          "type": "string",
+          "description": "Options for the command in docopt format."
+        },
+        "cmd": {
+          "oneOf": [
+            {
+              "type": "string",
+              "description": "Command as a string."
+            },
+            {
+              "type": "array",
+              "description": "Command as a list of strings.",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "object",
+              "description": "Command as an object with key as named command and value as a script",
+              "patternProperties": {
+                "^[a-zA-Z_][a-zA-Z0-9_]*$": {
+                  "oneOf": [
+                    {
+                      "type": "string",
+                      "description": "Command as a string."
+                    },
+                    {
+                      "type": "array",
+                      "description": "Command as a list of strings.",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "depends": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "persist_checksum": {
+          "type": "boolean"
+        },
+        "checksum": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "env": {
+          "$ref": "#/definitions/env"
+        },
+        "after": {
+          "type": "string",
+          "description": "A shell sctipt to run after the command."
+        },
+        "work_dir": {
+          "type": "string",
+          "description": "A directory to run the command in."
+        }
+      }
+    },
     "env": {
       "type": "object",
       "description": "Environment variables to set.",
