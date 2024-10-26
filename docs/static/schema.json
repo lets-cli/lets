@@ -16,7 +16,27 @@
       "type": "array",
       "description": "List of mixin files to include.",
       "items": {
-        "type": "string"
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "url": {
+                "type": "string",
+                "description": "URL to the mixin file."
+              },
+              "version": {
+                "type": "number",
+                "description": "Version of the mixin file."
+              }
+            },
+            "required": [
+              "url"
+            ]
+          }
+        ]
       }
     },
     "env": {
