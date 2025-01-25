@@ -45,6 +45,7 @@ func initRootFlags(rootCmd *cobra.Command) {
 	rootCmd.Flags().CountP("debug", "d", "show debug logs (or use LETS_DEBUG=1). If used multiple times, shows more verbose logs") //nolint:lll
 	rootCmd.Flags().StringP("config", "c", "", "config file (default is lets.yaml)")
 	rootCmd.Flags().Bool("all", false, "show all commands (including the ones with _)")
+	rootCmd.Flags().Bool("lsp", false, "run lsp server")
 }
 
 func PrintHelpMessage(cmd *cobra.Command) error {

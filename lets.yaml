@@ -109,6 +109,17 @@ commands:
       sudo mv ./${BIN} $PATH2LETSDEV/${BIN} && \
       echo " - binary ${BIN} version ${VERSION} successfully installed in ${PATH2LETSDEV}"
 
+  build:
+    description: Build lets from source code
+    options: |
+      Usage: lets build [<bin>]
+    cmd: |
+      VERSION=$(git describe)
+      BIN=${LETSOPT_BIN:-lets}
+
+      go build -ldflags="-X main.version=${VERSION:1}-dev" -o ${BIN} *.go && \
+      echo " - binary './${BIN}' (version ${VERSION}) successfully build"
+
   publish-docs:
     work_dir: docs
     cmd: npm run doc:deploy

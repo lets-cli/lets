@@ -14,6 +14,7 @@ import (
 	"github.com/lets-cli/lets/executor"
 	"github.com/lets-cli/lets/logging"
 	"github.com/lets-cli/lets/set"
+	"github.com/lets-cli/lets/lsp"
 	"github.com/lets-cli/lets/upgrade"
 	"github.com/lets-cli/lets/upgrade/registry"
 	"github.com/lets-cli/lets/workdir"
@@ -51,6 +52,14 @@ func main() {
 	if rootFlags.version {
 		if err := cmd.PrintVersionMessage(rootCmd); err != nil {
 			log.Errorf("lets: print version error: %s", err)
+			os.Exit(1)
+		}
+		os.Exit(0)
+	}
+
+	if rootFlags.lsp {
+		if err := lsp.Run(ctx, version); err != nil {
+			log.Errorf("lets: lsp error: %s", err)
 			os.Exit(1)
 		}
 		os.Exit(0)
@@ -164,6 +173,8 @@ type flags struct {
 	all     bool
 	init    bool
 	upgrade bool
+	// TODO: better to use subcommand  othervise we will have to use namespaced flags such as --lsp-log or --lsp-debug
+	lsp     bool
 }
 
 // We can not parse --config and --debug flags using cobra.Command.ParseFlags
@@ -242,6 +253,10 @@ func parseRootFlags(args []string) (*flags, error) {
 		case "--upgrade":
 			if !isFlagVisited("upgrade") {
 				f.upgrade = true
+			}
+		case "--lsp":
+			if !isFlagVisited("lsp") {
+				f.lsp = true
 			}
 		}
 
