@@ -1,10 +1,11 @@
 package lsp
 
 import (
-	"context"
+	// "fmt"
 
-	ts "github.com/smacker/go-tree-sitter"
-	"github.com/smacker/go-tree-sitter/yaml"
+	tree_sitter_yaml "github.com/tree-sitter-grammars/tree-sitter-yaml/bindings/go"
+	ts "github.com/tree-sitter/go-tree-sitter"
+
 	lsp "github.com/tliron/glsp/protocol_3_16"
 )
 
@@ -16,19 +17,19 @@ const (
 )
 
 func isCursorWithinNode(node *ts.Node, pos lsp.Position) bool {
-	return isCursorWithinNodePoints(node.StartPoint(), node.EndPoint(), pos)
+	return isCursorWithinNodePoints(node.StartPosition(), node.EndPosition(), pos)
 }
 
 func isCursorWithinNodePoints(startPoint, endPoint ts.Point, pos lsp.Position) bool {
-	if uint32(pos.Line) < startPoint.Row || uint32(pos.Line) > endPoint.Row {
+	if uint(pos.Line) < startPoint.Row || uint(pos.Line) > endPoint.Row {
 		return false
 	}
 
-	if uint32(pos.Line) == startPoint.Row && uint32(pos.Character) < startPoint.Column {
+	if uint(pos.Line) == startPoint.Row && uint(pos.Character) < startPoint.Column {
 		return false
 	}
 
-	if uint32(pos.Line) == endPoint.Row && uint32(pos.Character) > endPoint.Column {
+	if uint(pos.Line) == endPoint.Row && uint(pos.Character) > endPoint.Column {
 		return false
 	}
 
@@ -36,9 +37,9 @@ func isCursorWithinNodePoints(startPoint, endPoint ts.Point, pos lsp.Position) b
 }
 
 func isCursorAtLine(node *ts.Node, pos lsp.Position) bool {
-	startPoint := node.StartPoint()
-	endPoint := node.EndPoint()
-	return uint32(pos.Line) == startPoint.Row && uint32(pos.Line) == endPoint.Row
+	startPoint := node.StartPosition()
+	endPoint := node.EndPosition()
+	return uint(pos.Line) == startPoint.Row && uint(pos.Line) == endPoint.Row
 }
 
 func getPositionType(document *string, position lsp.Position) PositionType {
@@ -51,9 +52,16 @@ func getPositionType(document *string, position lsp.Position) PositionType {
 // TODO: handle errors ?
 func inMixinsPosition(document *string, position lsp.Position) bool {
 	parser := ts.NewParser()
-	parser.SetLanguage(yaml.GetLanguage())
+    defer parser.Close()
+	lang := ts.NewLanguage(tree_sitter_yaml.Language())
+    parser.SetLanguage(lang)
 
-	query, err := ts.NewQuery([]byte(`
+	docBytes := []byte(*document)
+
+    tree := parser.Parse(docBytes, nil)
+    defer tree.Close()
+
+	query, err := ts.NewQuery(lang, `
 		(block_mapping_pair
 			key: (flow_node) @key
 			value: (block_node
@@ -62,32 +70,31 @@ func inMixinsPosition(document *string, position lsp.Position) bool {
 						(flow_node) @value)))
 			(#eq? @key "mixins")
 		)
-	`), yaml.GetLanguage())
+	`)
 	if err != nil {
 		return false
 	}
 
-	docBytes := []byte(*document)
+	defer query.Close()
 
-	tree, err := parser.ParseCtx(context.Background(), nil, docBytes)
-	if err != nil {
-		return false
-	}
-	root := tree.RootNode()
+    root := tree.RootNode()
+    // fmt.Println(root.ToSexp())
 
 	cursor := ts.NewQueryCursor()
-	cursor.Exec(query, root)
+	defer cursor.Close()
+
+	matches := cursor.Matches(query, root, docBytes)
 
 	for {
-		match, ok := cursor.NextMatch()
-		if !ok {
+		match := matches.Next()
+		if match == nil {
 			break
 		}
 
 		for _, capture := range match.Captures {
 			if parent := capture.Node.Parent(); parent != nil {
-				nodeText := capture.Node.Content(docBytes)
-				if parent.Type() == "block_mapping_pair" &&
+				nodeText := capture.Node.Utf8Text(docBytes)
+				if parent.Kind() == "block_mapping_pair" &&
 				   string(nodeText) == "mixins" &&
 				   isCursorWithinNode(parent, position) {
 					return true
@@ -95,14 +102,22 @@ func inMixinsPosition(document *string, position lsp.Position) bool {
 			}
 		}
 	}
+
 	return false
 }
 
 func extractFilenameFromMixins(document *string, position lsp.Position) string {
 	parser := ts.NewParser()
-	parser.SetLanguage(yaml.GetLanguage())
+    defer parser.Close()
+	lang := ts.NewLanguage(tree_sitter_yaml.Language())
+    parser.SetLanguage(lang)
 
-	query, err := ts.NewQuery([]byte(`
+	docBytes := []byte(*document)
+
+    tree := parser.Parse(docBytes, nil)
+    defer tree.Close()
+
+	query, err := ts.NewQuery(lang, `
 		(block_mapping_pair
 			key: (flow_node) @key
 			value: (block_node
@@ -111,35 +126,33 @@ func extractFilenameFromMixins(document *string, position lsp.Position) string {
 						(flow_node) @value)))
 			(#eq? @key "mixins")
 		)
-	`), yaml.GetLanguage())
+	`)
 	if err != nil {
 		return ""
 	}
+	defer query.Close()
 
-	docBytes := []byte(*document)
-
-	tree, err := parser.ParseCtx(context.Background(), nil, docBytes)
-	if err != nil {
-		return ""
-	}
-	root := tree.RootNode()
+    root := tree.RootNode()
+    // fmt.Println(root.ToSexp())
 
 	cursor := ts.NewQueryCursor()
-	cursor.Exec(query, root)
+	defer cursor.Close()
+	matches := cursor.Matches(query, root, docBytes)
 
 	for {
-		match, ok := cursor.NextMatch()
-		if !ok {
+		match := matches.Next()
+		if match == nil {
 			break
 		}
 
 		for _, capture := range match.Captures {
 			if parent := capture.Node.Parent(); parent != nil {
-				if parent.Type() == "block_sequence_item" && isCursorAtLine(capture.Node, position) {
-					return capture.Node.Content(docBytes)
+				if parent.Kind() == "block_sequence_item" && isCursorAtLine(&capture.Node, position) {
+					return capture.Node.Utf8Text(docBytes)
 				}
 			}
 		}
 	}
+
 	return ""
 }

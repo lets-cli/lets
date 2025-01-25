@@ -3,8 +3,8 @@ package lsp
 import (
 	"testing"
 
+	ts "github.com/tree-sitter/go-tree-sitter"
 	lsp "github.com/tliron/glsp/protocol_3_16"
-	ts "github.com/smacker/go-tree-sitter"
 )
 
 
@@ -55,8 +55,6 @@ commands:
 		{lsp.Position{Line: 3, Character: 0}, false},
 	}
 
-	// parser := NewParser()
-
 	for i, tt := range tests {
 		got := inMixinsPosition(&doc, tt.pos)
 		if got != tt.want {
@@ -82,7 +80,6 @@ commands:
 		{lsp.Position{Line: 2, Character: 15}, "lets.my.yaml"},
 	}
 
-	// parser := NewPgccarser()
 	for i, tt := range tests {
 		result := extractFilenameFromMixins(&doc, tt.pos)
 		if result != tt.expected {

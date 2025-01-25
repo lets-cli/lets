@@ -5,46 +5,48 @@ import (
 
 	"github.com/lets-cli/lets/util"
 	"github.com/tliron/glsp"
-	protocol "github.com/tliron/glsp/protocol_3_16"
+	lsp "github.com/tliron/glsp/protocol_3_16"
 )
 
-func (s *lspServer) initialize(context *glsp.Context, params *protocol.InitializeParams) (any, error) {
+func (s *lspServer) initialize(context *glsp.Context, params *lsp.InitializeParams) (any, error) {
 	capabilities := handler.CreateServerCapabilities()
+	value := lsp.TextDocumentSyncKindFull
+	capabilities.TextDocumentSync.(*lsp.TextDocumentSyncOptions).Change = &value
 
-	return protocol.InitializeResult{
+	return lsp.InitializeResult{
 		Capabilities: capabilities,
-		ServerInfo: &protocol.InitializeResultServerInfo{
+		ServerInfo: &lsp.InitializeResultServerInfo{
 			Name:    lsName,
 			Version: &s.version,
 		},
 	}, nil
 }
 
-func (s *lspServer) initialized(context *glsp.Context, params *protocol.InitializedParams) error {
+func (s *lspServer) initialized(context *glsp.Context, params *lsp.InitializedParams) error {
 	return nil
 }
 
 func (s *lspServer) shutdown(context *glsp.Context) error {
-	protocol.SetTraceValue(protocol.TraceValueOff)
+	lsp.SetTraceValue(lsp.TraceValueOff)
 	return nil
 }
 
-func (s *lspServer) setTrace(context *glsp.Context, params *protocol.SetTraceParams) error {
-	protocol.SetTraceValue(params.Value)
+func (s *lspServer) setTrace(context *glsp.Context, params *lsp.SetTraceParams) error {
+	lsp.SetTraceValue(params.Value)
 	return nil
 }
 
-func (s *lspServer) textDocumentDidOpen(context *glsp.Context, params *protocol.DidOpenTextDocumentParams) error {
+func (s *lspServer) textDocumentDidOpen(context *glsp.Context, params *lsp.DidOpenTextDocumentParams) error {
 	s.storage.AddDocument(params.TextDocument.URI, params.TextDocument.Text)
 	return nil
 }
 
-func (s *lspServer) textDocumentDidChange(context *glsp.Context, params *protocol.DidChangeTextDocumentParams) error {
+func (s *lspServer) textDocumentDidChange(context *glsp.Context, params *lsp.DidChangeTextDocumentParams) error {
 	for _, change := range params.ContentChanges {
 		switch c := change.(type) {
-			case protocol.TextDocumentContentChangeEventWhole:
+			case lsp.TextDocumentContentChangeEventWhole:
 				s.storage.AddDocument(params.TextDocument.URI, c.Text)
-			case protocol.TextDocumentContentChangeEvent:
+			case lsp.TextDocumentContentChangeEvent:
 				return fmt.Errorf("incremental changes not supported")
 		}
 	}
@@ -53,7 +55,7 @@ func (s *lspServer) textDocumentDidChange(context *glsp.Context, params *protoco
 
 type DefinitionHandler struct {}
 
-func (h *DefinitionHandler) findMixinsDefinition(doc *string, params *protocol.DefinitionParams) (any, error) {
+func (h *DefinitionHandler) findMixinsDefinition(doc *string, params *lsp.DefinitionParams) (any, error) {
 	path := normalizePath(params.TextDocument.URI)
 	filename := extractFilenameFromMixins(doc, params.Position)
 	if filename == "" {
@@ -66,16 +68,16 @@ func (h *DefinitionHandler) findMixinsDefinition(doc *string, params *protocol.D
 		return nil, nil
 	}
 
-	return []protocol.Location{
+	return []lsp.Location{
 		{
 			URI: pathToUri(absFilename),
-			Range: protocol.Range{},
+			Range: lsp.Range{},
 		},
 	}, nil
 }
 
 // Returns: Location | []Location | []LocationLink | nil
-func (s *lspServer) textDocumentDefinition(context *glsp.Context, params *protocol.DefinitionParams) (any, error) {
+func (s *lspServer) textDocumentDefinition(context *glsp.Context, params *lsp.DefinitionParams) (any, error) {
 	definitionHandler := DefinitionHandler{}
 	doc := s.storage.GetDocument(params.TextDocument.URI)
 

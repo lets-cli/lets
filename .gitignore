@@ -21,6 +21,7 @@ dist
 
 # lets binary
 lets
+lets-dev
 .lets
 lets.my.yaml
 _lets

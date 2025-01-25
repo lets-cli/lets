@@ -1,31 +1,26 @@
 package lsp
 
 import (
-	// "log/slog"
-
 	"context"
 	"fmt"
 
 	"github.com/tliron/commonlog"
-	protocol "github.com/tliron/glsp/protocol_3_16"
+	lsp "github.com/tliron/glsp/protocol_3_16"
 	"github.com/tliron/glsp/server"
-	log "github.com/sirupsen/logrus"
-
-	// Must include a backend implementation
-	// See CommonLog for other options: https://github.com/tliron/commonlog
 	_ "github.com/tliron/commonlog/simple"
 )
 
 const lsName = "lets_ls"
 
 var (
-	handler protocol.Handler
+	handler lsp.Handler
 )
 
 type lspServer struct {
 	version string
 	server *server.Server
 	storage *storage
+	log commonlog.Logger
 }
 
 func (s *lspServer) Run() error {
@@ -33,13 +28,11 @@ func (s *lspServer) Run() error {
 }
 
 func Run(ctx context.Context, version string) error {
-	fmt.Println("lets: LSP server starting fmt")
 	commonlog.Configure(1, nil)
 	logger := commonlog.GetLogger(fmt.Sprintf("%s.parser", lsName))
-	logger.Info("lets: LSP server starting")
-	log.Info("lets: LSP server starting logrst")
+	logger.Info("Lets LSP server starting")
 
-	handler = protocol.Handler{}
+	handler = lsp.Handler{}
 
 	glspServer := server.NewServer(&handler, lsName, false)
 	glspServer.Context = ctx
@@ -48,6 +41,7 @@ func Run(ctx context.Context, version string) error {
 		version: version,
 		server: glspServer,
 		storage: newStorage(),
+		log: logger,
 	}
 
 	handler.Initialize = lspServer.initialize
