@@ -2,6 +2,7 @@ package lsp
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/lets-cli/lets/util"
 	"github.com/tliron/glsp"
@@ -10,8 +11,12 @@ import (
 
 func (s *lspServer) initialize(context *glsp.Context, params *lsp.InitializeParams) (any, error) {
 	capabilities := handler.CreateServerCapabilities()
-	value := lsp.TextDocumentSyncKindFull
-	capabilities.TextDocumentSync.(*lsp.TextDocumentSyncOptions).Change = &value
+	syncKind := lsp.TextDocumentSyncKindFull
+	capabilities.TextDocumentSync.(*lsp.TextDocumentSyncOptions).Change = &syncKind
+
+	capabilities.CompletionProvider = &lsp.CompletionOptions{
+		TriggerCharacters: []string{" ", "- ", "["},
+	}
 
 	return lsp.InitializeResult{
 		Capabilities: capabilities,
@@ -53,11 +58,13 @@ func (s *lspServer) textDocumentDidChange(context *glsp.Context, params *lsp.Did
 	return nil
 }
 
-type DefinitionHandler struct {}
+type definitionHandler struct {
+	parser *parser
+}
 
-func (h *DefinitionHandler) findMixinsDefinition(doc *string, params *lsp.DefinitionParams) (any, error) {
+func (h *definitionHandler) findMixinsDefinition(doc *string, params *lsp.DefinitionParams) (any, error) {
 	path := normalizePath(params.TextDocument.URI)
-	filename := extractFilenameFromMixins(doc, params.Position)
+	filename := h.parser.extractFilenameFromMixins(doc, params.Position)
 	if filename == "" {
 		return nil, nil
 	}
@@ -76,16 +83,66 @@ func (h *DefinitionHandler) findMixinsDefinition(doc *string, params *lsp.Defini
 	}, nil
 }
 
+type completionHandler struct {
+	parser *parser
+}
+
+func (h *completionHandler) buildDependsCompletions(doc *string, params *lsp.CompletionParams) ([]lsp.CompletionItem, error) {
+	commands := h.parser.getCommands(doc)
+	alreadyInDepends := h.parser.extractDependsValues(doc)
+	currentCommand := h.parser.getCurrentCommand(doc, params.Position)
+	items := []lsp.CompletionItem{}
+
+	keywordKind := lsp.CompletionItemKindKeyword
+
+	for _, cmd := range commands {
+		// do not suggest the current command
+		if currentCommand != nil && cmd.name == currentCommand.name {
+			continue
+		}
+		// do not suggest already included commands
+		if slices.Contains(alreadyInDepends, cmd.name) {
+			continue
+		}
+		items = append(items, lsp.CompletionItem{
+			Label: cmd.name,
+			Kind:  &keywordKind,
+		})
+	}
+
+	return items, nil
+}
+
 // Returns: Location | []Location | []LocationLink | nil
 func (s *lspServer) textDocumentDefinition(context *glsp.Context, params *lsp.DefinitionParams) (any, error) {
-	definitionHandler := DefinitionHandler{}
+	definitionHandler := definitionHandler{
+		parser: newParser(s.log),
+	}
 	doc := s.storage.GetDocument(params.TextDocument.URI)
 
-	switch getPositionType(doc, params.Position) {
+	p := newParser(s.log)
+	switch p.getPositionType(doc, params.Position) {
 		case PositionTypeMixins:
 			return definitionHandler.findMixinsDefinition(doc, params)
-		case PositionTypeNone:
+		default:
 			return nil, nil
 	}
-	return nil, nil
+}
+
+// Returns: []CompletionItem | CompletionList | nil
+func (s *lspServer) textDocumentCompletion(context *glsp.Context, params *lsp.CompletionParams) (any, error) {
+	completionHandler := completionHandler{
+		parser: newParser(s.log),
+	}
+	doc := s.storage.GetDocument(params.TextDocument.URI)
+
+	p := newParser(s.log)
+	pos := p.getPositionType(doc, params.Position)
+	s.log.Infof("Position type: %d", pos)
+	switch pos {
+		case PositionTypeDepends:
+			return completionHandler.buildDependsCompletions(doc, params)
+		default:
+			return []lsp.CompletionItem{}, nil
+	}
 }

@@ -1,12 +1,16 @@
 package lsp
 
 import (
+	"reflect"
 	"testing"
 
-	ts "github.com/tree-sitter/go-tree-sitter"
+	"github.com/tliron/commonlog"
 	lsp "github.com/tliron/glsp/protocol_3_16"
+	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
+
+var logger = commonlog.GetLogger("test")
 
 func TestIsCursorWithinNode(t *testing.T) {
 	tests := []struct {
@@ -42,7 +46,7 @@ mixins:
   - lets.my.yaml
 commands:
   test:
-	cmd: echo Test`
+    cmd: echo Test`
 
 	tests := []struct {
 		pos  lsp.Position
@@ -55,8 +59,9 @@ commands:
 		{lsp.Position{Line: 3, Character: 0}, false},
 	}
 
+	p := newParser(logger)
 	for i, tt := range tests {
-		got := inMixinsPosition(&doc, tt.pos)
+		got := p.inMixinsPosition(&doc, tt.pos)
 		if got != tt.want {
 			t.Errorf("case %d: got %v, want %v", i, got, tt.want)
 		}
@@ -69,7 +74,7 @@ mixins:
   - lets.my.yaml
 commands:
   test:
-	cmd: echo Test`
+    cmd: echo Test`
 
 	tests := []struct {
 		pos      lsp.Position
@@ -80,10 +85,206 @@ commands:
 		{lsp.Position{Line: 2, Character: 15}, "lets.my.yaml"},
 	}
 
+	p := newParser(logger)
 	for i, tt := range tests {
-		result := extractFilenameFromMixins(&doc, tt.pos)
+		result := p.extractFilenameFromMixins(&doc, tt.pos)
 		if result != tt.expected {
 			t.Errorf("Case %d: expected %v, actual %v", i, tt.expected, result)
 		}
+	}
+}
+
+func TestDetectDependsNodeIsArray(t *testing.T) {
+	doc := `shell: bash
+mixins:
+  - lets.my.yaml
+commands:
+  test:
+    cmd: echo Test
+
+  test2:
+    depends: [test]
+    cmd: echo Test2`
+
+	tests := []struct {
+		pos  lsp.Position
+		want bool
+	}{
+		{lsp.Position{Line: 8, Character: 15}, true},
+	}
+
+	p := newParser(logger)
+	for i, tt := range tests {
+		got := p.inDependsPosition(&doc, tt.pos)
+		if got != tt.want {
+			t.Errorf("case %d: expected %v, actual %v", i, tt.want, got)
+		}
+	}
+}
+
+func TestDetectDependsNodeIsSequence(t *testing.T) {
+	// NOTE: space after '-' in first depends sequence item is importanat,
+	// it is a curosor position
+	doc := `shell: bash
+mixins:
+  - lets.my.yaml
+commands:
+  test:
+    cmd: echo Test
+
+  test2:
+    depends:
+      - 
+    cmd: echo Test2`
+
+	tests := []struct {
+		pos  lsp.Position
+		want bool
+	}{
+		{lsp.Position{Line: 8, Character: 4}, false},
+		{lsp.Position{Line: 9, Character: 0}, true},
+		{lsp.Position{Line: 9, Character: 7}, true},
+		{lsp.Position{Line: 9, Character: 8}, true},
+		{lsp.Position{Line: 10, Character: 0}, false},
+	}
+
+	p := newParser(logger)
+	for i, tt := range tests {
+		got := p.inDependsPosition(&doc, tt.pos)
+		if got != tt.want {
+			t.Errorf("case %d: expected %v, actual %v", i, tt.want, got)
+		}
+	}
+}
+
+func TestDetectDependsNodeIsSequenceNextLine(t *testing.T) {
+	// NOTE: space after '-' in first depends sequence item is importanat,
+	// it is a curosor position
+	doc := `shell: bash
+mixins:
+  - lets.my.yaml
+commands:
+  test:
+    cmd: echo Test
+
+  test2:
+    depends:
+      - test
+      - 
+    cmd: echo Test2`
+
+	tests := []struct {
+		pos  lsp.Position
+		want bool
+	}{
+		{lsp.Position{Line: 8, Character: 4}, false},
+		{lsp.Position{Line: 9, Character: 0}, true},
+		{lsp.Position{Line: 10, Character: 0}, true},
+	}
+
+	p := newParser(logger)
+	for i, tt := range tests {
+		got := p.inDependsPosition(&doc, tt.pos)
+		if got != tt.want {
+			t.Errorf("case %d: expected %v, actual %v", i, tt.want, got)
+		}
+	}
+}
+
+func TestGetCommands(t *testing.T) {
+	doc := `shell: bash
+mixins:
+  - lets.my.yaml
+commands:
+  test:
+    cmd: echo Test
+  test2:
+    cmd: echo Test2`
+
+	p := newParser(logger)
+	commands := p.getCommands(&doc)
+	if len(commands) != 2 {
+		t.Errorf("expected 2 commands, got %d", len(commands))
+	}
+
+	expected := []Command{
+		{name: "test"},
+		{name: "test2"},
+	}
+
+	for i, cmd := range commands {
+		if cmd.name != expected[i].name {
+			t.Errorf("command %d: expected name %q, got %q", i, expected[i].name, cmd.name)
+		}
+	}
+}
+
+func TestGetCurrentCommandInDepends(t *testing.T) {
+	doc := `shell: bash
+mixins:
+  - lets.my.yaml
+commands:
+  test:
+    cmd: echo Test
+  test2:
+    cmd: echo Test2
+  test3:
+    depends: [test, ]
+    cmd: echo Test3`
+
+	p := newParser(logger)
+	command := p.getCurrentCommand(&doc, lsp.Position{Line: 9, Character: 20})
+	if command == nil {
+		t.Fatal("expected command, got nil")
+	}
+	if command.name != "test3" {
+		t.Errorf("expected command name 'test3', got %q", command.name)
+	}
+}
+
+func TestExractDependsValuesArray(t *testing.T) {
+	doc := `shell: bash
+mixins:
+  - lets.my.yaml
+commands:
+  test:
+    cmd: echo Test
+  test2:
+    cmd: echo Test2
+  test3:
+    depends: [test]
+    cmd: echo Test3`
+
+	p := newParser(logger)
+	values := p.extractDependsValues(&doc)
+	if len(values) == 0 {
+		t.Fatal("expected non-empty array")
+	if !reflect.DeepEqual(values, []string{"test"}) {
+		t.Errorf("expected array [test], got %v", values)
+	}
+	}
+}
+
+func TestExractDependsValuesSequence(t *testing.T) {
+	doc := `shell: bash
+mixins:
+  - lets.my.yaml
+commands:
+  test:
+    cmd: echo Test
+  test2:
+    cmd: echo Test2
+  test3:
+    depends:
+	  - test
+    cmd: echo Test3`
+
+	p := newParser(logger)
+	values := p.extractDependsValues(&doc)
+	if len(values) == 0 {
+		t.Fatal("expected non-empty array")
+	if !reflect.DeepEqual(values, []string{"test"}) {
+		t.Errorf("expected array [test], got %v", values)
+	}
 	}
 }

@@ -51,6 +51,7 @@ func Run(ctx context.Context, version string) error {
 	handler.TextDocumentDidOpen = lspServer.textDocumentDidOpen
 	handler.TextDocumentDidChange = lspServer.textDocumentDidChange
 	handler.TextDocumentDefinition = lspServer.textDocumentDefinition
+	handler.TextDocumentCompletion = lspServer.textDocumentCompletion
 
 	return lspServer.Run()
 }
