@@ -83,6 +83,41 @@ func (h *definitionHandler) findMixinsDefinition(doc *string, params *lsp.Defini
 	}, nil
 }
 
+func (h *definitionHandler) findCommandDefinition(doc *string, params *lsp.DefinitionParams) (any, error) {
+	line := getLine(doc, uint32(params.Position.Line))
+	if line == "" {
+		return nil, nil
+	}
+
+	word := wordUnderCursor(line, &params.Position)
+	if word == "" {
+		return nil, nil
+	}
+
+	command := h.parser.findCommand(doc, word)
+	if command == nil {
+		return nil, nil
+	}
+
+	// TODO: theoretically we can have multiple commands with the same name if we have mixins
+	return []lsp.Location{
+		{
+			// TODO: support commands in other files
+			URI: params.TextDocument.URI,
+			Range: lsp.Range{
+				Start: lsp.Position{
+					Line:      command.position.Line,
+					Character: 2, // TODO: do we have to assume indentation?
+				},
+				End: lsp.Position{
+					Line:      command.position.Line,
+					Character: 2, // TODO: do we need + len ?
+				},
+			},
+		},
+	}, nil
+}
+
 type completionHandler struct {
 	parser *parser
 }
@@ -121,9 +156,12 @@ func (s *lspServer) textDocumentDefinition(context *glsp.Context, params *lsp.De
 	doc := s.storage.GetDocument(params.TextDocument.URI)
 
 	p := newParser(s.log)
+
 	switch p.getPositionType(doc, params.Position) {
 	case PositionTypeMixins:
 		return definitionHandler.findMixinsDefinition(doc, params)
+	case PositionTypeDepends:
+		return definitionHandler.findCommandDefinition(doc, params)
 	default:
 		return nil, nil
 	}
@@ -137,9 +175,7 @@ func (s *lspServer) textDocumentCompletion(context *glsp.Context, params *lsp.Co
 	doc := s.storage.GetDocument(params.TextDocument.URI)
 
 	p := newParser(s.log)
-	pos := p.getPositionType(doc, params.Position)
-	s.log.Infof("Position type: %d", pos)
-	switch pos {
+	switch p.getPositionType(doc, params.Position) {
 	case PositionTypeDepends:
 		return completionHandler.buildDependsCompletions(doc, params)
 	default:

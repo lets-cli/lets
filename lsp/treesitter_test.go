@@ -256,11 +256,13 @@ commands:
 
 	p := newParser(logger)
 	values := p.extractDependsValues(&doc)
+
 	if len(values) == 0 {
 		t.Fatal("expected non-empty array")
-		if !reflect.DeepEqual(values, []string{"test"}) {
-			t.Errorf("expected array [test], got %v", values)
-		}
+	}
+
+	if !reflect.DeepEqual(values, []string{"test"}) {
+		t.Errorf("expected array [test], got %v", values)
 	}
 }
 
@@ -282,8 +284,72 @@ commands:
 	values := p.extractDependsValues(&doc)
 	if len(values) == 0 {
 		t.Fatal("expected non-empty array")
-		if !reflect.DeepEqual(values, []string{"test"}) {
-			t.Errorf("expected array [test], got %v", values)
+	}
+
+	if !reflect.DeepEqual(values, []string{"test"}) {
+		t.Errorf("expected array [test], got %v", values)
+	}
+}
+
+func TestFindCommand(t *testing.T) {
+	doc := `shell: bash
+mixins:
+  - lets.my.yaml
+commands:
+  test:
+    cmd: echo Test
+  test2:
+    depends:
+      - test
+    cmd: echo Test3`
+
+	expected := Command{
+		name: "test",
+		position: lsp.Position{
+			Line:      4,
+			Character: 2,
+		},
+	}
+
+	p := newParser(logger)
+	command := p.findCommand(&doc, "test")
+	if command == nil {
+		t.Fatal("expected non-nil command")
+	}
+
+	if command.name != expected.name {
+		t.Errorf("expected command name '%s', got %q", expected.name, command.name)
+	}
+
+	if command.position.Line != expected.position.Line {
+		t.Errorf("expected line %d, got %d", expected.position.Line, command.position.Line)
+	}
+	if command.position.Character != expected.position.Character {
+		t.Errorf("expected character %d, got %d", expected.position.Character, command.position.Character)
+	}
+}
+
+func TestWordUnderCursor(t *testing.T) {
+	tests := []struct {
+		line     string
+		position lsp.Position
+		want     string
+	}{
+		{"test word here", lsp.Position{Character: 0}, "test"},
+		{"test word here", lsp.Position{Character: 2}, "test"},
+		{"test word here", lsp.Position{Character: 5}, "word"},
+		{"test word here", lsp.Position{Character: 10}, "here"},
+		{"test-word_123", lsp.Position{Character: 5}, "test-word_123"},
+		{"", lsp.Position{Character: 0}, ""},
+		{"test", lsp.Position{Character: 10}, ""},
+		{"test word", lsp.Position{Character: 4}, "word"},
+		{"  test  ", lsp.Position{Character: 3}, "test"},
+	}
+
+	for i, tt := range tests {
+		got := wordUnderCursor(tt.line, &tt.position)
+		if got != tt.want {
+			t.Errorf("case %d: got %q, want %q", i, got, tt.want)
 		}
 	}
 }

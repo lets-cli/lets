@@ -1,6 +1,8 @@
 package lsp
 
 import (
+	"strings"
+
 	tree_sitter_yaml "github.com/tree-sitter-grammars/tree-sitter-yaml/bindings/go"
 	ts "github.com/tree-sitter/go-tree-sitter"
 
@@ -40,6 +42,42 @@ func isCursorAtLine(node *ts.Node, pos lsp.Position) bool {
 	startPoint := node.StartPosition()
 	endPoint := node.EndPosition()
 	return uint(pos.Line) == startPoint.Row && uint(pos.Line) == endPoint.Row
+}
+
+func getLine(document *string, line uint32) string {
+	lines := strings.Split(*document, "\n")
+	if line < 0 || line >= uint32(len(lines)) {
+		return ""
+	}
+	return lines[line]
+}
+
+func wordUnderCursor(line string, position *lsp.Position) string {
+	if len(line) == 0 {
+		return ""
+	}
+
+	lineText := line
+	if len(lineText) == 0 || int(position.Character) >= len(lineText) {
+		return ""
+	}
+
+	// Find word boundaries
+	start := uint32(position.Character)
+	for start > 0 && isWordChar(lineText[start-1]) {
+		start--
+	}
+
+	end := uint32(position.Character)
+	for end < uint32(len(lineText)) && isWordChar(lineText[end]) {
+		end++
+	}
+
+	return lineText[start:end]
+}
+
+func isWordChar(c byte) bool {
+	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_' || c == '-'
 }
 
 type parser struct {
@@ -232,6 +270,8 @@ func (p *parser) extractFilenameFromMixins(document *string, position lsp.Positi
 
 type Command struct {
 	name string
+	// TODO: maybe range will be more appropriate
+	position lsp.Position
 }
 
 func (p *parser) getCommands(document *string) []Command {
@@ -281,6 +321,10 @@ func (p *parser) getCommands(document *string) []Command {
 			if capture.Index == uint32(cmdKeyIndex) {
 				commands = append(commands, Command{
 					name: capture.Node.Utf8Text(docBytes),
+					position: lsp.Position{
+						Line:      uint32(capture.Node.StartPosition().Row),
+						Character: uint32(capture.Node.StartPosition().Column),
+					},
 				})
 			}
 		}
@@ -337,6 +381,67 @@ func (p *parser) getCurrentCommand(document *string, position lsp.Position) *Com
 			if key := capture.Node.ChildByFieldName("key"); key != nil {
 				return &Command{
 					name: key.Utf8Text(docBytes),
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func (p *parser) findCommand(document *string, commandName string) *Command {
+	parser := ts.NewParser()
+	defer parser.Close()
+	lang := ts.NewLanguage(tree_sitter_yaml.Language())
+	parser.SetLanguage(lang)
+
+	docBytes := []byte(*document)
+
+	tree := parser.Parse(docBytes, nil)
+	defer tree.Close()
+
+	query, err := ts.NewQuery(lang, `
+		(block_mapping_pair
+			key: (flow_node(plain_scalar(string_scalar)) @commands)
+			value: (block_node
+				(block_mapping
+					(block_mapping_pair
+						key: (flow_node
+							(plain_scalar
+								(string_scalar)) @cmd_key)
+						value: (block_node) @cmd_value)) @values)
+			(#eq? @commands "commands")
+		)
+	`)
+	if err != nil {
+		return nil
+	}
+	defer query.Close()
+
+	root := tree.RootNode()
+	cursor := ts.NewQueryCursor()
+	defer cursor.Close()
+	matches := cursor.Matches(query, root, docBytes)
+
+	cmdKeyIndex, _ := query.CaptureIndexForName("cmd_key")
+
+	for {
+		match := matches.Next()
+		if match == nil {
+			break
+		}
+
+		for _, capture := range match.Captures {
+			if capture.Index != uint32(cmdKeyIndex) {
+				continue
+			}
+			if capture.Node.Utf8Text(docBytes) == commandName {
+				return &Command{
+					name: commandName,
+					position: lsp.Position{
+						Line:      uint32(capture.Node.StartPosition().Row),
+						Character: uint32(capture.Node.StartPosition().Column),
+					},
 				}
 			}
 		}
