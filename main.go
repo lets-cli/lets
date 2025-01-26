@@ -13,8 +13,8 @@ import (
 	"github.com/lets-cli/lets/env"
 	"github.com/lets-cli/lets/executor"
 	"github.com/lets-cli/lets/logging"
-	"github.com/lets-cli/lets/set"
 	"github.com/lets-cli/lets/lsp"
+	"github.com/lets-cli/lets/set"
 	"github.com/lets-cli/lets/upgrade"
 	"github.com/lets-cli/lets/upgrade/registry"
 	"github.com/lets-cli/lets/workdir"
@@ -174,7 +174,7 @@ type flags struct {
 	init    bool
 	upgrade bool
 	// TODO: better to use subcommand  othervise we will have to use namespaced flags such as --lsp-log or --lsp-debug
-	lsp     bool
+	lsp bool
 }
 
 // We can not parse --config and --debug flags using cobra.Command.ParseFlags

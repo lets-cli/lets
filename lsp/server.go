@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/tliron/commonlog"
+	_ "github.com/tliron/commonlog/simple"
 	lsp "github.com/tliron/glsp/protocol_3_16"
 	"github.com/tliron/glsp/server"
-	_ "github.com/tliron/commonlog/simple"
 )
 
 const lsName = "lets_ls"
@@ -18,9 +18,9 @@ var (
 
 type lspServer struct {
 	version string
-	server *server.Server
+	server  *server.Server
 	storage *storage
-	log commonlog.Logger
+	log     commonlog.Logger
 }
 
 func (s *lspServer) Run() error {
@@ -39,9 +39,9 @@ func Run(ctx context.Context, version string) error {
 
 	lspServer := &lspServer{
 		version: version,
-		server: glspServer,
+		server:  glspServer,
 		storage: newStorage(),
-		log: logger,
+		log:     logger,
 	}
 
 	handler.Initialize = lspServer.initialize

@@ -49,10 +49,10 @@ func (s *lspServer) textDocumentDidOpen(context *glsp.Context, params *lsp.DidOp
 func (s *lspServer) textDocumentDidChange(context *glsp.Context, params *lsp.DidChangeTextDocumentParams) error {
 	for _, change := range params.ContentChanges {
 		switch c := change.(type) {
-			case lsp.TextDocumentContentChangeEventWhole:
-				s.storage.AddDocument(params.TextDocument.URI, c.Text)
-			case lsp.TextDocumentContentChangeEvent:
-				return fmt.Errorf("incremental changes not supported")
+		case lsp.TextDocumentContentChangeEventWhole:
+			s.storage.AddDocument(params.TextDocument.URI, c.Text)
+		case lsp.TextDocumentContentChangeEvent:
+			return fmt.Errorf("incremental changes not supported")
 		}
 	}
 	return nil
@@ -77,7 +77,7 @@ func (h *definitionHandler) findMixinsDefinition(doc *string, params *lsp.Defini
 
 	return []lsp.Location{
 		{
-			URI: pathToUri(absFilename),
+			URI:   pathToUri(absFilename),
 			Range: lsp.Range{},
 		},
 	}, nil
@@ -122,10 +122,10 @@ func (s *lspServer) textDocumentDefinition(context *glsp.Context, params *lsp.De
 
 	p := newParser(s.log)
 	switch p.getPositionType(doc, params.Position) {
-		case PositionTypeMixins:
-			return definitionHandler.findMixinsDefinition(doc, params)
-		default:
-			return nil, nil
+	case PositionTypeMixins:
+		return definitionHandler.findMixinsDefinition(doc, params)
+	default:
+		return nil, nil
 	}
 }
 
@@ -140,9 +140,9 @@ func (s *lspServer) textDocumentCompletion(context *glsp.Context, params *lsp.Co
 	pos := p.getPositionType(doc, params.Position)
 	s.log.Infof("Position type: %d", pos)
 	switch pos {
-		case PositionTypeDepends:
-			return completionHandler.buildDependsCompletions(doc, params)
-		default:
-			return []lsp.CompletionItem{}, nil
+	case PositionTypeDepends:
+		return completionHandler.buildDependsCompletions(doc, params)
+	default:
+		return []lsp.CompletionItem{}, nil
 	}
 }
