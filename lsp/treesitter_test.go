@@ -9,7 +9,6 @@ import (
 	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
-
 var logger = commonlog.GetLogger("test")
 
 func TestIsCursorWithinNode(t *testing.T) {
@@ -26,10 +25,10 @@ func TestIsCursorWithinNode(t *testing.T) {
 		{ts.Point{1, 0}, ts.Point{1, 10}, lsp.Position{Line: 1, Character: 11}, false}, // cursor outside
 
 		// Multiple line cases
-		{ts.Point{1, 0}, ts.Point{3, 10}, lsp.Position{Line: 2, Character: 10}, true},  // mid line, len <= end
-		{ts.Point{1, 0}, ts.Point{3, 10}, lsp.Position{Line: 2, Character: 15}, true},  // mid line, len > end
-		{ts.Point{1, 0}, ts.Point{3, 10}, lsp.Position{Line: 3, Character: 10}, true},  // at last line
-		{ts.Point{1, 0}, ts.Point{3, 10}, lsp.Position{Line: 4, Character: 1}, false},  // beyond node
+		{ts.Point{1, 0}, ts.Point{3, 10}, lsp.Position{Line: 2, Character: 10}, true}, // mid line, len <= end
+		{ts.Point{1, 0}, ts.Point{3, 10}, lsp.Position{Line: 2, Character: 15}, true}, // mid line, len > end
+		{ts.Point{1, 0}, ts.Point{3, 10}, lsp.Position{Line: 3, Character: 10}, true}, // at last line
+		{ts.Point{1, 0}, ts.Point{3, 10}, lsp.Position{Line: 4, Character: 1}, false}, // beyond node
 	}
 
 	for i, tt := range tests {
@@ -259,9 +258,9 @@ commands:
 	values := p.extractDependsValues(&doc)
 	if len(values) == 0 {
 		t.Fatal("expected non-empty array")
-	if !reflect.DeepEqual(values, []string{"test"}) {
-		t.Errorf("expected array [test], got %v", values)
-	}
+		if !reflect.DeepEqual(values, []string{"test"}) {
+			t.Errorf("expected array [test], got %v", values)
+		}
 	}
 }
 
@@ -276,15 +275,15 @@ commands:
     cmd: echo Test2
   test3:
     depends:
-	  - test
+      - test
     cmd: echo Test3`
 
 	p := newParser(logger)
 	values := p.extractDependsValues(&doc)
 	if len(values) == 0 {
 		t.Fatal("expected non-empty array")
-	if !reflect.DeepEqual(values, []string{"test"}) {
-		t.Errorf("expected array [test], got %v", values)
-	}
+		if !reflect.DeepEqual(values, []string{"test"}) {
+			t.Errorf("expected array [test], got %v", values)
+		}
 	}
 }

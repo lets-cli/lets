@@ -11,9 +11,9 @@ import (
 type PositionType int
 
 const (
-    PositionTypeMixins PositionType = iota
+	PositionTypeMixins PositionType = iota
 	PositionTypeDepends
-    PositionTypeNone
+	PositionTypeNone
 )
 
 func isCursorWithinNode(node *ts.Node, pos lsp.Position) bool {
@@ -63,14 +63,14 @@ func (p *parser) getPositionType(document *string, position lsp.Position) Positi
 
 func (p *parser) inMixinsPosition(document *string, position lsp.Position) bool {
 	parser := ts.NewParser()
-    defer parser.Close()
+	defer parser.Close()
 	lang := ts.NewLanguage(tree_sitter_yaml.Language())
-    parser.SetLanguage(lang)
+	parser.SetLanguage(lang)
 
 	docBytes := []byte(*document)
 
-    tree := parser.Parse(docBytes, nil)
-    defer tree.Close()
+	tree := parser.Parse(docBytes, nil)
+	defer tree.Close()
 
 	query, err := ts.NewQuery(lang, `
 		(block_mapping_pair
@@ -88,7 +88,7 @@ func (p *parser) inMixinsPosition(document *string, position lsp.Position) bool 
 
 	defer query.Close()
 
-    root := tree.RootNode()
+	root := tree.RootNode()
 
 	cursor := ts.NewQueryCursor()
 	defer cursor.Close()
@@ -105,8 +105,8 @@ func (p *parser) inMixinsPosition(document *string, position lsp.Position) bool 
 			if parent := capture.Node.Parent(); parent != nil {
 				nodeText := capture.Node.Utf8Text(docBytes)
 				if parent.Kind() == "block_mapping_pair" &&
-				   string(nodeText) == "mixins" &&
-				   isCursorWithinNode(parent, position) {
+					string(nodeText) == "mixins" &&
+					isCursorWithinNode(parent, position) {
 					return true
 				}
 			}
@@ -168,7 +168,7 @@ func (p *parser) inDependsPosition(document *string, position lsp.Position) bool
 				if isCursorWithinNode(&capture.Node, position) || isCursorAtLine(&capture.Node, position) {
 					return true
 				}
-			// if is an array
+				// if is an array
 			} else if nodeKind == "flow_sequence" || nodeKind == "flow_node" {
 				if isCursorWithinNode(&capture.Node, position) {
 					return true
@@ -182,14 +182,14 @@ func (p *parser) inDependsPosition(document *string, position lsp.Position) bool
 
 func (p *parser) extractFilenameFromMixins(document *string, position lsp.Position) string {
 	parser := ts.NewParser()
-    defer parser.Close()
+	defer parser.Close()
 	lang := ts.NewLanguage(tree_sitter_yaml.Language())
-    parser.SetLanguage(lang)
+	parser.SetLanguage(lang)
 
 	docBytes := []byte(*document)
 
-    tree := parser.Parse(docBytes, nil)
-    defer tree.Close()
+	tree := parser.Parse(docBytes, nil)
+	defer tree.Close()
 
 	query, err := ts.NewQuery(lang, `
 		(block_mapping_pair
@@ -206,8 +206,7 @@ func (p *parser) extractFilenameFromMixins(document *string, position lsp.Positi
 	}
 	defer query.Close()
 
-    root := tree.RootNode()
-    // fmt.Println(root.ToSexp())
+	root := tree.RootNode()
 
 	cursor := ts.NewQueryCursor()
 	defer cursor.Close()
@@ -360,11 +359,19 @@ func (p *parser) extractDependsValues(document *string) []string {
 	query, err := ts.NewQuery(lang, `
 		(block_mapping_pair
 			key: (flow_node) @key
-			value: (flow_node
-				(flow_sequence
-					(flow_node
-						(plain_scalar
-							(string_scalar) @value))))
+			value: [
+				(flow_node
+					(flow_sequence
+						(flow_node
+							(plain_scalar
+								(string_scalar) @value))))
+				(block_node
+					(block_sequence
+						(block_sequence_item
+							(flow_node
+								(plain_scalar
+									(string_scalar) @value)))))
+			]
 			(#eq? @key "depends")
 		)
 	`)
