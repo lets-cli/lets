@@ -2,8 +2,6 @@ package lsp
 
 import (
 	"context"
-	"fmt"
-
 	"github.com/tliron/commonlog"
 	_ "github.com/tliron/commonlog/simple"
 	lsp "github.com/tliron/glsp/protocol_3_16"
@@ -29,8 +27,8 @@ func (s *lspServer) Run() error {
 
 func Run(ctx context.Context, version string) error {
 	commonlog.Configure(1, nil)
-	logger := commonlog.GetLogger(fmt.Sprintf("%s.parser", lsName))
-	logger.Info("Lets LSP server starting")
+	logger := commonlog.GetLogger(lsName)
+	logger.Infof("Lets LSP server starting %s", version)
 
 	handler = lsp.Handler{}
 

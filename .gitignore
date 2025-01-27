@@ -28,6 +28,7 @@ _lets
 coverage.out
 node_modules
 TODO
+TODO.md
 
 .DS_Store
 __debug_bin*

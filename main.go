@@ -13,7 +13,6 @@ import (
 	"github.com/lets-cli/lets/env"
 	"github.com/lets-cli/lets/executor"
 	"github.com/lets-cli/lets/logging"
-	"github.com/lets-cli/lets/lsp"
 	"github.com/lets-cli/lets/set"
 	"github.com/lets-cli/lets/upgrade"
 	"github.com/lets-cli/lets/upgrade/registry"
@@ -35,6 +34,7 @@ func main() {
 	rootCmd.InitDefaultHelpFlag()
 	rootCmd.InitDefaultVersionFlag()
 	reinitCompletionCmd := cmd.InitCompletionCmd(rootCmd, nil)
+	cmd.InitSelfCmd(rootCmd, version)
 	rootCmd.InitDefaultHelpCmd()
 
 	command, args, err := rootCmd.Traverse(os.Args[1:])
@@ -52,14 +52,6 @@ func main() {
 	if rootFlags.version {
 		if err := cmd.PrintVersionMessage(rootCmd); err != nil {
 			log.Errorf("lets: print version error: %s", err)
-			os.Exit(1)
-		}
-		os.Exit(0)
-	}
-
-	if rootFlags.lsp {
-		if err := lsp.Run(ctx, version); err != nil {
-			log.Errorf("lets: lsp error: %s", err)
 			os.Exit(1)
 		}
 		os.Exit(0)
@@ -161,7 +153,7 @@ func getContext() context.Context {
 
 // do not fail on config error in it is help (-h, --help) or --init or completion command
 func failOnConfigError(root *cobra.Command, current *cobra.Command, rootFlags *flags) bool {
-	rootCommands := set.NewSet("completion", "help")
+	rootCommands := set.NewSet("completion", "help", "lsp")
 	return (root.Flags().NFlag() == 0 && !rootCommands.Contains(current.Name())) && !rootFlags.help && !rootFlags.init
 }
 
@@ -173,8 +165,6 @@ type flags struct {
 	all     bool
 	init    bool
 	upgrade bool
-	// TODO: better to use subcommand  othervise we will have to use namespaced flags such as --lsp-log or --lsp-debug
-	lsp bool
 }
 
 // We can not parse --config and --debug flags using cobra.Command.ParseFlags
@@ -253,10 +243,6 @@ func parseRootFlags(args []string) (*flags, error) {
 		case "--upgrade":
 			if !isFlagVisited("upgrade") {
 				f.upgrade = true
-			}
-		case "--lsp":
-			if !isFlagVisited("lsp") {
-				f.lsp = true
 			}
 		}
 
