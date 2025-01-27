@@ -176,7 +176,7 @@ func (c *Command) Help() string {
 	buf := new(bytes.Buffer)
 	if c.Description != "" {
 		desc := strings.TrimSuffix(c.Description, "\n")
-		buf.WriteString(fmt.Sprintf("%s\n\n", desc))
+		buf.WriteString(desc + "\n\n")
 	}
 
 	if c.Docopts != "" {

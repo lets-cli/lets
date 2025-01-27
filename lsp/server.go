@@ -2,6 +2,7 @@ package lsp
 
 import (
 	"context"
+
 	"github.com/tliron/commonlog"
 	_ "github.com/tliron/commonlog/simple"
 	lsp "github.com/tliron/glsp/protocol_3_16"
@@ -10,9 +11,7 @@ import (
 
 const lsName = "lets_ls"
 
-var (
-	handler lsp.Handler
-)
+var handler lsp.Handler
 
 type lspServer struct {
 	version string

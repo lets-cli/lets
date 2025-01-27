@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// UriToPath converts a file:// URI to a path
+// UriToPath converts a file:// URI to a path.
 func uriToPath(uri string) string {
 	if strings.HasPrefix(uri, "file://") {
 		return uri[7:]
@@ -13,8 +13,8 @@ func uriToPath(uri string) string {
 	return uri
 }
 
-// PathToUri converts a path to a file:// URI
-func pathToUri(path string) string {
+// pathToURI converts a path to a file:// URI.
+func pathToURI(path string) string {
 	if strings.HasPrefix(path, "file://") {
 		return path
 	}
@@ -25,17 +25,15 @@ func getCanonicalPath(path string) string {
 	path = filepath.Clean(path)
 
 	resolvedPath, err := filepath.EvalSymlinks(path)
-	if err != nil {
-		//fs.logger.Err(err)
-	} else {
+	if err == nil {
 		path = resolvedPath
 	}
 
 	return path
 }
 
-func normalizePath(pathOrUri string) string {
-	path := uriToPath(pathOrUri)
+func normalizePath(pathOrURI string) string {
+	path := uriToPath(pathOrURI)
 	return getCanonicalPath(path)
 }
 

@@ -28,12 +28,21 @@ linters:
     - nlreturn
     - goprintffuncname
     - exhaustruct
+    - wastedassign
+    - nilnil
+    - recvcheck
+    - musttag
+    - mnd
+    - lll
+    - gocritic
+    - forcetypeassert
+    - exhaustive
+    - depguard
+    - revive
+    - gosec
+    - copyloopvar
 
 linters-settings:
-  gomnd:
-    settings:
-      mnd:
-        checks: case,condition,return
   lll:
     line-length: 120
   varnamelen:

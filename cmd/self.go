@@ -5,11 +5,11 @@ import (
 )
 
 // InitSelfCmd intializes root 'self' subcommand.
-func InitSelfCmd(rootCmd *cobra.Command, version string) error {
+func InitSelfCmd(rootCmd *cobra.Command, version string) {
 	selfCmd := &cobra.Command{
 		Use:    "self",
-		Hidden: true,
-		Short:  "Entrypoint command for self management",
+		Hidden: false,
+		Short:  "Manage lets CLI itself",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return PrintHelpMessage(cmd)
 		},
@@ -18,6 +18,4 @@ func InitSelfCmd(rootCmd *cobra.Command, version string) error {
 	rootCmd.AddCommand(selfCmd)
 
 	selfCmd.AddCommand(initLspCommand(version))
-
-	return nil
 }

@@ -145,7 +145,7 @@ func (e *Executor) executeAfterScript(ctx *Context) {
 func formatOptsUsageError(err error, opts docopt.Opts, cmdName string, rawOptions string) error {
 	if opts == nil && err.Error() == "" {
 		// TODO how to get wrong option name
-		err = fmt.Errorf("no such option")
+		err = errors.New("no such option")
 	}
 
 	errTpl := fmt.Sprintf("failed to parse docopt options for cmd %s: %s", cmdName, err)

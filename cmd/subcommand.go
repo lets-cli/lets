@@ -1,15 +1,16 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
+	"slices"
 	"strings"
 
 	"github.com/lets-cli/lets/config/config"
 	"github.com/lets-cli/lets/executor"
 	"github.com/spf13/cobra"
-	"golang.org/x/exp/slices"
 )
 
 const (
@@ -223,8 +224,7 @@ func parseOnlyAndExclude(cmd *cobra.Command) ([]string, []string, error) {
 	}
 
 	if len(exclude) > 0 && len(only) > 0 {
-		return []string{}, []string{}, fmt.Errorf(
-			"can not use '--only' and '--exclude' at the same time")
+		return []string{}, []string{}, errors.New("can not use '--only' and '--exclude' at the same time")
 	}
 
 	return only, exclude, nil

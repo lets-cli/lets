@@ -3,6 +3,7 @@ package config
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"net/http"
@@ -39,7 +40,7 @@ func (rm *RemoteMixin) Filename() string {
 		hasher.Write([]byte(rm.Version))
 	}
 
-	return fmt.Sprintf("%x", hasher.Sum(nil))
+	return hex.EncodeToString(hasher.Sum(nil))
 }
 
 // Path is abs path to mixin file (.lets/mixins/<filename>).

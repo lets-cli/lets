@@ -342,7 +342,7 @@ func TestWordUnderCursor(t *testing.T) {
 		{"test-word_123", lsp.Position{Character: 5}, "test-word_123"},
 		{"", lsp.Position{Character: 0}, ""},
 		{"test", lsp.Position{Character: 10}, ""},
-		{"test word", lsp.Position{Character: 4}, "word"},
+		{"test word", lsp.Position{Character: 4}, ""},
 		{"  test  ", lsp.Position{Character: 3}, "test"},
 	}
 

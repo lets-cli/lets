@@ -2,8 +2,8 @@ package config
 
 import (
 	"errors"
+	"slices"
 
-	"golang.org/x/exp/slices"
 	"gopkg.in/yaml.v3"
 )
 
@@ -24,7 +24,7 @@ func (d *Deps) UnmarshalYAML(node *yaml.Node) error {
 		return errors.New("lets: 'depends' must be a sequence")
 	}
 
-	for i := 0; i < len(node.Content); i++ {
+	for i := range len(node.Content) {
 		node := node.Content[i]
 
 		var dep Dep

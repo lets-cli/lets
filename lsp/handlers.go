@@ -1,7 +1,7 @@
 package lsp
 
 import (
-	"fmt"
+	"errors"
 	"slices"
 
 	"github.com/lets-cli/lets/util"
@@ -52,7 +52,7 @@ func (s *lspServer) textDocumentDidChange(context *glsp.Context, params *lsp.Did
 		case lsp.TextDocumentContentChangeEventWhole:
 			s.storage.AddDocument(params.TextDocument.URI, c.Text)
 		case lsp.TextDocumentContentChangeEvent:
-			return fmt.Errorf("incremental changes not supported")
+			return errors.New("incremental changes not supported")
 		}
 	}
 	return nil
@@ -77,14 +77,14 @@ func (h *definitionHandler) findMixinsDefinition(doc *string, params *lsp.Defini
 
 	return []lsp.Location{
 		{
-			URI:   pathToUri(absFilename),
+			URI:   pathToURI(absFilename),
 			Range: lsp.Range{},
 		},
 	}, nil
 }
 
 func (h *definitionHandler) findCommandDefinition(doc *string, params *lsp.DefinitionParams) (any, error) {
-	line := getLine(doc, uint32(params.Position.Line))
+	line := getLine(doc, params.Position.Line)
 	if line == "" {
 		return nil, nil
 	}
@@ -148,7 +148,7 @@ func (h *completionHandler) buildDependsCompletions(doc *string, params *lsp.Com
 	return items, nil
 }
 
-// Returns: Location | []Location | []LocationLink | nil
+// Returns: Location | []Location | []LocationLink | nil.
 func (s *lspServer) textDocumentDefinition(context *glsp.Context, params *lsp.DefinitionParams) (any, error) {
 	definitionHandler := definitionHandler{
 		parser: newParser(s.log),
@@ -167,7 +167,7 @@ func (s *lspServer) textDocumentDefinition(context *glsp.Context, params *lsp.De
 	}
 }
 
-// Returns: []CompletionItem | CompletionList | nil
+// Returns: []CompletionItem | CompletionList | nil.
 func (s *lspServer) textDocumentCompletion(context *glsp.Context, params *lsp.CompletionParams) (any, error) {
 	completionHandler := completionHandler{
 		parser: newParser(s.log),

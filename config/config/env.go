@@ -4,10 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"os/exec"
+	"slices"
 	"strings"
 
 	"github.com/lets-cli/lets/checksum"
-	"golang.org/x/exp/slices"
 	"gopkg.in/yaml.v3"
 )
 

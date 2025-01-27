@@ -66,7 +66,7 @@ func (reg *GithubRegistry) GetPackageName(os string, arch string) (string, error
 
 	archAdapted, archExists := archAdaptMap[arch]
 	if !archExists {
-		return "", fmt.Errorf("architechture '%s' is not supported", arch)
+		return "", fmt.Errorf("architecture '%s' is not supported", arch)
 	}
 
 	return fmt.Sprintf("lets_%s_%s", os, archAdapted), nil
@@ -77,7 +77,7 @@ func (reg *GithubRegistry) DownloadReleaseBinary(
 	version string,
 	dstPath string,
 ) error {
-	downloadURL := reg.GetDownloadURL(reg.repoURI, fmt.Sprintf("%s.tar.gz", packageName), version)
+	downloadURL := reg.GetDownloadURL(reg.repoURI, packageName+".tar.gz", version)
 
 	ctx, cancel := context.WithTimeout(reg.ctx, reg.downloadPackageTimeout)
 	defer cancel()
@@ -105,7 +105,7 @@ func (reg *GithubRegistry) DownloadReleaseBinary(
 		return fmt.Errorf("network error: %s", resp.Status)
 	}
 
-	dstDir := fmt.Sprintf("%s.dir", dstPath)
+	dstDir := dstPath + ".dir"
 	// cleanup if something abd happens during download/extract/rename flow
 	defer os.RemoveAll(dstDir)
 
@@ -147,7 +147,7 @@ func (reg *GithubRegistry) GetLatestRelease() (string, error) {
 	ctx, cancel := context.WithTimeout(reg.ctx, reg.latestReleaseTimeout)
 	defer cancel()
 
-	url := fmt.Sprintf("%s/releases/latest", reg.repoURI)
+	url := reg.repoURI + "/releases/latest"
 
 	req, err := http.NewRequestWithContext(
 		ctx,

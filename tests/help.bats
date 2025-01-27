@@ -17,6 +17,7 @@ Available Commands:
   bar         Print bar
   foo         Print foo
   help        Help about any command
+  self        Manage lets CLI itself
 
 Flags:
       --all                   show all commands (including the ones with _)
@@ -47,6 +48,7 @@ Available Commands:
   bar         Print bar
   foo         Print foo
   help        Help about any command
+  self        Manage lets CLI itself
 
 Flags:
       --all                   show all commands (including the ones with _)

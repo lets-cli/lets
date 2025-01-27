@@ -3,11 +3,10 @@ package lsp
 import (
 	"strings"
 
-	tree_sitter_yaml "github.com/tree-sitter-grammars/tree-sitter-yaml/bindings/go"
-	ts "github.com/tree-sitter/go-tree-sitter"
-
 	"github.com/tliron/commonlog"
 	lsp "github.com/tliron/glsp/protocol_3_16"
+	tree_sitter_yaml "github.com/tree-sitter-grammars/tree-sitter-yaml/bindings/go"
+	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
 type PositionType int
@@ -46,34 +45,40 @@ func isCursorAtLine(node *ts.Node, pos lsp.Position) bool {
 
 func getLine(document *string, line uint32) string {
 	lines := strings.Split(*document, "\n")
-	if line < 0 || line >= uint32(len(lines)) {
+	if line >= uint32(len(lines)) {
 		return ""
 	}
 	return lines[line]
 }
 
-func wordUnderCursor(line string, position *lsp.Position) string {
-	if len(line) == 0 {
+// position.
+func wordUnderCursor(text string, position *lsp.Position) string {
+	if len(text) == 0 {
 		return ""
 	}
 
-	lineText := line
-	if len(lineText) == 0 || int(position.Character) >= len(lineText) {
+	character := position.Character
+
+	if character >= uint32(len(text)) {
+		return ""
+	}
+
+	if text[character] == ' ' {
 		return ""
 	}
 
 	// Find word boundaries
-	start := uint32(position.Character)
-	for start > 0 && isWordChar(lineText[start-1]) {
+	start := position.Character
+	for start > 0 && isWordChar(text[start-1]) {
 		start--
 	}
 
-	end := uint32(position.Character)
-	for end < uint32(len(lineText)) && isWordChar(lineText[end]) {
+	end := position.Character
+	for end < uint32(len(text)) && isWordChar(text[end]) {
 		end++
 	}
 
-	return lineText[start:end]
+	return text[start:end]
 }
 
 func isWordChar(c byte) bool {
@@ -103,7 +108,9 @@ func (p *parser) inMixinsPosition(document *string, position lsp.Position) bool 
 	parser := ts.NewParser()
 	defer parser.Close()
 	lang := ts.NewLanguage(tree_sitter_yaml.Language())
-	parser.SetLanguage(lang)
+	if err := parser.SetLanguage(lang); err != nil {
+		return false
+	}
 
 	docBytes := []byte(*document)
 
@@ -143,7 +150,7 @@ func (p *parser) inMixinsPosition(document *string, position lsp.Position) bool 
 			if parent := capture.Node.Parent(); parent != nil {
 				nodeText := capture.Node.Utf8Text(docBytes)
 				if parent.Kind() == "block_mapping_pair" &&
-					string(nodeText) == "mixins" &&
+					nodeText == "mixins" &&
 					isCursorWithinNode(parent, position) {
 					return true
 				}
@@ -158,7 +165,9 @@ func (p *parser) inDependsPosition(document *string, position lsp.Position) bool
 	parser := ts.NewParser()
 	defer parser.Close()
 	lang := ts.NewLanguage(tree_sitter_yaml.Language())
-	parser.SetLanguage(lang)
+	if err := parser.SetLanguage(lang); err != nil {
+		return false
+	}
 
 	docBytes := []byte(*document)
 
@@ -222,7 +231,9 @@ func (p *parser) extractFilenameFromMixins(document *string, position lsp.Positi
 	parser := ts.NewParser()
 	defer parser.Close()
 	lang := ts.NewLanguage(tree_sitter_yaml.Language())
-	parser.SetLanguage(lang)
+	if err := parser.SetLanguage(lang); err != nil {
+		return ""
+	}
 
 	docBytes := []byte(*document)
 
@@ -278,7 +289,9 @@ func (p *parser) getCommands(document *string) []Command {
 	parser := ts.NewParser()
 	defer parser.Close()
 	lang := ts.NewLanguage(tree_sitter_yaml.Language())
-	parser.SetLanguage(lang)
+	if err := parser.SetLanguage(lang); err != nil {
+		return nil
+	}
 
 	docBytes := []byte(*document)
 
@@ -337,7 +350,9 @@ func (p *parser) getCurrentCommand(document *string, position lsp.Position) *Com
 	parser := ts.NewParser()
 	defer parser.Close()
 	lang := ts.NewLanguage(tree_sitter_yaml.Language())
-	parser.SetLanguage(lang)
+	if err := parser.SetLanguage(lang); err != nil {
+		return nil
+	}
 
 	docBytes := []byte(*document)
 
@@ -393,7 +408,9 @@ func (p *parser) findCommand(document *string, commandName string) *Command {
 	parser := ts.NewParser()
 	defer parser.Close()
 	lang := ts.NewLanguage(tree_sitter_yaml.Language())
-	parser.SetLanguage(lang)
+	if err := parser.SetLanguage(lang); err != nil {
+		return nil
+	}
 
 	docBytes := []byte(*document)
 
@@ -454,7 +471,9 @@ func (p *parser) extractDependsValues(document *string) []string {
 	parser := ts.NewParser()
 	defer parser.Close()
 	lang := ts.NewLanguage(tree_sitter_yaml.Language())
-	parser.SetLanguage(lang)
+	if err := parser.SetLanguage(lang); err != nil {
+		return nil
+	}
 
 	docBytes := []byte(*document)
 
