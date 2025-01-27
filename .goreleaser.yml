@@ -9,19 +9,49 @@ release:
   prerelease: auto
 
 builds:
-- env:
-    - CGO_ENABLED=1
-  goos:
-    - linux
-    - darwin
-  goarch:
-    - amd64
-    - arm64
-  ignore:
-    - goos: linux
-      goarch: arm64
-  ldflags:
-    - -X main.version={{.Version}}
+  - id: darwin-amd64
+    main: .
+    goos:
+      - darwin
+    goarch:
+      - amd64
+    env:
+      - PKG_CONFIG_SYSROOT_DIR=/sysroot/macos/amd64
+      - PKG_CONFIG_PATH=/sysroot/macos/amd64/usr/local/lib/pkgconfig
+      - CC=o64-clang
+      - CXX=o64-clang++
+    flags:
+      - -mod=readonly
+    ldflags:
+      - -s -w -X main.version={{.Version}}
+  - id: darwin-arm64
+    main: .
+    goos:
+      - darwin
+    goarch:
+      - arm64
+    env:
+      - PKG_CONFIG_SYSROOT_DIR=/sysroot/macos/arm64
+      - PKG_CONFIG_PATH=/sysroot/macos/arm64/usr/local/lib/pkgconfig
+      - CC=oa64-clang
+      - CXX=oa64-clang++
+    flags:
+      - -mod=readonly
+    ldflags:
+      - -s -w -X main.version={{.Version}}
+  - id: linux-amd64
+    main: .
+    goos:
+      - linux
+    goarch:
+      - amd64
+    env:
+      - CC=x86_64-linux-gnu-gcc
+      - CXX=x86_64-linux-gnu-g++
+    flags:
+      - -mod=readonly
+    ldflags:
+      - -s -w -X main.version={{.Version}}
 
 archives:
 - formats: [tar.gz]
