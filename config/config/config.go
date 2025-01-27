@@ -112,8 +112,8 @@ func (c *Config) resolveRefs() error {
 			if command.Docopts != "" {
 				command.Docopts = strings.Replace(
 					command.Docopts,
-					fmt.Sprintf("lets %s", ref.Name),
-					fmt.Sprintf("lets %s", command.Name),
+					"lets "+ref.Name,
+					"lets "+command.Name,
 					1,
 				)
 			}

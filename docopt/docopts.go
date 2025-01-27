@@ -43,7 +43,7 @@ func OptsToLetsOpt(opts Opts) map[string]string {
 			continue
 		}
 		key := normalizeKey(origKey)
-		envKey := fmt.Sprintf("LETSOPT_%s", key)
+		envKey := "LETSOPT_" + key
 
 		var strValue string
 		switch value := value.(type) {
@@ -81,7 +81,7 @@ func OptsToLetsCli(opts Opts) map[string]string {
 		}
 
 		key := normalizeKey(origKey)
-		cliKey := fmt.Sprintf("LETSCLI_%s", key)
+		cliKey := "LETSCLI_" + key
 
 		var strValue string
 

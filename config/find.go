@@ -39,7 +39,7 @@ func FindConfig(configName string, configDir string) (PathInfo, error) {
 		return PathInfo{}, err
 	}
 
-	log.Debugf(color.BlueString("lets: found %s config file in %s directory", configName, workDir))
+	log.Debugf("%s", color.BlueString("lets: found %s config file in %s directory", configName, workDir))
 
 	configAbsPath := ""
 

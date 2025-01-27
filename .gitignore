@@ -21,12 +21,16 @@ dist
 
 # lets binary
 lets
+lets-dev
 .lets
 lets.my.yaml
 _lets
 coverage.out
 node_modules
 TODO
+TODO.md
 
 .DS_Store
 __debug_bin*
+# Added by goreleaser init:
+dist/

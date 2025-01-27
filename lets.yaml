@@ -10,7 +10,10 @@ env:
 
 commands:
   release:
-    description: Create tag and push
+    description: |
+      Create tag and push
+
+      If -rcN (e.g 1.0.0-rc1) sufix used in version, it will be considered as a prerelease
     options: |
       Usage: lets release <version> --message=<message>
 
@@ -20,6 +23,7 @@ commands:
 
       Example:
         lets release 1.0.0 -m "Release 1.0.0"
+        lets release 1.0.0-rc1 -m "Prerelease 1.0.0-rc1"
     cmd: |
       if [[ -z "$(grep "\[${LETSOPT_VERSION}\]" docs/docs/changelog.md)" ]]; then
         echo "Version ${LETSOPT_VERSION} not found in changelog. Update docs/docs/changelog.md and try again."
@@ -108,6 +112,17 @@ commands:
       go build -ldflags="-X main.version=${VERSION:1}-dev" -o "${BIN}" *.go && \
       sudo mv ./${BIN} $PATH2LETSDEV/${BIN} && \
       echo " - binary ${BIN} version ${VERSION} successfully installed in ${PATH2LETSDEV}"
+
+  build:
+    description: Build lets from source code
+    options: |
+      Usage: lets build [<bin>]
+    cmd: |
+      VERSION=$(git describe)
+      BIN=${LETSOPT_BIN:-lets}
+
+      go build -ldflags="-X main.version=${VERSION:1}-dev" -o ${BIN} *.go && \
+      echo " - binary './${BIN}' (version ${VERSION}) successfully build"
 
   publish-docs:
     work_dir: docs

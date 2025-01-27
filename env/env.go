@@ -50,13 +50,6 @@ func SetDebugLevel(level int) int {
 	return level
 }
 
-func min(x, y int) int {
-	if x < y {
-		return x
-	}
-	return y
-}
-
 func DebugLevel() int {
 	if !debugLevel.ready {
 		panic("must run SetDebugLevel first")

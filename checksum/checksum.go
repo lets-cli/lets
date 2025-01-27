@@ -3,6 +3,7 @@ package checksum
 import (
 	// #nosec G505
 	"crypto/sha1"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -83,7 +84,7 @@ func CalculateChecksum(workDir string, patterns []string) (string, error) {
 
 	checksum := hasher.Sum(nil)
 
-	return fmt.Sprintf("%x", checksum), nil
+	return hex.EncodeToString(checksum), nil
 }
 
 // getMapKeys get keys as array.
@@ -138,7 +139,7 @@ func CalculateChecksumFromSources(workDir string, checksumSources map[string][]s
 		}
 	}
 
-	checksumMap[DefaultChecksumKey] = fmt.Sprintf("%x", hasher.Sum(nil))
+	checksumMap[DefaultChecksumKey] = hex.EncodeToString(hasher.Sum(nil))
 
 	return checksumMap, nil
 }
@@ -194,7 +195,7 @@ func persistOneChecksum(checksumsDir string, cmdName string, checksumName string
 		return fmt.Errorf("can not open file %s to persist checksum: %w", checksumFilePath, err)
 	}
 
-	_, err = f.Write([]byte(checksum))
+	_, err = f.WriteString(checksum)
 	if err != nil {
 		return fmt.Errorf("can not write checksum to file %s: %w", checksumFilePath, err)
 	}

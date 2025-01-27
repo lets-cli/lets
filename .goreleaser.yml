@@ -1,3 +1,4 @@
+version: 2
 project_name: lets
 
 before:
@@ -9,7 +10,7 @@ release:
 
 builds:
 - env:
-    - CGO_ENABLED=0
+    - CGO_ENABLED=1
   goos:
     - linux
     - darwin
@@ -23,7 +24,8 @@ builds:
     - -X main.version={{.Version}}
 
 archives:
-- name_template: >-
+- formats: [tar.gz]
+  name_template: >-
     {{ .ProjectName }}_
     {{- title .Os }}_
     {{- if eq .Arch "amd64" }}x86_64
@@ -41,7 +43,7 @@ brews:
       owner: lets-cli
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
-    folder: Formula
+    directory: Formula
 
 aurs:
   - name: lets-bin
@@ -64,7 +66,7 @@ checksum:
   name_template: '{{ .ProjectName }}_checksums.txt'
 
 snapshot:
-  name_template: "{{ .Tag }}-{{ .ShortCommit }}"
+  version_template: "{{ .Tag }}-{{ .ShortCommit }}"
 
 changelog:
   sort: asc

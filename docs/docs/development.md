@@ -71,6 +71,27 @@ lets release 0.0.1 -m "implement some new feature"
 
 This will create an annotated tag with 0.0.1 and run `git push --tags`
 
+### Prerelease
+
+If you are not ready to release a new version yet, it is possible to create a prerelease version.
+
+Prerelease version is no visible to `install.sh` script and you can be sure that no one will get this version accidentiall.
+
+Also you do not need to revoke published version if it has some critical bugs.
+
+To create a prerelease version you need to append a `-rcN` suffix to next version, for example:
+
+```bash
+lets release 0.0.1-rc1 -m "pre: implement some new feature"
+```
+
+This will create a `0.0.1-rc1` tag and push it to github. Github will create a prerelease version and build all the binaries.
+
+Once you are ready to release a new version, just create a normal release:
+
+```bash
+lets release 0.0.1 -m "implement some new feature"
+```
 
 ## Versioning
 

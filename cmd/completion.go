@@ -106,7 +106,7 @@ func getCommandsList(rootCmd *cobra.Command, out io.Writer, verbose bool) error 
 	for _, cmd := range rootCmd.Commands() {
 		if !cmd.Hidden && cmd.Name() != "help" {
 			if verbose {
-				descr := fmt.Sprintf("No description for command %s", cmd.Name())
+				descr := "No description for command " + cmd.Name()
 				if cmd.Short != "" {
 					descr = cmd.Short
 					descr = strings.TrimSpace(descr)
@@ -114,7 +114,7 @@ func getCommandsList(rootCmd *cobra.Command, out io.Writer, verbose bool) error 
 
 				buf.WriteString(fmt.Sprintf("%s:%s\n", cmd.Name(), descr))
 			} else {
-				buf.WriteString(fmt.Sprintf("%s\n", cmd.Name()))
+				buf.WriteString(cmd.Name() + "\n")
 			}
 		}
 	}
@@ -159,7 +159,7 @@ func getCommandOptions(command *config.Command, out io.Writer, verbose bool) err
 
 	for _, option := range options {
 		if verbose {
-			desc := fmt.Sprintf("No description for option %s", option.name)
+			desc := "No description for option " + option.name
 
 			if option.desc != "" {
 				desc = strings.TrimSpace(option.desc)
@@ -167,7 +167,7 @@ func getCommandOptions(command *config.Command, out io.Writer, verbose bool) err
 
 			buf.WriteString(fmt.Sprintf("%[1]s[%s]\n", option.name, desc))
 		} else {
-			buf.WriteString(fmt.Sprintf("%s\n", option.name))
+			buf.WriteString(option.name + "\n")
 		}
 	}
 

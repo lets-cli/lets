@@ -34,6 +34,7 @@ func main() {
 	rootCmd.InitDefaultHelpFlag()
 	rootCmd.InitDefaultVersionFlag()
 	reinitCompletionCmd := cmd.InitCompletionCmd(rootCmd, nil)
+	cmd.InitSelfCmd(rootCmd, version)
 	rootCmd.InitDefaultHelpCmd()
 
 	command, args, err := rootCmd.Traverse(os.Args[1:])
@@ -121,8 +122,9 @@ func main() {
 		log.Error(err.Error())
 
 		exitCode := 1
-		if e, ok := err.(*executor.ExecuteError); ok { //nolint:errorlint
-			exitCode = e.ExitCode()
+		var execErr *executor.ExecuteError
+		if errors.As(err, &execErr) {
+			exitCode = execErr.ExitCode()
 		}
 
 		os.Exit(exitCode)
@@ -150,9 +152,9 @@ func getContext() context.Context {
 	return ctx
 }
 
-// do not fail on config error in it is help (-h, --help) or --init or completion command
+// do not fail on config error in it is help (-h, --help) or --init or completion command.
 func failOnConfigError(root *cobra.Command, current *cobra.Command, rootFlags *flags) bool {
-	rootCommands := set.NewSet("completion", "help")
+	rootCommands := set.NewSet("completion", "help", "lsp")
 	return (root.Flags().NFlag() == 0 && !rootCommands.Contains(current.Name())) && !rootFlags.help && !rootFlags.init
 }
 

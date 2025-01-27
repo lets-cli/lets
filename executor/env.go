@@ -32,7 +32,7 @@ func getChecksumEnvMap(checksumMap map[string]string) map[string]string {
 	envMap := make(map[string]string)
 
 	for name, value := range checksumMap {
-		envKey := fmt.Sprintf("LETS_CHECKSUM_%s", normalizeEnvKey(name))
+		envKey := "LETS_CHECKSUM_" + normalizeEnvKey(name)
 		if name == checksum.DefaultChecksumKey {
 			envKey = "LETS_CHECKSUM"
 		}
