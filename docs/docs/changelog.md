@@ -5,6 +5,14 @@ title: Changelog
 
 ## [Unreleased](https://github.com/lets-cli/lets/releases/tag/v0.0.X)
 
+## [0.0.55](https://github.com/lets-cli/lets/releases/tag/v0.0.54)
+
+* `[Added]` `lets self` command that is ment to be a new home for all lets own commands such as `completions` (soon) or `lsp`
+* `[Added]` `lets self lsp` command that starts built-in `lsp` server with go to definition support and completions
+* [`Development`] Since `lsp` implementation uses  `https://tree-sitter.github.io` (C library with go bindings) as a internal parser `lets` now build with `CGO_ENABLED=1`. If you are building on local machine, you do not have to specify `CGO_ENABLED` env variable. But you may have to install some build system dependencies in case compilatino fails.
+* `[Dependency]` update go to `1.23`
+* `[Dependency]` update goreleaser to `2.x`
+
 ## [0.0.54](https://github.com/lets-cli/lets/releases/tag/v0.0.54)
 
 * `[Fixed]` `lets --init` now properly creates `lets.yaml`. Issue [#263](https://github.com/lets-cli/lets/issues/263)
