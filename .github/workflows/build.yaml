@@ -1,0 +1,47 @@
+on:
+  pull_request:
+    branches:
+      - master
+
+permissions:
+  contents: write # needed to write releases
+
+name: Build
+jobs:
+  test-releaser:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.23.x
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # this is important, otherwise it won't checkout the full tree (i.e. no previous tags)
+      - name: Build
+        env:
+          PACKAGE_NAME: github.com/lets-cli/lets
+          GOLANG_CROSS_VERSION: v1.23
+        run: |
+          docker run \
+            --rm \
+            -e CGO_ENABLED=1 \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v `pwd`:/go/src/${PACKAGE_NAME}\
+            -v `pwd`/sysroot:/sysroot \
+            -w /go/src/${PACKAGE_NAME} \
+            ghcr.io/goreleaser/goreleaser-cross:${GOLANG_CROSS_VERSION} \
+            --clean --skip=validate --skip=publish --snapshot
+      # - name: Releaser build
+      #   uses: goreleaser/goreleaser-action@v4
+      #   with:
+      #     distribution: goreleaser
+      #     version: v2.6.1
+      #     args: build --clean --skip=validate --snapshot --single-target
+      #   env:
+      #     GOOS: darwin
+      #     GOARCH: amd64
+      #     ZIG_LOCAL_CACHE_DIR: ${{ steps.set_env.outputs.current_dir }}
+      #     ZIG_GLOBAL_CACHE_DIR: ${{ steps.set_env.outputs.current_dir }}
+      #     SDK_PATH: ${{ steps.set_env.outputs.sdk_path }}
