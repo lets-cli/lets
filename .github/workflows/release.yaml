@@ -30,25 +30,17 @@ jobs:
             -w /go/src/${PACKAGE_NAME} \
             ghcr.io/goreleaser/goreleaser-cross:${GOLANG_CROSS_VERSION} \
             --clean --skip=validate --skip=publish
-      - name: Setup release environment
-        run: |-
-          echo 'GITHUB_TOKEN=${{secrets.GITHUB_TOKEN}}' > .release-env
-          echo 'HOMEBREW_TAP_GITHUB_TOKEN=${{secrets.GH_PAT}}' > .release-env
-          echo 'AUR_GITHUB_TOKEN=${{secrets.AUR_SSH_PRIVATE_KEY}}' > .release-env
       - name: Run GoReleaser
         env:
           PACKAGE_NAME: github.com/lets-cli/lets
           GOLANG_CROSS_VERSION: v1.23
         run: |
-          if [ ! -f ".release-env" ]; then
-            echo ".release-env is required for release";
-            exit 1;
-          fi
-
           docker run \
             --rm \
             -e CGO_ENABLED=1 \
-            --env-file .release-env \
+            -e GITHUB_TOKEN="${{secrets.GITHUB_TOKEN}}" \
+            -e HOMEBREW_TAP_GITHUB_TOKEN="${{secrets.GH_PAT}}" \
+            -e AUR_GITHUB_TOKEN="${{secrets.AUR_SSH_PRIVATE_KEY}}" \
             -v /var/run/docker.sock:/var/run/docker.sock \
             -v `pwd`:/go/src/${PACKAGE_NAME}\
             -v `pwd`/sysroot:/sysroot \
