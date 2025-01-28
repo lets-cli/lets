@@ -13,9 +13,11 @@ Usage:
   lets [flags]
   lets [command]
 
-Available Commands:
+Commands:
   bar         Print bar
   foo         Print foo
+
+Internal commands:
   help        Help about any command
   self        Manage lets CLI itself
 
@@ -43,10 +45,12 @@ Usage:
   lets [flags]
   lets [command]
 
-Available Commands:
+Commands:
   _x          Hidden x
   bar         Print bar
   foo         Print foo
+
+Internal commands:
   help        Help about any command
   self        Manage lets CLI itself
 

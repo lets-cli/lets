@@ -9,7 +9,7 @@ import (
 
 // newRootCmd represents the base command when called without any subcommands.
 func newRootCmd(version string) *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "lets",
 		Short: "A CLI task runner",
 		Args:  cobra.ArbitraryArgs,
@@ -24,6 +24,9 @@ func newRootCmd(version string) *cobra.Command {
 		// print help message manyally
 		SilenceUsage: true,
 	}
+	cmd.AddGroup(&cobra.Group{"main", "Commands:"}, &cobra.Group{"internal", "Internal commands:"})
+	cmd.SetHelpCommandGroupID("internal")
+	return cmd
 }
 
 // CreateRootCommand used to run only root command without config.
