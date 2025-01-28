@@ -187,6 +187,7 @@ func InitCompletionCmd(rootCmd *cobra.Command, cfg *config.Config) func(cfg *con
 		Use:    "completion",
 		Hidden: true,
 		Short:  "Generates completion scripts for bash, zsh",
+		GroupID: "internal",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			shellType, err := cmd.Flags().GetString("shell")
 			if err != nil {

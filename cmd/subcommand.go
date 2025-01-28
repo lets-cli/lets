@@ -159,6 +159,7 @@ func newSubcommand(command *config.Command, conf *config.Config, showAll bool, o
 	subCmd := &cobra.Command{
 		Use:    command.Name,
 		Short:  short(command.Description),
+		GroupID: "main",
 		Hidden: isHidden(command.Name, showAll),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			command.Args = append(command.Args, prepareArgs(command.Name, os.Args)...)
