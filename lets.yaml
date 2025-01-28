@@ -25,7 +25,7 @@ commands:
         lets release 1.0.0 -m "Release 1.0.0"
         lets release 1.0.0-rc1 -m "Prerelease 1.0.0-rc1"
     cmd: |
-      if [[ -z "$(grep "\[${LETSOPT_VERSION}\]" docs/docs/changelog.md)" ]]; then
+      if [[ "${LETSOPT_VERSION}" != *-rc* ]] && [[ -z "$(grep "\[${LETSOPT_VERSION}\]" docs/docs/changelog.md)" ]]; then
         echo "Version ${LETSOPT_VERSION} not found in changelog. Update docs/docs/changelog.md and try again."
         exit 1
       fi

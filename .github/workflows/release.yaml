@@ -17,6 +17,9 @@ jobs:
         with:
           go-version: 1.23.x
       - name: Run GoReleaser (dry run)
+        env:
+          PACKAGE_NAME: github.com/lets-cli/lets
+          GOLANG_CROSS_VERSION: v1.23
         run: |
           docker run \
             --rm \
