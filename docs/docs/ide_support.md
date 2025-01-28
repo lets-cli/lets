@@ -7,21 +7,21 @@ title: IDE/Text editors support
 
 Provides autocomplete and filetype support.
 
-[Plugin site](https://plugins.jetbrains.com/plugin/14639-lets)
-[Plugin repo](https://github.com/lets-cli/intellij-lets)
+- [Plugin site](https://plugins.jetbrains.com/plugin/14639-lets)
+- [Plugin repo](https://github.com/lets-cli/intellij-lets)
 
 ### VSCode plugin (official)
 
 Provides autocomplete and filetype support.
 
-[Plugin site](https://marketplace.visualstudio.com/items?itemName=kindritskyimax.vscode-lets)
-[Plugin repo](https://github.com/lets-cli/vscode-lets)
+- [Plugin site](https://marketplace.visualstudio.com/items?itemName=kindritskyimax.vscode-lets)
+- [Plugin repo](https://github.com/lets-cli/vscode-lets)
 
 ### Emacs plugin (community)
 
 Provides autocomplete and filetype support.
 
-[Plugin repo](https://github.com/mpanarin/lets-mode)
+- [Plugin repo](https://github.com/mpanarin/lets-mode)
 
 ### LSP
 
@@ -31,22 +31,22 @@ Starting from `0.0.55` version lets comes with builtin `lsp` server under `lets 
 
 Lsp support includes:
 
-[x] Goto definition
+- [x] Goto definition
   - Navigate to definitions of mixins files
   - Navigate to definitions of command from `depends`
-[x] Completion
+- [x] Completion
   - Complete commands in depends
-[ ] Diagnostics
-[ ] Hover
-[ ] Formatting
-[ ] Signature help
-[ ] Code action
+- [ ] Diagnostics
+- [ ] Hover
+- [ ] Formatting
+- [ ] Signature help
+- [ ] Code action
 
 `lsp` server works with JSON Schema (see bellow).
 
 #### VSCode
 
-VSCode plugin supports lsp out of the box, you only want to make sure you have lets >= `0.0.55`.
+[VSCode plugin](#vscode-plugin-official) supports lsp out of the box, just make sure you have lets >= `0.0.55`.
 
 #### Neovim
 
