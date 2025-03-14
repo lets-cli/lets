@@ -24,7 +24,7 @@ func newRootCmd(version string) *cobra.Command {
 		// print help message manyally
 		SilenceUsage: true,
 	}
-	cmd.AddGroup(&cobra.Group{"main", "Commands:"}, &cobra.Group{"internal", "Internal commands:"})
+	cmd.AddGroup(&cobra.Group{ID: "main", Title: "Commands:"}, &cobra.Group{ID: "internal", Title: "Internal commands:"})
 	cmd.SetHelpCommandGroupID("internal")
 	return cmd
 }

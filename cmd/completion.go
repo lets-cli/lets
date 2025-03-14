@@ -184,9 +184,9 @@ func getCommandOptions(command *config.Command, out io.Writer, verbose bool) err
 // Returns reinit function which must be called when config is parsed.
 func InitCompletionCmd(rootCmd *cobra.Command, cfg *config.Config) func(cfg *config.Config) {
 	completionCmd := &cobra.Command{
-		Use:    "completion",
-		Hidden: true,
-		Short:  "Generates completion scripts for bash, zsh",
+		Use:     "completion",
+		Hidden:  true,
+		Short:   "Generates completion scripts for bash, zsh",
 		GroupID: "internal",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			shellType, err := cmd.Flags().GetString("shell")

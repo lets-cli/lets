@@ -5,6 +5,8 @@ title: Changelog
 
 ## [Unreleased](https://github.com/lets-cli/lets/releases/tag/v0.0.X)
 
+* `[Dependency]` update go to `1.24`
+
 ## [0.0.55](https://github.com/lets-cli/lets/releases/tag/v0.0.55)
 
 * `[Added]` `lets self` command that is ment to be a new home for all lets own commands such as `completions` (soon) or `lsp`

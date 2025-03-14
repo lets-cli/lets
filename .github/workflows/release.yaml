@@ -15,11 +15,11 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v1
         with:
-          go-version: 1.23.x
+          go-version: 1.24.x
       - name: Run GoReleaser (dry run)
         env:
           PACKAGE_NAME: github.com/lets-cli/lets
-          GOLANG_CROSS_VERSION: v1.23
+          GOLANG_CROSS_VERSION: v1.24
         run: |
           docker run \
             --rm \
@@ -33,7 +33,7 @@ jobs:
       - name: Run GoReleaser
         env:
           PACKAGE_NAME: github.com/lets-cli/lets
-          GOLANG_CROSS_VERSION: v1.23
+          GOLANG_CROSS_VERSION: v1.24
         run: |
           docker run \
             --rm \
