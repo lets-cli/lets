@@ -1,6 +1,6 @@
 package config
 
-import "golang.org/x/exp/constraints"
+import "cmp"
 
 func cloneSlice[I any](a []I) []I {
 	if a == nil {
@@ -13,7 +13,7 @@ func cloneSlice[I any](a []I) []I {
 	return arr
 }
 
-func cloneMap[K constraints.Ordered, V any](m map[K]V) map[K]V {
+func cloneMap[K cmp.Ordered, V any](m map[K]V) map[K]V {
 	if m == nil {
 		return nil
 	}
@@ -26,7 +26,7 @@ func cloneMap[K constraints.Ordered, V any](m map[K]V) map[K]V {
 	return mapping
 }
 
-func cloneMapSlice[K constraints.Ordered, V []string](m map[K]V) map[K]V {
+func cloneMapSlice[K cmp.Ordered, V []string](m map[K]V) map[K]V {
 	if m == nil {
 		return nil
 	}

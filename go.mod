@@ -1,6 +1,6 @@
 module github.com/lets-cli/lets
 
-go 1.23
+go 1.24
 
 require (
 	github.com/codeclysm/extract v2.2.0+incompatible

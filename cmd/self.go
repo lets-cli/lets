@@ -7,9 +7,9 @@ import (
 // InitSelfCmd intializes root 'self' subcommand.
 func InitSelfCmd(rootCmd *cobra.Command, version string) {
 	selfCmd := &cobra.Command{
-		Use:    "self",
-		Hidden: false,
-		Short:  "Manage lets CLI itself",
+		Use:     "self",
+		Hidden:  false,
+		Short:   "Manage lets CLI itself",
 		GroupID: "internal",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return PrintHelpMessage(cmd)
