@@ -57,7 +57,7 @@ func TestParseConfig(t *testing.T) {
 
 		env := cfg.Env.Dump()
 		expected := map[string]string{
-			"FOO": "BAR",
+			"FOO":   "BAR",
 			"HELLO": "WORLD",
 		}
 		if !maps.Equal(env, expected) {

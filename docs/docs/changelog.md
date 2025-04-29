@@ -5,12 +5,16 @@ title: Changelog
 
 ## [Unreleased](https://github.com/lets-cli/lets/releases/tag/v0.0.X)
 
-## [0.0.56](https://github.com/lets-cli/lets/releases/tag/v0.0.56)
+## [0.0.57](https://github.com/lets-cli/lets/releases/tag/v0.0.57)
 
 * `[Dependency]` update go to `1.24`
 * `[Added]` support custom top-level keywords that start with `x-`
 * `[Added]` check for invalid top-level keywords during config parsing
 * `[Added]` support YAML aliases in `env` - env will be merged aliases mapping
+
+## [0.0.56](https://github.com/lets-cli/lets/releases/tag/v0.0.56)
+
+This tag is not released due to build issues
 
 ## [0.0.55](https://github.com/lets-cli/lets/releases/tag/v0.0.55)
 
