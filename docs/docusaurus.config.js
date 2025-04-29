@@ -18,6 +18,7 @@ module.exports = {
       },
       items: [
         {to: 'docs/quick_start', label: 'Docs', position: 'right'},
+        {to: 'docs/changelog', label: 'Changelog', position: 'right'},
         {to: 'blog', label: 'Blog', position: 'right'},
         {
           href: 'https://github.com/lets-cli/lets',
