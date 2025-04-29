@@ -17,3 +17,10 @@ setup() {
     assert_line --index 5 "BAR=Bar"
     assert_line --index 6 "FOO=bb1da47569d9fbe3b5f2216fdbd4c9b040ccb5c1"
 }
+
+@test "global_env: should merge env with aliased map" {
+    run lets -c lets.aliased-env.yaml env
+    assert_success
+    assert_line --index 0 "ONE=1"
+    assert_line --index 1 "FOO=BAR"
+}

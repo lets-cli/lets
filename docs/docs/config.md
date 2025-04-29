@@ -3,25 +3,36 @@ id: config
 title: Config reference
 ---
 
-* [shell](#shell)
-* [mixins](#mixins)
-* [env](#global-env)
-* [eval_env](#global-eval_env)
-* [init](#global-init)
-* [before](#global-before)
-* [commands](#commands)
-    * [description](#description)
-    * [cmd](#cmd)
-    * [work_dir](#work_dir)
-    * [after](#after)
-    * [depends](#depends)
-    * [options](#options)
-    * [env](#env)
-    * [eval_env](#eval_env)
-    * [checksum](#checksum)
-    * [persist_checksum](#persist_checksum)
-    * [ref](#ref)
-    * [args](#args)
+- [Top-level directives:](#top-level-directives)
+  - [Version](#version)
+  - [Shell](#shell)
+  - [Global env](#global-env)
+  - [Global eval\_env](#global-eval_env)
+  - [Global before](#global-before)
+  - [Global init](#global-init)
+    - [Conditional init](#conditional-init)
+  - [Mixins](#mixins)
+  - [Ignored mixins](#ignored-mixins)
+  - [Remote mixins `(experimental)`](#remote-mixins-experimental)
+  - [Commands](#commands)
+- [Command directives:](#command-directives)
+  - [Short syntax](#short-syntax)
+  - [`cmd`](#cmd)
+  - [`description`](#description)
+  - [`work_dir`](#work_dir)
+  - [`shell`](#shell-1)
+  - [`after`](#after)
+  - [`depends`](#depends)
+    - [Override arguments in depends command](#override-arguments-in-depends-command)
+  - [`options`](#options)
+  - [`env`](#env)
+  - [`eval_env`](#eval_env)
+  - [`checksum`](#checksum)
+  - [`persist_checksum`](#persist_checksum)
+  - [`ref`](#ref)
+  - [`args`](#args)
+- [Aliasing:](#aliasing)
+  - [Env aliasing](#env-aliasing)
 
 
 ## Top-level directives:
@@ -139,11 +150,19 @@ commands:
 
 `type: string`
 
-Specify init script which will be executed only once. It is execured right before first command call.
+Specify init script which will be executed only once during each lets invocation. It is execured right before first command call.
 
-`init` script is a good place for some intialization that sould be done once, for example,
+> Main difference from `before` is that `before` called before each command invocation (including commands specified in depends)
 
-create docker network, check if some directory exist, clear caches, etc.
+`init` script is a good place for some initialization that should be done once at lets startup, for example:
+
+* create docker network
+* check if some directory exist
+* clear caches,
+* install dependencies
+* etc.
+
+Example usage:
 
 ```yaml
 shell: bash
@@ -170,6 +189,29 @@ Foo
 From before
 Bar
 ```
+
+#### Conditional init
+
+If you need to make sure that code in `init` is called once with some condition,
+you can for example create a file at the end of `init` script and check if this 
+file exists at the beginning of `init` script.
+
+Example:
+
+```
+shell: bash
+
+init: |
+  if [[ ! -f .lets/init_done ]]; then
+    echo "calling init script"
+    touch .lets/init_done
+  fi
+```
+
+In this example we are checking for `.lets/init_done` file existence. If it does not exist, we will call init script and create `init_done` file as a marker of successfull init script invocation.
+
+We are using `.lets` dir here because this dir will be created by `lets` itself and is generally a good place to create such files, but you are free to create files with any name and in any directory you want.
+
 
 ### Mixins
 
@@ -828,3 +870,24 @@ commands:
 
 `args` is used only with [ref](#ref) and allows to set additional positional args to referenced command. See [ref](#ref) example.
 
+
+## Aliasing:
+
+Lets supports YAML aliasing in various places in the config
+
+### Env aliasing
+
+You can define any mapping and alias it in `env` configuration:
+
+```yaml
+shell: bash
+
+.default-env: &default-env
+  FOO: BAR
+
+env:
+  <<: *default-env
+  HELLO: WORLD
+```
+
+This will merge `env` and `.default-env`. Any environment variables declarations after `<<: ` will override variables defined in aliased map.

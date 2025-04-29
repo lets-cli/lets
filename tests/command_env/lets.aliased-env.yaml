@@ -1,0 +1,16 @@
+shell: bash
+
+x-default-env: &default-env
+  FOO:
+    sh: echo "BAR"
+
+commands:
+  env:
+    env:
+      ONE: "1"
+      FOO:
+        sh: echo "hello"
+      <<: *default-env
+    cmd: |
+      echo ONE=${ONE}
+      echo FOO=${FOO}
