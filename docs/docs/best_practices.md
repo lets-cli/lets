@@ -5,7 +5,7 @@ title: Best practices
 
 ### Naming conventions
 
-Prefer single word over plural. 
+Prefer single word over plural.
 
 It is better to leverage semantics of `lets` as an intention to do something. For example it is natural saying `lets test` or `lets build` something.
 
@@ -106,3 +106,28 @@ As you can see, we execute `build` command each time we execute `run` command (`
 
 `persist_checksum` will save calculated checksum to `.lets` directory and all subsequent calls of `build` command will
 read checksum from disk, calculate new checksum, and compare them. If `package.json` will change - we will rebuild the image.
+
+
+### Initialize project using `init`
+
+You can use `init` keyword to write a script that will do some initialization on lets startup, like creating some dirs, configs or installing project dependencies.
+
+By default, `init` runs each time the `lets` program is executed.
+
+You can make `init` conditional, by simply creating a file and checking if it exists at the start of `init` script.
+
+Example:
+
+```
+shell: bash
+
+init: |
+  if [[ ! -f .lets/init_done ]]; then
+    echo "calling init script"
+    touch .lets/init_done
+  fi
+```
+
+In this example we are checking for `.lets/init_done` file existence. If it does not exist, we will call init script and create `init_done` file as a marker of successfull init script invocation.
+
+We are using `.lets` dir here because this dir will be created by `lets` itself and is generally a good place to create such files, but you are free to create files with any name and in any directory you want.

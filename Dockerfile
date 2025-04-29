@@ -1,7 +1,7 @@
-FROM golang:1.24-bookworm as builder
+FROM golang:1.24-bookworm AS builder
 
-ENV GOPROXY https://proxy.golang.org
-ENV CGO_ENABLED 1
+ENV GOPROXY=https://proxy.golang.org
+ENV CGO_ENABLED=1
 # disable all compiler errors
 ENV CGO_CFLAGS=-w
 
@@ -26,6 +26,6 @@ COPY go.sum .
 
 RUN go mod download
 
-FROM golangci/golangci-lint:v1.64.7-alpine as linter
+FROM golangci/golangci-lint:v1.64.7-alpine AS linter
 
 RUN mkdir -p /.cache && chmod -R 777 /.cache

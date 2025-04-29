@@ -36,6 +36,17 @@ func (e *Envs) UnmarshalYAML(node *yaml.Node) error {
 		keyNode := node.Content[i]
 		valueNode := node.Content[i+1]
 
+		// handle <<: *aliased case
+		if keyNode.Tag == "!!merge" {
+			aliasedEnv := &Envs{}
+			err := aliasedEnv.UnmarshalYAML(valueNode.Alias)
+			if err != nil {
+				return errors.New("lets: can not parse aliased env")
+			}
+			e.Merge(aliasedEnv)
+			continue
+		}
+
 		envAsStr := ""
 
 		if err := valueNode.Decode(&envAsStr); err == nil {

@@ -2,6 +2,7 @@ package config
 
 import (
 	"bytes"
+	"maps"
 	"testing"
 
 	"github.com/lithammer/dedent"
@@ -37,4 +38,54 @@ func TestParseConfig(t *testing.T) {
 		}
 	})
 
+	t.Run("parse env with alias", func(t *testing.T) {
+		text := dedent.Dedent(`
+		shell: bash
+
+		x-default-env: &default-env
+		  HELLO: WORLD
+
+		env:
+		  <<: *default-env
+		  FOO: BAR
+
+		commands:
+		  hello:
+		    cmd: [echo, Hello]
+		`)
+		cfg := ConfigFixture(t, text)
+
+		env := cfg.Env.Dump()
+		expected := map[string]string{
+			"FOO": "BAR",
+			"HELLO": "WORLD",
+		}
+		if !maps.Equal(env, expected) {
+			t.Errorf("wrong output. \nexpect %s \ngot:  %s", expected, env)
+		}
+	})
+
+	t.Run("invalid alias name - does not start with x-", func(t *testing.T) {
+		text := dedent.Dedent(`
+		shell: bash
+
+		default-env: &default-env
+		  HELLO: WORLD
+
+		env:
+		  <<: *default-env
+		  FOO: BAR
+
+		commands:
+		  hello:
+		    cmd: [echo, Hello]
+		`)
+
+		buf := bytes.NewBufferString(text)
+		c := NewConfig(".", ".", ".")
+		err := yaml.NewDecoder(buf).Decode(&c)
+		if err.Error() != "keyword 'default-env' not supported" {
+			t.Errorf("config must not allow custom keywords")
+		}
+	})
 }

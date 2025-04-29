@@ -9,8 +9,20 @@ import (
 	"strings"
 
 	"github.com/lets-cli/lets/config/path"
+	"github.com/lets-cli/lets/set"
 	"github.com/lets-cli/lets/util"
 	"gopkg.in/yaml.v3"
+)
+
+var keywords = set.NewSet[string](
+	"version",
+	"shell",
+	"env",
+	"eval_env",
+	"init",
+	"before",
+	"mixins",
+	"commands",
 )
 
 // Config is a struct for loaded config file.
@@ -37,6 +49,18 @@ type Config struct {
 }
 
 func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var raw map[string]interface{}
+	if err := unmarshal(&raw); err != nil {
+		return err
+	}
+
+	// check if config has unsupported keywords
+	for key := range raw {
+		if !keywords.Contains(key) && !strings.HasPrefix(key, "x-") {
+			return fmt.Errorf("keyword '%s' not supported", key)
+		}
+	}
+
 	var config struct {
 		Version  Version
 		Mixins   []*Mixin
