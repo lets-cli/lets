@@ -1,0 +1,36 @@
+shell: bash
+
+commands:
+  # Basic failing command
+  build-app:
+    description: Simulates a failing build
+    cmd: |
+      echo "Building app..."
+      sleep 1
+      echo "Build failed!"
+      exit 130
+
+  # Command that depends on the failing build
+  run-app:
+    description: Runs the app (depends on build)
+    depends: [build-app]
+    cmd: |
+      echo "Starting application..."
+      echo "App is running!"
+
+  # More complex example with multiple levels
+  deploy-app:
+    description: Deploys the app (depends on run-app, which depends on build-app)
+    depends: [run-app]
+    cmd: |
+      echo "Deploying to production..."
+      echo "Deployment complete!"
+
+  # Example with multiple dependencies where one fails
+  integration-test:
+    description: Runs integration tests
+    depends:
+      - build-app
+    cmd: |
+      echo "Running integration tests..."
+      echo "All tests passed!"
