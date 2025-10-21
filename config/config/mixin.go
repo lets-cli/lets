@@ -6,14 +6,35 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"mime"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/lets-cli/lets/set"
 	"github.com/lets-cli/lets/util"
 )
+
+var allowedContentTypes = set.NewSet(
+	"text/plain",
+	"text/yaml",
+	"text/x-yaml",
+	"application/yaml",
+	"application/x-yaml",
+)
+
+// normalizeContentType extracts the media type from a Content-Type header,
+// removing parameters like charset to enable robust matching.
+func normalizeContentType(contentType string) string {
+	mediaType, _, err := mime.ParseMediaType(contentType)
+	if err != nil {
+		// If parsing fails, return the original string
+		return contentType
+	}
+	return mediaType
+}
 
 type Mixins []*Mixin
 
@@ -108,6 +129,12 @@ func (rm *RemoteMixin) download() ([]byte, error) {
 		return nil, fmt.Errorf("no such file at: %s", rm.URL)
 	} else if resp.StatusCode < 200 || resp.StatusCode > 299 {
 		return nil, fmt.Errorf("network error: %s", resp.Status)
+	}
+
+	contentType := resp.Header.Get("Content-Type")
+	normalizedContentType := normalizeContentType(contentType)
+	if !allowedContentTypes.Contains(normalizedContentType) {
+		return nil, fmt.Errorf("unsupported content type: %s", contentType)
 	}
 
 	data, err := io.ReadAll(resp.Body)

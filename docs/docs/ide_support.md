@@ -62,35 +62,18 @@ vim.filetype.add({
 })
 ```
 
-2. In your `neovim/nvim-lspconfig` servers configuration:
+2. Define `lets_ls` lsp config
 
-In order for `nvim-lspconfig` to recognize `lets lsp` we must define config for `lets_ls` (lets_ls is just a conventional name because we are not officially added to `neovim/nvim-lspconfig`)
-
-```lua
-require("lspconfig.configs").lets_ls = {
-  default_config = {
-    cmd = { 
-      "lets self lsp",
-    },
-    filetypes = { "yaml.lets" },
-    root_dir = util.root_pattern("lets.yaml"),
-    settings = {},
-  },
-}
-```
-
-3. And then enable lets_ls in then servers section:
+Requires `neovim >= 0.11.2`
 
 ```lua
-return {
-  "neovim/nvim-lspconfig",
-  opts = {
-    servers = {
-      lets_ls = {},
-      pyright = {},  -- pyright here just as hint to where we should add lets_ls
-    },
-  },
+vim.lsp.config.lets_ls = {
+  cmd = { "lets", "self", "lsp" },
+  filetypes = { "yaml.lets" },
+  root_markers = { "lets.yaml" },
 }
+
+vim.lsp.enable("lets_ls")
 ```
 
 ### JSON Schema
