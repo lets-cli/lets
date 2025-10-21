@@ -12,7 +12,16 @@ import (
 	"strings"
 	"time"
 
+	"github.com/lets-cli/lets/set"
 	"github.com/lets-cli/lets/util"
+)
+
+var allowedContentTypes = set.NewSet(
+	"text/plain",
+	"text/yaml",
+	"text/x-yaml",
+	"application/yaml",
+	"application/x-yaml",
 )
 
 type Mixins []*Mixin
@@ -108,6 +117,11 @@ func (rm *RemoteMixin) download() ([]byte, error) {
 		return nil, fmt.Errorf("no such file at: %s", rm.URL)
 	} else if resp.StatusCode < 200 || resp.StatusCode > 299 {
 		return nil, fmt.Errorf("network error: %s", resp.Status)
+	}
+
+	contentType := resp.Header.Get("Content-Type")
+	if !allowedContentTypes.Contains(contentType) {
+		return nil, fmt.Errorf("unsupported content type: %s", contentType)
 	}
 
 	data, err := io.ReadAll(resp.Body)

@@ -282,8 +282,7 @@ func (c *Config) readMixins(mixins []*Mixin) error {
 
 	for _, mixin := range mixins {
 		if err := c.readMixin(mixin); err != nil {
-			// TODO: check if error is correct, concise and for humans
-			return err
+			return fmt.Errorf("failed to read remote mixin config '%s': %w", mixin.Remote.URL, err)
 		}
 	}
 
