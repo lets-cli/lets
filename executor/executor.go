@@ -36,6 +36,63 @@ func (e *ExecuteError) ExitCode() int {
 	return 1 // default error code
 }
 
+// DependencyError represents an error that occurred in a dependency chain
+type DependencyError struct {
+	rootCommand    string
+	failedCommand  string
+	dependencyPath []string
+	underlyingErr  error
+	exitCode       int
+}
+
+func (e *DependencyError) Error() string {
+	if len(e.dependencyPath) <= 1 {
+		// No dependency chain, use original error format
+		return e.underlyingErr.Error()
+	}
+
+	// Build dependency tree visualization
+	var builder strings.Builder
+	
+	// Show the failed command
+	builder.WriteString(fmt.Sprintf("'%s' failed: %s\n\n", e.failedCommand, e.getUnderlyingErrorMessage()))
+	
+	// Show the dependency chain
+	builder.WriteString(fmt.Sprintf("'%s' ->", e.rootCommand))
+	for i := 1; i < len(e.dependencyPath); i++ {
+		builder.WriteString(fmt.Sprintf("\n   '%s'", e.dependencyPath[i]))
+		if e.dependencyPath[i] == e.failedCommand {
+			builder.WriteString(" ⚠️")
+		}
+	}
+
+	return builder.String()
+}
+
+func (e *DependencyError) getUnderlyingErrorMessage() string {
+	if e.underlyingErr == nil {
+		return fmt.Sprintf("exit status %d", e.exitCode)
+	}
+	
+	// Extract just the exit status from the underlying error
+	errStr := e.underlyingErr.Error()
+	if strings.Contains(errStr, "exit status") {
+		parts := strings.Split(errStr, ": ")
+		if len(parts) > 0 {
+			return parts[len(parts)-1]
+		}
+	}
+	return errStr
+}
+
+func (e *DependencyError) ExitCode() int {
+	return e.exitCode
+}
+
+func (e *DependencyError) Unwrap() error {
+	return e.underlyingErr
+}
+
 type Executor struct {
 	cfg        *config.Config
 	out        io.Writer
@@ -50,23 +107,31 @@ func NewExecutor(cfg *config.Config, out io.Writer) *Executor {
 }
 
 type Context struct {
-	ctx     context.Context
-	command *config.Command
-	logger  *logging.ExecLogger
+	ctx            context.Context
+	command        *config.Command
+	logger         *logging.ExecLogger
+	dependencyPath []string
 }
 
 func NewExecutorCtx(ctx context.Context, command *config.Command) *Context {
 	return &Context{
-		ctx:     ctx,
-		command: command,
-		logger:  logging.NewExecLogger().Child(command.Name),
+		ctx:            ctx,
+		command:        command,
+		logger:         logging.NewExecLogger().Child(command.Name),
+		dependencyPath: []string{command.Name},
 	}
 }
 
 func ChildExecutorCtx(ctx *Context, command *config.Command) *Context {
+	dependencyPath := make([]string, len(ctx.dependencyPath)+1)
+	copy(dependencyPath, ctx.dependencyPath)
+	dependencyPath[len(ctx.dependencyPath)] = command.Name
+
 	return &Context{
-		command: command,
-		logger:  ctx.logger.Child(command.Name),
+		ctx:            ctx.ctx,
+		command:        command,
+		logger:         ctx.logger.Child(command.Name),
+		dependencyPath: dependencyPath,
 	}
 }
 
@@ -309,7 +374,30 @@ func (e *Executor) executeDepends(ctx *Context) error {
 			ctx.logger.Debug("dependency env overridden: '%s'", cmd.Env.Dump())
 		}
 
-		return e.Execute(ChildExecutorCtx(ctx, cmd))
+		if err := e.Execute(ChildExecutorCtx(ctx, cmd)); err != nil {
+			// Wrap error with dependency context if it's not already a DependencyError
+			var depErr *DependencyError
+			if !errors.As(err, &depErr) {
+				// Extract exit code from ExecuteError or use default
+				exitCode := 1
+				var execErr *ExecuteError
+				if errors.As(err, &execErr) {
+					exitCode = execErr.ExitCode()
+				}
+
+				return &DependencyError{
+					rootCommand:    ctx.dependencyPath[0],
+					failedCommand:  cmd.Name,
+					dependencyPath: append(ctx.dependencyPath, cmd.Name),
+					underlyingErr:  err,
+					exitCode:       exitCode,
+				}
+			}
+			// If it's already a DependencyError, just return it
+			return err
+		}
+
+		return nil
 	})
 }
 

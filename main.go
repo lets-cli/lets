@@ -127,6 +127,14 @@ func main() {
 			exitCode = execErr.ExitCode()
 		}
 
+		// Check if it's a DependencyError (need to import executor package types)
+		type ExitCoder interface {
+			ExitCode() int
+		}
+		if exitCoder, ok := err.(ExitCoder); ok {
+			exitCode = exitCoder.ExitCode()
+		}
+
 		os.Exit(exitCode)
 	}
 }

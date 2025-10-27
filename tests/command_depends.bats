@@ -49,3 +49,30 @@ setup() {
     assert_failure
     assert_line --index 0 "lets: config error: command 'parallel-in-depends' depends on command 'parallel', but parallel cmd is not allowed in depends yet"
 }
+
+@test "command_depends: should show dependency tree on failure" {
+    run lets run-with-failing-dep
+    assert_failure 1
+    assert_output --partial "'fail-command' failed: exit status 1"
+    assert_output --partial "'run-with-failing-dep' ->"
+    assert_output --partial "'fail-command' ⚠️"
+}
+
+@test "command_depends: should show dependency tree with multiple levels" {
+    run lets level2-dep
+    assert_failure 1
+    assert_output --partial "'fail-command' failed: exit status 1"
+    assert_output --partial "'level2-dep' ->"
+    assert_output --partial "'run-with-failing-dep'"
+    assert_output --partial "'fail-command' ⚠️"
+}
+
+@test "command_depends: should run successful deps before showing failure tree" {
+    run lets multiple-deps-one-fail
+    assert_failure 1
+    assert_output --partial "Hello World with level INFO"
+    assert_output --partial "Bar"
+    assert_output --partial "'fail-command' failed: exit status 1"
+    assert_output --partial "'multiple-deps-one-fail' ->"
+    assert_output --partial "'fail-command' ⚠️"
+}

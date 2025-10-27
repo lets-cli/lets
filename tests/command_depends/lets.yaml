@@ -52,3 +52,30 @@ commands:
       - name: greet-foo
         args: Bar
     cmd: echo I have ref in depends
+
+  # Test commands for dependency failure tree
+  fail-command:
+    description: Command that always fails
+    cmd: exit 1
+
+  run-with-failing-dep:
+    description: Command that depends on a failing command
+    depends:
+      - fail-command
+    cmd: echo "This should not run"
+
+  # More complex dependency chain test
+  level2-dep:
+    description: Command that depends on a failing command through multiple levels
+    depends:
+      - run-with-failing-dep
+    cmd: echo "This should also not run"
+
+  # Test multiple dependencies with one failing
+  multiple-deps-one-fail:
+    description: Command with multiple dependencies where one fails
+    depends:
+      - greet
+      - bar 
+      - fail-command
+    cmd: echo "This should not run"
