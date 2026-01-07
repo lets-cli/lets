@@ -108,7 +108,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	showUsage := rootFlags.help || (command.Name() == "help" && len(args) == 0)
+	showUsage := rootFlags.help || (command.Name() == "help" && len(args) == 0) || (len(os.Args) == 1)
 
 	if showUsage {
 		if err := cmd.PrintRootHelpMessage(rootCmd); err != nil {

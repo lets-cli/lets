@@ -58,7 +58,7 @@ func (c *Command) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 
 	var cmd struct {
-		GroupName       string `yaml:"group_name"`
+		GroupName       string `yaml:"group"`
 		Cmd             Cmds
 		Description     string
 		Shell           string

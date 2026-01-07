@@ -19,21 +19,21 @@ func CommandFixture(t *testing.T, text string) *Command {
 }
 
 func TestParseCommand(t *testing.T) {
-	t.Run("default group_name", func(t *testing.T) {
+	t.Run("default group", func(t *testing.T) {
 		text := dedent.Dedent(`
 		cmd: [echo, Hello]
 		`)
 		command := CommandFixture(t, text)
-		exp := ""
+		exp := "Common"
 
 		if command.GroupName != exp {
 			t.Errorf("wrong output. \nexpect %s \ngot:  %s", exp, command.GroupName)
 		}
 	})
 
-	t.Run("provided custom group_name", func(t *testing.T) {
+	t.Run("provided custom group", func(t *testing.T) {
 		text := dedent.Dedent(`
-		group_name: Group Name
+		group: Group Name
 		cmd: [echo, Hello]
 		`)
 		command := CommandFixture(t, text)

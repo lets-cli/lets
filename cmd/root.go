@@ -3,8 +3,10 @@ package cmd
 import (
 	"fmt"
 	"strings"
+	"sort"
 
 	"github.com/spf13/cobra"
+	"github.com/lets-cli/lets/set"
 )
 
 // newRootCmd represents the base command when called without any subcommands.
@@ -58,42 +60,58 @@ func PrintHelpMessage(cmd *cobra.Command) error {
 	return err
 }
 
-func buildGroupedCommandHelp(cmd *cobra.Command) string {
-    help := ""
-    cmds := cmd.Commands()
-    groups := cmd.Groups()
+func buildGroupCommandHelp(cmd *cobra.Command, group *cobra.Group) string {
+	help := ""
+	cmds := []*cobra.Command{}
 
-    groupCmdMap := make(map[string]map[string][]*cobra.Command)
+	// select commands that belong to the specified group
+	for _, c := range cmd.Commands() {
+		if c.GroupID == group.ID && (c.IsAvailableCommand() || c.Name() == "help") {
+			cmds = append(cmds, c)
+		}
+	}
 
-	// todo: add sort
+	sort.Slice(cmds, func(i, j int) bool {
+		return cmds[i].Name() < cmds[j].Name()
+	})
 
-    for _, group := range groups {
-        if _, ok := groupCmdMap[group.Title]; !ok {
-            groupCmdMap[group.Title] = make(map[string][]*cobra.Command)
-        }
-        for _, c := range cmds {
-            if c.GroupID == group.ID && (c.IsAvailableCommand() || c.Name() == "help") {
-                subgroup := c.Annotations["SubGroupName"]
-                groupCmdMap[group.Title][subgroup] = append(groupCmdMap[group.Title][subgroup], c)
-            }
-        }
-    }
+	// Create a list of subgroups
+	subGroupNameSet := set.NewSet[string]()
 
-    for groupName, GroupsMap := range groupCmdMap {
-        help += fmt.Sprintf("%s\n", groupName)
-        for subgroupName, cmds := range GroupsMap {
-			intend := ""
-            if len(GroupsMap) > 1 {
-                help += fmt.Sprintf("\n  %-*s\n", cmd.NamePadding(), subgroupName)
-				intend = "  "
-            }
-            for _, c := range cmds {
+	for _, c := range cmds {
+		if subgroup, ok := c.Annotations["SubGroupName"]; ok && subgroup != "" {
+			subGroupNameSet.Add(subgroup)
+		}
+	}
+
+	subGroupNameList := subGroupNameSet.ToList()
+	sort.Strings(subGroupNameList)
+
+	// generate output
+	help += fmt.Sprintf("%s\n", group.Title)
+
+	for _, subgroupName := range subGroupNameList {
+		intend := ""
+		if len(subGroupNameList) > 1 {
+			help += fmt.Sprintf("\n  %s\n", subgroupName)
+			intend = "  "
+		}
+		for _, c := range cmds {
+			if subgroup, ok := c.Annotations["SubGroupName"]; ok && subgroup == subgroupName {
 				help += fmt.Sprintf("%s  %-*s %s\n", intend, cmd.NamePadding(), c.Name(), c.Short)
-            }
-        }
-        help += "\n"
-    }
-    return help
+			}
+		}
+	}
+
+	for _, c := range cmds {
+		if _, ok := c.Annotations["SubGroupName"]; !ok {
+			help += fmt.Sprintf("  %-*s %s\n", cmd.NamePadding(), c.Name(), c.Short)
+		}
+	}
+
+	help += "\n"
+
+	return help
 }
 
 
@@ -112,7 +130,9 @@ func PrintRootHelpMessage(cmd *cobra.Command) error {
 	help += "\n"
 
 	// Commands
-	help += buildGroupedCommandHelp(cmd)
+	for _, group := range cmd.Groups() {
+		help += buildGroupCommandHelp(cmd, group)
+	}
 
 	// Flags
 	if cmd.HasAvailableLocalFlags() {

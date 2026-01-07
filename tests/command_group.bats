@@ -3,7 +3,7 @@ load test_helpers
 setup() {
     load "${BATS_UTILS_PATH}/bats-support/load.bash"
     load "${BATS_UTILS_PATH}/bats-assert/load.bash"
-    cd ./tests/command_group_name
+    cd ./tests/command_group
 }
 
 HELP_MESSAGE=$(cat <<EOF
@@ -15,15 +15,19 @@ Usage:
 
 Commands:
 
+  A group
+    c           c command
+
+  B group
+    a           a command
+    b           b command
+
   Common
-    run         Run the application
+    d           d command
 
-  Test
-    test        Runs all tests
-
-  Linters
-    linter1     Runs first linter
-    linter2     Runs second linter
+Internal commands:
+  help        Help about any command
+  self        Manage lets CLI itself
 
 Flags:
       --all                   show all commands (including the ones with _)
@@ -44,7 +48,21 @@ EOF
 
 
 @test "help: running 'lets help' should group commands by their group names" {
+    run lets help
+    assert_success
+
+    assert_output "$HELP_MESSAGE"
+}
+
+@test "help: running 'lets --help' should group commands by their group names" {
     run lets --help
+    assert_success
+
+    assert_output "$HELP_MESSAGE"
+}
+
+@test "help: running 'lets' should group commands by their group names" {
+    run lets
     assert_success
 
     assert_output "$HELP_MESSAGE"
