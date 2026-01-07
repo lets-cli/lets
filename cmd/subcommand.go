@@ -202,6 +202,9 @@ func newSubcommand(command *config.Command, conf *config.Config, showAll bool, o
 			c.Println(err)
 		}
 	})
+	subCmd.Annotations = map[string]string{
+		"SubGroupName": command.GroupName,
+	}
 
 	return subCmd
 }

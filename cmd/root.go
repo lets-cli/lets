@@ -58,6 +58,76 @@ func PrintHelpMessage(cmd *cobra.Command) error {
 	return err
 }
 
+func buildGroupedCommandHelp(cmd *cobra.Command) string {
+    help := ""
+    cmds := cmd.Commands()
+    groups := cmd.Groups()
+
+    groupCmdMap := make(map[string]map[string][]*cobra.Command)
+
+	// todo: add sort
+
+    for _, group := range groups {
+        if _, ok := groupCmdMap[group.Title]; !ok {
+            groupCmdMap[group.Title] = make(map[string][]*cobra.Command)
+        }
+        for _, c := range cmds {
+            if c.GroupID == group.ID && (c.IsAvailableCommand() || c.Name() == "help") {
+                subgroup := c.Annotations["SubGroupName"]
+                groupCmdMap[group.Title][subgroup] = append(groupCmdMap[group.Title][subgroup], c)
+            }
+        }
+    }
+
+    for groupName, GroupsMap := range groupCmdMap {
+        help += fmt.Sprintf("%s\n", groupName)
+        for subgroupName, cmds := range GroupsMap {
+			intend := ""
+            if len(GroupsMap) > 1 {
+                help += fmt.Sprintf("\n  %-*s\n", cmd.NamePadding(), subgroupName)
+				intend = "  "
+            }
+            for _, c := range cmds {
+				help += fmt.Sprintf("%s  %-*s %s\n", intend, cmd.NamePadding(), c.Name(), c.Short)
+            }
+        }
+        help += "\n"
+    }
+    return help
+}
+
+
+func PrintRootHelpMessage(cmd *cobra.Command) error {
+	help := ""
+	help = fmt.Sprintf("%s\n\n%s", cmd.Short, help)
+
+	// General
+	help += "Usage:\n"
+	if cmd.Runnable() {
+		help += fmt.Sprintf("  %s\n", cmd.UseLine())
+	}
+	if cmd.HasAvailableSubCommands() {
+		help += fmt.Sprintf("  %s [command]\n", cmd.CommandPath())
+	}
+	help += "\n"
+
+	// Commands
+	help += buildGroupedCommandHelp(cmd)
+
+	// Flags
+	if cmd.HasAvailableLocalFlags() {
+		help += "Flags:\n"
+		help += cmd.LocalFlags().FlagUsagesWrapped(120)
+		help += "\n"
+	}
+
+	// Usage
+	help += fmt.Sprintf(`Use "%s help [command]" for more information about a command.`, cmd.CommandPath())
+
+	_, err := fmt.Fprint(cmd.OutOrStdout(), help)
+	return err
+}
+
 func PrintVersionMessage(cmd *cobra.Command) error {
 	_, err := fmt.Fprintf(cmd.OutOrStdout(), "lets version %s\n", cmd.Version)
 	return err

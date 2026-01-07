@@ -1,0 +1,22 @@
+shell: bash
+
+commands:
+  linter1:
+    group_name: Linters
+    description: Runs first linter
+    cmd: linter1
+
+  linter2:
+    group_name: Linters
+    description: Runs second linter
+    cmd: linter1
+
+  test:
+    group_name: Test
+    description: Runs all tests
+    cmd: ./test --all
+
+  run:
+    description: Run the application
+    cmd: ./run
+
