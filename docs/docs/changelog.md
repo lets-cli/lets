@@ -5,6 +5,23 @@ title: Changelog
 
 ## [Unreleased](https://github.com/lets-cli/lets/releases/tag/v0.0.X)
 
+* `[Added]` `group` directive for commands. Organize commands into groups for better readability in help output. See [config reference for group](/docs/config#group).
+
+  ```yaml
+  commands:
+    build:
+      group: Development
+      cmd: npm run build
+
+    test:
+      group: Development
+      cmd: npm test
+
+    deploy:
+      group: Operations
+      cmd: ./deploy.sh
+  ```
+
 ## [0.0.57](https://github.com/lets-cli/lets/releases/tag/v0.0.57)
 
 * `[Dependency]` update go to `1.24`
