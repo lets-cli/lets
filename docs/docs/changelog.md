@@ -5,6 +5,8 @@ title: Changelog
 
 ## [Unreleased](https://github.com/lets-cli/lets/releases/tag/v0.0.X)
 
+## [0.0.58](https://github.com/lets-cli/lets/releases/tag/v0.0.58)
+
 * `[Added]` `group` directive for commands. Organize commands into groups for better readability in help output. See [config reference for group](/docs/config#group).
 
   ```yaml
@@ -83,16 +85,20 @@ This tag is not released due to build issues
 * `[Added]` Command short syntax. See [config reference for short syntax](/docs/config#short-syntax). Example:
 
   Before:
+
   ```yaml
   commands:
     hello:
       cmd: echo Hello
   ```
+
   After:
+
   ```yaml
   commands:
     hello: echo Hello
   ```
+
 * `[Added]` If command starts with `_` it is considered *hidden* and will not be printed in help message unless `--all` root flag is provided.
 * `[Changed]` Improved rendering of `description` directive. When used in `lets help` usage message the text will be stripped to 120 chars and only text up to first `\n` will be taken. Thus help message will be rendered cosnsistently in width. It is still possible to have a lot of text in `description` and all this text will be used in `lets help [command]` help message. See [config reference for how help messages works](/docs/config#description)
 
@@ -107,10 +113,12 @@ This tag is not released due to build issues
   ```shell
   lets --no-depends run
   ```
+
 ## [0.0.47](https://github.com/lets-cli/lets/releases/tag/v0.0.47)
 
 * `[Added]` completion for command options
 * `[Dependency]` use fork of docopt.go with extended options parser
+
 ## [0.0.45](https://github.com/lets-cli/lets/releases/tag/v0.0.45)
 
 * `[Fixed]` **`Breaking change`** Fix duplicate files for checksum.
@@ -142,7 +150,7 @@ This tag is not released due to build issues
 
 * `[Added]` Validate if commands declared in `depends` actually exist.
 * `[Refactoring]` Refactored `executor` package, implemented `Executor` struct.
-* `[Added]` Support `NO_COLOR` env variable to disable colored output. See https://no-color.org/
+* `[Added]` Support `NO_COLOR` env variable to disable colored output. See <https://no-color.org/>
 * `[Added]` `LETS_COMMAND_ARGS` - will contain command's positional args. [See config](/docs/env#default-environment-variables).
 
   Also, special bash env variables such as `"$@"` and `"$1"` etc. now available inside `cmd` script and work as expected.
@@ -154,16 +162,13 @@ This tag is not released due to build issues
 * `[Added]` `sh` and `checksum` execution modes for global level `env` and command level `env` [See config](/docs/config#env).
   `eval_env` is deprecated now, since `env` with `sh` execution mode does exactly the same
 
-
 ## [0.0.33](https://github.com/lets-cli/lets/releases/tag/v0.0.33)
 
 * `[Added]` Allow templating in command `options` directive [docs](/docs/advanced_usage#command-templates)
 
-
 ## [0.0.32](https://github.com/lets-cli/lets/releases/tag/v0.0.32)
 
 * `[Fixed]` Publish lets to homebrew
-
 
 ## [0.0.30](https://github.com/lets-cli/lets/releases/tag/v0.0.30)
 
@@ -172,11 +177,11 @@ This tag is not released due to build issues
 * `[Added]` Publish `lets` to homebrew
 * `[Added]` `--upgrade` flag to make self-upgrades
 
-
 ## 0.0.29
 
 * `[Added]` `after` directive to command.
   It allows to run some script after main `cmd`
+
   ```yaml
   commands:
     run:
@@ -186,6 +191,7 @@ This tag is not released due to build issues
 
 * `[Added]` `before` global directive to config.
   It allows to run some script before each main `cmd`
+
   ```yaml
   before: |
     function @docker-compose() {
@@ -211,7 +217,6 @@ This tag is not released due to build issues
     run:
       cmd: docker-compose up redis
   ```
-
 
 ## 0.0.28
 
