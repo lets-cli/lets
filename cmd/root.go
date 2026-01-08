@@ -3,8 +3,10 @@ package cmd
 import (
 	"fmt"
 	"strings"
+	"sort"
 
 	"github.com/spf13/cobra"
+	"github.com/lets-cli/lets/set"
 )
 
 // newRootCmd represents the base command when called without any subcommands.
@@ -54,6 +56,94 @@ func PrintHelpMessage(cmd *cobra.Command) error {
 	help := cmd.UsageString()
 	help = fmt.Sprintf("%s\n\n%s", cmd.Short, help)
 	help = strings.Replace(help, "lets [command] --help", "lets help [command]", 1)
+	_, err := fmt.Fprint(cmd.OutOrStdout(), help)
+	return err
+}
+
+func buildGroupCommandHelp(cmd *cobra.Command, group *cobra.Group) string {
+	help := ""
+	cmds := []*cobra.Command{}
+
+	// select commands that belong to the specified group
+	for _, c := range cmd.Commands() {
+		if c.GroupID == group.ID && (c.IsAvailableCommand() || c.Name() == "help") {
+			cmds = append(cmds, c)
+		}
+	}
+
+	sort.Slice(cmds, func(i, j int) bool {
+		return cmds[i].Name() < cmds[j].Name()
+	})
+
+	// Create a list of subgroups
+	subGroupNameSet := set.NewSet[string]()
+
+	for _, c := range cmds {
+		if subgroup, ok := c.Annotations["SubGroupName"]; ok && subgroup != "" {
+			subGroupNameSet.Add(subgroup)
+		}
+	}
+
+	subGroupNameList := subGroupNameSet.ToList()
+	sort.Strings(subGroupNameList)
+
+	// generate output
+	help += fmt.Sprintf("%s\n", group.Title)
+
+	for _, subgroupName := range subGroupNameList {
+		intend := ""
+		if len(subGroupNameList) > 1 {
+			help += fmt.Sprintf("\n  %s\n", subgroupName)
+			intend = "  "
+		}
+		for _, c := range cmds {
+			if subgroup, ok := c.Annotations["SubGroupName"]; ok && subgroup == subgroupName {
+				help += fmt.Sprintf("%s  %-*s %s\n", intend, cmd.NamePadding(), c.Name(), c.Short)
+			}
+		}
+	}
+
+	for _, c := range cmds {
+		if _, ok := c.Annotations["SubGroupName"]; !ok {
+			help += fmt.Sprintf("  %-*s %s\n", cmd.NamePadding(), c.Name(), c.Short)
+		}
+	}
+
+	help += "\n"
+
+	return help
+}
+
+
+func PrintRootHelpMessage(cmd *cobra.Command) error {
+	help := ""
+	help = fmt.Sprintf("%s\n\n%s", cmd.Short, help)
+
+	// General
+	help += "Usage:\n"
+	if cmd.Runnable() {
+		help += fmt.Sprintf("  %s\n", cmd.UseLine())
+	}
+	if cmd.HasAvailableSubCommands() {
+		help += fmt.Sprintf("  %s [command]\n", cmd.CommandPath())
+	}
+	help += "\n"
+
+	// Commands
+	for _, group := range cmd.Groups() {
+		help += buildGroupCommandHelp(cmd, group)
+	}
+
+	// Flags
+	if cmd.HasAvailableLocalFlags() {
+		help += "Flags:\n"
+		help += cmd.LocalFlags().FlagUsagesWrapped(120)
+		help += "\n"
+	}
+
+	// Usage
+	help += fmt.Sprintf(`Use "%s help [command]" for more information about a command.`, cmd.CommandPath())
+
 	_, err := fmt.Fprint(cmd.OutOrStdout(), help)
 	return err
 }

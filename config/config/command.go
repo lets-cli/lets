@@ -14,6 +14,7 @@ import (
 
 type Command struct {
 	Name string
+	GroupName string
 	// Represents a list of commands (scripts)
 	Cmds Cmds
 	// script to run after cmd finished (cleanup, etc)
@@ -57,6 +58,7 @@ func (c *Command) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 
 	var cmd struct {
+		GroupName       string `yaml:"group"`
 		Cmd             Cmds
 		Description     string
 		Shell           string
@@ -73,6 +75,12 @@ func (c *Command) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 	if err := unmarshal(&cmd); err != nil {
 		return err
+	}
+
+	if cmd.GroupName != "" {
+		c.GroupName = cmd.GroupName
+	} else {
+		c.GroupName = "Common"
 	}
 
 	c.Cmds = cmd.Cmd
@@ -141,6 +149,7 @@ func (c *Command) GetEnv(cfg Config) (map[string]string, error) {
 func (c *Command) Clone() *Command {
 	cmd := &Command{
 		Name:               c.Name,
+		GroupName:          c.GroupName,
 		Cmds:               c.Cmds.Clone(),
 		After:              c.After,
 		Shell:              c.Shell,

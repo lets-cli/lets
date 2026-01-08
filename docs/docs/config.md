@@ -31,6 +31,7 @@ title: Config reference
   - [`persist_checksum`](#persist_checksum)
   - [`ref`](#ref)
   - [`args`](#args)
+  - [`group`](#group)
 - [Aliasing:](#aliasing)
   - [Env aliasing](#env-aliasing)
 
@@ -193,7 +194,7 @@ Bar
 #### Conditional init
 
 If you need to make sure that code in `init` is called once with some condition,
-you can for example create a file at the end of `init` script and check if this 
+you can for example create a file at the end of `init` script and check if this
 file exists at the beginning of `init` script.
 
 Example:
@@ -869,6 +870,46 @@ commands:
 **`Experimental feature`**
 
 `args` is used only with [ref](#ref) and allows to set additional positional args to referenced command. See [ref](#ref) example.
+
+
+### `group`
+
+`key: group`
+
+`type: string`
+
+Commands can be organized into groups for better readability in the help output. To assign a command to a group, use the `group` key:
+
+```yaml
+commands:
+  build:
+    group: Build & Deploy
+    description: Build the project
+    cmd: npm run build
+
+  deploy:
+    group: Build & Deploy
+    description: Deploy the project
+    cmd: npm run deploy
+
+  test:
+    group: Testing
+    description: Run tests
+    cmd: npm test
+```
+
+When you run `lets help`, commands will be listed under their respective groups, making it easier to find related commands.
+
+```
+Commands:
+
+  Build & Deploy
+    build       Build the project
+    deploy      Deploy the project
+
+  Testing
+    test        Run tests
+```
 
 
 ## Aliasing:
