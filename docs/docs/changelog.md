@@ -5,7 +5,10 @@ title: Changelog
 
 ## [Unreleased](https://github.com/lets-cli/lets/releases/tag/v0.0.X)
 
+## [0.0.59](https://github.com/lets-cli/lets/releases/tag/v0.0.59)
+
 * `[Fixed]` Fixed indentation issues for long commands in help output. Command names are now properly padded for consistent alignment.
+* `[Refactoring]` Refactored `maxCommandNameLen` to use `slices.MaxFunc` with proper handling for empty command lists.
 
 ## [0.0.58](https://github.com/lets-cli/lets/releases/tag/v0.0.58)
 
