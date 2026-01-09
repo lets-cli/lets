@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"cmp"
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 
@@ -61,15 +63,14 @@ func PrintHelpMessage(cmd *cobra.Command) error {
 }
 
 func maxCommandNameLen(cmd *cobra.Command) int {
-	maxLen := 0
-
-	for _, c := range cmd.Commands() {
-		if l := len(c.Name()); l > maxLen {
-			maxLen = l
-		}
+	commands := cmd.Commands()
+	if len(commands) == 0 {
+		return 0
 	}
-
-	return maxLen
+	maxCmd := slices.MaxFunc(commands, func(a, b *cobra.Command) int {
+		return cmp.Compare(len(a.Name()), len(b.Name()))
+	})
+	return len(maxCmd.Name())
 }
 
 func rpad(s string, padding int) string {
