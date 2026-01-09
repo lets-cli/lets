@@ -13,7 +13,7 @@ import (
 )
 
 type Command struct {
-	Name string
+	Name      string
 	GroupName string
 	// Represents a list of commands (scripts)
 	Cmds Cmds

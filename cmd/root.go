@@ -2,11 +2,11 @@ package cmd
 
 import (
 	"fmt"
-	"strings"
 	"sort"
+	"strings"
 
-	"github.com/spf13/cobra"
 	"github.com/lets-cli/lets/set"
+	"github.com/spf13/cobra"
 )
 
 // newRootCmd represents the base command when called without any subcommands.
@@ -60,6 +60,36 @@ func PrintHelpMessage(cmd *cobra.Command) error {
 	return err
 }
 
+func maxCommandNameLen(cmd *cobra.Command) int {
+	maxLen := 0
+
+	for _, c := range cmd.Commands() {
+		if l := len(c.Name()); l > maxLen {
+			maxLen = l
+		}
+	}
+
+	return maxLen
+}
+
+func rpad(s string, padding int) string {
+	formattedString := fmt.Sprintf("%%-%ds", padding)
+	return fmt.Sprintf(formattedString, s)
+}
+
+func hasSubgroup(cmd *cobra.Command) bool {
+	subgroups := make(map[string]struct{})
+	for _, c := range cmd.Commands() {
+		if subgroup, ok := c.Annotations["SubGroupName"]; ok && subgroup != "" {
+			subgroups[subgroup] = struct{}{}
+			if len(subgroups) > 1 {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func buildGroupCommandHelp(cmd *cobra.Command, group *cobra.Group) string {
 	help := ""
 	cmds := []*cobra.Command{}
@@ -70,6 +100,8 @@ func buildGroupCommandHelp(cmd *cobra.Command, group *cobra.Group) string {
 			cmds = append(cmds, c)
 		}
 	}
+
+	padding := maxCommandNameLen(cmd)
 
 	sort.Slice(cmds, func(i, j int) bool {
 		return cmds[i].Name() < cmds[j].Name()
@@ -88,24 +120,27 @@ func buildGroupCommandHelp(cmd *cobra.Command, group *cobra.Group) string {
 	sort.Strings(subGroupNameList)
 
 	// generate output
-	help += fmt.Sprintf("%s\n", group.Title)
+	help += group.Title + "\n"
+
+	intend := ""
+	if hasSubgroup(cmd) {
+		intend = "  "
+	}
 
 	for _, subgroupName := range subGroupNameList {
-		intend := ""
 		if len(subGroupNameList) > 1 {
 			help += fmt.Sprintf("\n  %s\n", subgroupName)
-			intend = "  "
 		}
 		for _, c := range cmds {
 			if subgroup, ok := c.Annotations["SubGroupName"]; ok && subgroup == subgroupName {
-				help += fmt.Sprintf("%s  %-*s %s\n", intend, cmd.NamePadding(), c.Name(), c.Short)
+				help += fmt.Sprintf("  %s%s  %s\n", intend, rpad(c.Name(), padding), c.Short)
 			}
 		}
 	}
 
 	for _, c := range cmds {
 		if _, ok := c.Annotations["SubGroupName"]; !ok {
-			help += fmt.Sprintf("  %-*s %s\n", cmd.NamePadding(), c.Name(), c.Short)
+			help += fmt.Sprintf("  %s%s  %s\n", rpad(c.Name(), padding), intend, c.Short)
 		}
 	}
 
@@ -113,7 +148,6 @@ func buildGroupCommandHelp(cmd *cobra.Command, group *cobra.Group) string {
 
 	return help
 }
-
 
 func PrintRootHelpMessage(cmd *cobra.Command) error {
 	help := ""

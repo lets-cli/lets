@@ -1,0 +1,18 @@
+shell: bash
+
+commands:
+  _x:
+    description: Hidden x
+    cmd: echo "x"
+
+  foo:
+    description: Print foo
+    cmd: echo "Foo"
+
+  bar:
+    description: Print bar
+    cmd: echo "Bar"
+
+  super_long_command_longer_than_usual:
+    description: Super long command
+    cmd: echo "long command"

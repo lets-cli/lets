@@ -3,7 +3,7 @@ load test_helpers
 setup() {
     load "${BATS_UTILS_PATH}/bats-support/load.bash"
     load "${BATS_UTILS_PATH}/bats-assert/load.bash"
-    cd ./tests/command_group
+    cd ./tests/command_group_long
 }
 
 HELP_MESSAGE=$(cat <<EOF
@@ -16,18 +16,19 @@ Usage:
 Commands:
 
   A group
-    c           c command
+    c                                     c command
 
   B group
-    a           a command
-    b           b command
+    a                                     a command
+    b                                     b command
 
   Common
-    d           d command
+    d                                     d command
+    super_long_command_longer_than_usual  Super long command
 
 Internal commands:
-  help          Help about any command
-  self          Manage lets CLI itself
+  help                                    Help about any command
+  self                                    Manage lets CLI itself
 
 Flags:
       --all                   show all commands (including the ones with _)
