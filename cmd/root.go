@@ -63,7 +63,11 @@ func PrintHelpMessage(cmd *cobra.Command) error {
 }
 
 func maxCommandNameLen(cmd *cobra.Command) int {
-	maxCmd := slices.MaxFunc(cmd.Commands(), func(a, b *cobra.Command) int {
+	commands := cmd.Commands()
+	if len(commands) == 0 {
+		return 0
+	}
+	maxCmd := slices.MaxFunc(commands, func(a, b *cobra.Command) int {
 		return cmp.Compare(len(a.Name()), len(b.Name()))
 	})
 	return len(maxCmd.Name())
