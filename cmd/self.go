@@ -11,6 +11,7 @@ func InitSelfCmd(rootCmd *cobra.Command, version string) {
 		Hidden:  false,
 		Short:   "Manage lets CLI itself",
 		GroupID: "internal",
+		Args:    validateCommandArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return PrintHelpMessage(cmd)
 		},
