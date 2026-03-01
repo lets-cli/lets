@@ -12,16 +12,39 @@ import (
 )
 
 type unknownCommandError struct {
-	command string
-	root    string
+	message string
 }
 
 func (e *unknownCommandError) Error() string {
-	return fmt.Sprintf("unknown command %q for %q", e.command, e.root)
+	return e.message
 }
 
 func (e *unknownCommandError) ExitCode() int {
 	return 2
+}
+
+func buildUnknownCommandMessage(cmd *cobra.Command, arg string) string {
+	message := fmt.Sprintf("unknown command %q for %q", arg, cmd.CommandPath())
+
+	if cmd.DisableSuggestions {
+		return message
+	}
+
+	if cmd.SuggestionsMinimumDistance <= 0 {
+		cmd.SuggestionsMinimumDistance = 2
+	}
+
+	suggestions := cmd.SuggestionsFor(arg)
+	if len(suggestions) == 0 {
+		return message
+	}
+
+	message += "\n\nDid you mean this?\n"
+	for _, suggestion := range suggestions {
+		message += fmt.Sprintf("\t%s\n", suggestion)
+	}
+
+	return message
 }
 
 func validateCommandArgs(cmd *cobra.Command, args []string) error {
@@ -30,8 +53,7 @@ func validateCommandArgs(cmd *cobra.Command, args []string) error {
 	}
 
 	return &unknownCommandError{
-		command: args[0],
-		root:    cmd.CommandPath(),
+		message: buildUnknownCommandMessage(cmd, args[0]),
 	}
 }
 

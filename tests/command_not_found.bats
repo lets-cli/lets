@@ -13,3 +13,19 @@ setup() {
     run lets self no_such_command
     assert_failure 2
 }
+
+@test "command_not_found: suggest root command for close typo" {
+    run lets slef
+    assert_failure 2
+    assert_output --partial 'unknown command "slef" for "lets"'
+    assert_output --partial 'Did you mean this?'
+    assert_output --partial 'self'
+}
+
+@test "command_not_found: suggest self subcommand for close typo" {
+    run lets self ls
+    assert_failure 2
+    assert_output --partial 'unknown command "ls" for "lets self"'
+    assert_output --partial 'Did you mean this?'
+    assert_output --partial 'lsp'
+}

@@ -82,7 +82,7 @@ func TestRootCmdWithConfig(t *testing.T) {
 	})
 
 	t.Run("should return exit code 2 for unknown command", func(t *testing.T) {
-		rootCmd, _ := newTestRootCmdWithConfig([]string{"baz"})
+		rootCmd, _ := newTestRootCmdWithConfig([]string{"fo"})
 
 		err := rootCmd.Execute()
 		if err == nil {
@@ -98,8 +98,16 @@ func TestRootCmdWithConfig(t *testing.T) {
 			t.Fatalf("expected exit code 2, got %d", exitCode)
 		}
 
-		if !strings.Contains(err.Error(), `unknown command "baz"`) {
+		if !strings.Contains(err.Error(), `unknown command "fo"`) {
 			t.Fatalf("expected unknown command error, got %q", err.Error())
+		}
+
+		if !strings.Contains(err.Error(), "Did you mean this?") {
+			t.Fatalf("expected suggestions in error, got %q", err.Error())
+		}
+
+		if !strings.Contains(err.Error(), "\tfoo\n") {
+			t.Fatalf("expected foo suggestion, got %q", err.Error())
 		}
 	})
 }
@@ -109,7 +117,7 @@ func TestSelfCmd(t *testing.T) {
 		bufOut := new(bytes.Buffer)
 
 		rootCmd := CreateRootCommand("v0.0.0-test")
-		rootCmd.SetArgs([]string{"self", "baz"})
+		rootCmd.SetArgs([]string{"self", "ls"})
 		rootCmd.SetOut(bufOut)
 		rootCmd.SetErr(bufOut)
 		InitSelfCmd(rootCmd, "v0.0.0-test")
@@ -128,8 +136,16 @@ func TestSelfCmd(t *testing.T) {
 			t.Fatalf("expected exit code 2, got %d", exitCode)
 		}
 
-		if !strings.Contains(err.Error(), `unknown command "baz" for "lets self"`) {
+		if !strings.Contains(err.Error(), `unknown command "ls" for "lets self"`) {
 			t.Fatalf("expected unknown self subcommand error, got %q", err.Error())
+		}
+
+		if !strings.Contains(err.Error(), "Did you mean this?") {
+			t.Fatalf("expected suggestions in error, got %q", err.Error())
+		}
+
+		if !strings.Contains(err.Error(), "\tlsp\n") {
+			t.Fatalf("expected lsp suggestion, got %q", err.Error())
 		}
 	})
 }
