@@ -29,3 +29,17 @@ setup() {
     assert_output --partial 'Did you mean this?'
     assert_output --partial 'lsp'
 }
+
+@test "command_not_found: no suggestions for completely unrelated command" {
+    run lets zzzznotacommand
+    assert_failure 2
+    assert_output --partial 'unknown command "zzzznotacommand" for "lets"'
+    refute_output --partial 'Did you mean this?'
+}
+
+@test "command_not_found: no suggestions for completely unrelated self subcommand" {
+    run lets self zzzznotacommand
+    assert_failure 2
+    assert_output --partial 'unknown command "zzzznotacommand" for "lets self"'
+    refute_output --partial 'Did you mean this?'
+}

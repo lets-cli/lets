@@ -5,6 +5,9 @@ title: Changelog
 
 ## [Unreleased](https://github.com/lets-cli/lets/releases/tag/v0.0.X)
 
+* `[Added]` Show similar command suggestions on typos.
+* `[Changed]` Exit code 2 on unknown command.
+
 ## [0.0.59](https://github.com/lets-cli/lets/releases/tag/v0.0.59)
 
 * `[Fixed]` Fixed indentation issues for long commands in help output. Command names are now properly padded for consistent alignment.
