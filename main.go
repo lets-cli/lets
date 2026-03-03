@@ -11,7 +11,6 @@ import (
 	"github.com/lets-cli/lets/cmd"
 	"github.com/lets-cli/lets/config"
 	"github.com/lets-cli/lets/env"
-	"github.com/lets-cli/lets/executor"
 	"github.com/lets-cli/lets/logging"
 	"github.com/lets-cli/lets/set"
 	"github.com/lets-cli/lets/upgrade"
@@ -40,7 +39,7 @@ func main() {
 	command, args, err := rootCmd.Traverse(os.Args[1:])
 	if err != nil {
 		log.Errorf("lets: traverse commands error: %s", err)
-		os.Exit(1)
+		os.Exit(getExitCode(err, 1))
 	}
 
 	rootFlags, err := parseRootFlags(args)
@@ -120,14 +119,7 @@ func main() {
 
 	if err := rootCmd.ExecuteContext(ctx); err != nil {
 		log.Error(err.Error())
-
-		exitCode := 1
-		var execErr *executor.ExecuteError
-		if errors.As(err, &execErr) {
-			exitCode = execErr.ExitCode()
-		}
-
-		os.Exit(exitCode)
+		os.Exit(getExitCode(err, 1))
 	}
 }
 
@@ -150,6 +142,15 @@ func getContext() context.Context {
 	}()
 
 	return ctx
+}
+
+func getExitCode(err error, defaultCode int) int {
+	var exitCoder interface{ ExitCode() int }
+	if errors.As(err, &exitCoder) {
+		return exitCoder.ExitCode()
+	}
+
+	return defaultCode
 }
 
 // do not fail on config error in it is help (-h, --help) or --init or completion command.

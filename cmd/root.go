@@ -11,12 +11,58 @@ import (
 	"github.com/spf13/cobra"
 )
 
+type unknownCommandError struct {
+	message string
+}
+
+func (e *unknownCommandError) Error() string {
+	return e.message
+}
+
+func (e *unknownCommandError) ExitCode() int {
+	return 2
+}
+
+func buildUnknownCommandMessage(cmd *cobra.Command, arg string) string {
+	message := fmt.Sprintf("unknown command %q for %q", arg, cmd.CommandPath())
+
+	if cmd.DisableSuggestions {
+		return message
+	}
+
+	if cmd.SuggestionsMinimumDistance <= 0 {
+		cmd.SuggestionsMinimumDistance = 2
+	}
+
+	suggestions := cmd.SuggestionsFor(arg)
+	if len(suggestions) == 0 {
+		return message
+	}
+
+	message += "\n\nDid you mean this?\n"
+	for _, suggestion := range suggestions {
+		message += fmt.Sprintf("\t%s\n", suggestion)
+	}
+
+	return message
+}
+
+func validateCommandArgs(cmd *cobra.Command, args []string) error {
+	if len(args) == 0 {
+		return nil
+	}
+
+	return &unknownCommandError{
+		message: buildUnknownCommandMessage(cmd, args[0]),
+	}
+}
+
 // newRootCmd represents the base command when called without any subcommands.
 func newRootCmd(version string) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "lets",
 		Short: "A CLI task runner",
-		Args:  cobra.ArbitraryArgs,
+		Args:  validateCommandArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return PrintHelpMessage(cmd)
 		},
