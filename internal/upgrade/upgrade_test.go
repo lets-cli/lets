@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/lets-cli/lets/upgrade/registry"
+	"github.com/lets-cli/lets/internal/upgrade/registry"
 )
 
 type MockRegistry struct {

@@ -7,7 +7,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/lets-cli/lets/checksum"
+	"github.com/lets-cli/lets/internal/checksum"
 	"gopkg.in/yaml.v3"
 )
 

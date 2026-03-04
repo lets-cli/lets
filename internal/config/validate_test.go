@@ -3,7 +3,7 @@ package config
 import (
 	"testing"
 
-	"github.com/lets-cli/lets/config/config"
+	"github.com/lets-cli/lets/internal/config/config"
 )
 
 func TestValidateCommandInDependsExists(t *testing.T) {

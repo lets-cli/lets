@@ -8,8 +8,8 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/lets-cli/lets/config/config"
-	"github.com/lets-cli/lets/docopt"
+	"github.com/lets-cli/lets/internal/config/config"
+	"github.com/lets-cli/lets/internal/docopt"
 	"github.com/spf13/cobra"
 )
 

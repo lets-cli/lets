@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/lets-cli/lets/util"
+	"github.com/lets-cli/lets/internal/util"
 )
 
 var ErrFileNotExists = errors.New("file not exists")

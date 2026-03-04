@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/lets-cli/lets/config/path"
-	"github.com/lets-cli/lets/set"
-	"github.com/lets-cli/lets/util"
+	"github.com/lets-cli/lets/internal/config/path"
+	"github.com/lets-cli/lets/internal/set"
+	"github.com/lets-cli/lets/internal/util"
 	"gopkg.in/yaml.v3"
 )
 

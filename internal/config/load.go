@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/lets-cli/lets/config/config"
+	"github.com/lets-cli/lets/internal/config/config"
 	"gopkg.in/yaml.v3"
 )
 

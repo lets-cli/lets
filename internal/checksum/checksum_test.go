@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/lets-cli/lets/test"
+	"github.com/lets-cli/lets/internal/test"
 )
 
 // get filename without last 4 chars - to make tests more predictable.

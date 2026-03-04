@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/lets-cli/lets/checksum"
+	"github.com/lets-cli/lets/internal/checksum"
 )
 
 func makeEnvEntry(k, v string) string {

@@ -7,7 +7,7 @@ import (
 	"path"
 	"runtime"
 
-	"github.com/lets-cli/lets/upgrade/registry"
+	"github.com/lets-cli/lets/internal/upgrade/registry"
 	log "github.com/sirupsen/logrus"
 )
 
