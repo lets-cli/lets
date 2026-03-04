@@ -20,7 +20,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var version = "0.0.0-dev"
+var Version = "0.0.0-dev"
 
 func main() {
 	ctx := getContext()
@@ -29,11 +29,11 @@ func main() {
 
 	logging.InitLogging(os.Stdout, os.Stderr)
 
-	rootCmd := cmd.CreateRootCommand(version)
+	rootCmd := cmd.CreateRootCommand(Version)
 	rootCmd.InitDefaultHelpFlag()
 	rootCmd.InitDefaultVersionFlag()
 	reinitCompletionCmd := cmd.InitCompletionCmd(rootCmd, nil)
-	cmd.InitSelfCmd(rootCmd, version)
+	cmd.InitSelfCmd(rootCmd, Version)
 	rootCmd.InitDefaultHelpCmd()
 
 	command, args, err := rootCmd.Traverse(os.Args[1:])
@@ -66,7 +66,7 @@ func main() {
 		rootFlags.config = os.Getenv("LETS_CONFIG")
 	}
 
-	cfg, err := config.Load(rootFlags.config, configDir, version)
+	cfg, err := config.Load(rootFlags.config, configDir, Version)
 	if err != nil {
 		if failOnConfigError(rootCmd, command, rootFlags) {
 			log.Errorf("lets: config error: %s", err)
@@ -82,7 +82,7 @@ func main() {
 	if rootFlags.init {
 		wd, err := os.Getwd()
 		if err == nil {
-			err = workdir.InitLetsFile(wd, version)
+			err = workdir.InitLetsFile(wd, Version)
 		}
 
 		if err != nil {
@@ -94,7 +94,7 @@ func main() {
 	}
 
 	if rootFlags.upgrade {
-		upgrader, err := upgrade.NewBinaryUpgrader(registry.NewGithubRegistry(ctx), version)
+		upgrader, err := upgrade.NewBinaryUpgrader(registry.NewGithubRegistry(ctx), Version)
 		if err == nil {
 			err = upgrader.Upgrade()
 		}

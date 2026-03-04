@@ -10,7 +10,7 @@ release:
 
 builds:
   - id: darwin-amd64
-    main: .
+    main: ./cmd/lets
     goos:
       - darwin
     goarch:
@@ -23,9 +23,9 @@ builds:
     flags:
       - -mod=readonly
     ldflags:
-      - -s -w -X main.version={{.Version}}
+      - -s -w -X main.Version={{.Version}}
   - id: darwin-arm64
-    main: .
+    main: ./cmd/lets
     goos:
       - darwin
     goarch:
@@ -38,9 +38,9 @@ builds:
     flags:
       - -mod=readonly
     ldflags:
-      - -s -w -X main.version={{.Version}}
+      - -s -w -X main.Version={{.Version}}
   - id: linux-amd64
-    main: .
+    main: ./cmd/lets
     goos:
       - linux
     goarch:
@@ -51,7 +51,7 @@ builds:
     flags:
       - -mod=readonly
     ldflags:
-      - -s -w -X main.version={{.Version}}
+      - -s -w -X main.Version={{.Version}}
 
 archives:
 - formats: [tar.gz]

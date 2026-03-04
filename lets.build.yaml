@@ -9,3 +9,7 @@ commands:
   build-lint-image:
     description: Build lets lint docker image
     cmd: docker build -t lets-lint -f Dockerfile --target linter .
+
+  goreleaser-dev:
+    description: Run goreleaser to test its build
+    cmd: goreleaser build --skip=validate --clean

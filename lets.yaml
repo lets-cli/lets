@@ -109,9 +109,9 @@ commands:
         PATH2LETSDEV=$LETSOPT_PATH
       fi
 
-      go build -ldflags="-X main.version=${VERSION:1}-dev" -o "${BIN}" *.go && \
+      go build -ldflags="-X main.Version=${VERSION:1}-dev" -o "${BIN}" ./cmd/lets && \
       sudo mv ./${BIN} $PATH2LETSDEV/${BIN} && \
-      echo " - binary ${BIN} version ${VERSION} successfully installed in ${PATH2LETSDEV}"
+      echo " - binary ${BIN} version $($PATH2LETSDEV/${BIN} --version) successfully installed in ${PATH2LETSDEV}"
 
   build:
     description: Build lets from source code
@@ -120,9 +120,18 @@ commands:
     cmd: |
       VERSION=$(git describe)
       BIN=${LETSOPT_BIN:-lets}
-
-      go build -ldflags="-X main.version=${VERSION:1}-dev" -o ${BIN} *.go && \
-      echo " - binary './${BIN}' (version ${VERSION}) successfully build"
+      
+      go build \
+        -ldflags="-X main.Version=${VERSION:1}-dev" \
+        -o ${BIN} ./cmd/lets
+      
+      success=$?
+      if [[ $success -eq 0 ]]; then
+        version=$(./${BIN} --version)
+        echo " - binary './${BIN}' ($version) successfully build"
+      else
+        echo "Failed to build"
+      fi
 
   publish-docs:
     work_dir: docs
