@@ -3,7 +3,7 @@ package config
 import (
 	"errors"
 
-	"github.com/lets-cli/lets/util"
+	"github.com/lets-cli/lets/internal/util"
 )
 
 type Version string

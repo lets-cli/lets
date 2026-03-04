@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/lets-cli/lets/lsp"
+	"github.com/lets-cli/lets/internal/lsp"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )

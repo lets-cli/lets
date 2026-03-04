@@ -5,9 +5,9 @@ import (
 	"path/filepath"
 
 	"github.com/fatih/color"
-	"github.com/lets-cli/lets/config/path"
-	"github.com/lets-cli/lets/util"
-	"github.com/lets-cli/lets/workdir"
+	"github.com/lets-cli/lets/internal/config/path"
+	"github.com/lets-cli/lets/internal/util"
+	"github.com/lets-cli/lets/internal/workdir"
 	log "github.com/sirupsen/logrus"
 )
 

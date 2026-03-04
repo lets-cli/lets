@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/lets-cli/lets/set"
-	"github.com/lets-cli/lets/util"
+	"github.com/lets-cli/lets/internal/set"
+	"github.com/lets-cli/lets/internal/util"
 )
 
 const (

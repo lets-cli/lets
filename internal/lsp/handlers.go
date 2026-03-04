@@ -4,7 +4,7 @@ import (
 	"errors"
 	"slices"
 
-	"github.com/lets-cli/lets/util"
+	"github.com/lets-cli/lets/internal/util"
 	"github.com/tliron/glsp"
 	lsp "github.com/tliron/glsp/protocol_3_16"
 )

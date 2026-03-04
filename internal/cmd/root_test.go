@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/lets-cli/lets/config/config"
+	"github.com/lets-cli/lets/internal/config/config"
 	"github.com/spf13/cobra"
 )
 

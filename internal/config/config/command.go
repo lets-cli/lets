@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/lets-cli/lets/checksum"
+	"github.com/lets-cli/lets/internal/checksum"
 	log "github.com/sirupsen/logrus"
 )
 

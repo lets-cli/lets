@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/lets-cli/lets/config/config"
-	"github.com/lets-cli/lets/util"
+	"github.com/lets-cli/lets/internal/config/config"
+	"github.com/lets-cli/lets/internal/util"
 )
 
 // Validate loaded config.

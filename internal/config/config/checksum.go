@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/lets-cli/lets/checksum"
+	"github.com/lets-cli/lets/internal/checksum"
 )
 
 // Checksum type for all checksum uses (env, command.env, command,checksum).

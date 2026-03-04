@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/lets-cli/lets/set"
+	"github.com/lets-cli/lets/internal/set"
 	"github.com/spf13/cobra"
 )
 

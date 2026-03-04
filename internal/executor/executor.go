@@ -10,11 +10,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/lets-cli/lets/checksum"
-	"github.com/lets-cli/lets/config/config"
-	"github.com/lets-cli/lets/docopt"
-	"github.com/lets-cli/lets/env"
-	"github.com/lets-cli/lets/logging"
+	"github.com/lets-cli/lets/internal/checksum"
+	"github.com/lets-cli/lets/internal/config/config"
+	"github.com/lets-cli/lets/internal/docopt"
+	"github.com/lets-cli/lets/internal/env"
+	"github.com/lets-cli/lets/internal/logging"
 	"golang.org/x/sync/errgroup"
 )
 
