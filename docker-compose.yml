@@ -31,7 +31,8 @@ services:
       - bash
       - -c
       - |
-        go build -o /usr/bin/lets *.go
+        go build -buildvcs=false -o /usr/bin/lets ./cmd/lets
+        ls -l /usr/bin/lets
         if [[ -n "${LETSOPT_TEST}" ]]; then
           bats tests/"${LETSOPT_TEST}" ${LETSOPT_OPTS}
         else
