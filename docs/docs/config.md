@@ -7,7 +7,6 @@ title: Config reference
   - [Version](#version)
   - [Shell](#shell)
   - [Global env](#global-env)
-  - [Global eval\_env](#global-eval_env)
   - [Global before](#global-before)
   - [Global init](#global-init)
     - [Conditional init](#conditional-init)
@@ -26,7 +25,6 @@ title: Config reference
     - [Override arguments in depends command](#override-arguments-in-depends-command)
   - [`options`](#options)
   - [`env`](#env)
-  - [`eval_env`](#eval_env)
   - [`checksum`](#checksum)
   - [`persist_checksum`](#persist_checksum)
   - [`ref`](#ref)
@@ -89,26 +87,6 @@ env:
     sh: echo "`id`"
   MY_GLOBAL_ENV_3:
     checksum: [Readme.md, package.json]
-```
-
-### Global eval_env
-
-**`Deprecated`**
-
-`key: eval_env`
-
-`type: mapping string => string`
-
-> Since `env` now has `sh` execution mode, `eval_env` is deprecated.
-
-Specify global eval_env for all commands.
-
-Example:
-
-```yaml
-shell: bash
-eval_env:
-  CURRENT_UID: echo "`id -u`:`id -g`"
 ```
 
 ### Global before
@@ -690,33 +668,6 @@ commands:
         checksum: [Readme.md, package.json]
     cmd: go build -o lets *.go
 ```
-
-
-### `eval_env`
-
-**`Deprecated`**
-
-`key: eval_env`
-
-`type: mapping string => string`
-
-> Since `env` now has `sh` execution mode, `eval_env` is deprecated.
-
-Same as env but allows you to dynamically compute env:
-
-Example:
-
-```yaml
-commands:
-  test:
-    description: Test something
-    eval_env:
-      CURRENT_UID: echo "`id -u`:`id -g`"
-      CURRENT_USER_NAME: echo "`id -un`"
-    cmd: go build -o lets *.go
-```
-
-Value will be executed in shell and result will be saved in env.
 
 
 ### `checksum`

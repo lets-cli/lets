@@ -35,19 +35,19 @@ commands:
     cmd: npm run server
 ```
 
-### Eval env
+### Dynamic env values
 
-Also if the value of the environment variable must be evaluated, you can add global or per-command `eval_env`:
+If the environment variable value must be evaluated, use `env` with `sh`:
 
 ```yaml
 shell: bash
 
 env:
   DEBUG: "0"
-
-eval_env:
-  CURRENT_UID: echo "`id -u`:`id -g`"
-  CURRENT_USER_NAME: echo "`id -un`"
+  CURRENT_UID:
+    sh: echo "`id -u`:`id -g`"
+  CURRENT_USER_NAME:
+    sh: echo "`id -un`"
 
 commands:
   run:

@@ -3,11 +3,12 @@ shell: bash
 env:
   DOCKER_BUILDKIT: "1"
   COMPOSE_DOCKER_CLI_BUILD: "1"
-
-eval_env:
-  CURRENT_UID: echo "`id -u`:`id -g`"
-  CURRENT_USER_NAME: echo "`id -un`"
-  DOCKER_GATEWAY: echo $(docker network inspect uaprom_default --format="{{(index .IPAM.Config 0).Gateway}}")
+  CURRENT_UID:
+    sh: echo "`id -u`:`id -g`"
+  CURRENT_USER_NAME:
+    sh: echo "`id -un`"
+  DOCKER_GATEWAY:
+    sh: echo $(docker network inspect uaprom_default --format="{{(index .IPAM.Config 0).Gateway}}")
 
 commands:
   build-server:
