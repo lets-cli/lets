@@ -49,7 +49,7 @@ lets publish-docs             # deploy docs site
 
 ## Key lets.yaml Fields
 
-- Top-level: `shell`, `env`, `eval_env`, `before`, `init`, `mixins`, `commands`
+- Top-level: `shell`, `env`, `before`, `init`, `mixins`, `commands`
 - Command: `cmd`, `description`, `depends`, `env`, `options` (docopt), `work_dir`, `after`, `checksum`, `persist_checksum`, `ref`, `args`, `shell`
 
 ## Project Rules

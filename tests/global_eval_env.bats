@@ -6,9 +6,8 @@ setup() {
     cd ./tests/global_eval_env
 }
 
-@test "global_eval_env: should compute env from eval_env and provide env to command" {
+@test "global_eval_env: should fail because eval_env is not supported" {
     run lets global-eval_env
-    assert_success
-    assert_line --index 0 "ONE=1"
-    assert_line --index 1 "TWO=2"
+    assert_failure
+    assert_output --partial "keyword 'eval_env' not supported"
 }

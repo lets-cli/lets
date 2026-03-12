@@ -18,7 +18,6 @@ var keywords = set.NewSet[string](
 	"version",
 	"shell",
 	"env",
-	"eval_env",
 	"init",
 	"before",
 	"mixins",
@@ -69,7 +68,6 @@ func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		Before   string
 		Init     string
 		Env      *Envs
-		EvalEnv  *Envs `yaml:"eval_env"`
 	}
 
 	if err := unmarshal(&config); err != nil {
@@ -94,13 +92,6 @@ func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if c.Env == nil {
 		c.Env = &Envs{}
 	}
-
-	// support for deprecated eval_env
-	_ = config.EvalEnv.Range(func(name string, value Env) error {
-		c.Env.Set(name, Env{Name: name, Sh: value.Value})
-
-		return nil
-	})
 
 	for name, cmd := range c.Commands {
 		cmd.Name = name

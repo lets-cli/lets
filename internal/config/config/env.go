@@ -193,7 +193,7 @@ func executeScript(shell string, script string) (string, error) {
 
 	out, err := cmd.Output()
 	if err != nil {
-		return "", fmt.Errorf("can not get output from eval_env script: %s: %w", script, err)
+		return "", fmt.Errorf("can not get output from env.sh script: %s: %w", script, err)
 	}
 
 	res := string(out)

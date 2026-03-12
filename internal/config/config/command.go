@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/lets-cli/lets/internal/checksum"
-	log "github.com/sirupsen/logrus"
 )
 
 type Command struct {
@@ -63,7 +62,6 @@ func (c *Command) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		Description     string
 		Shell           string
 		Env             *Envs
-		EvalEnv         *Envs `yaml:"eval_env"`
 		Options         string
 		Depends         *Deps
 		WorkDir         string `yaml:"work_dir"`
@@ -89,16 +87,6 @@ func (c *Command) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if c.Env == nil {
 		c.Env = &Envs{}
 	}
-
-	// support for deprecated eval_env
-	if !cmd.EvalEnv.Empty() {
-		log.Debug("eval_env is deprecated, consider using 'env' with 'sh' executor")
-	}
-	_ = cmd.EvalEnv.Range(func(name string, value Env) error {
-		c.Env.Set(name, Env{Name: name, Sh: value.Value})
-
-		return nil
-	})
 
 	c.Shell = cmd.Shell
 	c.Docopts = cmd.Options
