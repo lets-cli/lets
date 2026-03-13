@@ -6,7 +6,7 @@ setup() {
   load "${BATS_UTILS_PATH}/bats-support/load.bash"
   load "${BATS_UTILS_PATH}/bats-assert/load.bash"
   # NOTICE to test this functionality properly we building lets with specified version ${TEST_VERSION}
-  go build -ldflags="-X main.Version=${TEST_VERSION}" -o ./tests/config_version/lets cmd/lets/main.go
+  go build -ldflags="-X main.Version=${TEST_VERSION} -X main.BuildDate=2024-01-01T00:00:00Z" -o ./tests/config_version/lets cmd/lets/main.go
   cd ./tests/config_version
 }
 

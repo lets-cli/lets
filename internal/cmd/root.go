@@ -80,8 +80,9 @@ func newRootCmd(version string) *cobra.Command {
 }
 
 // CreateRootCommand used to run only root command without config.
-func CreateRootCommand(version string) *cobra.Command {
+func CreateRootCommand(version string, buildDate string) *cobra.Command {
 	rootCmd := newRootCmd(version)
+	rootCmd.Annotations = map[string]string{"buildDate": buildDate}
 
 	initRootFlags(rootCmd)
 
@@ -230,6 +231,10 @@ func PrintRootHelpMessage(cmd *cobra.Command) error {
 }
 
 func PrintVersionMessage(cmd *cobra.Command) error {
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "lets version %s\n", cmd.Version)
+	msg := fmt.Sprintf("lets version %s", cmd.Version)
+	if buildDate := cmd.Annotations["buildDate"]; buildDate != "" {
+		msg += fmt.Sprintf(" (%s)", buildDate)
+	}
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), msg)
 	return err
 }

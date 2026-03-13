@@ -32,20 +32,20 @@ lets publish-docs             # deploy docs site
 
 ## Package Structure
 
-- `main.go` — entry point, flag parsing, signal handling
-- `cmd/` — Cobra commands (root, subcommands, completion, LSP, self-update)
-- `config/` — config file discovery, loading, validation; `config/config/` defines Config/Command/Mixin structs and YAML unmarshaling
-- `executor/` — command execution, dependency resolution, env setup, checksum verification
-- `env/` — debug level state (`LETS_DEBUG`, levels 0-2)
-- `logging/` — logrus-based logging with command chain formatting
-- `lsp/` — Language Server Protocol: definition lookup, completion for depends, tree-sitter YAML parsing; `lets lsp` runs stdio-based server for IDE integration
-- `checksum/` — SHA1 file checksumming with glob patterns
-- `docopt/` — docopt argument parsing, produces `LETSOPT_*` and `LETSCLI_*` env vars
-- `upgrade/` — binary self-update from GitHub releases
-- `util/` — file/dir/version helpers
-- `workdir/` — `--init` scaffolding
-- `set/` — generic Set data structure
-- `test/` — test utilities (temp files, args helpers)
+- `cmd/lets/main.go` — CLI entry point, flag parsing, signal handling
+- `internal/cmd/` — Cobra command setup (root, subcommands, completion, LSP, self-update)
+- `internal/config/` — config file discovery, loading, validation; `internal/config/config/` defines Config/Command/Mixin structs and YAML unmarshaling; `internal/config/path/` contains config path helpers
+- `internal/executor/` — command execution, dependency resolution, env setup, checksum verification
+- `internal/env/` — debug level state (`LETS_DEBUG`, levels 0-2)
+- `internal/logging/` — logrus-based logging with command chain formatting
+- `internal/lsp/` — Language Server Protocol: definition lookup, completion for depends, tree-sitter YAML parsing; `lets lsp` runs stdio-based server for IDE integration
+- `internal/checksum/` — SHA1 file checksumming with glob patterns
+- `internal/docopt/` — docopt argument parsing, produces `LETSOPT_*` and `LETSCLI_*` env vars
+- `internal/upgrade/` — binary self-update from GitHub releases; `internal/upgrade/registry/` contains release registry implementation
+- `internal/util/` — file/dir/version helpers
+- `internal/workdir/` — `--init` scaffolding
+- `internal/set/` — generic Set data structure
+- `internal/test/` — test utilities (temp files, args helpers)
 
 ## Key lets.yaml Fields
 

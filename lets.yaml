@@ -109,7 +109,7 @@ commands:
         PATH2LETSDEV=$LETSOPT_PATH
       fi
 
-      go build -ldflags="-X main.Version=${VERSION:1}-dev" -o "${BIN}" ./cmd/lets && \
+      go build -ldflags="-X main.Version=${VERSION:1}-dev -X main.BuildDate=$(date -u +%Y-%m-%dT%H:%M:%SZ)" -o "${BIN}" ./cmd/lets && \
       sudo mv ./${BIN} $PATH2LETSDEV/${BIN} && \
       echo " - binary ${BIN} version $($PATH2LETSDEV/${BIN} --version) successfully installed in ${PATH2LETSDEV}"
 
@@ -122,7 +122,7 @@ commands:
       BIN=${LETSOPT_BIN:-lets}
       
       go build \
-        -ldflags="-X main.Version=${VERSION:1}-dev" \
+        -ldflags="-X main.Version=${VERSION:1}-dev -X main.BuildDate=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
         -o ${BIN} ./cmd/lets
       
       success=$?

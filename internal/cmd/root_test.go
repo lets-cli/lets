@@ -11,7 +11,7 @@ import (
 )
 
 func newTestRootCmd(args []string) (rootCmd *cobra.Command) {
-	root := CreateRootCommand("v0.0.0-test")
+	root := CreateRootCommand("v0.0.0-test", "")
 	root.SetArgs(args)
 	InitCompletionCmd(root, nil)
 
@@ -27,7 +27,7 @@ func newTestRootCmdWithConfig(args []string) (rootCmd *cobra.Command, out *bytes
 	cfg.Commands["foo"] = &config.Command{Name: "foo"}
 	cfg.Commands["bar"] = &config.Command{Name: "bar"}
 
-	root := CreateRootCommand("v0.0.0-test")
+	root := CreateRootCommand("v0.0.0-test", "")
 	root.SetArgs(args)
 	root.SetOut(bufOut)
 	root.SetErr(bufOut)
@@ -138,11 +138,48 @@ func TestRootCmdWithConfig(t *testing.T) {
 	})
 }
 
+func TestPrintVersionMessage(t *testing.T) {
+	t.Run("should include build date in parentheses when non-empty", func(t *testing.T) {
+		buf := new(bytes.Buffer)
+		root := CreateRootCommand("v0.0.0-test", "2024-01-15T10:30:00Z")
+		root.SetOut(buf)
+
+		err := PrintVersionMessage(root)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		out := buf.String()
+		if !strings.Contains(out, "v0.0.0-test") {
+			t.Errorf("expected version in output, got %q", out)
+		}
+		if !strings.Contains(out, "(2024-01-15T10:30:00Z)") {
+			t.Errorf("expected build date in parentheses, got %q", out)
+		}
+	})
+
+	t.Run("should omit parentheses when build date is empty", func(t *testing.T) {
+		buf := new(bytes.Buffer)
+		root := CreateRootCommand("v0.0.0-test", "")
+		root.SetOut(buf)
+
+		err := PrintVersionMessage(root)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		out := buf.String()
+		if strings.Contains(out, "(") {
+			t.Errorf("expected no parentheses when build date is empty, got %q", out)
+		}
+	})
+}
+
 func TestSelfCmd(t *testing.T) {
 	t.Run("should return exit code 2 for unknown self subcommand", func(t *testing.T) {
 		bufOut := new(bytes.Buffer)
 
-		rootCmd := CreateRootCommand("v0.0.0-test")
+		rootCmd := CreateRootCommand("v0.0.0-test", "")
 		rootCmd.SetArgs([]string{"self", "ls"})
 		rootCmd.SetOut(bufOut)
 		rootCmd.SetErr(bufOut)
@@ -178,7 +215,7 @@ func TestSelfCmd(t *testing.T) {
 	t.Run("should return exit code 2 for unknown self subcommand with no suggestions", func(t *testing.T) {
 		bufOut := new(bytes.Buffer)
 
-		rootCmd := CreateRootCommand("v0.0.0-test")
+		rootCmd := CreateRootCommand("v0.0.0-test", "")
 		rootCmd.SetArgs([]string{"self", "zzzznotacommand"})
 		rootCmd.SetOut(bufOut)
 		rootCmd.SetErr(bufOut)
