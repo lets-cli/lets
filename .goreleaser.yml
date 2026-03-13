@@ -23,7 +23,7 @@ builds:
     flags:
       - -mod=readonly
     ldflags:
-      - -s -w -X main.Version={{.Version}}
+      - -s -w -X main.Version={{.Version}} -X main.BuildDate={{.Date}}
   - id: darwin-arm64
     main: ./cmd/lets
     goos:
@@ -38,7 +38,7 @@ builds:
     flags:
       - -mod=readonly
     ldflags:
-      - -s -w -X main.Version={{.Version}}
+      - -s -w -X main.Version={{.Version}} -X main.BuildDate={{.Date}}
   - id: linux-amd64
     main: ./cmd/lets
     goos:
@@ -51,7 +51,7 @@ builds:
     flags:
       - -mod=readonly
     ldflags:
-      - -s -w -X main.Version={{.Version}}
+      - -s -w -X main.Version={{.Version}} -X main.BuildDate={{.Date}}
 
 archives:
 - formats: [tar.gz]

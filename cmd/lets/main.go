@@ -21,6 +21,7 @@ import (
 )
 
 var Version = "0.0.0-dev"
+var BuildDate = ""
 
 func main() {
 	ctx := getContext()
@@ -29,7 +30,7 @@ func main() {
 
 	logging.InitLogging(os.Stdout, os.Stderr)
 
-	rootCmd := cmd.CreateRootCommand(Version)
+	rootCmd := cmd.CreateRootCommand(Version, BuildDate)
 	rootCmd.InitDefaultHelpFlag()
 	rootCmd.InitDefaultVersionFlag()
 	reinitCompletionCmd := cmd.InitCompletionCmd(rootCmd, nil)
