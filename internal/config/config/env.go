@@ -205,6 +205,7 @@ func convertEnvMapToList(envMap map[string]string) []string {
 func executeScript(shell string, script string, envMap map[string]string) (string, error) {
 	cmd := exec.Command(shell, "-c", script)
 	envList := os.Environ()
+	// Append resolved env last so it overrides process env keys (Go 1.21+ cmd.Env dedup: last value wins).
 	envList = append(envList, convertEnvMapToList(envMap)...)
 	cmd.Env = envList
 
