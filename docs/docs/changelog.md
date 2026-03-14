@@ -8,6 +8,7 @@ title: Changelog
 * `[Added]` Show similar command suggestions on typos.
 * `[Changed]` Exit code 2 on unknown command.
 * `[Removed]` Drop deprecated `eval_env` directive. Use `env` with `sh` execution mode instead.
+* `[Fixed]` Evaluate `env` entries sequentially so `sh` values can reference previously resolved env keys (including global env for command-level env).
 
 ## [0.0.59](https://github.com/lets-cli/lets/releases/tag/v0.0.59)
 

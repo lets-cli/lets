@@ -127,7 +127,7 @@ func (c *Command) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 func (c *Command) GetEnv(cfg Config) (map[string]string, error) {
-	if err := c.Env.Execute(cfg); err != nil {
+	if err := c.Env.Execute(cfg, cfg.GetEnv()); err != nil {
 		return nil, err
 	}
 

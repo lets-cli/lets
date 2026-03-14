@@ -3,6 +3,7 @@ package config
 import (
 	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 	"slices"
 	"strings"
@@ -187,9 +188,25 @@ func (e *Envs) Set(key string, value Env) {
 	e.Mapping[key] = value
 }
 
+func convertEnvMapToList(envMap map[string]string) []string {
+	if len(envMap) == 0 {
+		return []string{}
+	}
+
+	envList := make([]string, 0, len(envMap))
+	for k, v := range envMap {
+		envList = append(envList, fmt.Sprintf("%s=%s", k, v))
+	}
+
+	return envList
+}
+
 // eval env value and trim result string.
-func executeScript(shell string, script string) (string, error) {
+func executeScript(shell string, script string, envMap map[string]string) (string, error) {
 	cmd := exec.Command(shell, "-c", script)
+	envList := os.Environ()
+	envList = append(envList, convertEnvMapToList(envMap)...)
+	cmd.Env = envList
 
 	out, err := cmd.Output()
 	if err != nil {
@@ -202,7 +219,7 @@ func executeScript(shell string, script string) (string, error) {
 
 // Execute executes env entries for sh scrips and calculate checksums
 // It is lazy and caches data on first call.
-func (e *Envs) Execute(cfg Config) error {
+func (e *Envs) Execute(cfg Config, baseEnv map[string]string) error {
 	if e == nil {
 		return nil
 	}
@@ -211,10 +228,15 @@ func (e *Envs) Execute(cfg Config) error {
 		return nil
 	}
 
+	resolvedEnv := cloneMap(baseEnv)
+	if resolvedEnv == nil {
+		resolvedEnv = make(map[string]string)
+	}
+
 	for _, key := range e.Keys {
 		env := e.Mapping[key]
 		if env.Sh != "" {
-			result, err := executeScript(cfg.Shell, env.Sh)
+			result, err := executeScript(cfg.Shell, env.Sh, resolvedEnv)
 			if err != nil {
 				return err
 			}
@@ -229,6 +251,8 @@ func (e *Envs) Execute(cfg Config) error {
 			env.Value = result
 			e.Mapping[key] = env
 		}
+
+		resolvedEnv[key] = env.Value
 	}
 	e.ready = true
 
