@@ -33,8 +33,7 @@ func (e *DependencyError) ExitCode() int {
 func prependToChain(name string, err error) error {
 	var depErr *DependencyError
 	if errors.As(err, &depErr) {
-		depErr.Chain = append([]string{name}, depErr.Chain...)
-		return depErr
+		return &DependencyError{Chain: append([]string{name}, depErr.Chain...), Err: depErr.Err}
 	}
 
 	return &DependencyError{Chain: []string{name}, Err: err}

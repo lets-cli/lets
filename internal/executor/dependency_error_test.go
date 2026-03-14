@@ -63,8 +63,7 @@ func TestPrependToChain(t *testing.T) {
 }
 
 func TestDependencyErrorExitCode(t *testing.T) {
-	t.Run("wraps ExecuteError exit code", func(t *testing.T) {
-		// Use a plain error in ExecuteError (not exec.ExitError) — ExitCode() returns 1
+	t.Run("returns 1 when ExecuteError wraps non-ExitError", func(t *testing.T) {
 		execErr := &ExecuteError{err: fmt.Errorf("failed")}
 		depErr := &DependencyError{Chain: []string{"lint"}, Err: execErr}
 		if depErr.ExitCode() != 1 {
@@ -94,8 +93,12 @@ func TestPrintDependencyTree(t *testing.T) {
 		var buf bytes.Buffer
 		PrintDependencyTree(depErr, &buf)
 		out := buf.String()
-		if !strings.Contains(out, "  lint") {
-			t.Errorf("expected '  lint' in output, got: %q", out)
+		lines := strings.Split(strings.TrimRight(out, "\n"), "\n")
+		if len(lines) != 1 {
+			t.Fatalf("expected 1 line, got %d: %v", len(lines), lines)
+		}
+		if !strings.HasPrefix(lines[0], "  lint") {
+			t.Errorf("expected line to start with '  lint', got: %q", lines[0])
 		}
 		if !strings.Contains(out, "failed here") {
 			t.Errorf("expected 'failed here' annotation on lint line, got: %q", out)
