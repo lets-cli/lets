@@ -11,6 +11,7 @@ import (
 	"github.com/lets-cli/lets/internal/cmd"
 	"github.com/lets-cli/lets/internal/config"
 	"github.com/lets-cli/lets/internal/env"
+	"github.com/lets-cli/lets/internal/executor"
 	"github.com/lets-cli/lets/internal/logging"
 	"github.com/lets-cli/lets/internal/set"
 	"github.com/lets-cli/lets/internal/upgrade"
@@ -119,6 +120,10 @@ func main() {
 	}
 
 	if err := rootCmd.ExecuteContext(ctx); err != nil {
+		var depErr *executor.DependencyError
+		if errors.As(err, &depErr) {
+			executor.PrintDependencyTree(depErr, os.Stderr)
+		}
 		log.Error(err.Error())
 		os.Exit(getExitCode(err, 1))
 	}
