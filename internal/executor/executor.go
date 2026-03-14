@@ -398,6 +398,7 @@ func (e *Executor) executeParallel(ctx *Context) error {
 
 	// persist checksum only if exit code 0
 	if err := e.persistChecksum(ctx); err != nil {
+		err := fmt.Errorf("persist checksum error in command '%s': %w", command.Name, err)
 		return prependToChain(command.Name, err)
 	}
 

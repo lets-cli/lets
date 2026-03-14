@@ -3,6 +3,7 @@ package executor
 import (
 	"bytes"
 	"fmt"
+	"os/exec"
 	"strings"
 	"testing"
 )
@@ -75,6 +76,19 @@ func TestDependencyErrorExitCode(t *testing.T) {
 		depErr := &DependencyError{Chain: []string{"lint"}, Err: fmt.Errorf("plain error")}
 		if depErr.ExitCode() != 1 {
 			t.Errorf("expected default exit code 1, got %d", depErr.ExitCode())
+		}
+	})
+
+	t.Run("propagates real exit code from exec.ExitError", func(t *testing.T) {
+		cmd := exec.Command("bash", "-c", "exit 2")
+		runErr := cmd.Run()
+		if runErr == nil {
+			t.Fatal("expected command to fail")
+		}
+		execErr := &ExecuteError{err: runErr}
+		depErr := &DependencyError{Chain: []string{"lint"}, Err: execErr}
+		if depErr.ExitCode() != 2 {
+			t.Errorf("expected exit code 2, got %d", depErr.ExitCode())
 		}
 	})
 }

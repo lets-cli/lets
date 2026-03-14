@@ -17,6 +17,7 @@ type DependencyError struct {
 }
 
 func (e *DependencyError) Error() string { return e.Err.Error() }
+func (e *DependencyError) Unwrap() error { return e.Err }
 
 // ExitCode propagates the exit code from the innermost ExecuteError, or returns 1.
 func (e *DependencyError) ExitCode() int {
