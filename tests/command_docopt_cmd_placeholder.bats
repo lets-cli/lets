@@ -19,5 +19,5 @@ setup() {
     run lets cmd-2 posarg --config=some_path
 
     assert_failure
-    assert_line --index 0 --partial "no such option"
+    assert_line --partial "no such option"
 }

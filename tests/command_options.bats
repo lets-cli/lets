@@ -108,22 +108,22 @@ setup() {
     run lets test-options --kv-opt
 
     assert_failure
-    assert_line --index 0 "failed to parse docopt options for cmd test-options: --kv-opt requires argument"
-    assert_line --index 1 "Usage:"
-    assert_line --index 2 "  lets test-options [--kv-opt=<kv-opt>] [--bool-opt] [--attr=<attr>...] [<args>...]"
-    assert_line --index 3 "Options:"
-    assert_line --index 4 "  <args>...                Positional args in the end"
-    assert_line --index 5 "  --bool-opt, -b           Boolean opt"
-    assert_line --index 6 "  --kv-opt=<kv-opt>, -K    Key value opt"
-    assert_line --index 7 "  --attr=<attr>...         Repeated kv args"
+    assert_line --index 1 "failed to parse docopt options for cmd test-options: --kv-opt requires argument"
+    assert_line --index 2 "Usage:"
+    assert_line --index 3 "  lets test-options [--kv-opt=<kv-opt>] [--bool-opt] [--attr=<attr>...] [<args>...]"
+    assert_line --index 4 "Options:"
+    assert_line --index 5 "  <args>...                Positional args in the end"
+    assert_line --index 6 "  --bool-opt, -b           Boolean opt"
+    assert_line --index 7 "  --kv-opt=<kv-opt>, -K    Key value opt"
+    assert_line --index 8 "  --attr=<attr>...         Repeated kv args"
 }
 
 @test "command_options: wrong usage" {
     run lets options-wrong-usage
 
     assert_failure
-    assert_line --index 0 "failed to parse docopt options for cmd options-wrong-usage: no such option"
-    assert_line --index 1 "Usage: lets options-wrong-usage-xxx"
+    assert_line --index 1 "failed to parse docopt options for cmd options-wrong-usage: no such option"
+    assert_line --index 2 "Usage: lets options-wrong-usage-xxx"
 }
 
 @test "command_options: should not break json argument" {

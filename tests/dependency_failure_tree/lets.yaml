@@ -1,0 +1,10 @@
+shell: bash
+commands:
+  deploy:
+    depends: [build]
+    cmd: echo done
+  build:
+    depends: [lint]
+    cmd: echo done
+  lint:
+    cmd: exit 1

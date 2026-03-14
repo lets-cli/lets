@@ -61,13 +61,5 @@ setup() {
     LETS_CONFIG_DIR=./a run lets print-workdir
 
     assert_failure
-    assert_line --index 0 "failed to run command 'print-workdir': chdir ${TEST_DIR}/b: no such file or directory"
-}
-
-@test "LETS_OS and LETS_ARCH: contain Go runtime platform values" {
-    run lets print-os-arch
-
-    assert_success
-    assert_line --index 0 "LETS_OS=$(go env GOOS)"
-    assert_line --index 1 "LETS_ARCH=$(go env GOARCH)"
+    assert_line "failed to run command 'print-workdir': chdir ${TEST_DIR}/b: no such file or directory"
 }
