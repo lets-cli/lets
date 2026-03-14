@@ -9,7 +9,6 @@ title: Changelog
 * `[Changed]` Exit code 2 on unknown command.
 * `[Added]` Expose `LETS_OS` and `LETS_ARCH` environment variables at command runtime.
 * `[Removed]` Drop deprecated `eval_env` directive. Use `env` with `sh` execution mode instead.
-* `[Fixed]` Evaluate `env` entries sequentially so `sh` values can reference previously resolved env keys (including global env for command-level env).
 
 ## [0.0.59](https://github.com/lets-cli/lets/releases/tag/v0.0.59)
 
