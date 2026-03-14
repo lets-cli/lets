@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/lets-cli/lets/internal/checksum"
@@ -210,6 +211,8 @@ func (e *Executor) setupEnv(osCmd *exec.Cmd, command *config.Command, shell stri
 		"LETS_COMMAND_WORK_DIR": osCmd.Dir,
 		"LETS_CONFIG":           filepath.Base(e.cfg.FilePath),
 		"LETS_CONFIG_DIR":       filepath.Dir(e.cfg.FilePath),
+		"LETS_OS":               runtime.GOOS,
+		"LETS_ARCH":             runtime.GOARCH,
 		"LETS_SHELL":            shell,
 	}
 

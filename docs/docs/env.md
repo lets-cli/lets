@@ -19,6 +19,8 @@ title: Environment
 * `LETS_COMMAND_WORK_DIR` - absolute path to `work_dir` specified in command.
 * `LETS_CONFIG` - absolute path to lets config file.
 * `LETS_CONFIG_DIR` - absolute path to lets config file firectory.
+* `LETS_OS` - current operating system name from Go runtime, for example `linux`, `darwin`, `windows`
+* `LETS_ARCH` - current architecture name from Go runtime, for example `amd64`, `arm64`, `386`
 * `LETS_SHELL` - shell from config or command.
 * `LETSOPT_<>` - options parsed from command `options` (docopt string). E.g `lets run --env=prod --reload` will be `LETSOPT_ENV=prod` and `LETSOPT_RELOAD=true`
 * `LETSCLI_<>` - options which values is a options usage. E.g `lets run --env=prod --reload` will be `LETSCLI_ENV=--env=prod` and `LETSCLI_RELOAD=--reload`

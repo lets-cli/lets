@@ -14,3 +14,8 @@ commands:
     options: |
       Usage: lets print-env <env>
     cmd: echo ${LETSOPT_ENV}=`printenv ${LETSOPT_ENV}`
+
+  print-os-arch:
+    cmd: |
+      echo LETS_OS=${LETS_OS}
+      echo LETS_ARCH=${LETS_ARCH}
