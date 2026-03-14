@@ -104,21 +104,25 @@ func (e *Executor) execute(ctx *Context) error {
 	}()
 
 	if err := e.initCmd(ctx); err != nil {
-		return err
+		return prependToChain(command.Name, err)
 	}
 
 	if err := e.executeDepends(ctx); err != nil {
-		return err
+		return prependToChain(command.Name, err)
 	}
 
 	for _, cmd := range command.Cmds.Commands {
 		if err := e.runCmd(ctx, cmd); err != nil {
-			return err
+			return prependToChain(command.Name, err)
 		}
 	}
 
 	// persist checksum only if exit code 0
-	return e.persistChecksum(ctx)
+	if err := e.persistChecksum(ctx); err != nil {
+		return prependToChain(command.Name, err)
+	}
+
+	return nil
 }
 
 // Executes 'after' script after main 'cmd' script
@@ -372,30 +376,29 @@ func (e *Executor) executeParallel(ctx *Context) error {
 	}()
 
 	if err := e.initCmd(ctx); err != nil {
-		return err
+		return prependToChain(command.Name, err)
 	}
 
 	if err := e.executeDepends(ctx); err != nil {
-		return err
+		return prependToChain(command.Name, err)
 	}
 
 	group, _ := errgroup.WithContext(ctx.ctx)
 
 	for _, cmd := range command.Cmds.Commands {
 		cmd := cmd
-		// wait for cmd to end in a goroutine with error propagation
 		group.Go(func() error {
 			return e.runCmd(ctx, cmd)
 		})
 	}
 
 	if err := group.Wait(); err != nil {
-		return err //nolint:wrapcheck
+		return prependToChain(command.Name, err)
 	}
 
 	// persist checksum only if exit code 0
 	if err := e.persistChecksum(ctx); err != nil {
-		return fmt.Errorf("persist checksum error in command '%s': %w", command.Name, err)
+		return prependToChain(command.Name, err)
 	}
 
 	return nil
