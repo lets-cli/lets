@@ -1,0 +1,32 @@
+shell: bash
+
+env:
+  ENGINE: docker
+  GLOBAL_COMPOSE:
+    sh: echo "${ENGINE}-compose"
+
+commands:
+  global-env-dependency:
+    cmd: echo "GLOBAL_COMPOSE=${GLOBAL_COMPOSE}"
+
+  command-env-dependency:
+    env:
+      ENGINE: podman
+      COMMAND_COMPOSE:
+        sh: echo "${ENGINE}-compose"
+    cmd: echo "COMMAND_COMPOSE=${COMMAND_COMPOSE}"
+
+  command-env-uses-global:
+    env:
+      COMMAND_COMPOSE:
+        sh: echo "${ENGINE}-compose"
+    cmd: echo "COMMAND_COMPOSE=${COMMAND_COMPOSE}"
+
+  command-forward-reference:
+    env:
+      COMMAND_COMPOSE:
+        sh: echo "${LETS_TEST_FORWARD_VAR}"
+      LETS_TEST_FORWARD_VAR: from-command-env
+    cmd: |
+      echo "COMMAND_COMPOSE=${COMMAND_COMPOSE}"
+      echo "LETS_TEST_FORWARD_VAR=${LETS_TEST_FORWARD_VAR}"

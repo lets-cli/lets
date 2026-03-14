@@ -77,6 +77,8 @@ Specify global env for all commands.
 
 Env can be declared as static value or with execution mode:
 
+Env entries are evaluated sequentially in declaration order. `sh` can reference variables that are declared earlier in the same `env` block.
+
 Example:
 
 ```yaml
@@ -87,6 +89,16 @@ env:
     sh: echo "`id`"
   MY_GLOBAL_ENV_3:
     checksum: [Readme.md, package.json]
+```
+
+Reference previously declared env:
+
+```yaml
+shell: bash
+env:
+  ENGINE: docker
+  COMPOSE:
+    sh: echo "${ENGINE}-compose"
 ```
 
 ### Global before
@@ -653,6 +665,8 @@ Env is as simple as it sounds. Define additional env for a command:
 
 Env can be declared as static value or with execution mode:
 
+Command `env` entries are also evaluated sequentially in declaration order. During command env evaluation, values from global `env` are available too.
+
 Example:
 
 ```yaml
@@ -667,6 +681,18 @@ commands:
       MY_ENV_2:
         checksum: [Readme.md, package.json]
     cmd: go build -o lets *.go
+```
+
+Reference previously declared command env:
+
+```yaml
+commands:
+  up:
+    env:
+      ENGINE: docker
+      COMPOSE:
+        sh: echo "${ENGINE}-compose"
+    cmd: ${COMPOSE} up
 ```
 
 

@@ -287,7 +287,7 @@ func (c *Config) GetEnv() map[string]string {
 // SetupEnv must be called once. It is not intended to be called
 // multiple times hence does not have mutex.
 func (c *Config) SetupEnv() error {
-	if err := c.Env.Execute(*c); err != nil {
+	if err := c.Env.Execute(*c, nil); err != nil {
 		return err
 	}
 
