@@ -1,0 +1,7 @@
+shell: bash
+
+env_file: .env.required.global.missing
+
+commands:
+  noop:
+    cmd: echo noop

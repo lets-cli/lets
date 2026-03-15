@@ -108,7 +108,7 @@ setup() {
     run lets test-options --kv-opt
 
     assert_failure
-    assert_line --index 1 "failed to parse docopt options for cmd test-options: --kv-opt requires argument"
+    assert_line --index 1 "lets: failed to parse docopt options for cmd test-options: --kv-opt requires argument"
     assert_line --index 2 "Usage:"
     assert_line --index 3 "  lets test-options [--kv-opt=<kv-opt>] [--bool-opt] [--attr=<attr>...] [<args>...]"
     assert_line --index 4 "Options:"
@@ -122,7 +122,7 @@ setup() {
     run lets options-wrong-usage
 
     assert_failure
-    assert_line --index 1 "failed to parse docopt options for cmd options-wrong-usage: no such option"
+    assert_line --index 1 "lets: failed to parse docopt options for cmd options-wrong-usage: no such option"
     assert_line --index 2 "Usage: lets options-wrong-usage-xxx"
 }
 

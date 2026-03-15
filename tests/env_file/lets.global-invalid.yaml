@@ -1,0 +1,7 @@
+shell: bash
+
+env_file: .env.invalid
+
+commands:
+  noop:
+    cmd: echo noop

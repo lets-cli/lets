@@ -25,6 +25,8 @@ type Command struct {
 	Description string
 	// env from command
 	Env *Envs
+	// env files from command
+	EnvFiles *EnvFiles
 	// store docopts from options directive
 	Docopts         string
 	SkipDocopts     bool // default false
@@ -42,6 +44,8 @@ type Command struct {
 
 	// ref is basically a command name to use with predefined args, env
 	ref *ref
+
+	resolvedEnv map[string]string
 }
 
 type Commands map[string]*Command
@@ -62,6 +66,7 @@ func (c *Command) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		Description     string
 		Shell           string
 		Env             *Envs
+		EnvFiles        *EnvFiles `yaml:"env_file"`
 		Options         string
 		Depends         *Deps
 		WorkDir         string `yaml:"work_dir"`
@@ -86,6 +91,10 @@ func (c *Command) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	c.Env = cmd.Env
 	if c.Env == nil {
 		c.Env = &Envs{}
+	}
+	c.EnvFiles = cmd.EnvFiles
+	if c.EnvFiles == nil {
+		c.EnvFiles = &EnvFiles{}
 	}
 
 	c.Shell = cmd.Shell
@@ -126,12 +135,39 @@ func (c *Command) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
-func (c *Command) GetEnv(cfg Config) (map[string]string, error) {
-	if err := c.Env.Execute(cfg, cfg.GetEnv()); err != nil {
+func (c *Command) GetEnv(cfg Config, builtinEnv map[string]string) (map[string]string, error) {
+	if c.resolvedEnv != nil {
+		return cloneMap(c.resolvedEnv), nil
+	}
+
+	baseEnv := cloneMap(builtinEnv)
+	if baseEnv == nil {
+		baseEnv = make(map[string]string)
+	}
+	for key, value := range cfg.GetEnv() {
+		baseEnv[key] = value
+	}
+
+	if err := c.Env.Execute(cfg, baseEnv); err != nil {
 		return nil, err
 	}
 
-	return c.Env.Dump(), nil
+	filenameEnv := cloneMap(baseEnv)
+	for key, value := range c.Env.Dump() {
+		filenameEnv[key] = value
+	}
+
+	envFileEnv, err := c.EnvFiles.Load(cfg, filenameEnv)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve env_file for command '%s': %w", c.Name, err)
+	}
+
+	c.resolvedEnv = c.Env.Dump()
+	for key, value := range envFileEnv {
+		c.resolvedEnv[key] = value
+	}
+
+	return cloneMap(c.resolvedEnv), nil
 }
 
 func (c *Command) Clone() *Command {
@@ -144,6 +180,7 @@ func (c *Command) Clone() *Command {
 		WorkDir:            c.WorkDir,
 		Description:        c.Description,
 		Env:                c.Env.Clone(),
+		EnvFiles:           c.EnvFiles.Clone(),
 		Docopts:            c.Docopts,
 		SkipDocopts:        c.SkipDocopts,
 		Options:            cloneMap(c.Options),
