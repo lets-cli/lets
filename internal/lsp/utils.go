@@ -10,6 +10,7 @@ func uriToPath(uri string) string {
 	if strings.HasPrefix(uri, "file://") {
 		return uri[7:]
 	}
+
 	return uri
 }
 
@@ -18,6 +19,7 @@ func pathToURI(path string) string {
 	if strings.HasPrefix(path, "file://") {
 		return path
 	}
+
 	return "file://" + path
 }
 

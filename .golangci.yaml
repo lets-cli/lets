@@ -1,58 +1,64 @@
+version: "2"
 run:
+  go: "1.26"
   tests: false
-  go: "1.23"
-
 linters:
-  enable-all: true
+  default: all
   disable:
-    - typecheck
-    - gomoddirectives
     - containedctx
-    - gochecknoglobals
-    - goimports
-    - funlen
-    - godox
-    - maligned
-    - goerr113
-    - exhaustivestruct
-    - wrapcheck
-    - prealloc # enable it sometimes
-    - wsl
-    - ifshort
-    - unparam
-    - cyclop
-    - gocyclo
-    - gocognit
-    - tagliatelle
-    - nestif
-    - nlreturn
-    - goprintffuncname
-    - exhaustruct
-    - wastedassign
-    - nilnil
-    - recvcheck
-    - musttag
-    - mnd
-    - lll
-    - gocritic
-    - forcetypeassert
-    - exhaustive
-    - depguard
-    - revive
-    - gosec
     - copyloopvar
-
-linters-settings:
-  lll:
-    line-length: 120
-  varnamelen:
-    min-name-length: 1
-
-issues:
-  exclude-rules:
-    - path: _test\.go
-      linters:
-        - gomnd
-    - path: set\.go
-      linters:
-      - typecheck
+    - cyclop
+    - depguard
+    - err113
+    - exhaustive
+    - exhaustruct
+    - forcetypeassert
+    - funlen
+    - funcorder
+    - gochecknoglobals
+    - gocognit
+    - gocritic
+    - gocyclo
+    - godoclint
+    - godox
+    - gomoddirectives
+    - goprintffuncname
+    - gosec
+    - importas
+    - lll
+    - mnd
+    - musttag
+    - nestif
+    - nilnil
+    - noctx
+    - noinlineerr
+    - nlreturn
+    - prealloc
+    - recvcheck
+    - revive
+    - tagliatelle
+    - unparam
+    - wastedassign
+    - wrapcheck
+    - whitespace
+    - wsl
+  settings:
+    lll:
+      line-length: 120
+    varnamelen:
+      min-name-length: 1
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - mnd
+        path: _test\.go
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

@@ -24,10 +24,11 @@ func (e *unknownCommandError) ExitCode() int {
 }
 
 func buildUnknownCommandMessage(cmd *cobra.Command, arg string) string {
-	message := fmt.Sprintf("unknown command %q for %q", arg, cmd.CommandPath())
+	var builder strings.Builder
+	fmt.Fprintf(&builder, "unknown command %q for %q", arg, cmd.CommandPath())
 
 	if cmd.DisableSuggestions {
-		return message
+		return builder.String()
 	}
 
 	if cmd.SuggestionsMinimumDistance <= 0 {
@@ -36,15 +37,18 @@ func buildUnknownCommandMessage(cmd *cobra.Command, arg string) string {
 
 	suggestions := cmd.SuggestionsFor(arg)
 	if len(suggestions) == 0 {
-		return message
+		return builder.String()
 	}
 
-	message += "\n\nDid you mean this?\n"
+	builder.WriteString("\n\nDid you mean this?\n")
+
 	for _, suggestion := range suggestions {
-		message += fmt.Sprintf("\t%s\n", suggestion)
+		builder.WriteByte('\t')
+		builder.WriteString(suggestion)
+		builder.WriteByte('\n')
 	}
 
-	return message
+	return builder.String()
 }
 
 func validateCommandArgs(cmd *cobra.Command, args []string) error {
@@ -76,6 +80,7 @@ func newRootCmd(version string) *cobra.Command {
 	}
 	cmd.AddGroup(&cobra.Group{ID: "main", Title: "Commands:"}, &cobra.Group{ID: "internal", Title: "Internal commands:"})
 	cmd.SetHelpCommandGroupID("internal")
+
 	return cmd
 }
 
@@ -106,6 +111,7 @@ func PrintHelpMessage(cmd *cobra.Command) error {
 	help = fmt.Sprintf("%s\n\n%s", cmd.Short, help)
 	help = strings.Replace(help, "lets [command] --help", "lets help [command]", 1)
 	_, err := fmt.Fprint(cmd.OutOrStdout(), help)
+
 	return err
 }
 
@@ -114,9 +120,11 @@ func maxCommandNameLen(cmd *cobra.Command) int {
 	if len(commands) == 0 {
 		return 0
 	}
+
 	maxCmd := slices.MaxFunc(commands, func(a, b *cobra.Command) int {
 		return cmp.Compare(len(a.Name()), len(b.Name()))
 	})
+
 	return len(maxCmd.Name())
 }
 
@@ -127,6 +135,7 @@ func rpad(s string, padding int) string {
 
 func hasSubgroup(cmd *cobra.Command) bool {
 	subgroups := make(map[string]struct{})
+
 	for _, c := range cmd.Commands() {
 		if subgroup, ok := c.Annotations["SubGroupName"]; ok && subgroup != "" {
 			subgroups[subgroup] = struct{}{}
@@ -135,11 +144,21 @@ func hasSubgroup(cmd *cobra.Command) bool {
 			}
 		}
 	}
+
 	return false
 }
 
+func writeGroupCommandHelpLine(builder *strings.Builder, prefix string, name string, padding int, suffix string, short string) {
+	builder.WriteString("  ")
+	builder.WriteString(prefix)
+	builder.WriteString(rpad(name, padding))
+	builder.WriteString(suffix)
+	builder.WriteString("  ")
+	builder.WriteString(short)
+	builder.WriteByte('\n')
+}
+
 func buildGroupCommandHelp(cmd *cobra.Command, group *cobra.Group) string {
-	help := ""
 	cmds := []*cobra.Command{}
 
 	// select commands that belong to the specified group
@@ -168,7 +187,9 @@ func buildGroupCommandHelp(cmd *cobra.Command, group *cobra.Group) string {
 	sort.Strings(subGroupNameList)
 
 	// generate output
-	help += group.Title + "\n"
+	var builder strings.Builder
+	builder.WriteString(group.Title)
+	builder.WriteByte('\n')
 
 	intend := ""
 	if hasSubgroup(cmd) {
@@ -177,64 +198,73 @@ func buildGroupCommandHelp(cmd *cobra.Command, group *cobra.Group) string {
 
 	for _, subgroupName := range subGroupNameList {
 		if len(subGroupNameList) > 1 {
-			help += fmt.Sprintf("\n  %s\n", subgroupName)
+			builder.WriteString("\n  ")
+			builder.WriteString(subgroupName)
+			builder.WriteByte('\n')
 		}
+
 		for _, c := range cmds {
 			if subgroup, ok := c.Annotations["SubGroupName"]; ok && subgroup == subgroupName {
-				help += fmt.Sprintf("  %s%s  %s\n", intend, rpad(c.Name(), padding), c.Short)
+				writeGroupCommandHelpLine(&builder, intend, c.Name(), padding, "", c.Short)
 			}
 		}
 	}
 
 	for _, c := range cmds {
 		if _, ok := c.Annotations["SubGroupName"]; !ok {
-			help += fmt.Sprintf("  %s%s  %s\n", rpad(c.Name(), padding), intend, c.Short)
+			writeGroupCommandHelpLine(&builder, "", c.Name(), padding, intend, c.Short)
 		}
 	}
 
-	help += "\n"
+	builder.WriteByte('\n')
 
-	return help
+	return builder.String()
 }
 
 func PrintRootHelpMessage(cmd *cobra.Command) error {
-	help := ""
-	help = fmt.Sprintf("%s\n\n%s", cmd.Short, help)
+	var builder strings.Builder
+	builder.WriteString(cmd.Short)
+	builder.WriteString("\n\n")
 
 	// General
-	help += "Usage:\n"
+	builder.WriteString("Usage:\n")
 	if cmd.Runnable() {
-		help += fmt.Sprintf("  %s\n", cmd.UseLine())
+		fmt.Fprintf(&builder, "  %s\n", cmd.UseLine())
 	}
+
 	if cmd.HasAvailableSubCommands() {
-		help += fmt.Sprintf("  %s [command]\n", cmd.CommandPath())
+		fmt.Fprintf(&builder, "  %s [command]\n", cmd.CommandPath())
 	}
-	help += "\n"
+
+	builder.WriteByte('\n')
 
 	// Commands
 	for _, group := range cmd.Groups() {
-		help += buildGroupCommandHelp(cmd, group)
+		builder.WriteString(buildGroupCommandHelp(cmd, group))
 	}
 
 	// Flags
 	if cmd.HasAvailableLocalFlags() {
-		help += "Flags:\n"
-		help += cmd.LocalFlags().FlagUsagesWrapped(120)
-		help += "\n"
+		builder.WriteString("Flags:\n")
+		builder.WriteString(cmd.LocalFlags().FlagUsagesWrapped(120))
+		builder.WriteByte('\n')
 	}
 
 	// Usage
-	help += fmt.Sprintf(`Use "%s help [command]" for more information about a command.`, cmd.CommandPath())
+	fmt.Fprintf(&builder, `Use "%s help [command]" for more information about a command.`, cmd.CommandPath())
 
-	_, err := fmt.Fprint(cmd.OutOrStdout(), help)
+	_, err := fmt.Fprint(cmd.OutOrStdout(), builder.String())
+
 	return err
 }
 
 func PrintVersionMessage(cmd *cobra.Command) error {
-	msg := fmt.Sprintf("lets version %s", cmd.Version)
+	msg := "lets version " + cmd.Version
 	if buildDate := cmd.Annotations["buildDate"]; buildDate != "" {
 		msg += fmt.Sprintf(" (%s)", buildDate)
 	}
+
 	_, err := fmt.Fprintln(cmd.OutOrStdout(), msg)
+
 	return err
 }

@@ -58,7 +58,6 @@ func validateVersion(cfg *config.Config, letsVersion string) error {
 
 func validateDepends(cfg *config.Config) error {
 	for _, cmd := range cfg.Commands {
-		cmd := cmd
 		err := cmd.Depends.Range(func(key string, value config.Dep) error {
 			dependency, exists := cfg.Commands[key]
 

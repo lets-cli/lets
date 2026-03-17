@@ -39,7 +39,7 @@ func escapeArgs(args []string) []string {
 }
 
 // UnmarshalYAML implements the yaml.Unmarshaler interface.
-func (c *Cmds) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (c *Cmds) UnmarshalYAML(unmarshal func(any) error) error {
 	var script string
 	if err := unmarshal(&script); err == nil {
 		c.Commands = []*Cmd{{Name: "", Script: script}}
@@ -61,6 +61,7 @@ func (c *Cmds) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		for name, script := range cmdMap {
 			c.Commands = append(c.Commands, &Cmd{Name: name, Script: script})
 		}
+
 		c.Parallel = true
 
 		return nil

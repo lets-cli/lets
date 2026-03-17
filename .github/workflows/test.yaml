@@ -20,9 +20,9 @@ jobs:
         if: runner.os == 'macOS'
         run: brew install bash
       - name: Setup go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v6
         with:
-          go-version: 1.24.x
+          go-version: 1.26.x
       - name: Checkout code
         uses: actions/checkout@v2
       - run: go install gotest.tools/gotestsum@latest

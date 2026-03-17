@@ -42,10 +42,12 @@ func OptsToLetsOpt(opts Opts) map[string]string {
 		if !isOptKey(origKey) {
 			continue
 		}
+
 		key := normalizeKey(origKey)
 		envKey := "LETSOPT_" + key
 
 		var strValue string
+
 		switch value := value.(type) {
 		case string:
 			strValue = value

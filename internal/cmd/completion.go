@@ -112,7 +112,7 @@ func getCommandsList(rootCmd *cobra.Command, out io.Writer, verbose bool) error 
 					descr = strings.TrimSpace(descr)
 				}
 
-				buf.WriteString(fmt.Sprintf("%s:%s\n", cmd.Name(), descr))
+				fmt.Fprintf(buf, "%s:%s\n", cmd.Name(), descr)
 			} else {
 				buf.WriteString(cmd.Name() + "\n")
 			}
@@ -165,7 +165,7 @@ func getCommandOptions(command *config.Command, out io.Writer, verbose bool) err
 				desc = strings.TrimSpace(option.desc)
 			}
 
-			buf.WriteString(fmt.Sprintf("%[1]s[%s]\n", option.name, desc))
+			fmt.Fprintf(buf, "%[1]s[%s]\n", option.name, desc)
 		} else {
 			buf.WriteString(option.name + "\n")
 		}
@@ -249,6 +249,7 @@ func InitCompletionCmd(rootCmd *cobra.Command, cfg *config.Config) func(cfg *con
 	}
 
 	completionCmd.Flags().StringP("shell", "s", "", "The type of shell (bash or zsh)")
+
 	if cfg != nil {
 		completionCmd.Flags().Bool("list", false, "Show list of commands [deprecated, use --commands]")
 		completionCmd.Flags().Bool("commands", false, "Show list of commands")

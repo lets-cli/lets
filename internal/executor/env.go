@@ -36,6 +36,7 @@ func getChecksumEnvMap(checksumMap map[string]string) map[string]string {
 		if name == checksum.DefaultChecksumKey {
 			envKey = "LETS_CHECKSUM"
 		}
+
 		envMap[envKey] = value
 	}
 

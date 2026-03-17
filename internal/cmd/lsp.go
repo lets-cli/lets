@@ -14,6 +14,7 @@ func initLspCommand(version string) *cobra.Command {
 			if err := lsp.Run(cmd.Context(), version); err != nil {
 				return errors.Wrap(err, "lsp error")
 			}
+
 			return nil
 		},
 	}

@@ -46,13 +46,14 @@ type Command struct {
 
 type Commands map[string]*Command
 
-func (c *Command) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (c *Command) UnmarshalYAML(unmarshal func(any) error) error {
 	var short string
 	if err := unmarshal(&short); err == nil {
 		c.Cmds = Cmds{
 			Commands: []*Cmd{{Script: short}},
 		}
 		c.SkipDocopts = true
+
 		return nil
 	}
 
@@ -83,21 +84,26 @@ func (c *Command) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 	c.Cmds = cmd.Cmd
 	c.Description = cmd.Description
+
 	c.Env = cmd.Env
 	if c.Env == nil {
 		c.Env = &Envs{}
 	}
 
 	c.Shell = cmd.Shell
+
 	c.Docopts = cmd.Options
 	if c.Docopts == "" {
 		c.SkipDocopts = true
 	}
+
 	c.Depends = cmd.Depends
+
 	workDir, err := filepath.Abs(cmd.WorkDir)
 	if err != nil {
 		return err
 	}
+
 	c.WorkDir = workDir
 	c.After = cmd.After
 	// TODO: checksum must be refactored
@@ -117,6 +123,7 @@ func (c *Command) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		if err := unmarshal(&refArgs); err != nil {
 			return err
 		}
+
 		c.ref = &ref{Name: cmd.Ref}
 		if refArgs.Args != nil {
 			c.ref.Args = *refArgs.Args
@@ -166,11 +173,13 @@ func (c *Command) Dump() string {
 	}
 
 	result := string(pretty)
+
 	return strings.TrimSpace(result)
 }
 
 func (c *Command) Help() string {
 	buf := new(bytes.Buffer)
+
 	if c.Description != "" {
 		desc := strings.TrimSuffix(c.Description, "\n")
 		buf.WriteString(desc + "\n\n")
@@ -181,7 +190,7 @@ func (c *Command) Help() string {
 	}
 
 	if buf.Len() == 0 {
-		buf.WriteString(fmt.Sprintf("No help message for '%s'", c.Name))
+		fmt.Fprintf(buf, "No help message for '%s'", c.Name)
 	}
 
 	return strings.TrimSuffix(buf.String(), "\n")
@@ -215,6 +224,7 @@ func (c *Command) ReadChecksumsFromDisk(checksumsDir string, cmdName string, che
 		if checksumName == checksum.DefaultChecksumKey {
 			filename = checksum.DefaultChecksumFileName
 		}
+
 		checksumResult, err := checksum.ReadChecksumFromDisk(checksumsDir, cmdName, filename)
 		if err != nil {
 			return err

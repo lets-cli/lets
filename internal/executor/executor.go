@@ -166,6 +166,7 @@ func (e *Executor) initCmd(ctx *Context) error {
 
 	if !cmd.SkipDocopts {
 		ctx.logger.Debug("parse docopt: %s, args: %s", cmd.Docopts, cmd.Args)
+
 		opts, err := docopt.Parse(cmd.Name, cmd.Args, cmd.Docopts)
 		if err != nil {
 			// TODO if accept_args, just continue with what we got
@@ -264,6 +265,7 @@ func (e *Executor) setupEnv(osCmd *exec.Cmd, command *config.Command, shell stri
 // Passing ctx will change behavior of program drastically - it will kill process if context will be canceled.
 func (e *Executor) newOsCommand(command *config.Command, cmdScript string) (*exec.Cmd, error) {
 	script := joinBeforeAndScript(e.cfg.Before, cmdScript)
+
 	shell := e.cfg.Shell
 	if command.Shell != "" {
 		shell = command.Shell
@@ -347,6 +349,7 @@ func (e *Executor) persistChecksum(ctx *Context) error {
 
 func (e *Executor) runCmd(ctx *Context, cmd *config.Cmd) error {
 	command := ctx.command
+
 	osCmd, err := e.newOsCommand(command, cmd.Script)
 	if err != nil {
 		return err
@@ -386,7 +389,6 @@ func (e *Executor) executeParallel(ctx *Context) error {
 	group, _ := errgroup.WithContext(ctx.ctx)
 
 	for _, cmd := range command.Cmds.Commands {
-		cmd := cmd
 		group.Go(func() error {
 			return e.runCmd(ctx, cmd)
 		})

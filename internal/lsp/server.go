@@ -26,6 +26,7 @@ func (s *lspServer) Run() error {
 
 func Run(ctx context.Context, version string) error {
 	commonlog.Configure(1, nil)
+
 	logger := commonlog.GetLogger(lsName)
 	logger.Infof("Lets LSP server starting %s", version)
 

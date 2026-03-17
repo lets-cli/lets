@@ -78,12 +78,12 @@ func (l *ExecLogger) Child(name string) *ExecLogger {
 	return l.cache[name]
 }
 
-func (l *ExecLogger) Info(format string, a ...interface{}) {
+func (l *ExecLogger) Info(format string, a ...any) {
 	format = fmt.Sprintf("%s %s", l.prefix, color.BlueString(format))
 	l.log.Logf(log.InfoLevel, format, a...)
 }
 
-func (l *ExecLogger) Debug(format string, a ...interface{}) {
+func (l *ExecLogger) Debug(format string, a ...any) {
 	format = fmt.Sprintf("%s %s", l.prefix, color.BlueString(format))
 	l.log.Logf(log.DebugLevel, format, a...)
 }

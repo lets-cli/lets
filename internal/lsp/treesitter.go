@@ -40,6 +40,7 @@ func isCursorWithinNodePoints(startPoint, endPoint ts.Point, pos lsp.Position) b
 func isCursorAtLine(node *ts.Node, pos lsp.Position) bool {
 	startPoint := node.StartPosition()
 	endPoint := node.EndPosition()
+
 	return uint(pos.Line) == startPoint.Row && uint(pos.Line) == endPoint.Row
 }
 
@@ -48,6 +49,7 @@ func getLine(document *string, line uint32) string {
 	if line >= uint32(len(lines)) {
 		return ""
 	}
+
 	return lines[line]
 }
 
@@ -101,12 +103,14 @@ func (p *parser) getPositionType(document *string, position lsp.Position) Positi
 	} else if p.inDependsPosition(document, position) {
 		return PositionTypeDepends
 	}
+
 	return PositionTypeNone
 }
 
 func (p *parser) inMixinsPosition(document *string, position lsp.Position) bool {
 	parser := ts.NewParser()
 	defer parser.Close()
+
 	lang := ts.NewLanguage(tree_sitter_yaml.Language())
 	if err := parser.SetLanguage(lang); err != nil {
 		return false
@@ -164,6 +168,7 @@ func (p *parser) inMixinsPosition(document *string, position lsp.Position) bool 
 func (p *parser) inDependsPosition(document *string, position lsp.Position) bool {
 	parser := ts.NewParser()
 	defer parser.Close()
+
 	lang := ts.NewLanguage(tree_sitter_yaml.Language())
 	if err := parser.SetLanguage(lang); err != nil {
 		return false
@@ -191,8 +196,10 @@ func (p *parser) inDependsPosition(document *string, position lsp.Position) bool
 	defer query.Close()
 
 	root := tree.RootNode()
+
 	cursor := ts.NewQueryCursor()
 	defer cursor.Close()
+
 	matches := cursor.Matches(query, root, docBytes)
 
 	dependsIndex, _ := query.CaptureIndexForName("depends")
@@ -211,12 +218,13 @@ func (p *parser) inDependsPosition(document *string, position lsp.Position) bool
 			}
 
 			// if is a sequence
-			if nodeKind == "block_sequence_item" || nodeKind == "block_sequence" {
+			switch nodeKind {
+			case "block_sequence_item", "block_sequence":
 				if isCursorWithinNode(&capture.Node, position) || isCursorAtLine(&capture.Node, position) {
 					return true
 				}
 				// if is an array
-			} else if nodeKind == "flow_sequence" || nodeKind == "flow_node" {
+			case "flow_sequence", "flow_node":
 				if isCursorWithinNode(&capture.Node, position) {
 					return true
 				}
@@ -230,6 +238,7 @@ func (p *parser) inDependsPosition(document *string, position lsp.Position) bool
 func (p *parser) extractFilenameFromMixins(document *string, position lsp.Position) string {
 	parser := ts.NewParser()
 	defer parser.Close()
+
 	lang := ts.NewLanguage(tree_sitter_yaml.Language())
 	if err := parser.SetLanguage(lang); err != nil {
 		return ""
@@ -259,6 +268,7 @@ func (p *parser) extractFilenameFromMixins(document *string, position lsp.Positi
 
 	cursor := ts.NewQueryCursor()
 	defer cursor.Close()
+
 	matches := cursor.Matches(query, root, docBytes)
 
 	for {
@@ -288,6 +298,7 @@ type Command struct {
 func (p *parser) getCommands(document *string) []Command {
 	parser := ts.NewParser()
 	defer parser.Close()
+
 	lang := ts.NewLanguage(tree_sitter_yaml.Language())
 	if err := parser.SetLanguage(lang); err != nil {
 		return nil
@@ -317,11 +328,14 @@ func (p *parser) getCommands(document *string) []Command {
 	defer query.Close()
 
 	root := tree.RootNode()
+
 	cursor := ts.NewQueryCursor()
 	defer cursor.Close()
+
 	matches := cursor.Matches(query, root, docBytes)
 
 	var commands []Command
+
 	cmdKeyIndex, _ := query.CaptureIndexForName("cmd_key")
 
 	for {
@@ -349,6 +363,7 @@ func (p *parser) getCommands(document *string) []Command {
 func (p *parser) getCurrentCommand(document *string, position lsp.Position) *Command {
 	parser := ts.NewParser()
 	defer parser.Close()
+
 	lang := ts.NewLanguage(tree_sitter_yaml.Language())
 	if err := parser.SetLanguage(lang); err != nil {
 		return nil
@@ -374,8 +389,10 @@ func (p *parser) getCurrentCommand(document *string, position lsp.Position) *Com
 	defer query.Close()
 
 	root := tree.RootNode()
+
 	cursor := ts.NewQueryCursor()
 	defer cursor.Close()
+
 	matches := cursor.Matches(query, root, docBytes)
 
 	cmdIndex, _ := query.CaptureIndexForName("cmd")
@@ -390,9 +407,11 @@ func (p *parser) getCurrentCommand(document *string, position lsp.Position) *Com
 			if capture.Index != uint32(cmdIndex) {
 				continue
 			}
+
 			if !isCursorWithinNode(&capture.Node, position) {
 				continue
 			}
+
 			if key := capture.Node.ChildByFieldName("key"); key != nil {
 				return &Command{
 					name: key.Utf8Text(docBytes),
@@ -407,6 +426,7 @@ func (p *parser) getCurrentCommand(document *string, position lsp.Position) *Com
 func (p *parser) findCommand(document *string, commandName string) *Command {
 	parser := ts.NewParser()
 	defer parser.Close()
+
 	lang := ts.NewLanguage(tree_sitter_yaml.Language())
 	if err := parser.SetLanguage(lang); err != nil {
 		return nil
@@ -436,8 +456,10 @@ func (p *parser) findCommand(document *string, commandName string) *Command {
 	defer query.Close()
 
 	root := tree.RootNode()
+
 	cursor := ts.NewQueryCursor()
 	defer cursor.Close()
+
 	matches := cursor.Matches(query, root, docBytes)
 
 	cmdKeyIndex, _ := query.CaptureIndexForName("cmd_key")
@@ -452,6 +474,7 @@ func (p *parser) findCommand(document *string, commandName string) *Command {
 			if capture.Index != uint32(cmdKeyIndex) {
 				continue
 			}
+
 			if capture.Node.Utf8Text(docBytes) == commandName {
 				return &Command{
 					name: commandName,
@@ -470,6 +493,7 @@ func (p *parser) findCommand(document *string, commandName string) *Command {
 func (p *parser) extractDependsValues(document *string) []string {
 	parser := ts.NewParser()
 	defer parser.Close()
+
 	lang := ts.NewLanguage(tree_sitter_yaml.Language())
 	if err := parser.SetLanguage(lang); err != nil {
 		return nil
@@ -505,11 +529,14 @@ func (p *parser) extractDependsValues(document *string) []string {
 	defer query.Close()
 
 	root := tree.RootNode()
+
 	cursor := ts.NewQueryCursor()
 	defer cursor.Close()
+
 	matches := cursor.Matches(query, root, docBytes)
 
 	var values []string
+
 	valueIndex, _ := query.CaptureIndexForName("value")
 
 	for {

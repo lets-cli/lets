@@ -72,12 +72,15 @@ func CalculateChecksum(workDir string, patterns []string) (string, error) {
 			if err != nil {
 				return "", fmt.Errorf("can not read file to calculate checksum: %w", err)
 			}
+
 			cachedSum = fileHasher.Sum(data)
 			checksumCache[filename] = cachedSum
+
 			_, err = hasher.Write(cachedSum)
 			if err != nil {
 				return "", fmt.Errorf("can not write checksum to hasher: %w", err)
 			}
+
 			fileHasher.Reset()
 		}
 	}
@@ -175,6 +178,7 @@ func PersistCommandsChecksumToDisk(checksumsDir string, checksumMap map[string]s
 		if checksumName == DefaultChecksumKey {
 			filename = DefaultChecksumFileName
 		}
+
 		err := persistOneChecksum(checksumsDir, cmdName, filename, checksum)
 		if err != nil {
 			return err

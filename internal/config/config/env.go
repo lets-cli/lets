@@ -3,6 +3,7 @@ package config
 import (
 	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"os/exec"
 	"slices"
@@ -40,11 +41,14 @@ func (e *Envs) UnmarshalYAML(node *yaml.Node) error {
 		// handle <<: *aliased case
 		if keyNode.Tag == "!!merge" {
 			aliasedEnv := &Envs{}
+
 			err := aliasedEnv.UnmarshalYAML(valueNode.Alias)
 			if err != nil {
 				return errors.New("lets: can not parse aliased env")
 			}
+
 			e.Merge(aliasedEnv)
+
 			continue
 		}
 
@@ -97,9 +101,8 @@ func (e *Envs) Clone() *Envs {
 	}
 
 	mapping := make(map[string]Env, len(e.Mapping))
-	for k, v := range e.Mapping {
-		mapping[k] = v
-	}
+	maps.Copy(mapping, e.Mapping)
+
 	return &Envs{
 		Keys:    cloneSlice(e.Keys),
 		Mapping: mapping,
@@ -121,6 +124,7 @@ func (e *Envs) Has(key string) bool {
 	}
 
 	_, ok := e.Mapping[key]
+
 	return ok
 }
 
@@ -142,11 +146,13 @@ func (e *Envs) Range(yield func(key string, value Env) error) error {
 	if e == nil {
 		return nil
 	}
+
 	for _, k := range e.Keys {
 		if err := yield(k, e.Mapping[k]); err != nil {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -174,6 +180,7 @@ func (e *Envs) MergeMap(other map[string]string) {
 	for key, value := range other {
 		envs.Set(key, Env{Name: key, Value: value})
 	}
+
 	e.Merge(envs)
 }
 
@@ -182,9 +189,11 @@ func (e *Envs) Set(key string, value Env) {
 	if e.Mapping == nil {
 		e.Mapping = make(map[string]Env, 1)
 	}
+
 	if !slices.Contains(e.Keys, key) {
 		e.Keys = append(e.Keys, key)
 	}
+
 	e.Mapping[key] = value
 }
 
@@ -215,6 +224,7 @@ func executeScript(shell string, script string, envMap map[string]string) (strin
 	}
 
 	res := string(out)
+
 	return strings.TrimSpace(res), nil
 }
 
@@ -241,6 +251,7 @@ func (e *Envs) Execute(cfg Config, baseEnv map[string]string) error {
 			if err != nil {
 				return err
 			}
+
 			env.Value = result
 			e.Mapping[key] = env
 		} else if len(env.Checksum) > 0 {
@@ -255,13 +266,14 @@ func (e *Envs) Execute(cfg Config, baseEnv map[string]string) error {
 
 		resolvedEnv[key] = env.Value
 	}
+
 	e.ready = true
 
 	return nil
 }
 
 // UnmarshalYAML implements yaml.Unmarshaler interface.
-func (e *Env) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (e *Env) UnmarshalYAML(unmarshal func(any) error) error {
 	var str string
 	if err := unmarshal(&str); err == nil {
 		e.Value = str
