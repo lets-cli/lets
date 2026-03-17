@@ -47,6 +47,10 @@ func (e *EnvFile) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return errors.New("env_file name can not be empty")
 	}
 
+	if isOptionalEnvFilename(raw.Name) {
+		return errors.New("env_file map form does not support '-' prefix in name; use required: false instead")
+	}
+
 	e.Name = raw.Name
 	e.Required = true
 	if raw.Required != nil {

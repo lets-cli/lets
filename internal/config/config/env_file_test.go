@@ -85,6 +85,25 @@ func TestParseEnvFiles(t *testing.T) {
 			t.Fatalf("unexpected error: %s", err)
 		}
 	})
+
+	t.Run("rejects map form with optional dash prefix", func(t *testing.T) {
+		text := dedent.Dedent(`
+		env_file:
+		  name: -.env.local
+		`)
+
+		var raw struct {
+			EnvFiles *EnvFiles `yaml:"env_file"`
+		}
+		err := yaml.NewDecoder(bytes.NewBufferString(text)).Decode(&raw)
+		if err == nil {
+			t.Fatal("expected decode error")
+		}
+
+		if !strings.Contains(err.Error(), "use required: false instead") {
+			t.Fatalf("unexpected error: %s", err)
+		}
+	})
 }
 
 func TestEnvFilesLoad(t *testing.T) {
