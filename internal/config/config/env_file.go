@@ -169,6 +169,7 @@ func expandWithEnv(value string, envMap map[string]string) string {
 			}
 		}
 
+		// If lets own env does not have declared env var, fallback to os env
 		return os.Getenv(key)
 	})
 }
