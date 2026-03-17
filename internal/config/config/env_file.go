@@ -25,6 +25,7 @@ type EnvFiles struct {
 
 func (e *EnvFile) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var filename string
+	// try parse as scalar
 	if err := unmarshal(&filename); err == nil {
 		e.Name = normalizeEnvFilename(filename)
 		e.Required = !isOptionalEnvFilename(filename)
@@ -39,6 +40,7 @@ func (e *EnvFile) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		Name     string
 		Required *bool
 	}
+	// try parse as map
 	if err := unmarshal(&raw); err != nil {
 		return err
 	}

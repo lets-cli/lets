@@ -36,18 +36,20 @@ type Config struct {
 	// before is a script which will be included before every cmd
 	Before string
 	// init is a script which will be called exactly once before any command calls
-	Init        string
-	Env         *Envs
-	EnvFiles    *EnvFiles
-	Version     string
-	resolvedEnv map[string]string
-	isMixin     bool // if true, we consider config as mixin and apply different parsing and validation
+	Init     string
+	Env      *Envs
+	EnvFiles *EnvFiles
+	Version  string
 	// absolute path to .lets
 	DotLetsDir string
 	// absolute path to .lets/checksums
 	ChecksumsDir string
 	// absolute path to .lets/mixins
 	MixinsDir string
+
+	// cached env after config.SetupEnv, used in config.GetEnv
+	cachedEnv map[string]string
+	isMixin   bool // if true, we consider config as mixin and apply different parsing and validation
 }
 
 func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
@@ -290,8 +292,9 @@ func (c *Config) readMixins(mixins []*Mixin) error {
 }
 
 func (c *Config) GetEnv() map[string]string {
-	if c.resolvedEnv != nil {
-		return cloneMap(c.resolvedEnv)
+	if c.cachedEnv != nil {
+		// clone to avoid mutating config env
+		return cloneMap(c.cachedEnv)
 	}
 
 	return c.Env.Dump()
@@ -314,9 +317,9 @@ func (c *Config) SetupEnv() error {
 		return fmt.Errorf("failed to resolve global env_file: %w", err)
 	}
 
-	c.resolvedEnv = c.Env.Dump()
+	c.cachedEnv = c.Env.Dump()
 	for key, value := range envFileEnv {
-		c.resolvedEnv[key] = value
+		c.cachedEnv[key] = value
 	}
 
 	// expand env for args
@@ -324,7 +327,8 @@ func (c *Config) SetupEnv() error {
 		for idx, arg := range cmd.Args {
 			// we have to expand env here on our own, since this args not came from users tty, and not expanded before lets
 			cmd.Args[idx] = os.Expand(arg, func(key string) string {
-				return c.GetEnv()[key]
+				// safe to access own cached env
+				return c.cachedEnv[key]
 			})
 		}
 	}
