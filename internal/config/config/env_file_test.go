@@ -236,3 +236,43 @@ func TestCommandGetEnvWithEnvFile(t *testing.T) {
 		t.Fatalf("expected command env_file to override env, got %#v", got)
 	}
 }
+
+func TestCommandGetEnvDoesNotReuseBuiltinEnvCache(t *testing.T) {
+	workDir := t.TempDir()
+	writeFixtureFile(t, workDir, ".env.one", "VALUE=from-one\n")
+	writeFixtureFile(t, workDir, ".env.two", "VALUE=from-two\n")
+
+	cfg := loadConfigFixture(t, workDir, dedent.Dedent(`
+	shell: bash
+	commands:
+	  echo:
+	    env_file: .env.${LETS_COMMAND_ARGS}
+	    cmd: echo ok
+	`))
+
+	if err := cfg.SetupEnv(); err != nil {
+		t.Fatalf("unexpected setup error: %s", err)
+	}
+
+	cmd := cfg.Commands["echo"]
+
+	cmd.Args = []string{"one"}
+	gotOne, err := cmd.GetEnv(*cfg, cfg.CommandBuiltinEnv(cmd, cfg.Shell, cfg.WorkDir))
+	if err != nil {
+		t.Fatalf("unexpected command env error: %s", err)
+	}
+
+	cmd.Args = []string{"two"}
+	gotTwo, err := cmd.GetEnv(*cfg, cfg.CommandBuiltinEnv(cmd, cfg.Shell, cfg.WorkDir))
+	if err != nil {
+		t.Fatalf("unexpected command env error: %s", err)
+	}
+
+	if gotOne["VALUE"] != "from-one" {
+		t.Fatalf("expected first env file to be used, got %#v", gotOne)
+	}
+
+	if gotTwo["VALUE"] != "from-two" {
+		t.Fatalf("expected second env file to be used, got %#v", gotTwo)
+	}
+}
