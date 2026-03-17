@@ -1,0 +1,30 @@
+shell: bash
+
+env:
+  TARGET: global
+  COMMAND_TARGET: command
+  GLOBAL_OVERRIDE: from-global-env
+
+env_file:
+  - .env.${TARGET}
+  - .env.${LETS_OS}
+
+commands:
+  print-global:
+    cmd: |
+      echo GLOBAL_FROM_FILE=${GLOBAL_FROM_FILE}
+      echo GLOBAL_OVERRIDE=${GLOBAL_OVERRIDE}
+      echo OS_FILE=${OS_FILE}
+
+  print-command:
+    env:
+      SUFFIX: dev
+      COMMAND_OVERRIDE: from-command-env
+    env_file: .env.${COMMAND_TARGET}.${SUFFIX}
+    cmd: |
+      echo COMMAND_FROM_FILE=${COMMAND_FROM_FILE}
+      echo COMMAND_OVERRIDE=${COMMAND_OVERRIDE}
+
+  print-optional:
+    env_file: -.env.optional.missing
+    cmd: echo OPTIONAL_OK=1

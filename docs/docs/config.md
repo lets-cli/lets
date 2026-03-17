@@ -101,6 +101,58 @@ env:
     sh: echo "${ENGINE}-compose"
 ```
 
+### Global env_file
+
+`key: env_file`
+
+`type: string | map | list`
+
+Load one or more dotenv-style files and expose their values to all commands.
+
+Supported forms:
+
+```yaml
+env_file: .env
+env_file: -.env.local
+env_file:
+  name: .env.${TARGET}
+  required: false
+env_file:
+  - .env
+  - -.env.local
+  - name: .env.${LETS_OS}
+    required: true
+```
+
+Rules:
+
+- `-filename` is a short form of `required: false`
+- files are resolved relative to the config directory
+- file names are expanded after global `env` is resolved, so `env_file` can depend on global `env`
+- values loaded from `env_file` have higher precedence than values from `env`
+- missing files fail by default
+- invalid env file syntax reports an error with the file name
+
+Example:
+
+```yaml
+shell: bash
+
+env:
+  TARGET: dev
+  ENGINE: docker
+
+env_file:
+  - .env.${TARGET}
+  - -.env.local
+
+commands:
+  echo-env:
+    cmd: |
+      echo ENGINE=${ENGINE}
+      echo API_URL=${API_URL}
+```
+
 ### Global before
 
 `key: before`
@@ -693,6 +745,43 @@ commands:
       COMPOSE:
         sh: echo "${ENGINE}-compose"
     cmd: ${COMPOSE} up
+```
+
+
+### `env_file`
+
+`key: env_file`
+
+`type: string | map | list`
+
+Load dotenv-style env files for a single command.
+
+Rules:
+
+- command `env` is resolved first
+- command `env_file` file names are expanded using builtin lets vars, merged global env, and resolved command `env`
+- values loaded from command `env_file` override values from command `env`
+- paths are resolved relative to the config directory, not `work_dir`
+
+Example:
+
+```yaml
+shell: bash
+
+env:
+  TARGET: dev
+
+commands:
+  up:
+    env:
+      SUFFIX: local
+      ENGINE: docker
+    env_file:
+      - .env.${TARGET}.${SUFFIX}
+      - -.env.override
+    cmd: |
+      echo ENGINE=${ENGINE}
+      echo API_URL=${API_URL}
 ```
 
 
