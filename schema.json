@@ -42,6 +42,9 @@
     "env": {
       "$ref": "#/definitions/env"
     },
+    "env_file": {
+      "$ref": "#/definitions/env_file"
+    },
     "before": {
       "type": "string",
       "description": "Commands to run before the main script."
@@ -137,6 +140,9 @@
         "env": {
           "$ref": "#/definitions/env"
         },
+        "env_file": {
+          "$ref": "#/definitions/env_file"
+        },
         "after": {
           "type": "string",
           "description": "A shell sctipt to run after the command."
@@ -192,6 +198,45 @@
         }
       },
       "additionalProperties": false
+    },
+    "env_file_entry": {
+      "oneOf": [
+        {
+          "type": "string",
+          "description": "Path to an env file. Prefix with '-' to make it optional."
+        },
+        {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Path to an env file."
+            },
+            "required": {
+              "type": "boolean",
+              "description": "Whether the env file must exist. Defaults to true."
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "env_file": {
+      "description": "Env file or list of env files to load.",
+      "oneOf": [
+        {
+          "$ref": "#/definitions/env_file_entry"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/env_file_entry"
+          }
+        }
+      ]
     }
   },
   "additionalProperties": false
