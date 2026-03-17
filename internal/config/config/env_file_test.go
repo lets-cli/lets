@@ -269,6 +269,12 @@ func TestConfigSetupEnvWithEnvFile(t *testing.T) {
 	if got["OS_FILE"] != "os-file" {
 		t.Fatalf("expected OS_FILE from LETS_OS interpolation, got %#v", got)
 	}
+
+	got["FROM_FILE"] = "mutated"
+	gotAgain := cfg.GetEnv()
+	if gotAgain["FROM_FILE"] != "global-file" {
+		t.Fatalf("expected cached env to be isolated from caller mutations, got %#v", gotAgain)
+	}
 }
 
 func TestCommandGetEnvWithEnvFile(t *testing.T) {
