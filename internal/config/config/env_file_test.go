@@ -34,6 +34,48 @@ func writeFixtureFile(t *testing.T, dir string, name string, content string) {
 }
 
 func TestParseEnvFiles(t *testing.T) {
+	t.Run("parses scalar env_file form", func(t *testing.T) {
+		text := "env_file: .env\n"
+
+		var raw struct {
+			EnvFiles *EnvFiles `yaml:"env_file"`
+		}
+		if err := yaml.NewDecoder(bytes.NewBufferString(text)).Decode(&raw); err != nil {
+			t.Fatalf("unexpected decode error: %s", err)
+		}
+
+		if len(raw.EnvFiles.Items) != 1 {
+			t.Fatalf("expected 1 env file, got %d", len(raw.EnvFiles.Items))
+		}
+
+		if got := raw.EnvFiles.Items[0]; got.Name != ".env" || !got.Required {
+			t.Fatalf("unexpected env file: %#v", got)
+		}
+	})
+
+	t.Run("parses map env_file form", func(t *testing.T) {
+		text := dedent.Dedent(`
+		env_file:
+		  name: .env.prod
+		  required: false
+		`)
+
+		var raw struct {
+			EnvFiles *EnvFiles `yaml:"env_file"`
+		}
+		if err := yaml.NewDecoder(bytes.NewBufferString(text)).Decode(&raw); err != nil {
+			t.Fatalf("unexpected decode error: %s", err)
+		}
+
+		if len(raw.EnvFiles.Items) != 1 {
+			t.Fatalf("expected 1 env file, got %d", len(raw.EnvFiles.Items))
+		}
+
+		if got := raw.EnvFiles.Items[0]; got.Name != ".env.prod" || got.Required {
+			t.Fatalf("unexpected env file: %#v", got)
+		}
+	})
+
 	t.Run("parses mixed env_file forms", func(t *testing.T) {
 		text := dedent.Dedent(`
 		env_file:
@@ -101,6 +143,18 @@ func TestParseEnvFiles(t *testing.T) {
 		}
 
 		if !strings.Contains(err.Error(), "use required: false instead") {
+			t.Fatalf("unexpected error: %s", err)
+		}
+	})
+
+	t.Run("rejects invalid top-level env_file kind", func(t *testing.T) {
+		envFiles := &EnvFiles{}
+		err := envFiles.UnmarshalYAML(&yaml.Node{Kind: yaml.AliasNode})
+		if err == nil {
+			t.Fatal("expected unmarshal error")
+		}
+
+		if !strings.Contains(err.Error(), "env_file must be a string, map, or sequence") {
 			t.Fatalf("unexpected error: %s", err)
 		}
 	})
