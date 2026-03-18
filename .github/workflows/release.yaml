@@ -17,33 +17,18 @@ jobs:
         with:
           go-version: 1.26.x
       - name: Run GoReleaser (dry run)
-        env:
-          PACKAGE_NAME: github.com/lets-cli/lets
-          GOLANG_CROSS_VERSION: v1.26
-        run: |
-          docker run \
-            --rm \
-            -e CGO_ENABLED=1 \
-            -v /var/run/docker.sock:/var/run/docker.sock \
-            -v `pwd`:/go/src/${PACKAGE_NAME}\
-            -v `pwd`/sysroot:/sysroot \
-            -w /go/src/${PACKAGE_NAME} \
-            ghcr.io/goreleaser/goreleaser-cross:${GOLANG_CROSS_VERSION} \
-            --clean --skip=validate --skip=publish
+        uses: goreleaser/goreleaser-action@v7
+        with:
+          distribution: goreleaser
+          version: '~> v2'  # latest
+          args: release --clean --skip=validate --skip=publish
       - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v7
+        with:
+          distribution: goreleaser
+          version: '~> v2'  # latest
+          args: release --clean
         env:
-          PACKAGE_NAME: github.com/lets-cli/lets
-          GOLANG_CROSS_VERSION: v1.26
-        run: |
-          docker run \
-            --rm \
-            -e CGO_ENABLED=1 \
-            -e GITHUB_TOKEN="${{secrets.GITHUB_TOKEN}}" \
-            -e HOMEBREW_TAP_GITHUB_TOKEN="${{secrets.GH_PAT}}" \
-            -e AUR_GITHUB_TOKEN="${{secrets.AUR_SSH_PRIVATE_KEY}}" \
-            -v /var/run/docker.sock:/var/run/docker.sock \
-            -v `pwd`:/go/src/${PACKAGE_NAME}\
-            -v `pwd`/sysroot:/sysroot \
-            -w /go/src/${PACKAGE_NAME} \
-            ghcr.io/goreleaser/goreleaser-cross:${GOLANG_CROSS_VERSION} \
-            release --clean
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+          AUR_GITHUB_TOKEN: ${{ secrets.AUR_SSH_PRIVATE_KEY }}

@@ -3,10 +3,10 @@ package lsp
 import (
 	"strings"
 
+	ts "github.com/odvcencio/gotreesitter"
+	"github.com/odvcencio/gotreesitter/grammars"
 	"github.com/tliron/commonlog"
 	lsp "github.com/tliron/glsp/protocol_3_16"
-	tree_sitter_yaml "github.com/tree-sitter-grammars/tree-sitter-yaml/bindings/go"
-	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
 type PositionType int
@@ -17,20 +17,22 @@ const (
 	PositionTypeNone
 )
 
+var yamlLanguage = grammars.YamlLanguage()
+
 func isCursorWithinNode(node *ts.Node, pos lsp.Position) bool {
-	return isCursorWithinNodePoints(node.StartPosition(), node.EndPosition(), pos)
+	return isCursorWithinNodePoints(node.StartPoint(), node.EndPoint(), pos)
 }
 
 func isCursorWithinNodePoints(startPoint, endPoint ts.Point, pos lsp.Position) bool {
-	if uint(pos.Line) < startPoint.Row || uint(pos.Line) > endPoint.Row {
+	if pos.Line < startPoint.Row || pos.Line > endPoint.Row {
 		return false
 	}
 
-	if uint(pos.Line) == startPoint.Row && uint(pos.Character) < startPoint.Column {
+	if pos.Line == startPoint.Row && pos.Character < startPoint.Column {
 		return false
 	}
 
-	if uint(pos.Line) == endPoint.Row && uint(pos.Character) > endPoint.Column {
+	if pos.Line == endPoint.Row && pos.Character > endPoint.Column {
 		return false
 	}
 
@@ -38,10 +40,21 @@ func isCursorWithinNodePoints(startPoint, endPoint ts.Point, pos lsp.Position) b
 }
 
 func isCursorAtLine(node *ts.Node, pos lsp.Position) bool {
-	startPoint := node.StartPosition()
-	endPoint := node.EndPosition()
+	startPoint := node.StartPoint()
+	endPoint := node.EndPoint()
 
-	return uint(pos.Line) == startPoint.Row && uint(pos.Line) == endPoint.Row
+	return pos.Line == startPoint.Row && pos.Line == endPoint.Row
+}
+
+func parseYAMLDocument(document *string) (*ts.Tree, []byte, error) {
+	docBytes := []byte(*document)
+
+	tree, err := ts.NewParser(yamlLanguage).Parse(docBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return tree, docBytes, nil
 }
 
 func getLine(document *string, line uint32) string {
@@ -108,20 +121,13 @@ func (p *parser) getPositionType(document *string, position lsp.Position) Positi
 }
 
 func (p *parser) inMixinsPosition(document *string, position lsp.Position) bool {
-	parser := ts.NewParser()
-	defer parser.Close()
-
-	lang := ts.NewLanguage(tree_sitter_yaml.Language())
-	if err := parser.SetLanguage(lang); err != nil {
+	tree, docBytes, err := parseYAMLDocument(document)
+	if err != nil {
 		return false
 	}
+	defer tree.Release()
 
-	docBytes := []byte(*document)
-
-	tree := parser.Parse(docBytes, nil)
-	defer tree.Close()
-
-	query, err := ts.NewQuery(lang, `
+	query, err := ts.NewQuery(`
 		(block_mapping_pair
 			key: (flow_node) @key
 			value: (block_node
@@ -130,30 +136,28 @@ func (p *parser) inMixinsPosition(document *string, position lsp.Position) bool 
 						(flow_node) @value)))
 			(#eq? @key "mixins")
 		)
-	`)
+	`, yamlLanguage)
 	if err != nil {
 		return false
 	}
 
-	defer query.Close()
-
 	root := tree.RootNode()
+	if root == nil {
+		return false
+	}
 
-	cursor := ts.NewQueryCursor()
-	defer cursor.Close()
-
-	matches := cursor.Matches(query, root, docBytes)
+	matches := query.Exec(root, yamlLanguage, docBytes)
 
 	for {
-		match := matches.Next()
-		if match == nil {
+		match, ok := matches.NextMatch()
+		if !ok {
 			break
 		}
 
 		for _, capture := range match.Captures {
 			if parent := capture.Node.Parent(); parent != nil {
-				nodeText := capture.Node.Utf8Text(docBytes)
-				if parent.Kind() == "block_mapping_pair" &&
+				nodeText := capture.Node.Text(docBytes)
+				if parent.Type(yamlLanguage) == "block_mapping_pair" &&
 					nodeText == "mixins" &&
 					isCursorWithinNode(parent, position) {
 					return true
@@ -166,20 +170,13 @@ func (p *parser) inMixinsPosition(document *string, position lsp.Position) bool 
 }
 
 func (p *parser) inDependsPosition(document *string, position lsp.Position) bool {
-	parser := ts.NewParser()
-	defer parser.Close()
-
-	lang := ts.NewLanguage(tree_sitter_yaml.Language())
-	if err := parser.SetLanguage(lang); err != nil {
+	tree, docBytes, err := parseYAMLDocument(document)
+	if err != nil {
 		return false
 	}
+	defer tree.Release()
 
-	docBytes := []byte(*document)
-
-	tree := parser.Parse(docBytes, nil)
-	defer tree.Close()
-
-	query, err := ts.NewQuery(lang, `
+	query, err := ts.NewQuery(`
 		(block_mapping_pair
 			key: (flow_node) @keydepends
 			value: [
@@ -189,43 +186,40 @@ func (p *parser) inDependsPosition(document *string, position lsp.Position) bool
 			]
 			(#eq? @keydepends "depends")
 		)
-	`)
+	`, yamlLanguage)
 	if err != nil {
 		return false
 	}
-	defer query.Close()
 
 	root := tree.RootNode()
+	if root == nil {
+		return false
+	}
 
-	cursor := ts.NewQueryCursor()
-	defer cursor.Close()
-
-	matches := cursor.Matches(query, root, docBytes)
-
-	dependsIndex, _ := query.CaptureIndexForName("depends")
+	matches := query.Exec(root, yamlLanguage, docBytes)
 
 	for {
-		match := matches.Next()
-		if match == nil {
+		match, ok := matches.NextMatch()
+		if !ok {
 			break
 		}
 
 		for _, capture := range match.Captures {
-			nodeKind := capture.Node.Kind()
-
-			if capture.Index != uint32(dependsIndex) {
+			if capture.Name != "depends" {
 				continue
 			}
+
+			nodeKind := capture.Node.Type(yamlLanguage)
 
 			// if is a sequence
 			switch nodeKind {
 			case "block_sequence_item", "block_sequence":
-				if isCursorWithinNode(&capture.Node, position) || isCursorAtLine(&capture.Node, position) {
+				if isCursorWithinNode(capture.Node, position) || isCursorAtLine(capture.Node, position) {
 					return true
 				}
 				// if is an array
 			case "flow_sequence", "flow_node":
-				if isCursorWithinNode(&capture.Node, position) {
+				if isCursorWithinNode(capture.Node, position) {
 					return true
 				}
 			}
@@ -236,20 +230,13 @@ func (p *parser) inDependsPosition(document *string, position lsp.Position) bool
 }
 
 func (p *parser) extractFilenameFromMixins(document *string, position lsp.Position) string {
-	parser := ts.NewParser()
-	defer parser.Close()
-
-	lang := ts.NewLanguage(tree_sitter_yaml.Language())
-	if err := parser.SetLanguage(lang); err != nil {
+	tree, docBytes, err := parseYAMLDocument(document)
+	if err != nil {
 		return ""
 	}
+	defer tree.Release()
 
-	docBytes := []byte(*document)
-
-	tree := parser.Parse(docBytes, nil)
-	defer tree.Close()
-
-	query, err := ts.NewQuery(lang, `
+	query, err := ts.NewQuery(`
 		(block_mapping_pair
 			key: (flow_node) @key
 			value: (block_node
@@ -258,29 +245,28 @@ func (p *parser) extractFilenameFromMixins(document *string, position lsp.Positi
 						(flow_node) @value)))
 			(#eq? @key "mixins")
 		)
-	`)
+	`, yamlLanguage)
 	if err != nil {
 		return ""
 	}
-	defer query.Close()
 
 	root := tree.RootNode()
+	if root == nil {
+		return ""
+	}
 
-	cursor := ts.NewQueryCursor()
-	defer cursor.Close()
-
-	matches := cursor.Matches(query, root, docBytes)
+	matches := query.Exec(root, yamlLanguage, docBytes)
 
 	for {
-		match := matches.Next()
-		if match == nil {
+		match, ok := matches.NextMatch()
+		if !ok {
 			break
 		}
 
 		for _, capture := range match.Captures {
 			if parent := capture.Node.Parent(); parent != nil {
-				if parent.Kind() == "block_sequence_item" && isCursorAtLine(&capture.Node, position) {
-					return capture.Node.Utf8Text(docBytes)
+				if parent.Type(yamlLanguage) == "block_sequence_item" && isCursorAtLine(capture.Node, position) {
+					return capture.Node.Text(docBytes)
 				}
 			}
 		}
@@ -296,20 +282,13 @@ type Command struct {
 }
 
 func (p *parser) getCommands(document *string) []Command {
-	parser := ts.NewParser()
-	defer parser.Close()
-
-	lang := ts.NewLanguage(tree_sitter_yaml.Language())
-	if err := parser.SetLanguage(lang); err != nil {
+	tree, docBytes, err := parseYAMLDocument(document)
+	if err != nil {
 		return nil
 	}
+	defer tree.Release()
 
-	docBytes := []byte(*document)
-
-	tree := parser.Parse(docBytes, nil)
-	defer tree.Close()
-
-	query, err := ts.NewQuery(lang, `
+	query, err := ts.NewQuery(`
 		(block_mapping_pair
 			key: (flow_node(plain_scalar(string_scalar)) @parent)
 			value: (block_node
@@ -321,36 +300,33 @@ func (p *parser) getCommands(document *string) []Command {
 						value: (block_node) @cmd) @values))
 			(#eq? @parent "commands")
 		)
-	`)
+	`, yamlLanguage)
 	if err != nil {
 		return nil
 	}
-	defer query.Close()
 
 	root := tree.RootNode()
+	if root == nil {
+		return nil
+	}
 
-	cursor := ts.NewQueryCursor()
-	defer cursor.Close()
-
-	matches := cursor.Matches(query, root, docBytes)
+	matches := query.Exec(root, yamlLanguage, docBytes)
 
 	var commands []Command
 
-	cmdKeyIndex, _ := query.CaptureIndexForName("cmd_key")
-
 	for {
-		match := matches.Next()
-		if match == nil {
+		match, ok := matches.NextMatch()
+		if !ok {
 			break
 		}
 
 		for _, capture := range match.Captures {
-			if capture.Index == uint32(cmdKeyIndex) {
+			if capture.Name == "cmd_key" {
 				commands = append(commands, Command{
-					name: capture.Node.Utf8Text(docBytes),
+					name: capture.Node.Text(docBytes),
 					position: lsp.Position{
-						Line:      uint32(capture.Node.StartPosition().Row),
-						Character: uint32(capture.Node.StartPosition().Column),
+						Line:      capture.Node.StartPoint().Row,
+						Character: capture.Node.StartPoint().Column,
 					},
 				})
 			}
@@ -361,20 +337,13 @@ func (p *parser) getCommands(document *string) []Command {
 }
 
 func (p *parser) getCurrentCommand(document *string, position lsp.Position) *Command {
-	parser := ts.NewParser()
-	defer parser.Close()
-
-	lang := ts.NewLanguage(tree_sitter_yaml.Language())
-	if err := parser.SetLanguage(lang); err != nil {
+	tree, docBytes, err := parseYAMLDocument(document)
+	if err != nil {
 		return nil
 	}
+	defer tree.Release()
 
-	docBytes := []byte(*document)
-
-	tree := parser.Parse(docBytes, nil)
-	defer tree.Close()
-
-	query, err := ts.NewQuery(lang, `
+	query, err := ts.NewQuery(`
 		(block_mapping_pair
 			key: (flow_node(plain_scalar(string_scalar)) @commands)
 			value: (block_node
@@ -382,39 +351,36 @@ func (p *parser) getCurrentCommand(document *string, position lsp.Position) *Com
 					(block_mapping_pair) @cmd))
 			(#eq? @commands "commands")
 		)
-	`)
+	`, yamlLanguage)
 	if err != nil {
 		return nil
 	}
-	defer query.Close()
 
 	root := tree.RootNode()
+	if root == nil {
+		return nil
+	}
 
-	cursor := ts.NewQueryCursor()
-	defer cursor.Close()
-
-	matches := cursor.Matches(query, root, docBytes)
-
-	cmdIndex, _ := query.CaptureIndexForName("cmd")
+	matches := query.Exec(root, yamlLanguage, docBytes)
 
 	for {
-		match := matches.Next()
-		if match == nil {
+		match, ok := matches.NextMatch()
+		if !ok {
 			break
 		}
 
 		for _, capture := range match.Captures {
-			if capture.Index != uint32(cmdIndex) {
+			if capture.Name != "cmd" {
 				continue
 			}
 
-			if !isCursorWithinNode(&capture.Node, position) {
+			if !isCursorWithinNode(capture.Node, position) {
 				continue
 			}
 
-			if key := capture.Node.ChildByFieldName("key"); key != nil {
+			if key := capture.Node.ChildByFieldName("key", yamlLanguage); key != nil {
 				return &Command{
-					name: key.Utf8Text(docBytes),
+					name: key.Text(docBytes),
 				}
 			}
 		}
@@ -424,20 +390,13 @@ func (p *parser) getCurrentCommand(document *string, position lsp.Position) *Com
 }
 
 func (p *parser) findCommand(document *string, commandName string) *Command {
-	parser := ts.NewParser()
-	defer parser.Close()
-
-	lang := ts.NewLanguage(tree_sitter_yaml.Language())
-	if err := parser.SetLanguage(lang); err != nil {
+	tree, docBytes, err := parseYAMLDocument(document)
+	if err != nil {
 		return nil
 	}
+	defer tree.Release()
 
-	docBytes := []byte(*document)
-
-	tree := parser.Parse(docBytes, nil)
-	defer tree.Close()
-
-	query, err := ts.NewQuery(lang, `
+	query, err := ts.NewQuery(`
 		(block_mapping_pair
 			key: (flow_node(plain_scalar(string_scalar)) @commands)
 			value: (block_node
@@ -449,38 +408,35 @@ func (p *parser) findCommand(document *string, commandName string) *Command {
 						value: (block_node) @cmd_value)) @values)
 			(#eq? @commands "commands")
 		)
-	`)
+	`, yamlLanguage)
 	if err != nil {
 		return nil
 	}
-	defer query.Close()
 
 	root := tree.RootNode()
+	if root == nil {
+		return nil
+	}
 
-	cursor := ts.NewQueryCursor()
-	defer cursor.Close()
-
-	matches := cursor.Matches(query, root, docBytes)
-
-	cmdKeyIndex, _ := query.CaptureIndexForName("cmd_key")
+	matches := query.Exec(root, yamlLanguage, docBytes)
 
 	for {
-		match := matches.Next()
-		if match == nil {
+		match, ok := matches.NextMatch()
+		if !ok {
 			break
 		}
 
 		for _, capture := range match.Captures {
-			if capture.Index != uint32(cmdKeyIndex) {
+			if capture.Name != "cmd_key" {
 				continue
 			}
 
-			if capture.Node.Utf8Text(docBytes) == commandName {
+			if capture.Node.Text(docBytes) == commandName {
 				return &Command{
 					name: commandName,
 					position: lsp.Position{
-						Line:      uint32(capture.Node.StartPosition().Row),
-						Character: uint32(capture.Node.StartPosition().Column),
+						Line:      capture.Node.StartPoint().Row,
+						Character: capture.Node.StartPoint().Column,
 					},
 				}
 			}
@@ -491,20 +447,13 @@ func (p *parser) findCommand(document *string, commandName string) *Command {
 }
 
 func (p *parser) extractDependsValues(document *string) []string {
-	parser := ts.NewParser()
-	defer parser.Close()
-
-	lang := ts.NewLanguage(tree_sitter_yaml.Language())
-	if err := parser.SetLanguage(lang); err != nil {
+	tree, docBytes, err := parseYAMLDocument(document)
+	if err != nil {
 		return nil
 	}
+	defer tree.Release()
 
-	docBytes := []byte(*document)
-
-	tree := parser.Parse(docBytes, nil)
-	defer tree.Close()
-
-	query, err := ts.NewQuery(lang, `
+	query, err := ts.NewQuery(`
 		(block_mapping_pair
 			key: (flow_node) @key
 			value: [
@@ -522,32 +471,29 @@ func (p *parser) extractDependsValues(document *string) []string {
 			]
 			(#eq? @key "depends")
 		)
-	`)
+	`, yamlLanguage)
 	if err != nil {
 		return nil
 	}
-	defer query.Close()
 
 	root := tree.RootNode()
+	if root == nil {
+		return nil
+	}
 
-	cursor := ts.NewQueryCursor()
-	defer cursor.Close()
-
-	matches := cursor.Matches(query, root, docBytes)
+	matches := query.Exec(root, yamlLanguage, docBytes)
 
 	var values []string
 
-	valueIndex, _ := query.CaptureIndexForName("value")
-
 	for {
-		match := matches.Next()
-		if match == nil {
+		match, ok := matches.NextMatch()
+		if !ok {
 			break
 		}
 
 		for _, capture := range match.Captures {
-			if capture.Index == uint32(valueIndex) {
-				values = append(values, capture.Node.Utf8Text(docBytes))
+			if capture.Name == "value" {
+				values = append(values, capture.Node.Text(docBytes))
 			}
 		}
 	}

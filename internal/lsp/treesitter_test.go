@@ -4,12 +4,19 @@ import (
 	"reflect"
 	"testing"
 
+	ts "github.com/odvcencio/gotreesitter"
 	"github.com/tliron/commonlog"
 	lsp "github.com/tliron/glsp/protocol_3_16"
-	ts "github.com/tree-sitter/go-tree-sitter"
 )
 
 var logger = commonlog.GetLogger("test")
+
+func pos(line, character uint32) lsp.Position {
+	return lsp.Position{
+		Line:      line,
+		Character: character,
+	}
+}
 
 func TestIsCursorWithinNode(t *testing.T) {
 	tests := []struct {
@@ -326,6 +333,234 @@ commands:
 	}
 	if command.position.Character != expected.position.Character {
 		t.Errorf("expected character %d, got %d", expected.position.Character, command.position.Character)
+	}
+}
+
+func TestMixinsHelpersWithMultipleItems(t *testing.T) {
+	blockDoc := `shell: bash
+mixins:
+  - lets.base.yaml
+  - lets.extra.yaml
+commands:
+  build:
+    cmd: echo build`
+
+	flowDoc := `shell: bash
+mixins: [lets.base.yaml, lets.extra.yaml]
+commands:
+  build:
+    cmd: echo build`
+
+	tests := []struct {
+		name         string
+		doc          string
+		position     lsp.Position
+		wantInMixins bool
+		wantFilename string
+	}{
+		{
+			name:         "block key line is inside mixins",
+			doc:          blockDoc,
+			position:     pos(1, 1),
+			wantInMixins: true,
+		},
+		{
+			name:         "block first item resolves filename",
+			doc:          blockDoc,
+			position:     pos(2, 4),
+			wantInMixins: true,
+			wantFilename: "lets.base.yaml",
+		},
+		{
+			name:         "block second item resolves filename",
+			doc:          blockDoc,
+			position:     pos(3, 10),
+			wantInMixins: true,
+			wantFilename: "lets.extra.yaml",
+		},
+		{
+			name:         "outside mixins is false",
+			doc:          blockDoc,
+			position:     pos(4, 0),
+			wantInMixins: false,
+		},
+		{
+			name:         "flow mixins are not matched by query",
+			doc:          flowDoc,
+			position:     pos(1, 12),
+			wantInMixins: false,
+		},
+	}
+
+	p := newParser(logger)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotInMixins := p.inMixinsPosition(&tt.doc, tt.position)
+			if gotInMixins != tt.wantInMixins {
+				t.Fatalf("inMixinsPosition() = %v, want %v", gotInMixins, tt.wantInMixins)
+			}
+
+			gotFilename := p.extractFilenameFromMixins(&tt.doc, tt.position)
+			if gotFilename != tt.wantFilename {
+				t.Fatalf("extractFilenameFromMixins() = %q, want %q", gotFilename, tt.wantFilename)
+			}
+		})
+	}
+}
+
+func TestDependsHelpersWithBlockAndFlowSequences(t *testing.T) {
+	doc := `shell: bash
+commands:
+  build:
+    depends:
+      - clean
+      - lint
+    env:
+      GOFLAGS: -mod=mod
+    cmd: echo build
+  test:
+    depends: [build, lint]
+    options: |
+      Usage: lets test [--watch]
+    cmd: echo test
+  package:
+    cmd: echo package`
+
+	tests := []struct {
+		name string
+		pos  lsp.Position
+		want bool
+	}{
+		{name: "block key line is not inside depends values", pos: pos(3, 4), want: false},
+		{name: "block first item", pos: pos(4, 8), want: true},
+		{name: "block second item", pos: pos(5, 8), want: true},
+		{name: "nested env is outside depends", pos: pos(6, 4), want: false},
+		{name: "flow first item", pos: pos(10, 14), want: true},
+		{name: "flow second item", pos: pos(10, 21), want: true},
+		{name: "nested options are outside depends", pos: pos(12, 12), want: false},
+		{name: "command without depends", pos: pos(15, 10), want: false},
+	}
+
+	p := newParser(logger)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := p.inDependsPosition(&doc, tt.pos)
+			if got != tt.want {
+				t.Fatalf("inDependsPosition() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestCommandHelpersWithDifferentCommandShapes(t *testing.T) {
+	doc := `shell: bash
+commands:
+  bootstrap:
+    cmd: echo bootstrap
+  build:
+    depends:
+      - bootstrap
+      - lint
+    env:
+      GOFLAGS: -mod=mod
+    cmd: |
+      echo build
+      echo done
+  test:
+    depends: [build, lint]
+    options: |
+      Usage: lets test [--watch]
+    cmd: echo test
+  lint:
+    cmd: echo lint`
+
+	p := newParser(logger)
+
+	expectedCommands := []Command{
+		{name: "bootstrap", position: pos(2, 2)},
+		{name: "build", position: pos(4, 2)},
+		{name: "test", position: pos(13, 2)},
+		{name: "lint", position: pos(18, 2)},
+	}
+
+	commands := p.getCommands(&doc)
+	if !reflect.DeepEqual(commands, expectedCommands) {
+		t.Fatalf("getCommands() = %#v, want %#v", commands, expectedCommands)
+	}
+
+	findTests := []struct {
+		name    string
+		command string
+		want    *Command
+	}{
+		{name: "find bootstrap", command: "bootstrap", want: &Command{name: "bootstrap", position: pos(2, 2)}},
+		{name: "find build", command: "build", want: &Command{name: "build", position: pos(4, 2)}},
+		{name: "find test", command: "test", want: &Command{name: "test", position: pos(13, 2)}},
+		{name: "find lint", command: "lint", want: &Command{name: "lint", position: pos(18, 2)}},
+		{name: "missing command", command: "missing", want: nil},
+	}
+
+	for _, tt := range findTests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := p.findCommand(&doc, tt.command)
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Fatalf("findCommand() = %#v, want %#v", got, tt.want)
+			}
+		})
+	}
+
+	currentTests := []struct {
+		name     string
+		position lsp.Position
+		want     *Command
+	}{
+		{name: "inside bootstrap command body", position: pos(3, 12), want: &Command{name: "bootstrap"}},
+		{name: "inside build env block", position: pos(9, 10), want: &Command{name: "build"}},
+		{name: "inside build multiline cmd", position: pos(11, 8), want: &Command{name: "build"}},
+		{name: "inside test flow depends", position: pos(14, 18), want: &Command{name: "test"}},
+		{name: "inside test options block", position: pos(16, 12), want: &Command{name: "test"}},
+		{name: "inside lint command body", position: pos(19, 10), want: &Command{name: "lint"}},
+		{name: "outside commands tree", position: pos(0, 0), want: nil},
+	}
+
+	for _, tt := range currentTests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := p.getCurrentCommand(&doc, tt.position)
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Fatalf("getCurrentCommand() = %#v, want %#v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestExtractDependsValuesFromMixedCommands(t *testing.T) {
+	doc := `shell: bash
+commands:
+  build:
+    depends:
+      - bootstrap
+      - lint
+    cmd: echo build
+  test:
+    depends: [build, lint]
+    cmd: echo test
+  release:
+    env:
+      TARGET: prod
+    depends:
+      - test
+    cmd: echo release
+  lint:
+    cmd: echo lint`
+
+	p := newParser(logger)
+	got := p.extractDependsValues(&doc)
+	want := []string{"bootstrap", "lint", "build", "lint", "test"}
+
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("extractDependsValues() = %#v, want %#v", got, want)
 	}
 }
 

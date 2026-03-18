@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"path/filepath"
 	"strings"
 
@@ -92,6 +93,7 @@ func (c *Command) UnmarshalYAML(unmarshal func(any) error) error {
 	if c.Env == nil {
 		c.Env = &Envs{}
 	}
+
 	c.EnvFiles = cmd.EnvFiles
 	if c.EnvFiles == nil {
 		c.EnvFiles = &EnvFiles{}
@@ -145,9 +147,8 @@ func (c *Command) GetEnv(cfg Config, builtinEnv map[string]string) (map[string]s
 	if baseEnv == nil {
 		baseEnv = make(map[string]string)
 	}
-	for key, value := range cfg.GetEnv() {
-		baseEnv[key] = value
-	}
+
+	maps.Copy(baseEnv, cfg.GetEnv())
 
 	envs := c.Env.Clone()
 	if err := envs.Execute(cfg, baseEnv); err != nil {
@@ -155,20 +156,17 @@ func (c *Command) GetEnv(cfg Config, builtinEnv map[string]string) (map[string]s
 	}
 
 	filenameEnv := cloneMap(baseEnv)
-	for key, value := range envs.Dump() {
-		filenameEnv[key] = value
-	}
+	maps.Copy(filenameEnv, envs.Dump())
 
 	envFiles := c.EnvFiles.Clone()
+
 	envFileEnv, err := envFiles.Load(cfg, filenameEnv)
 	if err != nil {
 		return nil, fmt.Errorf("lets: failed to resolve env_file for command '%s': %w", c.Name, err)
 	}
 
 	resolvedEnv := envs.Dump()
-	for key, value := range envFileEnv {
-		resolvedEnv[key] = value
-	}
+	maps.Copy(resolvedEnv, envFileEnv)
 
 	return resolvedEnv, nil
 }

@@ -9,13 +9,12 @@ require (
 	github.com/coreos/go-semver v0.3.1
 	github.com/docopt/docopt-go v0.0.0-20180111231733-ee0de3bc6815
 	github.com/fatih/color v1.16.0
+	github.com/odvcencio/gotreesitter v0.9.2
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.0
 	github.com/tliron/commonlog v0.2.8
 	github.com/tliron/glsp v0.2.2
-	github.com/tree-sitter-grammars/tree-sitter-yaml v0.7.0
-	github.com/tree-sitter/go-tree-sitter v0.24.0
 	golang.org/x/sync v0.3.0
 )
 
@@ -26,7 +25,6 @@ require (
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
-	github.com/mattn/go-pointer v0.0.1 // indirect
 	github.com/mattn/go-runewidth v0.0.14 // indirect
 	github.com/muesli/termenv v0.15.2 // indirect
 	github.com/petermattis/goid v0.0.0-20180202154549-b0b1615b78e5 // indirect
