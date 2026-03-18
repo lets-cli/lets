@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"strings"
@@ -100,6 +101,7 @@ func (c *Config) UnmarshalYAML(unmarshal func(any) error) error {
 	if c.Env == nil {
 		c.Env = &Envs{}
 	}
+
 	c.EnvFiles = config.EnvFiles
 	if c.EnvFiles == nil {
 		c.EnvFiles = &EnvFiles{}
@@ -314,9 +316,7 @@ func (c *Config) SetupEnv() error {
 	}
 
 	filenameEnv := c.BuiltinEnv(c.Shell)
-	for key, value := range c.Env.Dump() {
-		filenameEnv[key] = value
-	}
+	maps.Copy(filenameEnv, c.Env.Dump())
 
 	envFileEnv, err := c.EnvFiles.Load(*c, filenameEnv)
 	if err != nil {
@@ -324,9 +324,7 @@ func (c *Config) SetupEnv() error {
 	}
 
 	c.cachedEnv = c.Env.Dump()
-	for key, value := range envFileEnv {
-		c.cachedEnv[key] = value
-	}
+	maps.Copy(c.cachedEnv, envFileEnv)
 
 	// expand env for args
 	for _, cmd := range c.Commands {

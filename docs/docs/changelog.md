@@ -12,6 +12,7 @@ title: Changelog
 * `[Removed]` Drop deprecated `eval_env` directive. Use `env` with `sh` execution mode instead.
 * `[Added]` When a command or its `depends` chain fails, print an indented tree to stderr showing the full chain with the failing command highlighted
 * `[Added]` Support `env_file` in global config and commands. File names are expanded after `env` is resolved, and values loaded from env files override values from `env`.
+* `[Changed]` Migrate the LSP YAML parser from the CGO-based tree-sitter bindings to pure-Go [`gotreesitter`](https://github.com/odvcencio/gotreesitter), removing the C toolchain requirement from normal builds and release packaging.
 
 ## [0.0.59](https://github.com/lets-cli/lets/releases/tag/v0.0.59)
 

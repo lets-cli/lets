@@ -126,6 +126,7 @@ func main() {
 		if errors.As(err, &depErr) {
 			executor.PrintDependencyTree(depErr, os.Stderr)
 		}
+
 		log.Errorf("lets: %s", err.Error())
 		os.Exit(getExitCode(err, 1))
 	}

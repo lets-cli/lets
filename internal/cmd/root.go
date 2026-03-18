@@ -228,6 +228,7 @@ func PrintRootHelpMessage(cmd *cobra.Command) error {
 
 	// General
 	builder.WriteString("Usage:\n")
+
 	if cmd.Runnable() {
 		fmt.Fprintf(&builder, "  %s\n", cmd.UseLine())
 	}

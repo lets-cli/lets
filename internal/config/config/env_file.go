@@ -3,6 +3,7 @@ package config
 import (
 	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"strings"
@@ -23,11 +24,12 @@ type EnvFiles struct {
 	ready  bool
 }
 
-func (e *EnvFile) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (e *EnvFile) UnmarshalYAML(unmarshal func(any) error) error {
 	var filename string
 	// try parse as scalar
 	if err := unmarshal(&filename); err == nil {
 		e.Name = normalizeEnvFilename(filename)
+
 		e.Required = !isOptionalEnvFilename(filename)
 		if e.Name == "" {
 			return errors.New("env_file name can not be empty")
@@ -54,6 +56,7 @@ func (e *EnvFile) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 
 	e.Name = raw.Name
+
 	e.Required = true
 	if raw.Required != nil {
 		e.Required = *raw.Required
@@ -71,6 +74,7 @@ func (e *EnvFiles) UnmarshalYAML(node *yaml.Node) error {
 		}
 
 		e.Items = []EnvFile{item}
+
 		return nil
 	case yaml.SequenceNode:
 		items := make([]EnvFile, 0, len(node.Content))
@@ -79,10 +83,12 @@ func (e *EnvFiles) UnmarshalYAML(node *yaml.Node) error {
 			if err := itemNode.Decode(&item); err != nil {
 				return err
 			}
+
 			items = append(items, item)
 		}
 
 		e.Items = items
+
 		return nil
 	default:
 		return errors.New("env_file must be a string, map, or sequence")
@@ -144,9 +150,7 @@ func (e *EnvFiles) Load(cfg Config, envMap map[string]string) (map[string]string
 			return nil, fmt.Errorf("failed to parse env_file %q: %w", filename, err)
 		}
 
-		for key, value := range values {
-			loaded[key] = value
-		}
+		maps.Copy(loaded, values)
 	}
 
 	e.loaded = loaded

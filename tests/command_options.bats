@@ -122,7 +122,7 @@ setup() {
     run lets options-wrong-usage
 
     assert_failure
-    assert_line --index 1 "lets: failed to parse docopt options for cmd options-wrong-usage: no such option"
+    assert_line --index 1 "lets: failed to parse docopt options for cmd options-wrong-usage: unknown option or argument: options-wrong-usage"
     assert_line --index 2 "Usage: lets options-wrong-usage-xxx"
 }
 

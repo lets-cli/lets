@@ -1,14 +1,12 @@
 FROM golang:1.26-bookworm AS builder
 
 ENV GOPROXY=https://proxy.golang.org
-ENV CGO_ENABLED=1
-# disable all compiler errors
-ENV CGO_CFLAGS=-w
+ENV CGO_ENABLED=0
 
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y \
-    git gcc \
+    git \
     zsh  # for zsh completion tests
 
 RUN cd /tmp && \

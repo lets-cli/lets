@@ -15,11 +15,6 @@ builds:
       - darwin
     goarch:
       - amd64
-    env:
-      - PKG_CONFIG_SYSROOT_DIR=/sysroot/macos/amd64
-      - PKG_CONFIG_PATH=/sysroot/macos/amd64/usr/local/lib/pkgconfig
-      - CC=o64-clang
-      - CXX=o64-clang++
     flags:
       - -mod=readonly
     ldflags:
@@ -30,11 +25,6 @@ builds:
       - darwin
     goarch:
       - arm64
-    env:
-      - PKG_CONFIG_SYSROOT_DIR=/sysroot/macos/arm64
-      - PKG_CONFIG_PATH=/sysroot/macos/arm64/usr/local/lib/pkgconfig
-      - CC=oa64-clang
-      - CXX=oa64-clang++
     flags:
       - -mod=readonly
     ldflags:
@@ -45,9 +35,6 @@ builds:
       - linux
     goarch:
       - amd64
-    env:
-      - CC=x86_64-linux-gnu-gcc
-      - CXX=x86_64-linux-gnu-g++
     flags:
       - -mod=readonly
     ldflags:
