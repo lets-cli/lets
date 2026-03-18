@@ -26,6 +26,7 @@ func getDefaltLetsConfig(version string) string {
 	        lets hello Friend
 	    cmd: echo Hello, "${LETSOPT_NAME:-world}"!
 	`, version))
+
 	return strings.TrimLeft(template, "\n")
 }
 

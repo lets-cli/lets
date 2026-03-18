@@ -55,6 +55,7 @@ func (s *lspServer) textDocumentDidChange(context *glsp.Context, params *lsp.Did
 			return errors.New("incremental changes not supported")
 		}
 	}
+
 	return nil
 }
 
@@ -64,6 +65,7 @@ type definitionHandler struct {
 
 func (h *definitionHandler) findMixinsDefinition(doc *string, params *lsp.DefinitionParams) (any, error) {
 	path := normalizePath(params.TextDocument.URI)
+
 	filename := h.parser.extractFilenameFromMixins(doc, params.Position)
 	if filename == "" {
 		return nil, nil
@@ -139,6 +141,7 @@ func (h *completionHandler) buildDependsCompletions(doc *string, params *lsp.Com
 		if slices.Contains(alreadyInDepends, cmd.name) {
 			continue
 		}
+
 		items = append(items, lsp.CompletionItem{
 			Label: cmd.name,
 			Kind:  &keywordKind,

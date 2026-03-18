@@ -55,6 +55,7 @@ func main() {
 			log.Errorf("lets: print version error: %s", err)
 			os.Exit(1)
 		}
+
 		os.Exit(0)
 	}
 
@@ -116,6 +117,7 @@ func main() {
 			log.Errorf("lets: print help error: %s", err)
 			os.Exit(1)
 		}
+
 		os.Exit(0)
 	}
 
@@ -198,7 +200,9 @@ func parseRootFlags(args []string) (*flags, error) {
 		if visited.Contains(name) {
 			return true
 		}
+
 		visited.Add(name)
+
 		return false
 	}
 
@@ -218,10 +222,12 @@ func parseRootFlags(args []string) (*flags, error) {
 					if value == "" {
 						return nil, errors.New("--config must be set to value")
 					}
+
 					f.config = value
 				} else if len(args[idx:]) > 0 {
 					f.config = args[idx+1]
 					idx += 2
+
 					continue
 				}
 			}

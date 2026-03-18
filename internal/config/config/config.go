@@ -52,8 +52,8 @@ type Config struct {
 	isMixin   bool // if true, we consider config as mixin and apply different parsing and validation
 }
 
-func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	var raw map[string]interface{}
+func (c *Config) UnmarshalYAML(unmarshal func(any) error) error {
+	var raw map[string]any
 	if err := unmarshal(&raw); err != nil {
 		return err
 	}
@@ -82,6 +82,7 @@ func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 	c.Version = string(config.Version)
 	c.Init = config.Init
+
 	c.Commands = config.Commands
 	if c.Commands == nil {
 		c.Commands = make(Commands, 0)
@@ -94,6 +95,7 @@ func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 
 	c.Before = config.Before
+
 	c.Env = config.Env
 	if c.Env == nil {
 		c.Env = &Envs{}
@@ -122,6 +124,7 @@ func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 func (c *Config) resolveRefs() error {
 	commandsFromRef := []*Command{}
+
 	for _, cmd := range c.Commands {
 		// resolve command by ref
 		if ref := cmd.ref; ref != nil {
@@ -142,6 +145,7 @@ func (c *Config) resolveRefs() error {
 					1,
 				)
 			}
+
 			commandsFromRef = append(commandsFromRef, command)
 		}
 	}
@@ -160,6 +164,7 @@ func joinBeforeScripts(beforeScripts ...string) string {
 		if script == "" {
 			continue
 		}
+
 		buf.WriteString(script)
 		buf.WriteString("\n")
 	}
@@ -226,6 +231,7 @@ func (c *Config) readMixin(mixin *Mixin) error {
 		//  2 option - namespace it (this may require specifying namespace in mixin config or in main config mixin section)
 
 		mixinCfg := NewMixinConfig(c, rm.Filename())
+
 		reader := bytes.NewReader(data)
 		if err := yaml.NewDecoder(reader).Decode(mixinCfg); err != nil {
 			return fmt.Errorf("failed to parse remote mixin config '%s': %w", rm.URL, err)

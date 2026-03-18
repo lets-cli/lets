@@ -5,6 +5,7 @@ title: Changelog
 
 ## [Unreleased](https://github.com/lets-cli/lets/releases/tag/v0.0.X)
 
+* `[Dependency]` update go to `1.26`
 * `[Added]` Show similar command suggestions on typos.
 * `[Changed]` Exit code 2 on unknown command.
 * `[Added]` Expose `LETS_OS` and `LETS_ARCH` environment variables at command runtime.

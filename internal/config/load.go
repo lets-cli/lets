@@ -13,6 +13,7 @@ func Load(configName string, configDir string, version string) (*config.Config, 
 	if err != nil {
 		return nil, err
 	}
+
 	f, err := os.Open(configPath.AbsPath)
 	if err != nil {
 		return nil, err

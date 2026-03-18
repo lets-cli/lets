@@ -32,8 +32,8 @@ func prepareArgs(cmdName string, osArgs []string) []string {
 }
 
 func short(text string) string {
-	if idx := strings.Index(text, "\n"); idx >= 0 {
-		return text[:idx]
+	if before, _, ok := strings.Cut(text, "\n"); ok {
+		return before
 	}
 
 	if len(text) > shortLimit {
@@ -186,6 +186,7 @@ func newSubcommand(command *config.Command, conf *config.Config, showAll bool, o
 			}
 
 			ctx := executor.NewExecutorCtx(cmd.Context(), command)
+
 			return executor.NewExecutor(conf, out).Execute(ctx)
 		},
 		// we use docopt to parse flags on our own, so any flag is valid flag here

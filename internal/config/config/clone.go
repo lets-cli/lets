@@ -1,5 +1,7 @@
 package config
 
+import "maps"
+
 import "cmp"
 
 func cloneSlice[I any](a []I) []I {
@@ -19,9 +21,7 @@ func cloneMap[K cmp.Ordered, V any](m map[K]V) map[K]V {
 	}
 
 	mapping := make(map[K]V, len(m))
-	for k, v := range m {
-		mapping[k] = v
-	}
+	maps.Copy(mapping, m)
 
 	return mapping
 }

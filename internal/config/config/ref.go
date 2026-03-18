@@ -14,7 +14,7 @@ type ref struct {
 type refArgs []string
 
 // UnmarshalYAML implements yaml.Unmarshaler interface.
-func (a *refArgs) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (a *refArgs) UnmarshalYAML(unmarshal func(any) error) error {
 	if *a == nil {
 		*a = make(refArgs, 0)
 	}

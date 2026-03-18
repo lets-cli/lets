@@ -47,6 +47,7 @@ func SetDebugLevel(level int) int {
 	level = min(level, MaxDebugLevel)
 
 	debugLevel.set(level)
+
 	return level
 }
 

@@ -1,4 +1,4 @@
-FROM golang:1.24-bookworm AS builder
+FROM golang:1.26-bookworm AS builder
 
 ENV GOPROXY=https://proxy.golang.org
 ENV CGO_ENABLED=1
@@ -26,6 +26,6 @@ COPY go.sum .
 
 RUN go mod download
 
-FROM golangci/golangci-lint:v1.64.7-alpine AS linter
+FROM golangci/golangci-lint:v2.11.3-alpine AS linter
 
 RUN mkdir -p /.cache && chmod -R 777 /.cache

@@ -1,6 +1,8 @@
 package config
 
 import (
+	"maps"
+
 	"github.com/lets-cli/lets/internal/checksum"
 )
 
@@ -8,7 +10,7 @@ import (
 type Checksum map[string][]string
 
 // UnmarshalYAML implements yaml.Unmarshaler interface.
-func (c *Checksum) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (c *Checksum) UnmarshalYAML(unmarshal func(any) error) error {
 	if *c == nil {
 		*c = make(Checksum)
 	}
@@ -25,9 +27,7 @@ func (c *Checksum) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return err
 	}
 
-	for key, patterns := range patternsMap {
-		(*c)[key] = patterns
-	}
+	maps.Copy((*c), patternsMap)
 
 	return nil
 }

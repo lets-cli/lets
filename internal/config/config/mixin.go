@@ -33,6 +33,7 @@ func normalizeContentType(contentType string) string {
 		// If parsing fails, return the original string
 		return contentType
 	}
+
 	return mediaType
 }
 
@@ -91,6 +92,7 @@ func (rm *RemoteMixin) tryRead() ([]byte, error) {
 	if !rm.exists() {
 		return nil, nil
 	}
+
 	data, err := os.ReadFile(rm.Path())
 	if err != nil {
 		return nil, fmt.Errorf("can not read mixin config file at %s: %w", rm.Path(), err)
@@ -132,6 +134,7 @@ func (rm *RemoteMixin) download() ([]byte, error) {
 	}
 
 	contentType := resp.Header.Get("Content-Type")
+
 	normalizedContentType := normalizeContentType(contentType)
 	if !allowedContentTypes.Contains(normalizedContentType) {
 		return nil, fmt.Errorf("unsupported content type: %s", contentType)
@@ -157,11 +160,12 @@ func isIgnoredMixin(filename string) bool {
 	return strings.HasPrefix(filename, "-")
 }
 
-func (m *Mixin) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (m *Mixin) UnmarshalYAML(unmarshal func(any) error) error {
 	var filename string
 	if err := unmarshal(&filename); err == nil {
 		m.FileName = normalizeMixinFilename(filename)
 		m.Ignored = isIgnoredMixin(filename)
+
 		return nil
 	}
 

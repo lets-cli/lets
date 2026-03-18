@@ -31,6 +31,7 @@ func (d *Deps) UnmarshalYAML(node *yaml.Node) error {
 		if err := node.Decode(&dep); err != nil {
 			return err
 		}
+
 		d.Set(dep.Name, dep)
 	}
 
@@ -64,6 +65,7 @@ func (d *Deps) Range(yield func(key string, value Dep) error) error {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -72,9 +74,11 @@ func (d *Deps) Set(key string, value Dep) {
 	if d.Mapping == nil {
 		d.Mapping = make(map[string]Dep, 1)
 	}
+
 	if !slices.Contains(d.Keys, key) {
 		d.Keys = append(d.Keys, key)
 	}
+
 	d.Mapping[key] = value
 }
 
@@ -99,11 +103,12 @@ func (d *Deps) Has(key string) bool {
 	}
 
 	_, ok := d.Mapping[key]
+
 	return ok
 }
 
 // UnmarshalYAML implements yaml.Unmarshaler interface.
-func (d *Dep) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (d *Dep) UnmarshalYAML(unmarshal func(any) error) error {
 	var cmdName string
 	if err := unmarshal(&cmdName); err == nil {
 		d.Name = cmdName
@@ -130,6 +135,7 @@ func (d *Dep) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		if cmdArgsStr.Args != "" {
 			d.Args = []string{cmdArgsStr.Args}
 		}
+
 		return nil
 	}
 
