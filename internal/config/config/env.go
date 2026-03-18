@@ -29,7 +29,7 @@ type Env struct {
 // UnmarshalYAML implements the yaml.Unmarshaler interface.
 func (e *Envs) UnmarshalYAML(node *yaml.Node) error {
 	if node.Kind != yaml.MappingNode {
-		return errors.New("lets: env is not a map")
+		return errors.New("env is not a map")
 	}
 
 	// keys accessed under even indexes
@@ -44,7 +44,7 @@ func (e *Envs) UnmarshalYAML(node *yaml.Node) error {
 
 			err := aliasedEnv.UnmarshalYAML(valueNode.Alias)
 			if err != nil {
-				return errors.New("lets: can not parse aliased env")
+				return errors.New("can not parse aliased env")
 			}
 
 			e.Merge(aliasedEnv)
@@ -76,11 +76,11 @@ func (e *Envs) UnmarshalYAML(node *yaml.Node) error {
 		}
 
 		if envAsMap.Sh == nil && envAsMap.Checksum == nil {
-			return fmt.Errorf("lets: environment variable '%s' must have value or 'sh' or 'checksum'", keyNode.Value)
+			return fmt.Errorf("environment variable '%s' must have value or 'sh' or 'checksum'", keyNode.Value)
 		}
 
 		if envAsMap.Sh != nil && envAsMap.Checksum != nil {
-			return fmt.Errorf("lets: environment variable '%s' must have only 'sh' or 'checksum'", keyNode.Value)
+			return fmt.Errorf("environment variable '%s' must have only 'sh' or 'checksum'", keyNode.Value)
 		}
 
 		if envAsMap.Sh != nil {

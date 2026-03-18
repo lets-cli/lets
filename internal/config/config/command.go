@@ -25,6 +25,8 @@ type Command struct {
 	Description string
 	// env from command
 	Env *Envs
+	// env files from command
+	EnvFiles *EnvFiles
 	// store docopts from options directive
 	Docopts         string
 	SkipDocopts     bool // default false
@@ -63,6 +65,7 @@ func (c *Command) UnmarshalYAML(unmarshal func(any) error) error {
 		Description     string
 		Shell           string
 		Env             *Envs
+		EnvFiles        *EnvFiles `yaml:"env_file"`
 		Options         string
 		Depends         *Deps
 		WorkDir         string `yaml:"work_dir"`
@@ -88,6 +91,10 @@ func (c *Command) UnmarshalYAML(unmarshal func(any) error) error {
 	c.Env = cmd.Env
 	if c.Env == nil {
 		c.Env = &Envs{}
+	}
+	c.EnvFiles = cmd.EnvFiles
+	if c.EnvFiles == nil {
+		c.EnvFiles = &EnvFiles{}
 	}
 
 	c.Shell = cmd.Shell
@@ -133,12 +140,37 @@ func (c *Command) UnmarshalYAML(unmarshal func(any) error) error {
 	return nil
 }
 
-func (c *Command) GetEnv(cfg Config) (map[string]string, error) {
-	if err := c.Env.Execute(cfg, cfg.GetEnv()); err != nil {
+func (c *Command) GetEnv(cfg Config, builtinEnv map[string]string) (map[string]string, error) {
+	baseEnv := cloneMap(builtinEnv)
+	if baseEnv == nil {
+		baseEnv = make(map[string]string)
+	}
+	for key, value := range cfg.GetEnv() {
+		baseEnv[key] = value
+	}
+
+	envs := c.Env.Clone()
+	if err := envs.Execute(cfg, baseEnv); err != nil {
 		return nil, err
 	}
 
-	return c.Env.Dump(), nil
+	filenameEnv := cloneMap(baseEnv)
+	for key, value := range envs.Dump() {
+		filenameEnv[key] = value
+	}
+
+	envFiles := c.EnvFiles.Clone()
+	envFileEnv, err := envFiles.Load(cfg, filenameEnv)
+	if err != nil {
+		return nil, fmt.Errorf("lets: failed to resolve env_file for command '%s': %w", c.Name, err)
+	}
+
+	resolvedEnv := envs.Dump()
+	for key, value := range envFileEnv {
+		resolvedEnv[key] = value
+	}
+
+	return resolvedEnv, nil
 }
 
 func (c *Command) Clone() *Command {
@@ -151,6 +183,7 @@ func (c *Command) Clone() *Command {
 		WorkDir:            c.WorkDir,
 		Description:        c.Description,
 		Env:                c.Env.Clone(),
+		EnvFiles:           c.EnvFiles.Clone(),
 		Docopts:            c.Docopts,
 		SkipDocopts:        c.SkipDocopts,
 		Options:            cloneMap(c.Options),

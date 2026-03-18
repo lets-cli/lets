@@ -21,7 +21,7 @@ type Deps struct {
 // UnmarshalYAML implements the yaml.Unmarshaler interface.
 func (d *Deps) UnmarshalYAML(node *yaml.Node) error {
 	if node.Kind != yaml.SequenceNode {
-		return errors.New("lets: 'depends' must be a sequence")
+		return errors.New("'depends' must be a sequence")
 	}
 
 	for i := range len(node.Content) {

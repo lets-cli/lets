@@ -61,5 +61,5 @@ setup() {
     LETS_CONFIG_DIR=./a run lets print-workdir
 
     assert_failure
-    assert_line "failed to run command 'print-workdir': chdir ${TEST_DIR}/b: no such file or directory"
+    assert_line "lets: failed to run command 'print-workdir': chdir ${TEST_DIR}/b: no such file or directory"
 }

@@ -27,6 +27,28 @@ title: Environment
 
 ### Override command env with -E flag
 
+### `env_file` precedence
+
+`env_file` loads dotenv-style files from config and command definitions.
+
+Precedence order is:
+
+* process env
+* builtin lets vars
+* global `env`
+* global `env_file`
+* command `env`
+* command `env_file`
+* command options, `-E` / `--env`, checksum vars
+
+When the same key is present in both directives, `env_file` wins over `env` at the same scope.
+
+`env_file` file names are expanded after `env` is resolved. This means:
+
+* global `env_file` can depend on global `env`
+* command `env_file` can depend on merged global env and command `env`
+* `env.sh` still does not read values from `env_file`
+
 You can override environment for command with `-E` flag:
 
 ```yaml

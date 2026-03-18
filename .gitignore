@@ -34,3 +34,4 @@ TODO.md
 __debug_bin*
 # Added by goreleaser init:
 dist/
+.env

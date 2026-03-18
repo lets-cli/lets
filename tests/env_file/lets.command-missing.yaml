@@ -1,0 +1,6 @@
+shell: bash
+
+commands:
+  fail:
+    env_file: .env.required.command.missing
+    cmd: echo fail
