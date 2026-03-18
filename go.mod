@@ -53,4 +53,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 )
 
-replace github.com/docopt/docopt-go => github.com/kindermax/docopt.go v0.7.1
+replace github.com/docopt/docopt-go => github.com/kindermax/docopt.go v0.7.2-0.20260318200304-9bd2b80373ad
