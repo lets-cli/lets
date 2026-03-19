@@ -161,10 +161,29 @@ func getExitCode(err error, defaultCode int) int {
 	return defaultCode
 }
 
-// do not fail on config error in it is help (-h, --help) or --init or completion command.
+// do not fail on config error if it is help (-h, --help), --init, completion, or lets self.
 func failOnConfigError(root *cobra.Command, current *cobra.Command, rootFlags *flags) bool {
-	rootCommands := set.NewSet("completion", "help", "self", "lsp", "doc")
-	return (root.Flags().NFlag() == 0 && !rootCommands.Contains(current.Name())) && !rootFlags.help && !rootFlags.init
+	return (root.Flags().NFlag() == 0 && !allowsMissingConfig(current)) && !rootFlags.help && !rootFlags.init
+}
+
+func allowsMissingConfig(current *cobra.Command) bool {
+	if current == nil {
+		return false
+	}
+
+	switch current.Name() {
+	case "completion", "help":
+		return true
+	}
+
+	for cmd := current; cmd != nil; cmd = cmd.Parent() {
+		parent := cmd.Parent()
+		if cmd.Name() == "self" && parent != nil && parent.Name() == "lets" {
+			return true
+		}
+	}
+
+	return false
 }
 
 type flags struct {

@@ -6,26 +6,25 @@ import (
 	"runtime"
 )
 
-func browserCommand(goos string, url string) (string, []string, error) {
+func browserCommand(goos string, url string) (*exec.Cmd, error) {
 	switch goos {
 	case "darwin":
-		return "open", []string{url}, nil
+		return exec.Command("open", url), nil
 	case "linux":
-		return "xdg-open", []string{url}, nil
+		return exec.Command("xdg-open", url), nil
 	default:
-		return "", nil, fmt.Errorf("unsupported platform %q", goos)
+		return nil, fmt.Errorf("unsupported platform %q", goos)
 	}
 }
 
 func OpenURL(url string) error {
-	name, args, err := browserCommand(runtime.GOOS, url)
+	cmd, err := browserCommand(runtime.GOOS, url)
 	if err != nil {
 		return err
 	}
 
-	cmd := exec.Command(name, args...)
 	if err := cmd.Start(); err != nil {
-		return fmt.Errorf("start %s: %w", name, err)
+		return fmt.Errorf("start %s: %w", cmd.Path, err)
 	}
 
 	if cmd.Process != nil {

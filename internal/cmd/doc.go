@@ -14,13 +14,13 @@ func initDocCommand(openURL func(string) error) *cobra.Command {
 		Aliases: []string{"docs"},
 		Short:   "Open lets documentation in browser",
 		Args:    cobra.NoArgs,
-		if err := openURL(letsDocsURL); err != nil {
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := openURL(letsDocsURL); err != nil {
 				return fmt.Errorf("can not open documentation: %w", err)
 			}
 
 			fmt.Fprintf(cmd.OutOrStdout(), "Opening %s\n", letsDocsURL)
 
-			return nil
 			return nil
 		},
 	}

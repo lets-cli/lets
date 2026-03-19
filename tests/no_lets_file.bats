@@ -8,6 +8,22 @@ setup() {
 }
 
 NOT_EXISTED_LETS_FILE="lets-not-existed.yaml"
+TEMP_FAKE_BIN_DIR=""
+TEMP_OPENED_URL_FILE=""
+
+teardown() {
+    if [[ -n "${TEMP_FAKE_BIN_DIR}" ]]; then
+        rm -rf "${TEMP_FAKE_BIN_DIR}"
+    fi
+
+    if [[ -n "${TEMP_OPENED_URL_FILE}" ]]; then
+        rm -f "${TEMP_OPENED_URL_FILE}"
+    fi
+
+    TEMP_FAKE_BIN_DIR=""
+    TEMP_OPENED_URL_FILE=""
+    cleanup
+}
 
 @test "no_lets_file: should not create .lets dir" {
     LETS_CONFIG=${NOT_EXISTED_LETS_FILE} run lets
@@ -52,40 +68,37 @@ NOT_EXISTED_LETS_FILE="lets-not-existed.yaml"
 }
 
 @test "no_lets_file: lets self doc opens docs without config" {
-    fake_bin_dir="$(mktemp -d)"
-    opened_url_file="$(mktemp)"
-    rm -f "${opened_url_file}"
+    TEMP_FAKE_BIN_DIR="$(mktemp -d)"
+    TEMP_OPENED_URL_FILE="$(mktemp)"
+    rm -f "${TEMP_OPENED_URL_FILE}"
 
-    cat > "${fake_bin_dir}/xdg-open" <<'EOF'
+    cat > "${TEMP_FAKE_BIN_DIR}/xdg-open" <<'EOF'
 #!/usr/bin/env bash
 printf "%s" "$1" > "${LETS_TEST_OPENED_URL_FILE}"
 EOF
-    chmod +x "${fake_bin_dir}/xdg-open"
+    chmod +x "${TEMP_FAKE_BIN_DIR}/xdg-open"
 
-    cat > "${fake_bin_dir}/open" <<'EOF'
+    cat > "${TEMP_FAKE_BIN_DIR}/open" <<'EOF'
 #!/usr/bin/env bash
 printf "%s" "$1" > "${LETS_TEST_OPENED_URL_FILE}"
 EOF
-    chmod +x "${fake_bin_dir}/open"
+    chmod +x "${TEMP_FAKE_BIN_DIR}/open"
 
-    PATH="${fake_bin_dir}:${PATH}" \
+    PATH="${TEMP_FAKE_BIN_DIR}:${PATH}" \
     LETS_CONFIG=${NOT_EXISTED_LETS_FILE} \
-    LETS_TEST_OPENED_URL_FILE="${opened_url_file}" \
+    LETS_TEST_OPENED_URL_FILE="${TEMP_OPENED_URL_FILE}" \
     run lets self doc
 
     assert_success
 
     for _ in $(seq 1 20); do
-        if [[ -f "${opened_url_file}" ]]; then
+        if [[ -f "${TEMP_OPENED_URL_FILE}" ]]; then
             break
         fi
         sleep 0.1
     done
 
-    run cat "${opened_url_file}"
+    run cat "${TEMP_OPENED_URL_FILE}"
     assert_success
-    assert_output "https://lets-cli.org/docs/quick_start"
-
-    rm -rf "${fake_bin_dir}"
-    rm -f "${opened_url_file}"
+    assert_output "https://lets-cli.org/docs/config"
 }

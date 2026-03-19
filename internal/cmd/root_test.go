@@ -181,22 +181,18 @@ func TestSelfCmd(t *testing.T) {
 		called := false
 		gotURL := ""
 
-		prevOpenURL := openURL
-		openURL = func(url string) error {
+		openURL := func(url string) error {
 			called = true
 			gotURL = url
 
 			return nil
 		}
-		defer func() {
-			openURL = prevOpenURL
-		}()
 
 		rootCmd := CreateRootCommand("v0.0.0-test", "")
 		rootCmd.SetArgs([]string{"self", "doc"})
 		rootCmd.SetOut(bufOut)
 		rootCmd.SetErr(bufOut)
-		InitSelfCmd(rootCmd, "v0.0.0-test")
+		initSelfCmd(rootCmd, "v0.0.0-test", openURL)
 
 		err := rootCmd.Execute()
 		if err != nil {
@@ -215,19 +211,15 @@ func TestSelfCmd(t *testing.T) {
 	t.Run("should return opener error for documentation command", func(t *testing.T) {
 		bufOut := new(bytes.Buffer)
 
-		prevOpenURL := openURL
-		openURL = func(url string) error {
+		openURL := func(url string) error {
 			return errors.New("open failed")
 		}
-		defer func() {
-			openURL = prevOpenURL
-		}()
 
 		rootCmd := CreateRootCommand("v0.0.0-test", "")
 		rootCmd.SetArgs([]string{"self", "doc"})
 		rootCmd.SetOut(bufOut)
 		rootCmd.SetErr(bufOut)
-		InitSelfCmd(rootCmd, "v0.0.0-test")
+		initSelfCmd(rootCmd, "v0.0.0-test", openURL)
 
 		err := rootCmd.Execute()
 		if err == nil {

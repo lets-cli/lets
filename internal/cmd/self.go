@@ -5,10 +5,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var openURL = util.OpenURL
-
 // InitSelfCmd intializes root 'self' subcommand.
 func InitSelfCmd(rootCmd *cobra.Command, version string) {
+	initSelfCmd(rootCmd, version, util.OpenURL)
+}
+
+func initSelfCmd(rootCmd *cobra.Command, version string, openURL func(string) error) {
 	selfCmd := &cobra.Command{
 		Use:     "self",
 		Hidden:  false,
