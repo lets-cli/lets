@@ -15,6 +15,7 @@ title: Changelog
 * `[Changed]` Migrate the LSP YAML parser from the CGO-based tree-sitter bindings to pure-Go [`gotreesitter`](https://github.com/odvcencio/gotreesitter), removing the C toolchain requirement from normal builds and release packaging.
 * `[Refactoring]` Move CLI startup flow from `cmd/lets/main.go` into `internal/cli/cli.go`, keeping `main.go` as a thin launcher.
 * `[Added]` Add `lets self doc` command to open the online documentation in a browser.
+* `[Added]` Show background update notifications for interactive sessions, with Homebrew-aware guidance and `LETS_CHECK_UPDATE` opt-out.
 
 ## [0.0.59](https://github.com/lets-cli/lets/releases/tag/v0.0.59)
 

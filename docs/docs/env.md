@@ -10,6 +10,7 @@ title: Environment
 * `LETS_DEBUG` - enable debug messages
 * `LETS_CONFIG` - changes default `lets.yaml` file path (e.g. LETS_CONFIG=lets.my.yaml)
 * `LETS_CONFIG_DIR` - changes path to dir where `lets.yaml` file placed
+* `LETS_CHECK_UPDATE` - disables background update checks and notifications
 * `NO_COLOR` - disables colored output. See https://no-color.org/
 
 ### Environment variables available at command runtime

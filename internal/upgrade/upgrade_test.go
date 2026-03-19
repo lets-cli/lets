@@ -1,6 +1,7 @@
 package upgrade
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path"
@@ -16,6 +17,10 @@ type MockRegistry struct {
 
 func (m MockRegistry) GetLatestRelease() (string, error) {
 	return m.latestVersion, nil
+}
+
+func (m MockRegistry) GetLatestReleaseInfo(ctx context.Context) (*registry.ReleaseInfo, error) {
+	return &registry.ReleaseInfo{TagName: m.latestVersion}, nil
 }
 
 func (m MockRegistry) DownloadReleaseBinary(packageName string, version string, dstPath string) error {
