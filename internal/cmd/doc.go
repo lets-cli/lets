@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const letsDocsURL = "https://lets-cli.org/docs/quick_start"
+const letsDocsURL = "https://lets-cli.org/docs/config"
 
 func initDocCommand(openURL func(string) error) *cobra.Command {
 	docCmd := &cobra.Command{

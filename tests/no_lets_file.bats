@@ -62,6 +62,12 @@ printf "%s" "$1" > "${LETS_TEST_OPENED_URL_FILE}"
 EOF
     chmod +x "${fake_bin_dir}/xdg-open"
 
+    cat > "${fake_bin_dir}/open" <<'EOF'
+#!/usr/bin/env bash
+printf "%s" "$1" > "${LETS_TEST_OPENED_URL_FILE}"
+EOF
+    chmod +x "${fake_bin_dir}/open"
+
     PATH="${fake_bin_dir}:${PATH}" \
     LETS_CONFIG=${NOT_EXISTED_LETS_FILE} \
     LETS_TEST_OPENED_URL_FILE="${opened_url_file}" \
