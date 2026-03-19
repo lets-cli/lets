@@ -176,6 +176,61 @@ func TestPrintVersionMessage(t *testing.T) {
 }
 
 func TestSelfCmd(t *testing.T) {
+	t.Run("should open documentation in browser", func(t *testing.T) {
+		bufOut := new(bytes.Buffer)
+		called := false
+		gotURL := ""
+
+		openURL := func(url string) error {
+			called = true
+			gotURL = url
+
+			return nil
+		}
+
+		rootCmd := CreateRootCommand("v0.0.0-test", "")
+		rootCmd.SetArgs([]string{"self", "doc"})
+		rootCmd.SetOut(bufOut)
+		rootCmd.SetErr(bufOut)
+		initSelfCmd(rootCmd, "v0.0.0-test", openURL)
+
+		err := rootCmd.Execute()
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if !called {
+			t.Fatal("expected documentation opener to be called")
+		}
+
+		if gotURL != letsDocsURL {
+			t.Fatalf("expected docs url %q, got %q", letsDocsURL, gotURL)
+		}
+	})
+
+	t.Run("should return opener error for documentation command", func(t *testing.T) {
+		bufOut := new(bytes.Buffer)
+
+		openURL := func(url string) error {
+			return errors.New("open failed")
+		}
+
+		rootCmd := CreateRootCommand("v0.0.0-test", "")
+		rootCmd.SetArgs([]string{"self", "doc"})
+		rootCmd.SetOut(bufOut)
+		rootCmd.SetErr(bufOut)
+		initSelfCmd(rootCmd, "v0.0.0-test", openURL)
+
+		err := rootCmd.Execute()
+		if err == nil {
+			t.Fatal("expected documentation opener error")
+		}
+
+		if !strings.Contains(err.Error(), "can not open documentation") {
+			t.Fatalf("expected documentation error, got %q", err.Error())
+		}
+	})
+
 	t.Run("should return exit code 2 for unknown self subcommand", func(t *testing.T) {
 		bufOut := new(bytes.Buffer)
 
