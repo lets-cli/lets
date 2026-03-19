@@ -50,3 +50,36 @@ NOT_EXISTED_LETS_FILE="lets-not-existed.yaml"
     assert_success
     assert_line --index 0  "A CLI task runner"
 }
+
+@test "no_lets_file: lets self doc opens docs without config" {
+    fake_bin_dir="$(mktemp -d)"
+    opened_url_file="$(mktemp)"
+    rm -f "${opened_url_file}"
+
+    cat > "${fake_bin_dir}/xdg-open" <<'EOF'
+#!/usr/bin/env bash
+printf "%s" "$1" > "${LETS_TEST_OPENED_URL_FILE}"
+EOF
+    chmod +x "${fake_bin_dir}/xdg-open"
+
+    PATH="${fake_bin_dir}:${PATH}" \
+    LETS_CONFIG=${NOT_EXISTED_LETS_FILE} \
+    LETS_TEST_OPENED_URL_FILE="${opened_url_file}" \
+    run lets self doc
+
+    assert_success
+
+    for _ in $(seq 1 20); do
+        if [[ -f "${opened_url_file}" ]]; then
+            break
+        fi
+        sleep 0.1
+    done
+
+    run cat "${opened_url_file}"
+    assert_success
+    assert_output "https://lets-cli.org/docs/quick_start"
+
+    rm -rf "${fake_bin_dir}"
+    rm -f "${opened_url_file}"
+}

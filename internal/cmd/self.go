@@ -1,8 +1,11 @@
 package cmd
 
 import (
+	"github.com/lets-cli/lets/internal/util"
 	"github.com/spf13/cobra"
 )
+
+var openURL = util.OpenURL
 
 // InitSelfCmd intializes root 'self' subcommand.
 func InitSelfCmd(rootCmd *cobra.Command, version string) {
@@ -19,5 +22,6 @@ func InitSelfCmd(rootCmd *cobra.Command, version string) {
 
 	rootCmd.AddCommand(selfCmd)
 
+	selfCmd.AddCommand(initDocCommand(openURL))
 	selfCmd.AddCommand(initLspCommand(version))
 }
