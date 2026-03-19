@@ -3,6 +3,7 @@ package checksum
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/lets-cli/lets/internal/test"
@@ -134,5 +135,23 @@ func TestCalculateChecksumFromListOrMap(t *testing.T) {
 			expectChecksum,
 			checksumMap1["misc"],
 		)
+	}
+}
+
+func TestCalculateChecksumFromCmdUsesWorkDir(t *testing.T) {
+	tempDir := t.TempDir()
+	checksumFilePath := filepath.Join(tempDir, "checksum.txt")
+
+	if err := os.WriteFile(checksumFilePath, []byte("checksum-from-workdir"), 0o600); err != nil {
+		t.Fatalf("can not write checksum file. Error: %s", err)
+	}
+
+	checksumResult, err := CalculateChecksumFromCmd("sh", tempDir, "cat checksum.txt")
+	if err != nil {
+		t.Fatalf("checksum command failed. Error: %s", err)
+	}
+
+	if checksumResult != "checksum-from-workdir" {
+		t.Fatalf("wrong checksum output. Expect: %s, got: %s", "checksum-from-workdir", checksumResult)
 	}
 }
