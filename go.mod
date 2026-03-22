@@ -11,7 +11,7 @@ require (
 	github.com/fatih/color v1.16.0
 	github.com/odvcencio/gotreesitter v0.9.2
 	github.com/pkg/errors v0.9.1
-	github.com/sirupsen/logrus v1.9.3
+	github.com/sirupsen/logrus v1.9.4
 	github.com/spf13/cobra v1.8.0
 	github.com/tliron/commonlog v0.2.8
 	github.com/tliron/glsp v0.2.2
