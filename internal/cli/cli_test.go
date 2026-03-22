@@ -60,6 +60,9 @@ func TestAllowsMissingConfig(t *testing.T) {
 
 func TestShouldCheckForUpdate(t *testing.T) {
 	t.Run("should allow normal interactive commands", func(t *testing.T) {
+		t.Setenv("CI", "")
+		t.Setenv("LETS_CHECK_UPDATE", "")
+
 		if !shouldCheckForUpdate("lets", true) {
 			t.Fatal("expected update check to be enabled")
 		}
