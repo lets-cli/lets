@@ -207,7 +207,6 @@ func maybeStartUpdateCheck(
 	command *cobra.Command,
 ) (<-chan updateCheckResult, context.CancelFunc) {
 	if !shouldCheckForUpdate(command.Name(), isInteractiveStderr()) {
-		log.Debugf("lets: update check disabled")
 		return nil, func() {}
 	}
 
