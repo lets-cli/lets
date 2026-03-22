@@ -19,7 +19,7 @@ func (m *mockNotifierRegistry) GetLatestReleaseInfo(ctx context.Context) (*regis
 	return m.release, nil
 }
 
-func (m *mockNotifierRegistry) GetLatestRelease() (string, error) {
+func (m *mockNotifierRegistry) GetLatestRelease(ctx context.Context) (string, error) {
 	m.calls++
 	if m.release == nil {
 		return "", nil
@@ -28,7 +28,7 @@ func (m *mockNotifierRegistry) GetLatestRelease() (string, error) {
 	return m.release.TagName, nil
 }
 
-func (m *mockNotifierRegistry) DownloadReleaseBinary(packageName string, version string, dstPath string) error {
+func (m *mockNotifierRegistry) DownloadReleaseBinary(ctx context.Context, packageName string, version string, dstPath string) error {
 	return nil
 }
 

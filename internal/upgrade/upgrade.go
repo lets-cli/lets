@@ -1,6 +1,7 @@
 package upgrade
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -12,7 +13,7 @@ import (
 )
 
 type Upgrader interface {
-	Upgrade() error
+	Upgrade(ctx context.Context) error
 }
 
 type BinaryUpgrader struct {
@@ -39,8 +40,8 @@ func NewBinaryUpgrader(reg registry.RepoRegistry, currentVersion string) (*Binar
 	}, nil
 }
 
-func (up *BinaryUpgrader) Upgrade() error {
-	latestVersion, err := up.registry.GetLatestRelease()
+func (up *BinaryUpgrader) Upgrade(ctx context.Context) error {
+	latestVersion, err := up.registry.GetLatestRelease(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get latest release version: %w", err)
 	}
@@ -59,6 +60,7 @@ func (up *BinaryUpgrader) Upgrade() error {
 	log.Printf("Downloading latest release %s...", latestVersion)
 
 	err = up.registry.DownloadReleaseBinary(
+		ctx,
 		packageName,
 		latestVersion,
 		up.downloadPath,

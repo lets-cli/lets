@@ -21,7 +21,7 @@ func TestGithubRegistryGetLatestReleaseInfo(t *testing.T) {
 	}))
 	defer server.Close()
 
-	reg := NewGithubRegistry(context.Background())
+	reg := NewGithubRegistry()
 	reg.apiURI = server.URL
 
 	release, err := reg.GetLatestReleaseInfo(context.Background())
@@ -43,10 +43,10 @@ func TestGithubRegistryGetLatestRelease(t *testing.T) {
 	}))
 	defer server.Close()
 
-	reg := NewGithubRegistry(context.Background())
+	reg := NewGithubRegistry()
 	reg.apiURI = server.URL
 
-	version, err := reg.GetLatestRelease()
+	version, err := reg.GetLatestRelease(context.Background())
 	if err != nil {
 		t.Fatalf("GetLatestRelease() error = %v", err)
 	}

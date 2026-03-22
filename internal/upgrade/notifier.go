@@ -152,6 +152,7 @@ func (n *UpdateNotifier) noticeFromState(
 	}
 
 	command := "lets self upgrade"
+
 	if isHomebrewInstall(n.executablePath) {
 		if !state.LatestPublishedAt.IsZero() && now.Sub(state.LatestPublishedAt) < homebrewNoticeDelay {
 			return nil

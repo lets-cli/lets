@@ -104,9 +104,9 @@ func Main(version string, buildDate string) int {
 	}
 
 	if rootFlags.upgrade {
-		upgrader, err := upgrade.NewBinaryUpgrader(registry.NewGithubRegistry(ctx), version)
+		upgrader, err := upgrade.NewBinaryUpgrader(registry.NewGithubRegistry(), version)
 		if err == nil {
-			err = upgrader.Upgrade()
+			err = upgrader.Upgrade(ctx)
 		}
 
 		if err != nil {
@@ -138,6 +138,7 @@ func Main(version string, buildDate string) int {
 		}
 
 		log.Errorf("lets: %s", err.Error())
+
 		return getExitCode(err, 1)
 	}
 
@@ -212,7 +213,7 @@ func maybeStartUpdateCheck(
 
 	log.Debugf("lets: start update check")
 
-	notifier, err := upgrade.NewUpdateNotifier(registry.NewGithubRegistry(ctx))
+	notifier, err := upgrade.NewUpdateNotifier(registry.NewGithubRegistry())
 	if err != nil {
 		return nil, func() {}
 	}
@@ -225,6 +226,7 @@ func maybeStartUpdateCheck(
 		if err != nil {
 			upgrade.LogUpdateCheckError(err)
 		}
+
 		log.Debugf("lets: update check done")
 
 		ch <- updateCheckResult{
