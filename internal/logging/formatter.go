@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/fatih/color"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -20,11 +21,26 @@ type Formatter struct{}
 // Format implements the log.Formatter interface.
 func (f *Formatter) Format(entry *log.Entry) ([]byte, error) {
 	buff := &bytes.Buffer{}
-	buff.WriteString(writeData(entry.Data))
-	buff.WriteString(entry.Message)
+	parts := []string{color.BlueString("lets:")}
+
+	if data := writeData(entry.Data); data != "" {
+		parts = append(parts, data)
+	}
+
+	parts = append(parts, formatMessage(entry))
+
+	buff.WriteString(strings.Join(parts, " "))
 	buff.WriteString("\n")
 
 	return buff.Bytes(), nil
+}
+
+func formatMessage(entry *log.Entry) string {
+	if entry.Level == log.DebugLevel {
+		return color.BlueString(entry.Message)
+	}
+
+	return entry.Message
 }
 
 func writeData(fields log.Fields) string {
@@ -37,10 +53,6 @@ func writeData(fields log.Fields) string {
 		default:
 			buff = append(buff, fmt.Sprintf("%v=%v", key, value))
 		}
-	}
-
-	if len(buff) > 0 {
-		buff = append(buff, "")
 	}
 
 	return strings.Join(buff, " ")
