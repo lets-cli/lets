@@ -3,10 +3,12 @@ package cli
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/lets-cli/lets/internal/cmd"
 	"github.com/lets-cli/lets/internal/config"
@@ -17,9 +19,17 @@ import (
 	"github.com/lets-cli/lets/internal/upgrade"
 	"github.com/lets-cli/lets/internal/upgrade/registry"
 	"github.com/lets-cli/lets/internal/workdir"
+	"github.com/mattn/go-isatty"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
+
+const updateCheckTimeout = 3 * time.Second
+
+type updateCheckResult struct {
+	notifier *upgrade.UpdateNotifier
+	notice   *upgrade.UpdateNotice
+}
 
 func Main(version string, buildDate string) int {
 	ctx := getContext()
@@ -94,9 +104,9 @@ func Main(version string, buildDate string) int {
 	}
 
 	if rootFlags.upgrade {
-		upgrader, err := upgrade.NewBinaryUpgrader(registry.NewGithubRegistry(ctx), version)
+		upgrader, err := upgrade.NewBinaryUpgrader(registry.NewGithubRegistry(), version)
 		if err == nil {
-			err = upgrader.Upgrade()
+			err = upgrader.Upgrade(ctx)
 		}
 
 		if err != nil {
@@ -118,6 +128,9 @@ func Main(version string, buildDate string) int {
 		return 0
 	}
 
+	updateCh, cancelUpdateCheck := maybeStartUpdateCheck(ctx, version, command)
+	defer cancelUpdateCheck()
+
 	if err := rootCmd.ExecuteContext(ctx); err != nil {
 		var depErr *executor.DependencyError
 		if errors.As(err, &depErr) {
@@ -125,8 +138,11 @@ func Main(version string, buildDate string) int {
 		}
 
 		log.Errorf("lets: %s", err.Error())
+
 		return getExitCode(err, 1)
 	}
+
+	printUpdateNotice(updateCh)
 
 	return 0
 }
@@ -184,6 +200,82 @@ func allowsMissingConfig(current *cobra.Command) bool {
 	}
 
 	return false
+}
+
+func maybeStartUpdateCheck(
+	ctx context.Context,
+	version string,
+	command *cobra.Command,
+) (<-chan updateCheckResult, context.CancelFunc) {
+	if !shouldCheckForUpdate(command.Name(), isInteractiveStderr()) {
+		return nil, func() {}
+	}
+
+	log.Debugf("lets: start update check")
+
+	notifier, err := upgrade.NewUpdateNotifier(registry.NewGithubRegistry())
+	if err != nil {
+		return nil, func() {}
+	}
+
+	ch := make(chan updateCheckResult, 1)
+	checkCtx, cancel := context.WithTimeout(ctx, updateCheckTimeout)
+
+	go func() {
+		notice, err := notifier.Check(checkCtx, version)
+		if err != nil {
+			upgrade.LogUpdateCheckError(err)
+		}
+
+		log.Debugf("lets: update check done")
+
+		ch <- updateCheckResult{
+			notifier: notifier,
+			notice:   notice,
+		}
+	}()
+
+	return ch, cancel
+}
+
+func printUpdateNotice(updateCh <-chan updateCheckResult) {
+	if updateCh == nil {
+		return
+	}
+
+	select {
+	case result := <-updateCh:
+		if result.notice == nil {
+			return
+		}
+
+		if _, err := fmt.Fprintln(os.Stderr, result.notice.Message()); err != nil {
+			return
+		}
+
+		if err := result.notifier.MarkNotified(result.notice); err != nil {
+			upgrade.LogUpdateCheckError(err)
+		}
+	default:
+	}
+}
+
+func shouldCheckForUpdate(commandName string, interactive bool) bool {
+	if !interactive || os.Getenv("CI") != "" || os.Getenv("LETS_CHECK_UPDATE") != "" {
+		return false
+	}
+
+	switch commandName {
+	case "completion", "help", "lsp", "self":
+		return false
+	default:
+		return true
+	}
+}
+
+func isInteractiveStderr() bool {
+	fd := os.Stderr.Fd()
+	return isatty.IsTerminal(fd) || isatty.IsCygwinTerminal(fd)
 }
 
 type flags struct {

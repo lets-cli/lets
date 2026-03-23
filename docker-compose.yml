@@ -25,6 +25,7 @@ services:
   test-bats:
     <<: *base
     environment:
+      LETS_CHECK_UPDATE: 0
       NO_COLOR: 1
       BATS_UTILS_PATH: /bats
     command:

@@ -25,30 +25,31 @@ var osMap = map[string]string{
 }
 
 type RepoRegistry interface {
-	GetLatestRelease() (string, error)
-	DownloadReleaseBinary(packageName string, version string, dstPath string) error
+	GetLatestReleaseInfo(ctx context.Context) (*ReleaseInfo, error)
+	GetLatestRelease(ctx context.Context) (string, error)
+	DownloadReleaseBinary(ctx context.Context, packageName string, version string, dstPath string) error
 	GetPackageName(os string, arch string) (string, error)
 	GetDownloadURL(repoURI string, packageName string, version string) string
 }
 
 type GithubRegistry struct {
 	client                 *http.Client
-	ctx                    context.Context
 	repoURI                string
+	apiURI                 string
 	downloadURL            string
 	downloadPackageTimeout time.Duration
 	latestReleaseTimeout   time.Duration
 }
 
-func NewGithubRegistry(ctx context.Context) *GithubRegistry {
+func NewGithubRegistry() *GithubRegistry {
 	client := &http.Client{
 		Timeout: 15 * 60 * time.Second, // global timeout
 	}
 
 	reg := &GithubRegistry{
 		client:                 client,
-		ctx:                    ctx,
 		repoURI:                "https://github.com/lets-cli/lets",
+		apiURI:                 "https://api.github.com/repos/lets-cli/lets",
 		downloadURL:            "",
 		downloadPackageTimeout: 60 * 5 * time.Second,
 		latestReleaseTimeout:   60 * time.Second,
@@ -73,13 +74,14 @@ func (reg *GithubRegistry) GetPackageName(os string, arch string) (string, error
 }
 
 func (reg *GithubRegistry) DownloadReleaseBinary(
+	ctx context.Context,
 	packageName string,
 	version string,
 	dstPath string,
 ) error {
 	downloadURL := reg.GetDownloadURL(reg.repoURI, packageName+".tar.gz", version)
 
-	ctx, cancel := context.WithTimeout(reg.ctx, reg.downloadPackageTimeout)
+	ctx, cancel := context.WithTimeout(ctx, reg.downloadPackageTimeout)
 	defer cancel()
 
 	req, err := http.NewRequestWithContext(
@@ -125,7 +127,7 @@ func (reg *GithubRegistry) DownloadReleaseBinary(
 
 	// TODO add download progress bar
 	// TODO drop extract dependency, replace with own code
-	err = extract.Gz(reg.ctx, resp.Body, dstDir, nil)
+	err = extract.Gz(ctx, resp.Body, dstDir, nil)
 	if err != nil {
 		return fmt.Errorf("failed to extract package: %w", err)
 	}
@@ -139,44 +141,59 @@ func (reg *GithubRegistry) DownloadReleaseBinary(
 	return nil
 }
 
-type release struct {
-	TagName string `json:"tag_name"`
+type ReleaseInfo struct {
+	TagName     string    `json:"tag_name"`
+	PublishedAt time.Time `json:"published_at"`
 }
 
-func (reg *GithubRegistry) GetLatestRelease() (string, error) {
-	ctx, cancel := context.WithTimeout(reg.ctx, reg.latestReleaseTimeout)
+func (reg *GithubRegistry) GetLatestRelease(ctx context.Context) (string, error) {
+	release, err := reg.GetLatestReleaseInfo(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	return release.TagName, nil
+}
+
+func (reg *GithubRegistry) GetLatestReleaseInfo(ctx context.Context) (*ReleaseInfo, error) {
+	requestCtx, cancel := context.WithTimeout(ctx, reg.latestReleaseTimeout)
 	defer cancel()
 
-	url := reg.repoURI + "/releases/latest"
+	url := reg.apiURI + "/releases/latest"
 
 	req, err := http.NewRequestWithContext(
-		ctx,
+		requestCtx,
 		http.MethodGet,
 		url,
 		nil,
 	)
 	if err != nil {
-		return "", fmt.Errorf("failed to create request: %w", err)
+		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Accept", "application/vnd.github+json")
+	req.Header.Add("User-Agent", "lets-cli")
 
 	resp, err := reg.client.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("failed to make request: %w", err)
+		return nil, fmt.Errorf("failed to make request: %w", err)
 	}
 
 	defer resp.Body.Close()
 
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		return nil, fmt.Errorf("failed to fetch latest release: %s", resp.Status)
+	}
+
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", fmt.Errorf("failed to read package body: %w", err)
+		return nil, fmt.Errorf("failed to read package body: %w", err)
 	}
 
-	var release release
+	var release ReleaseInfo
 	if err := json.Unmarshal(body, &release); err != nil {
-		return "", fmt.Errorf("failed to decode package body: %w", err)
+		return nil, fmt.Errorf("failed to decode package body: %w", err)
 	}
 
-	return release.TagName, nil
+	return &release, nil
 }

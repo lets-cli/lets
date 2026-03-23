@@ -1,6 +1,7 @@
 package upgrade
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path"
@@ -14,17 +15,21 @@ type MockRegistry struct {
 	latestVersion string
 }
 
-func (m MockRegistry) GetLatestRelease() (string, error) {
+func (m MockRegistry) GetLatestRelease(ctx context.Context) (string, error) {
 	return m.latestVersion, nil
 }
 
-func (m MockRegistry) DownloadReleaseBinary(packageName string, version string, dstPath string) error {
+func (m MockRegistry) GetLatestReleaseInfo(ctx context.Context) (*registry.ReleaseInfo, error) {
+	return &registry.ReleaseInfo{TagName: m.latestVersion}, nil
+}
+
+func (m MockRegistry) DownloadReleaseBinary(ctx context.Context, packageName string, version string, dstPath string) error {
 	file, err := os.Create(dstPath)
 	if err != nil {
 		return err
 	}
 
-	latest, _ := m.GetLatestRelease()
+	latest, _ := m.GetLatestRelease(ctx)
 
 	_, err = fmt.Fprint(file, latest)
 	if err != nil {
@@ -96,7 +101,7 @@ func TestSelfUpgrade(t *testing.T) {
 			t.Errorf("expected version %s", currentVersion)
 		}
 
-		err = upgrader.Upgrade()
+		err = upgrader.Upgrade(context.Background())
 		if err != nil {
 			t.Errorf("failed to upgrade: %s", err)
 		}
@@ -124,7 +129,7 @@ func TestSelfUpgrade(t *testing.T) {
 		// sleep to be sure files not created at the same time
 		time.Sleep(10 * time.Millisecond)
 
-		err = upgrader.Upgrade()
+		err = upgrader.Upgrade(context.Background())
 		if err != nil {
 			t.Errorf("failed to upgrade: %s", err)
 		}
