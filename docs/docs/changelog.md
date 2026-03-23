@@ -16,6 +16,7 @@ title: Changelog
 * `[Refactoring]` Move CLI startup flow from `cmd/lets/main.go` into `internal/cli/cli.go`, keeping `main.go` as a thin launcher.
 * `[Added]` Add `lets self doc` command to open the online documentation in a browser.
 * `[Added]` Show background update notifications for interactive sessions, with Homebrew-aware guidance and `LETS_CHECK_UPDATE` opt-out.
+* `[Changed]` Centralize the `lets:` log prefix in the formatter and render debug messages in blue.
 
 ## [0.0.59](https://github.com/lets-cli/lets/releases/tag/v0.0.59)
 

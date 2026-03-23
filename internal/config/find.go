@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/fatih/color"
 	"github.com/lets-cli/lets/internal/config/path"
 	"github.com/lets-cli/lets/internal/util"
 	"github.com/lets-cli/lets/internal/workdir"
@@ -39,7 +38,7 @@ func FindConfig(configName string, configDir string) (PathInfo, error) {
 		return PathInfo{}, err
 	}
 
-	log.Debugf("%s", color.BlueString("lets: found %s config file in %s directory", configName, workDir))
+	log.Debugf("found %s config file in %s directory", configName, workDir)
 
 	configAbsPath := ""
 

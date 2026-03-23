@@ -162,7 +162,7 @@ func (c *Command) GetEnv(cfg Config, builtinEnv map[string]string) (map[string]s
 
 	envFileEnv, err := envFiles.Load(cfg, filenameEnv)
 	if err != nil {
-		return nil, fmt.Errorf("lets: failed to resolve env_file for command '%s': %w", c.Name, err)
+		return nil, fmt.Errorf("failed to resolve env_file for command '%s': %w", c.Name, err)
 	}
 
 	resolvedEnv := envs.Dump()
