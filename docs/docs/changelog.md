@@ -11,6 +11,7 @@ title: Changelog
 * `[Added]` Expose `LETS_OS` and `LETS_ARCH` environment variables at command runtime.
 * `[Removed]` Drop deprecated `eval_env` directive. Use `env` with `sh` execution mode instead.
 * `[Added]` When a command or its `depends` chain fails, print an indented tree to stderr showing the full chain with the failing command highlighted
+* `[Changed]` Format command failure output as a `lets:`-prefixed tree plus a separate final status line such as `lets: exit status 1`.
 * `[Added]` Support `env_file` in global config and commands. File names are expanded after `env` is resolved, and values loaded from env files override values from `env`.
 * `[Changed]` Migrate the LSP YAML parser from the CGO-based tree-sitter bindings to pure-Go [`gotreesitter`](https://github.com/odvcencio/gotreesitter), removing the C toolchain requirement from normal builds and release packaging.
 * `[Refactoring]` Move CLI startup flow from `cmd/lets/main.go` into `internal/cli/cli.go`, keeping `main.go` as a thin launcher.
