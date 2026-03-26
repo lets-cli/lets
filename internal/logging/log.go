@@ -41,21 +41,20 @@ func InitLogging(
 
 // ExecLogger is used in Executor.
 // If adds command chain in message like this:
-// lets: [foo=>bar] message.
+// [foo=>bar] message.
 type ExecLogger struct {
 	log *log.Logger
 	// command name
 	name string
-	// lets: [a=>b]
+	// [a=>b]
 	prefix string
 	cache  map[string]*ExecLogger
 }
 
 func NewExecLogger() *ExecLogger {
 	return &ExecLogger{
-		log:    log.StandardLogger(),
-		prefix: color.BlueString("lets:"),
-		cache:  make(map[string]*ExecLogger),
+		log:   log.StandardLogger(),
+		cache: make(map[string]*ExecLogger),
 	}
 }
 
@@ -71,7 +70,7 @@ func (l *ExecLogger) Child(name string) *ExecLogger {
 	l.cache[name] = &ExecLogger{
 		log:    l.log,
 		name:   name,
-		prefix: color.BlueString("lets: %s", color.GreenString("[%s]", name)),
+		prefix: color.GreenString("[%s]", name),
 		cache:  make(map[string]*ExecLogger),
 	}
 
@@ -79,11 +78,17 @@ func (l *ExecLogger) Child(name string) *ExecLogger {
 }
 
 func (l *ExecLogger) Info(format string, a ...any) {
-	format = fmt.Sprintf("%s %s", l.prefix, color.BlueString(format))
+	if l.prefix != "" {
+		format = fmt.Sprintf("%s %s", l.prefix, format)
+	}
+
 	l.log.Logf(log.InfoLevel, format, a...)
 }
 
 func (l *ExecLogger) Debug(format string, a ...any) {
-	format = fmt.Sprintf("%s %s", l.prefix, color.BlueString(format))
+	if l.prefix != "" {
+		format = fmt.Sprintf("%s %s", l.prefix, format)
+	}
+
 	l.log.Logf(log.DebugLevel, format, a...)
 }

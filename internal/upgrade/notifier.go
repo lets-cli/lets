@@ -31,7 +31,7 @@ type UpdateNotice struct {
 func (n *UpdateNotice) Message() string {
 	return fmt.Sprintf(
 		"\n%s: %s -> %s\n%s",
-		color.YellowString("lets: new version been released"),
+		color.YellowString("new version been released"),
 		color.RedString(n.CurrentVersion),
 		color.GreenString(n.LatestVersion),
 		color.YellowString("Run '%s' or see https://lets-cli.org/docs/installation", n.command),
@@ -93,7 +93,7 @@ func (n *UpdateNotifier) Check(ctx context.Context, currentVersion string) (*Upd
 
 	now := n.now()
 	if now.Sub(state.CheckedAt) < updateCheckInterval {
-		log.Debugf("lets: skip update check: next check at %s", state.CheckedAt.Add(updateCheckInterval))
+		log.Debugf("skip update check: next check at %s", state.CheckedAt.Add(updateCheckInterval))
 		return n.noticeFromState(state, currentVersion, current, now), nil
 	}
 
@@ -251,5 +251,5 @@ func LogUpdateCheckError(err error) {
 		return
 	}
 
-	log.Debugf("lets: update notifier error: %s", err)
+	log.Debugf("update notifier error: %s", err)
 }

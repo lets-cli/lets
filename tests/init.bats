@@ -10,7 +10,7 @@ setup() {
     run lets --init
     assert_success
     [[ -f lets.yaml ]]
-    assert_line --index 0 "lets.yaml created in the current directory"
+    assert_line --index 0 "lets: lets.yaml created in the current directory"
     run lets hello bro
     assert_success
     assert_line --index 0 "Hello, bro!"

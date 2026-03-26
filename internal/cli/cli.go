@@ -47,19 +47,19 @@ func Main(version string, buildDate string) int {
 
 	command, args, err := rootCmd.Traverse(os.Args[1:])
 	if err != nil {
-		log.Errorf("lets: traverse commands error: %s", err)
+		log.Errorf("traverse commands error: %s", err)
 		return getExitCode(err, 1)
 	}
 
 	rootFlags, err := parseRootFlags(args)
 	if err != nil {
-		log.Errorf("lets: parse flags error: %s", err)
+		log.Errorf("parse flags error: %s", err)
 		return 1
 	}
 
 	if rootFlags.version {
 		if err := cmd.PrintVersionMessage(rootCmd); err != nil {
-			log.Errorf("lets: print version error: %s", err)
+			log.Errorf("print version error: %s", err)
 			return 1
 		}
 
@@ -79,7 +79,7 @@ func Main(version string, buildDate string) int {
 	cfg, err := config.Load(rootFlags.config, configDir, version)
 	if err != nil {
 		if failOnConfigError(rootCmd, command, rootFlags) {
-			log.Errorf("lets: config error: %s", err)
+			log.Errorf("config error: %s", err)
 			return 1
 		}
 	}
@@ -96,7 +96,7 @@ func Main(version string, buildDate string) int {
 		}
 
 		if err != nil {
-			log.Errorf("lets: can not create lets.yaml: %s", err)
+			log.Errorf("can not create lets.yaml: %s", err)
 			return 1
 		}
 
@@ -110,7 +110,7 @@ func Main(version string, buildDate string) int {
 		}
 
 		if err != nil {
-			log.Errorf("lets: can not self-upgrade binary: %s", err)
+			log.Errorf("can not self-upgrade binary: %s", err)
 			return 1
 		}
 
@@ -121,7 +121,7 @@ func Main(version string, buildDate string) int {
 
 	if showUsage {
 		if err := cmd.PrintRootHelpMessage(rootCmd); err != nil {
-			log.Errorf("lets: print help error: %s", err)
+			log.Errorf("print help error: %s", err)
 			return 1
 		}
 
@@ -137,7 +137,7 @@ func Main(version string, buildDate string) int {
 			executor.PrintDependencyTree(depErr, os.Stderr)
 		}
 
-		log.Errorf("lets: %s", err.Error())
+		log.Errorf("%s", err.Error())
 
 		return getExitCode(err, 1)
 	}
@@ -161,7 +161,7 @@ func getContext() context.Context {
 
 	go func() {
 		sig := <-ch
-		log.Printf("lets: signal received: %s", sig)
+		log.Printf("signal received: %s", sig)
 		cancel()
 	}()
 
@@ -211,7 +211,7 @@ func maybeStartUpdateCheck(
 		return nil, func() {}
 	}
 
-	log.Debugf("lets: start update check")
+	log.Debugf("start update check")
 
 	notifier, err := upgrade.NewUpdateNotifier(registry.NewGithubRegistry())
 	if err != nil {
@@ -227,7 +227,7 @@ func maybeStartUpdateCheck(
 			upgrade.LogUpdateCheckError(err)
 		}
 
-		log.Debugf("lets: update check done")
+		log.Debugf("update check done")
 
 		ch <- updateCheckResult{
 			notifier: notifier,
