@@ -197,6 +197,38 @@ commands:
 	}
 }
 
+func TestDetectCommandAliasPosition(t *testing.T) {
+	doc := `commands:
+  test: &test
+    cmd: echo Test
+  run-test:
+    <<: *test
+    cmd: echo Run`
+
+	tests := []struct {
+		pos  lsp.Position
+		want bool
+	}{
+		{pos: pos(4, 7), want: false},
+		{pos: pos(4, 8), want: true},
+		{pos: pos(4, 10), want: true},
+		{pos: pos(4, 13), want: true},
+		{pos: pos(5, 8), want: false},
+	}
+
+	p := newParser(logger)
+	for i, tt := range tests {
+		got := p.inCommandAliasPosition(&doc, tt.pos)
+		if got != tt.want {
+			t.Errorf("case %d: expected %v, actual %v", i, tt.want, got)
+		}
+	}
+
+	if got := p.getPositionType(&doc, pos(4, 10)); got != PositionTypeCommandAlias {
+		t.Fatalf("expected PositionTypeCommandAlias, got %v", got)
+	}
+}
+
 func TestGetCommands(t *testing.T) {
 	doc := `shell: bash
 mixins:
@@ -333,6 +365,84 @@ commands:
 	}
 	if command.position.Character != expected.position.Character {
 		t.Errorf("expected character %d, got %d", expected.position.Character, command.position.Character)
+	}
+}
+
+func TestExtractCommandReference(t *testing.T) {
+	doc := `commands:
+  build:
+    cmd: echo Build
+  test: &test
+    depends:
+      - build
+    cmd: echo Test
+  run-test:
+    <<: *test
+    depends: [build, test]
+    cmd: echo Run`
+
+	tests := []struct {
+		name string
+		pos  lsp.Position
+		want string
+	}{
+		{name: "block depends item", pos: pos(5, 8), want: "build"},
+		{name: "merge alias star", pos: pos(8, 8), want: "test"},
+		{name: "merge alias name", pos: pos(8, 10), want: "test"},
+		{name: "flow depends first item", pos: pos(9, 14), want: "build"},
+		{name: "flow depends second item", pos: pos(9, 21), want: "test"},
+		{name: "outside reference", pos: pos(10, 10), want: ""},
+	}
+
+	p := newParser(logger)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := p.extractCommandReference(&doc, tt.pos)
+			if got != tt.want {
+				t.Fatalf("extractCommandReference() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestFindCommandDefinitionFromAlias(t *testing.T) {
+	doc := `commands:
+  test: &test
+    cmd: echo Test
+  run-test:
+    <<: *test
+    cmd: echo Run`
+
+	handler := definitionHandler{parser: newParser(logger)}
+	params := &lsp.DefinitionParams{
+		TextDocumentPositionParams: lsp.TextDocumentPositionParams{
+			TextDocument: lsp.TextDocumentIdentifier{URI: "file:///tmp/lets.yaml"},
+			Position:     pos(4, 10),
+		},
+	}
+
+	got, err := handler.findCommandDefinition(&doc, params)
+	if err != nil {
+		t.Fatalf("findCommandDefinition() error = %v", err)
+	}
+
+	locations, ok := got.([]lsp.Location)
+	if !ok {
+		t.Fatalf("findCommandDefinition() type = %T, want []lsp.Location", got)
+	}
+
+	want := []lsp.Location{
+		{
+			URI: "file:///tmp/lets.yaml",
+			Range: lsp.Range{
+				Start: pos(1, 2),
+				End:   pos(1, 2),
+			},
+		},
+	}
+
+	if !reflect.DeepEqual(locations, want) {
+		t.Fatalf("findCommandDefinition() = %#v, want %#v", locations, want)
 	}
 }
 

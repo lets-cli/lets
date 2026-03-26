@@ -86,17 +86,12 @@ func (h *definitionHandler) findMixinsDefinition(doc *string, params *lsp.Defini
 }
 
 func (h *definitionHandler) findCommandDefinition(doc *string, params *lsp.DefinitionParams) (any, error) {
-	line := getLine(doc, params.Position.Line)
-	if line == "" {
+	commandName := h.parser.extractCommandReference(doc, params.Position)
+	if commandName == "" {
 		return nil, nil
 	}
 
-	word := wordUnderCursor(line, &params.Position)
-	if word == "" {
-		return nil, nil
-	}
-
-	command := h.parser.findCommand(doc, word)
+	command := h.parser.findCommand(doc, commandName)
 	if command == nil {
 		return nil, nil
 	}
@@ -163,7 +158,7 @@ func (s *lspServer) textDocumentDefinition(context *glsp.Context, params *lsp.De
 	switch p.getPositionType(doc, params.Position) {
 	case PositionTypeMixins:
 		return definitionHandler.findMixinsDefinition(doc, params)
-	case PositionTypeDepends:
+	case PositionTypeDepends, PositionTypeCommandAlias:
 		return definitionHandler.findCommandDefinition(doc, params)
 	default:
 		return nil, nil

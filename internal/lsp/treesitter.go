@@ -14,6 +14,7 @@ type PositionType int
 const (
 	PositionTypeMixins PositionType = iota
 	PositionTypeDepends
+	PositionTypeCommandAlias
 	PositionTypeNone
 )
 
@@ -115,6 +116,8 @@ func (p *parser) getPositionType(document *string, position lsp.Position) Positi
 		return PositionTypeMixins
 	} else if p.inDependsPosition(document, position) {
 		return PositionTypeDepends
+	} else if p.inCommandAliasPosition(document, position) {
+		return PositionTypeCommandAlias
 	}
 
 	return PositionTypeNone
@@ -229,6 +232,47 @@ func (p *parser) inDependsPosition(document *string, position lsp.Position) bool
 	return false
 }
 
+func (p *parser) inCommandAliasPosition(document *string, position lsp.Position) bool {
+	tree, docBytes, err := parseYAMLDocument(document)
+	if err != nil {
+		return false
+	}
+	defer tree.Release()
+
+	query, err := ts.NewQuery(`
+		(block_mapping_pair
+			key: (flow_node) @keymerge
+			value: (flow_node(alias) @alias)
+			(#eq? @keymerge "<<")
+		)
+	`, yamlLanguage)
+	if err != nil {
+		return false
+	}
+
+	root := tree.RootNode()
+	if root == nil {
+		return false
+	}
+
+	matches := query.Exec(root, yamlLanguage, docBytes)
+
+	for {
+		match, ok := matches.NextMatch()
+		if !ok {
+			break
+		}
+
+		for _, capture := range match.Captures {
+			if capture.Name == "alias" && isCursorWithinNode(capture.Node, position) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
 func (p *parser) extractFilenameFromMixins(document *string, position lsp.Position) string {
 	tree, docBytes, err := parseYAMLDocument(document)
 	if err != nil {
@@ -269,6 +313,110 @@ func (p *parser) extractFilenameFromMixins(document *string, position lsp.Positi
 					return capture.Node.Text(docBytes)
 				}
 			}
+		}
+	}
+
+	return ""
+}
+
+func (p *parser) extractCommandReference(document *string, position lsp.Position) string {
+	if commandName := p.extractDependsCommandReference(document, position); commandName != "" {
+		return commandName
+	}
+
+	return p.extractAliasCommandReference(document, position)
+}
+
+func (p *parser) extractDependsCommandReference(document *string, position lsp.Position) string {
+	tree, docBytes, err := parseYAMLDocument(document)
+	if err != nil {
+		return ""
+	}
+	defer tree.Release()
+
+	query, err := ts.NewQuery(`
+		(block_mapping_pair
+			key: (flow_node) @keydepends
+			value: [
+				(flow_node
+					(flow_sequence
+						(flow_node
+							(plain_scalar
+								(string_scalar)) @reference)))
+				(block_node
+					(block_sequence
+						(block_sequence_item
+							(flow_node
+								(plain_scalar
+									(string_scalar)) @reference))))
+			]
+			(#eq? @keydepends "depends")
+		)
+	`, yamlLanguage)
+	if err != nil {
+		return ""
+	}
+
+	root := tree.RootNode()
+	if root == nil {
+		return ""
+	}
+
+	matches := query.Exec(root, yamlLanguage, docBytes)
+
+	for {
+		match, ok := matches.NextMatch()
+		if !ok {
+			break
+		}
+
+		for _, capture := range match.Captures {
+			if capture.Name == "reference" && isCursorWithinNode(capture.Node, position) {
+				return capture.Node.Text(docBytes)
+			}
+		}
+	}
+
+	return ""
+}
+
+func (p *parser) extractAliasCommandReference(document *string, position lsp.Position) string {
+	tree, docBytes, err := parseYAMLDocument(document)
+	if err != nil {
+		return ""
+	}
+	defer tree.Release()
+
+	query, err := ts.NewQuery(`
+		(block_mapping_pair
+			key: (flow_node) @keymerge
+			value: (flow_node(alias) @reference)
+			(#eq? @keymerge "<<")
+		)
+	`, yamlLanguage)
+	if err != nil {
+		return ""
+	}
+
+	root := tree.RootNode()
+	if root == nil {
+		return ""
+	}
+
+	matches := query.Exec(root, yamlLanguage, docBytes)
+
+	for {
+		match, ok := matches.NextMatch()
+		if !ok {
+			break
+		}
+
+		for _, capture := range match.Captures {
+			if capture.Name != "reference" || !isCursorWithinNode(capture.Node, position) {
+				continue
+			}
+
+			return strings.TrimPrefix(capture.Node.Text(docBytes), "*")
 		}
 	}
 
