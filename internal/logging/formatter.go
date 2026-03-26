@@ -21,7 +21,7 @@ type Formatter struct{}
 // Format implements the log.Formatter interface.
 func (f *Formatter) Format(entry *log.Entry) ([]byte, error) {
 	buff := &bytes.Buffer{}
-	parts := []string{color.BlueString("lets:")}
+	parts := []string{formatPrefix(entry)}
 
 	if data := writeData(entry.Data); data != "" {
 		parts = append(parts, data)
@@ -35,8 +35,16 @@ func (f *Formatter) Format(entry *log.Entry) ([]byte, error) {
 	return buff.Bytes(), nil
 }
 
+func formatPrefix(entry *log.Entry) string {
+	if entry.Level == log.DebugLevel {
+		return color.BlueString("lets:")
+	}
+
+	return "lets:"
+}
+
 func formatMessage(entry *log.Entry) string {
-	if entry.Level >= log.DebugLevel {
+	if entry.Level == log.DebugLevel {
 		return color.BlueString(entry.Message)
 	}
 

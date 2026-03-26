@@ -52,32 +52,20 @@ func TestLoggingToStd(t *testing.T) {
 	})
 }
 
-func TestFormatterColorsVerboseMessages(t *testing.T) {
+func TestFormatterColorsDebugMessages(t *testing.T) {
 	setNoColorForTest(t, false)
 
-	tests := []struct {
-		name  string
-		level log.Level
-	}{
-		{name: "debug", level: log.DebugLevel},
-		{name: "trace", level: log.TraceLevel},
+	line, err := (&Formatter{}).Format(&log.Entry{
+		Level:   log.DebugLevel,
+		Message: "debug message",
+	})
+	if err != nil {
+		t.Fatalf("Format() error = %v", err)
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			line, err := (&Formatter{}).Format(&log.Entry{
-				Level:   tt.level,
-				Message: "debug message",
-			})
-			if err != nil {
-				t.Fatalf("Format() error = %v", err)
-			}
-
-			expected := color.BlueString("lets:") + " " + color.BlueString("debug message") + "\n"
-			if string(line) != expected {
-				t.Fatalf("unexpected debug line: %q", string(line))
-			}
-		})
+	expected := color.BlueString("lets:") + " " + color.BlueString("debug message") + "\n"
+	if string(line) != expected {
+		t.Fatalf("unexpected debug line: %q", string(line))
 	}
 }
 
@@ -119,6 +107,14 @@ func TestFormatterFormatsLevelsAndFields(t *testing.T) {
 				},
 			},
 			fields: []string{"alpha=one", "beta=two"},
+		},
+		{
+			name: "trace_no_data",
+			entry: &log.Entry{
+				Level:   log.TraceLevel,
+				Message: "trace message",
+				Data:    log.Fields{},
+			},
 		},
 	}
 
