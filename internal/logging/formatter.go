@@ -36,7 +36,7 @@ func (f *Formatter) Format(entry *log.Entry) ([]byte, error) {
 }
 
 func formatMessage(entry *log.Entry) string {
-	if entry.Level == log.DebugLevel {
+	if entry.Level >= log.DebugLevel {
 		return color.BlueString(entry.Message)
 	}
 
