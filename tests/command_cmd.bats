@@ -43,7 +43,8 @@ setup() {
     # as there is no guarantee in which order cmds runs
     # we can not guarantee that all commands will run and complete.
     # But error message must be in the output.
-    assert_output --partial "failed to run command 'cmd-as-map-error': exit status 2"
+    assert_output --partial "lets: cmd-as-map-error"
+    assert_output --partial "lets: exit status 2"
 }
 
 @test "command_cmd: cmd-as-map must propagate env" {

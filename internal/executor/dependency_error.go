@@ -16,6 +16,8 @@ type DependencyError struct {
 	Err   error
 }
 
+const treePrefix = "lets: "
+
 func (e *DependencyError) Error() string { return e.Err.Error() }
 func (e *DependencyError) Unwrap() error { return e.Err }
 
@@ -27,6 +29,15 @@ func (e *DependencyError) ExitCode() int {
 	}
 
 	return 1
+}
+
+func (e *DependencyError) FailureMessage() string {
+	var executeErr *ExecuteError
+	if errors.As(e.Err, &executeErr) {
+		return executeErr.Cause().Error()
+	}
+
+	return e.Err.Error()
 }
 
 // prependToChain prepends name to the chain in err if err is already a *DependencyError,
@@ -45,9 +56,14 @@ func prependToChain(name string, err error) error {
 // Respects NO_COLOR automatically via fatih/color.
 func PrintDependencyTree(e *DependencyError, w io.Writer) {
 	red := color.New(color.FgRed).SprintFunc()
+	treeIndent := strings.Repeat(" ", len(treePrefix))
 
 	for i, name := range e.Chain {
-		indent := strings.Repeat("  ", i+1)
+		indent := treeIndent + strings.Repeat("  ", i+1)
+		if i == 0 {
+			indent = treePrefix
+		}
+
 		if i == len(e.Chain)-1 {
 			fmt.Fprintf(w, "%s%s  %s\n", indent, name, red("<-- failed here"))
 		} else {

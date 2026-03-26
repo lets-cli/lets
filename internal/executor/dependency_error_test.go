@@ -3,8 +3,10 @@ package executor
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
+	"syscall"
 	"testing"
 )
 
@@ -101,6 +103,46 @@ func TestDependencyErrorError(t *testing.T) {
 	}
 }
 
+func TestDependencyErrorFailureMessage(t *testing.T) {
+	t.Run("returns root cause for execute errors", func(t *testing.T) {
+		depErr := &DependencyError{
+			Chain: []string{"lint"},
+			Err:   &ExecuteError{err: fmt.Errorf("failed to run command 'lint': %w", fmt.Errorf("exit status 1"))},
+		}
+
+		if got := depErr.FailureMessage(); got != "exit status 1" {
+			t.Fatalf("expected root cause message, got %q", got)
+		}
+	})
+
+	t.Run("keeps non execute errors intact", func(t *testing.T) {
+		depErr := &DependencyError{
+			Chain: []string{"lint"},
+			Err:   fmt.Errorf("failed to calculate checksum for command 'lint': missing file"),
+		}
+
+		if got := depErr.FailureMessage(); got != "failed to calculate checksum for command 'lint': missing file" {
+			t.Fatalf("expected original message, got %q", got)
+		}
+	})
+
+	t.Run("keeps path context for execute errors", func(t *testing.T) {
+		depErr := &DependencyError{
+			Chain: []string{"lint"},
+			Err: &ExecuteError{
+				err: fmt.Errorf(
+					"failed to run command 'lint': %w",
+					&os.PathError{Op: "chdir", Path: "/tmp/missing", Err: syscall.ENOENT},
+				),
+			},
+		}
+
+		if got := depErr.FailureMessage(); got != "chdir /tmp/missing: no such file or directory" {
+			t.Fatalf("expected path-aware message, got %q", got)
+		}
+	})
+}
+
 func TestPrintDependencyTree(t *testing.T) {
 	t.Run("single node", func(t *testing.T) {
 		depErr := &DependencyError{Chain: []string{"lint"}, Err: fmt.Errorf("fail")}
@@ -111,8 +153,8 @@ func TestPrintDependencyTree(t *testing.T) {
 		if len(lines) != 1 {
 			t.Fatalf("expected 1 line, got %d: %v", len(lines), lines)
 		}
-		if !strings.HasPrefix(lines[0], "  lint") {
-			t.Errorf("expected line to start with '  lint', got: %q", lines[0])
+		if !strings.HasPrefix(lines[0], "lets: lint") {
+			t.Errorf("expected line to start with 'lets: lint', got: %q", lines[0])
 		}
 		if !strings.Contains(out, "failed here") {
 			t.Errorf("expected 'failed here' annotation on lint line, got: %q", out)
@@ -137,9 +179,9 @@ func TestPrintDependencyTree(t *testing.T) {
 			name      string
 			hasFailed bool
 		}{
-			{"  ", "deploy", false},
-			{"    ", "build", false},
-			{"      ", "lint", true},
+			{"lets: ", "deploy", false},
+			{"          ", "build", false},
+			{"            ", "lint", true},
 		}
 		for i, c := range checks {
 			if !strings.HasPrefix(lines[i], c.prefix+c.name) {

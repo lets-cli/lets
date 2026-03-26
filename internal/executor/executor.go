@@ -25,6 +25,18 @@ func (e *ExecuteError) Error() string {
 	return e.err.Error()
 }
 
+func (e *ExecuteError) Unwrap() error {
+	return e.err
+}
+
+func (e *ExecuteError) Cause() error {
+	if err := errors.Unwrap(e.err); err != nil {
+		return err
+	}
+
+	return e.err
+}
+
 // ExitCode will return exit code from underlying ExitError or returns default error code.
 func (e *ExecuteError) ExitCode() int {
 	var exitErr *exec.ExitError
