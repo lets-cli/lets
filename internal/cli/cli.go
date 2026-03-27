@@ -134,7 +134,7 @@ func Main(version string, buildDate string) int {
 	if err := rootCmd.ExecuteContext(ctx); err != nil {
 		var depErr *executor.DependencyError
 		if errors.As(err, &depErr) {
-			executor.PrintDependencyTree(depErr, os.Stderr)
+			log.Errorf("%s", depErr.TreeMessage())
 			log.Errorf("%s", depErr.FailureMessage())
 			return getExitCode(err, 1)
 		}
