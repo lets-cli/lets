@@ -50,14 +50,8 @@ func (e *DependencyError) TreeMessage() string {
 
 	for i, name := range e.Chain {
 		builder.WriteByte('\n')
-		indentLevel := i
-		if indentLevel == 0 {
-			indentLevel = 1
-		}
-		builder.WriteString(strings.Repeat(dependencyTreeIndent, indentLevel))
-		if i > 0 {
-			builder.WriteString(dependencyTreeJoint)
-		}
+		builder.WriteString(strings.Repeat(dependencyTreeIndent, i+1))
+		builder.WriteString(dependencyTreeJoint)
 		builder.WriteString(name)
 
 		if i == len(e.Chain)-1 {

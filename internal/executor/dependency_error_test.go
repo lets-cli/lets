@@ -155,7 +155,7 @@ func TestPrintDependencyTree(t *testing.T) {
 		}
 		want := []string{
 			dependencyTreeHeader,
-			dependencyTreeIndent + "lint" + dependencyTreeIndent + "<-- failed here",
+			dependencyTreeIndent + dependencyTreeJoint + "lint" + dependencyTreeIndent + "<-- failed here",
 		}
 
 		for i := range want {
@@ -179,9 +179,9 @@ func TestPrintDependencyTree(t *testing.T) {
 		}
 		want := []string{
 			dependencyTreeHeader,
-			dependencyTreeIndent + "deploy",
-			dependencyTreeIndent + dependencyTreeJoint + "build",
-			strings.Repeat(dependencyTreeIndent, 2) + dependencyTreeJoint + "lint" +
+			dependencyTreeIndent + dependencyTreeJoint + "deploy",
+			strings.Repeat(dependencyTreeIndent, 2) + dependencyTreeJoint + "build",
+			strings.Repeat(dependencyTreeIndent, 3) + dependencyTreeJoint + "lint" +
 				dependencyTreeIndent + "<-- failed here",
 		}
 
