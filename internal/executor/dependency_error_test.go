@@ -150,14 +150,18 @@ func TestPrintDependencyTree(t *testing.T) {
 		PrintDependencyTree(depErr, &buf)
 		out := buf.String()
 		lines := strings.Split(strings.TrimRight(out, "\n"), "\n")
-		if len(lines) != 1 {
-			t.Fatalf("expected 1 line, got %d: %v", len(lines), lines)
+		if len(lines) != 2 {
+			t.Fatalf("expected 2 lines, got %d: %v", len(lines), lines)
 		}
-		if !strings.HasPrefix(lines[0], "lets: lint") {
-			t.Errorf("expected line to start with 'lets: lint', got: %q", lines[0])
+		want := []string{
+			dependencyTreeHeader,
+			dependencyTreeIndent + "lint" + dependencyTreeIndent + "<-- failed here",
 		}
-		if !strings.Contains(out, "failed here") {
-			t.Errorf("expected 'failed here' annotation on lint line, got: %q", out)
+
+		for i := range want {
+			if lines[i] != want[i] {
+				t.Errorf("line %d: want %q, got %q", i, want[i], lines[i])
+			}
 		}
 	})
 
@@ -170,28 +174,20 @@ func TestPrintDependencyTree(t *testing.T) {
 		PrintDependencyTree(depErr, &buf)
 		lines := strings.Split(strings.TrimRight(buf.String(), "\n"), "\n")
 
-		if len(lines) != 3 {
-			t.Fatalf("expected 3 lines, got %d: %v", len(lines), lines)
+		if len(lines) != 4 {
+			t.Fatalf("expected 4 lines, got %d: %v", len(lines), lines)
 		}
-		// index 0 = 2 spaces, index 1 = 4 spaces, index 2 = 6 spaces (outermost first)
-		checks := []struct {
-			prefix    string
-			name      string
-			hasFailed bool
-		}{
-			{"lets: ", "deploy", false},
-			{"          ", "build", false},
-			{"            ", "lint", true},
+		want := []string{
+			dependencyTreeHeader,
+			dependencyTreeIndent + "deploy",
+			dependencyTreeIndent + dependencyTreeJoint + "build",
+			strings.Repeat(dependencyTreeIndent, 2) + dependencyTreeJoint + "lint" +
+				dependencyTreeIndent + "<-- failed here",
 		}
-		for i, c := range checks {
-			if !strings.HasPrefix(lines[i], c.prefix+c.name) {
-				t.Errorf("line %d: want prefix %q + name %q, got %q", i, c.prefix, c.name, lines[i])
-			}
-			if c.hasFailed && !strings.Contains(lines[i], "failed here") {
-				t.Errorf("line %d: expected 'failed here' annotation, got %q", i, lines[i])
-			}
-			if !c.hasFailed && strings.Contains(lines[i], "failed here") {
-				t.Errorf("line %d: unexpected 'failed here' annotation on non-failing node, got %q", i, lines[i])
+
+		for i := range want {
+			if lines[i] != want[i] {
+				t.Errorf("line %d: want %q, got %q", i, want[i], lines[i])
 			}
 		}
 	})
