@@ -407,17 +407,18 @@ func TestExtractCommandReference(t *testing.T) {
 
 func TestFindCommandDefinitionFromAlias(t *testing.T) {
 	doc := `commands:
-  test: &test
-    cmd: echo Test
-  run-test:
-    <<: *test
-    cmd: echo Run`
+  publish-docs: &docs
+    work_dir: docs
+    cmd: npm run doc:deploy
+  run-docs:
+    <<: *docs
+    cmd: npm start`
 
 	handler := definitionHandler{parser: newParser(logger)}
 	params := &lsp.DefinitionParams{
 		TextDocumentPositionParams: lsp.TextDocumentPositionParams{
 			TextDocument: lsp.TextDocumentIdentifier{URI: "file:///tmp/lets.yaml"},
-			Position:     pos(4, 10),
+			Position:     pos(5, 10),
 		},
 	}
 
@@ -443,6 +444,26 @@ func TestFindCommandDefinitionFromAlias(t *testing.T) {
 
 	if !reflect.DeepEqual(locations, want) {
 		t.Fatalf("findCommandDefinition() = %#v, want %#v", locations, want)
+	}
+}
+
+func TestFindCommandNameByAnchor(t *testing.T) {
+	doc := `commands:
+  publish-docs: &docs
+    work_dir: docs
+    cmd: npm run doc:deploy
+  run-docs:
+    <<: *docs
+    cmd: npm start`
+
+	p := newParser(logger)
+
+	if got := p.findCommandNameByAnchor(&doc, "docs"); got != "publish-docs" {
+		t.Fatalf("findCommandNameByAnchor() = %q, want %q", got, "publish-docs")
+	}
+
+	if got := p.findCommandNameByAnchor(&doc, "missing"); got != "" {
+		t.Fatalf("findCommandNameByAnchor() = %q, want empty", got)
 	}
 }
 

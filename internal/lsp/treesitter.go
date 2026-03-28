@@ -18,6 +18,19 @@ const (
 	PositionTypeNone
 )
 
+func (p PositionType) String() string {
+	switch p {
+	case PositionTypeMixins:
+		return "mixins"
+	case PositionTypeDepends:
+		return "depends"
+	case PositionTypeCommandAlias:
+		return "command_alias"
+	default:
+		return "none"
+	}
+}
+
 var yamlLanguage = grammars.YamlLanguage()
 
 func isCursorWithinNode(node *ts.Node, pos lsp.Position) bool {
@@ -56,6 +69,41 @@ func parseYAMLDocument(document *string) (*ts.Tree, []byte, error) {
 	}
 
 	return tree, docBytes, nil
+}
+
+func executeYAMLQuery(document *string, queryText string, visit func(capture ts.QueryCapture, docBytes []byte) bool) bool {
+	tree, docBytes, err := parseYAMLDocument(document)
+	if err != nil {
+		return false
+	}
+	defer tree.Release()
+
+	query, err := ts.NewQuery(queryText, yamlLanguage)
+	if err != nil {
+		return false
+	}
+
+	root := tree.RootNode()
+	if root == nil {
+		return false
+	}
+
+	matches := query.Exec(root, yamlLanguage, docBytes)
+
+	for {
+		match, ok := matches.NextMatch()
+		if !ok {
+			break
+		}
+
+		for _, capture := range match.Captures {
+			if visit(capture, docBytes) {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 func getLine(document *string, line uint32) string {
@@ -233,44 +281,15 @@ func (p *parser) inDependsPosition(document *string, position lsp.Position) bool
 }
 
 func (p *parser) inCommandAliasPosition(document *string, position lsp.Position) bool {
-	tree, docBytes, err := parseYAMLDocument(document)
-	if err != nil {
-		return false
-	}
-	defer tree.Release()
-
-	query, err := ts.NewQuery(`
+	return executeYAMLQuery(document, `
 		(block_mapping_pair
 			key: (flow_node) @keymerge
 			value: (flow_node(alias) @alias)
 			(#eq? @keymerge "<<")
 		)
-	`, yamlLanguage)
-	if err != nil {
-		return false
-	}
-
-	root := tree.RootNode()
-	if root == nil {
-		return false
-	}
-
-	matches := query.Exec(root, yamlLanguage, docBytes)
-
-	for {
-		match, ok := matches.NextMatch()
-		if !ok {
-			break
-		}
-
-		for _, capture := range match.Captures {
-			if capture.Name == "alias" && isCursorWithinNode(capture.Node, position) {
-				return true
-			}
-		}
-	}
-
-	return false
+	`, func(capture ts.QueryCapture, _ []byte) bool {
+		return capture.Name == "alias" && isCursorWithinNode(capture.Node, position)
+	})
 }
 
 func (p *parser) extractFilenameFromMixins(document *string, position lsp.Position) string {
@@ -321,20 +340,22 @@ func (p *parser) extractFilenameFromMixins(document *string, position lsp.Positi
 
 func (p *parser) extractCommandReference(document *string, position lsp.Position) string {
 	if commandName := p.extractDependsCommandReference(document, position); commandName != "" {
+		p.log.Debugf("resolved command reference from depends: %q", commandName)
 		return commandName
 	}
 
-	return p.extractAliasCommandReference(document, position)
+	commandName := p.extractAliasCommandReference(document, position)
+	if commandName != "" {
+		p.log.Debugf("resolved command reference from alias: %q", commandName)
+	}
+
+	return commandName
 }
 
 func (p *parser) extractDependsCommandReference(document *string, position lsp.Position) string {
-	tree, docBytes, err := parseYAMLDocument(document)
-	if err != nil {
-		return ""
-	}
-	defer tree.Release()
+	var commandName string
 
-	query, err := ts.NewQuery(`
+	executeYAMLQuery(document, `
 		(block_mapping_pair
 			key: (flow_node) @keydepends
 			value: [
@@ -352,35 +373,52 @@ func (p *parser) extractDependsCommandReference(document *string, position lsp.P
 			]
 			(#eq? @keydepends "depends")
 		)
-	`, yamlLanguage)
-	if err != nil {
-		return ""
-	}
-
-	root := tree.RootNode()
-	if root == nil {
-		return ""
-	}
-
-	matches := query.Exec(root, yamlLanguage, docBytes)
-
-	for {
-		match, ok := matches.NextMatch()
-		if !ok {
-			break
+	`, func(capture ts.QueryCapture, docBytes []byte) bool {
+		if capture.Name == "reference" && isCursorWithinNode(capture.Node, position) {
+			commandName = capture.Node.Text(docBytes)
+			return true
 		}
 
-		for _, capture := range match.Captures {
-			if capture.Name == "reference" && isCursorWithinNode(capture.Node, position) {
-				return capture.Node.Text(docBytes)
-			}
-		}
-	}
+		return false
+	})
 
-	return ""
+	return commandName
 }
 
 func (p *parser) extractAliasCommandReference(document *string, position lsp.Position) string {
+	var anchorName string
+
+	executeYAMLQuery(document, `
+		(block_mapping_pair
+			key: (flow_node) @keymerge
+			value: (flow_node(alias) @reference)
+			(#eq? @keymerge "<<")
+		)
+	`, func(capture ts.QueryCapture, docBytes []byte) bool {
+		if capture.Name == "reference" && isCursorWithinNode(capture.Node, position) {
+			anchorName = strings.TrimPrefix(capture.Node.Text(docBytes), "*")
+			return true
+		}
+
+		return false
+	})
+
+	if anchorName == "" {
+		return ""
+	}
+
+	commandName := p.findCommandNameByAnchor(document, anchorName)
+	if commandName == "" {
+		p.log.Debugf("alias anchor %q did not match any local command anchor", anchorName)
+		return ""
+	}
+
+	p.log.Debugf("resolved alias anchor %q to command %q", anchorName, commandName)
+
+	return commandName
+}
+
+func (p *parser) findCommandNameByAnchor(document *string, anchorName string) string {
 	tree, docBytes, err := parseYAMLDocument(document)
 	if err != nil {
 		return ""
@@ -389,9 +427,17 @@ func (p *parser) extractAliasCommandReference(document *string, position lsp.Pos
 
 	query, err := ts.NewQuery(`
 		(block_mapping_pair
-			key: (flow_node) @keymerge
-			value: (flow_node(alias) @reference)
-			(#eq? @keymerge "<<")
+			key: (flow_node(plain_scalar(string_scalar)) @commands)
+			value: (block_node
+				(block_mapping
+					(block_mapping_pair
+						key: (flow_node
+							(plain_scalar
+								(string_scalar)) @cmd_key)
+						value: (block_node
+							(anchor
+								(anchor_name) @anchor_name)))))
+			(#eq? @commands "commands")
 		)
 	`, yamlLanguage)
 	if err != nil {
@@ -411,12 +457,20 @@ func (p *parser) extractAliasCommandReference(document *string, position lsp.Pos
 			break
 		}
 
-		for _, capture := range match.Captures {
-			if capture.Name != "reference" || !isCursorWithinNode(capture.Node, position) {
-				continue
-			}
+		var commandName string
+		var matchedAnchor string
 
-			return strings.TrimPrefix(capture.Node.Text(docBytes), "*")
+		for _, capture := range match.Captures {
+			switch capture.Name {
+			case "cmd_key":
+				commandName = capture.Node.Text(docBytes)
+			case "anchor_name":
+				matchedAnchor = capture.Node.Text(docBytes)
+			}
+		}
+
+		if matchedAnchor == anchorName {
+			return commandName
 		}
 	}
 

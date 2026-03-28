@@ -68,14 +68,18 @@ func (h *definitionHandler) findMixinsDefinition(doc *string, params *lsp.Defini
 
 	filename := h.parser.extractFilenameFromMixins(doc, params.Position)
 	if filename == "" {
+		h.parser.log.Debugf("no mixin filename resolved at %s:%d:%d", path, params.Position.Line, params.Position.Character)
 		return nil, nil
 	}
 
 	absFilename := replacePathFilename(path, filename)
 
 	if !util.FileExists(absFilename) {
+		h.parser.log.Debugf("mixin target does not exist: %s", absFilename)
 		return nil, nil
 	}
+
+	h.parser.log.Debugf("resolved mixin definition %q -> %s", filename, absFilename)
 
 	return []lsp.Location{
 		{
@@ -86,15 +90,26 @@ func (h *definitionHandler) findMixinsDefinition(doc *string, params *lsp.Defini
 }
 
 func (h *definitionHandler) findCommandDefinition(doc *string, params *lsp.DefinitionParams) (any, error) {
+	path := normalizePath(params.TextDocument.URI)
 	commandName := h.parser.extractCommandReference(doc, params.Position)
 	if commandName == "" {
+		h.parser.log.Debugf("no command reference resolved at %s:%d:%d", path, params.Position.Line, params.Position.Character)
 		return nil, nil
 	}
 
 	command := h.parser.findCommand(doc, commandName)
 	if command == nil {
+		h.parser.log.Debugf("command reference %q did not match any local command", commandName)
 		return nil, nil
 	}
+
+	h.parser.log.Debugf(
+		"resolved command definition %q -> %s:%d:%d",
+		commandName,
+		path,
+		command.position.Line,
+		command.position.Character,
+	)
 
 	// TODO: theoretically we can have multiple commands with the same name if we have mixins
 	return []lsp.Location{
@@ -154,13 +169,22 @@ func (s *lspServer) textDocumentDefinition(context *glsp.Context, params *lsp.De
 	doc := s.storage.GetDocument(params.TextDocument.URI)
 
 	p := newParser(s.log)
+	positionType := p.getPositionType(doc, params.Position)
+	s.log.Debugf(
+		"definition request uri=%s line=%d char=%d type=%s",
+		normalizePath(params.TextDocument.URI),
+		params.Position.Line,
+		params.Position.Character,
+		positionType,
+	)
 
-	switch p.getPositionType(doc, params.Position) {
+	switch positionType {
 	case PositionTypeMixins:
 		return definitionHandler.findMixinsDefinition(doc, params)
 	case PositionTypeDepends, PositionTypeCommandAlias:
 		return definitionHandler.findCommandDefinition(doc, params)
 	default:
+		s.log.Debugf("definition request ignored: unsupported cursor position")
 		return nil, nil
 	}
 }
