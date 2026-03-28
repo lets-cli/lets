@@ -25,8 +25,8 @@ func (s *lspServer) Run() error {
 	return s.server.RunStdio()
 }
 
-func lspLogVerbosity() (verbosity int) {
-	verbosity = 1
+func lspLogVerbosity() int {
+	verbosity := 1
 
 	defer func() {
 		_ = recover()

@@ -106,49 +106,6 @@ func executeYAMLQuery(document *string, queryText string, visit func(capture ts.
 	return false
 }
 
-func getLine(document *string, line uint32) string {
-	lines := strings.Split(*document, "\n")
-	if line >= uint32(len(lines)) {
-		return ""
-	}
-
-	return lines[line]
-}
-
-// position.
-func wordUnderCursor(text string, position *lsp.Position) string {
-	if len(text) == 0 {
-		return ""
-	}
-
-	character := position.Character
-
-	if character >= uint32(len(text)) {
-		return ""
-	}
-
-	if text[character] == ' ' {
-		return ""
-	}
-
-	// Find word boundaries
-	start := position.Character
-	for start > 0 && isWordChar(text[start-1]) {
-		start--
-	}
-
-	end := position.Character
-	for end < uint32(len(text)) && isWordChar(text[end]) {
-		end++
-	}
-
-	return text[start:end]
-}
-
-func isWordChar(c byte) bool {
-	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_' || c == '-'
-}
-
 type parser struct {
 	log commonlog.Logger
 }
@@ -457,8 +414,10 @@ func (p *parser) findCommandNameByAnchor(document *string, anchorName string) st
 			break
 		}
 
-		var commandName string
-		var matchedAnchor string
+		var (
+			commandName   string
+			matchedAnchor string
+		)
 
 		for _, capture := range match.Captures {
 			switch capture.Name {

@@ -91,6 +91,7 @@ func (h *definitionHandler) findMixinsDefinition(doc *string, params *lsp.Defini
 
 func (h *definitionHandler) findCommandDefinition(doc *string, params *lsp.DefinitionParams) (any, error) {
 	path := normalizePath(params.TextDocument.URI)
+
 	commandName := h.parser.extractCommandReference(doc, params.Position)
 	if commandName == "" {
 		h.parser.log.Debugf("no command reference resolved at %s:%d:%d", path, params.Position.Line, params.Position.Character)

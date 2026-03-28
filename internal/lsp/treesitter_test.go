@@ -694,28 +694,3 @@ commands:
 		t.Fatalf("extractDependsValues() = %#v, want %#v", got, want)
 	}
 }
-
-func TestWordUnderCursor(t *testing.T) {
-	tests := []struct {
-		line     string
-		position lsp.Position
-		want     string
-	}{
-		{"test word here", lsp.Position{Character: 0}, "test"},
-		{"test word here", lsp.Position{Character: 2}, "test"},
-		{"test word here", lsp.Position{Character: 5}, "word"},
-		{"test word here", lsp.Position{Character: 10}, "here"},
-		{"test-word_123", lsp.Position{Character: 5}, "test-word_123"},
-		{"", lsp.Position{Character: 0}, ""},
-		{"test", lsp.Position{Character: 10}, ""},
-		{"test word", lsp.Position{Character: 4}, ""},
-		{"  test  ", lsp.Position{Character: 3}, "test"},
-	}
-
-	for i, tt := range tests {
-		got := wordUnderCursor(tt.line, &tt.position)
-		if got != tt.want {
-			t.Errorf("case %d: got %q, want %q", i, got, tt.want)
-		}
-	}
-}
