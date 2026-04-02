@@ -16,7 +16,7 @@ require (
 	github.com/spf13/cobra v1.10.2
 	github.com/tliron/commonlog v0.2.8
 	github.com/tliron/glsp v0.2.2
-	golang.org/x/sync v0.3.0
+	golang.org/x/sync v0.20.0
 )
 
 require (
