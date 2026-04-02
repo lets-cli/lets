@@ -35,6 +35,10 @@ func (s *lspServer) initialized(context *glsp.Context, params *lsp.InitializedPa
 }
 
 func (s *lspServer) shutdown(context *glsp.Context) error {
+	if s.refresh != nil {
+		s.refresh.Stop()
+	}
+
 	lsp.SetTraceValue(lsp.TraceValueOff)
 	return nil
 }
@@ -74,11 +78,20 @@ func (s *lspServer) loadMixins(uri string) {
 	}
 }
 
+func (s *lspServer) refreshDocument(uri string) {
+	doc := s.storage.GetDocument(uri)
+	if doc == nil {
+		return
+	}
+
+	s.index.IndexDocument(uri, *doc)
+	s.loadMixins(uri)
+}
+
 func (s *lspServer) textDocumentDidOpen(context *glsp.Context, params *lsp.DidOpenTextDocumentParams) error {
 	s.storage.AddDocument(params.TextDocument.URI, params.TextDocument.Text)
 
-	go s.index.IndexDocument(params.TextDocument.URI, params.TextDocument.Text)
-	go s.loadMixins(params.TextDocument.URI)
+	go s.refreshDocument(params.TextDocument.URI)
 
 	return nil
 }
@@ -88,9 +101,11 @@ func (s *lspServer) textDocumentDidChange(context *glsp.Context, params *lsp.Did
 		switch c := change.(type) {
 		case lsp.TextDocumentContentChangeEventWhole:
 			s.storage.AddDocument(params.TextDocument.URI, c.Text)
-
-			go s.index.IndexDocument(params.TextDocument.URI, c.Text)
-			go s.loadMixins(params.TextDocument.URI)
+			if s.refresh != nil {
+				s.refresh.Schedule(params.TextDocument.URI)
+			} else {
+				go s.refreshDocument(params.TextDocument.URI)
+			}
 		case lsp.TextDocumentContentChangeEvent:
 			return errors.New("incremental changes not supported")
 		}
