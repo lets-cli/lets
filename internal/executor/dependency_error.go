@@ -9,14 +9,16 @@ import (
 	"github.com/fatih/color"
 )
 
+const dependencyTreeIndent = "  "
+const dependencyTreeHeader = "command failed:"
+const dependencyTreeJoint = "└─ "
+
 // DependencyError carries the full dependency chain when a command fails.
 // Chain is outermost-first (e.g., ["deploy", "build", "lint"]).
 type DependencyError struct {
 	Chain []string
 	Err   error
 }
-
-const treePrefix = "lets: "
 
 func (e *DependencyError) Error() string { return e.Err.Error() }
 func (e *DependencyError) Unwrap() error { return e.Err }
@@ -40,6 +42,28 @@ func (e *DependencyError) FailureMessage() string {
 	return e.Err.Error()
 }
 
+func (e *DependencyError) TreeMessage() string {
+	red := color.New(color.FgRed).SprintFunc()
+
+	var builder strings.Builder
+
+	builder.WriteString(dependencyTreeHeader)
+
+	for i, name := range e.Chain {
+		builder.WriteByte('\n')
+		builder.WriteString(strings.Repeat(dependencyTreeIndent, i+1))
+		builder.WriteString(dependencyTreeJoint)
+		builder.WriteString(name)
+
+		if i == len(e.Chain)-1 {
+			builder.WriteString(dependencyTreeIndent)
+			builder.WriteString(red("<-- failed here"))
+		}
+	}
+
+	return builder.String()
+}
+
 // prependToChain prepends name to the chain in err if err is already a *DependencyError,
 // otherwise wraps err in a new single-element DependencyError.
 func prependToChain(name string, err error) error {
@@ -55,19 +79,5 @@ func prependToChain(name string, err error) error {
 // The failing node (last in chain) is annotated in red.
 // Respects NO_COLOR automatically via fatih/color.
 func PrintDependencyTree(e *DependencyError, w io.Writer) {
-	red := color.New(color.FgRed).SprintFunc()
-	treeIndent := strings.Repeat(" ", len(treePrefix))
-
-	for i, name := range e.Chain {
-		indent := treeIndent + strings.Repeat("  ", i+1)
-		if i == 0 {
-			indent = treePrefix
-		}
-
-		if i == len(e.Chain)-1 {
-			fmt.Fprintf(w, "%s%s  %s\n", indent, name, red("<-- failed here"))
-		} else {
-			fmt.Fprintf(w, "%s%s\n", indent, name)
-		}
-	}
+	fmt.Fprintln(w, e.TreeMessage())
 }

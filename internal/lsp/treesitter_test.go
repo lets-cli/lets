@@ -197,6 +197,38 @@ commands:
 	}
 }
 
+func TestDetectCommandAliasPosition(t *testing.T) {
+	doc := `commands:
+  test: &test
+    cmd: echo Test
+  run-test:
+    <<: *test
+    cmd: echo Run`
+
+	tests := []struct {
+		pos  lsp.Position
+		want bool
+	}{
+		{pos: pos(4, 7), want: false},
+		{pos: pos(4, 8), want: true},
+		{pos: pos(4, 10), want: true},
+		{pos: pos(4, 13), want: true},
+		{pos: pos(5, 8), want: false},
+	}
+
+	p := newParser(logger)
+	for i, tt := range tests {
+		got := p.inCommandAliasPosition(&doc, tt.pos)
+		if got != tt.want {
+			t.Errorf("case %d: expected %v, actual %v", i, tt.want, got)
+		}
+	}
+
+	if got := p.getPositionType(&doc, pos(4, 10)); got != PositionTypeCommandAlias {
+		t.Fatalf("expected PositionTypeCommandAlias, got %v", got)
+	}
+}
+
 func TestGetCommands(t *testing.T) {
 	doc := `shell: bash
 mixins:
@@ -336,6 +368,112 @@ commands:
 	}
 }
 
+func TestExtractCommandReference(t *testing.T) {
+	doc := `commands:
+  build:
+    cmd: echo Build
+  test: &test
+    depends:
+      - build
+    cmd: echo Test
+  run-test:
+    <<: *test
+    depends: [build, test]
+    cmd: echo Run`
+
+	tests := []struct {
+		name string
+		pos  lsp.Position
+		want string
+	}{
+		{name: "block depends item", pos: pos(5, 8), want: "build"},
+		{name: "merge alias star", pos: pos(8, 8), want: "test"},
+		{name: "merge alias name", pos: pos(8, 10), want: "test"},
+		{name: "flow depends first item", pos: pos(9, 14), want: "build"},
+		{name: "flow depends second item", pos: pos(9, 21), want: "test"},
+		{name: "outside reference", pos: pos(10, 10), want: ""},
+	}
+
+	p := newParser(logger)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := p.extractCommandReference(&doc, tt.pos)
+			if got != tt.want {
+				t.Fatalf("extractCommandReference() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestFindCommandDefinitionFromAlias(t *testing.T) {
+	doc := `commands:
+  publish-docs: &docs
+    work_dir: docs
+    cmd: npm run doc:deploy
+  run-docs:
+    <<: *docs
+    cmd: npm start`
+
+	idx := newIndex(logger)
+	idx.IndexDocument("file:///tmp/lets.yaml", doc)
+
+	handler := definitionHandler{
+		log:    logger,
+		parser: newParser(logger),
+		index:  idx,
+	}
+	params := &lsp.DefinitionParams{
+		TextDocumentPositionParams: lsp.TextDocumentPositionParams{
+			TextDocument: lsp.TextDocumentIdentifier{URI: "file:///tmp/lets.yaml"},
+			Position:     pos(5, 10),
+		},
+	}
+
+	got, err := handler.findCommandDefinition(&doc, params)
+	if err != nil {
+		t.Fatalf("findCommandDefinition() error = %v", err)
+	}
+
+	locations, ok := got.([]lsp.Location)
+	if !ok {
+		t.Fatalf("findCommandDefinition() type = %T, want []lsp.Location", got)
+	}
+
+	want := []lsp.Location{
+		{
+			URI: "file:///tmp/lets.yaml",
+			Range: lsp.Range{
+				Start: pos(1, 2),
+				End:   pos(1, 2),
+			},
+		},
+	}
+
+	if !reflect.DeepEqual(locations, want) {
+		t.Fatalf("findCommandDefinition() = %#v, want %#v", locations, want)
+	}
+}
+
+func TestFindCommandNameByAnchor(t *testing.T) {
+	doc := `commands:
+  publish-docs: &docs
+    work_dir: docs
+    cmd: npm run doc:deploy
+  run-docs:
+    <<: *docs
+    cmd: npm start`
+
+	p := newParser(logger)
+
+	if got := p.findCommandNameByAnchor(&doc, "docs"); got != "publish-docs" {
+		t.Fatalf("findCommandNameByAnchor() = %q, want %q", got, "publish-docs")
+	}
+
+	if got := p.findCommandNameByAnchor(&doc, "missing"); got != "" {
+		t.Fatalf("findCommandNameByAnchor() = %q, want empty", got)
+	}
+}
+
 func TestMixinsHelpersWithMultipleItems(t *testing.T) {
 	blockDoc := `shell: bash
 mixins:
@@ -406,6 +544,24 @@ commands:
 				t.Fatalf("extractFilenameFromMixins() = %q, want %q", gotFilename, tt.wantFilename)
 			}
 		})
+	}
+}
+
+func TestGetMixinFilenames(t *testing.T) {
+	doc := `shell: bash
+mixins:
+  - lets.base.yaml
+  - -lets.local.yaml
+commands:
+  build:
+    cmd: echo build`
+
+	p := newParser(logger)
+	got := p.getMixinFilenames(&doc)
+	want := []string{"lets.base.yaml", "-lets.local.yaml"}
+
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("getMixinFilenames() = %#v, want %#v", got, want)
 	}
 }
 
@@ -561,30 +717,5 @@ commands:
 
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("extractDependsValues() = %#v, want %#v", got, want)
-	}
-}
-
-func TestWordUnderCursor(t *testing.T) {
-	tests := []struct {
-		line     string
-		position lsp.Position
-		want     string
-	}{
-		{"test word here", lsp.Position{Character: 0}, "test"},
-		{"test word here", lsp.Position{Character: 2}, "test"},
-		{"test word here", lsp.Position{Character: 5}, "word"},
-		{"test word here", lsp.Position{Character: 10}, "here"},
-		{"test-word_123", lsp.Position{Character: 5}, "test-word_123"},
-		{"", lsp.Position{Character: 0}, ""},
-		{"test", lsp.Position{Character: 10}, ""},
-		{"test word", lsp.Position{Character: 4}, ""},
-		{"  test  ", lsp.Position{Character: 3}, "test"},
-	}
-
-	for i, tt := range tests {
-		got := wordUnderCursor(tt.line, &tt.position)
-		if got != tt.want {
-			t.Errorf("case %d: got %q, want %q", i, got, tt.want)
-		}
 	}
 }

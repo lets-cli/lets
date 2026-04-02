@@ -2,9 +2,12 @@ package lsp
 
 import (
 	"errors"
+	"os"
 	"slices"
+	"strings"
 
 	"github.com/lets-cli/lets/internal/util"
+	"github.com/tliron/commonlog"
 	"github.com/tliron/glsp"
 	lsp "github.com/tliron/glsp/protocol_3_16"
 )
@@ -41,8 +44,42 @@ func (s *lspServer) setTrace(context *glsp.Context, params *lsp.SetTraceParams) 
 	return nil
 }
 
+// loadMixins reads local mixin files referenced by a document and adds them to storage and index.
+func (s *lspServer) loadMixins(uri string) {
+	doc := s.storage.GetDocument(uri)
+	if doc == nil {
+		return
+	}
+
+	path := normalizePath(uri)
+
+	for _, filename := range s.parser.getMixinFilenames(doc) {
+		mixinPath := replacePathFilename(path, strings.TrimPrefix(filename, "-"))
+		if !util.FileExists(mixinPath) {
+			s.log.Debugf("mixin target does not exist: %s", mixinPath)
+			continue
+		}
+
+		data, err := os.ReadFile(mixinPath)
+		if err != nil {
+			s.log.Warningf("failed to read mixin %s: %v", mixinPath, err)
+			continue
+		}
+
+		mixinURI := pathToURI(mixinPath)
+		text := string(data)
+
+		s.storage.AddDocument(mixinURI, text)
+		s.index.IndexDocument(mixinURI, text)
+	}
+}
+
 func (s *lspServer) textDocumentDidOpen(context *glsp.Context, params *lsp.DidOpenTextDocumentParams) error {
 	s.storage.AddDocument(params.TextDocument.URI, params.TextDocument.Text)
+
+	go s.index.IndexDocument(params.TextDocument.URI, params.TextDocument.Text)
+	go s.loadMixins(params.TextDocument.URI)
+
 	return nil
 }
 
@@ -51,6 +88,9 @@ func (s *lspServer) textDocumentDidChange(context *glsp.Context, params *lsp.Did
 		switch c := change.(type) {
 		case lsp.TextDocumentContentChangeEventWhole:
 			s.storage.AddDocument(params.TextDocument.URI, c.Text)
+
+			go s.index.IndexDocument(params.TextDocument.URI, c.Text)
+			go s.loadMixins(params.TextDocument.URI)
 		case lsp.TextDocumentContentChangeEvent:
 			return errors.New("incremental changes not supported")
 		}
@@ -60,7 +100,9 @@ func (s *lspServer) textDocumentDidChange(context *glsp.Context, params *lsp.Did
 }
 
 type definitionHandler struct {
+	log    commonlog.Logger
 	parser *parser
+	index  *index
 }
 
 func (h *definitionHandler) findMixinsDefinition(doc *string, params *lsp.DefinitionParams) (any, error) {
@@ -68,14 +110,18 @@ func (h *definitionHandler) findMixinsDefinition(doc *string, params *lsp.Defini
 
 	filename := h.parser.extractFilenameFromMixins(doc, params.Position)
 	if filename == "" {
+		h.parser.log.Debugf("no mixin filename resolved at %s:%d:%d", path, params.Position.Line, params.Position.Character)
 		return nil, nil
 	}
 
 	absFilename := replacePathFilename(path, filename)
 
 	if !util.FileExists(absFilename) {
+		h.parser.log.Debugf("mixin target does not exist: %s", absFilename)
 		return nil, nil
 	}
+
+	h.parser.log.Debugf("resolved mixin definition %q -> %s", filename, absFilename)
 
 	return []lsp.Location{
 		{
@@ -85,39 +131,48 @@ func (h *definitionHandler) findMixinsDefinition(doc *string, params *lsp.Defini
 	}, nil
 }
 
-func (h *definitionHandler) findCommandDefinition(doc *string, params *lsp.DefinitionParams) (any, error) {
-	line := getLine(doc, params.Position.Line)
-	if line == "" {
-		return nil, nil
-	}
-
-	word := wordUnderCursor(line, &params.Position)
-	if word == "" {
-		return nil, nil
-	}
-
-	command := h.parser.findCommand(doc, word)
-	if command == nil {
-		return nil, nil
-	}
-
-	// TODO: theoretically we can have multiple commands with the same name if we have mixins
-	return []lsp.Location{
-		{
-			// TODO: support commands in other files
-			URI: params.TextDocument.URI,
-			Range: lsp.Range{
-				Start: lsp.Position{
-					Line:      command.position.Line,
-					Character: 2, // TODO: do we have to assume indentation?
-				},
-				End: lsp.Position{
-					Line:      command.position.Line,
-					Character: 2, // TODO: do we need + len ?
-				},
+func locationForCommand(uri string, position lsp.Position) lsp.Location {
+	return lsp.Location{
+		URI: uri,
+		Range: lsp.Range{
+			Start: lsp.Position{
+				Line:      position.Line,
+				Character: 2, // TODO: do we have to assume indentation?
+			},
+			End: lsp.Position{
+				Line:      position.Line,
+				Character: 2, // TODO: do we need + len ?
 			},
 		},
-	}, nil
+	}
+}
+
+func (h *definitionHandler) findCommandDefinition(doc *string, params *lsp.DefinitionParams) (any, error) {
+	path := normalizePath(params.TextDocument.URI)
+
+	commandName := h.parser.extractCommandReference(doc, params.Position)
+	if commandName == "" {
+		h.log.Debugf("no command reference resolved at %s:%d:%d", path, params.Position.Line, params.Position.Character)
+		return nil, nil
+	}
+
+	commandInfo, found := h.index.findCommand(commandName)
+	if !found {
+		h.log.Debugf("command reference %q did not match any local command", commandName)
+		return nil, nil
+	}
+
+	h.log.Debugf(
+		"resolved command definition %q -> %s:%d:%d",
+		commandName,
+		path,
+		commandInfo.position.Line,
+		commandInfo.position.Character,
+	)
+
+	loc := locationForCommand(commandInfo.fileURI, commandInfo.position)
+
+	return []lsp.Location{loc}, nil
 }
 
 type completionHandler struct {
@@ -154,18 +209,28 @@ func (h *completionHandler) buildDependsCompletions(doc *string, params *lsp.Com
 // Returns: Location | []Location | []LocationLink | nil.
 func (s *lspServer) textDocumentDefinition(context *glsp.Context, params *lsp.DefinitionParams) (any, error) {
 	definitionHandler := definitionHandler{
-		parser: newParser(s.log),
+		log:    s.log,
+		parser: s.parser,
+		index:  s.index,
 	}
 	doc := s.storage.GetDocument(params.TextDocument.URI)
 
-	p := newParser(s.log)
+	positionType := s.parser.getPositionType(doc, params.Position)
+	s.log.Debugf(
+		"definition request uri=%s line=%d char=%d type=%s",
+		normalizePath(params.TextDocument.URI),
+		params.Position.Line,
+		params.Position.Character,
+		positionType,
+	)
 
-	switch p.getPositionType(doc, params.Position) {
+	switch positionType {
 	case PositionTypeMixins:
 		return definitionHandler.findMixinsDefinition(doc, params)
-	case PositionTypeDepends:
+	case PositionTypeDepends, PositionTypeCommandAlias:
 		return definitionHandler.findCommandDefinition(doc, params)
 	default:
+		s.log.Debugf("definition request ignored: unsupported cursor position")
 		return nil, nil
 	}
 }
@@ -173,12 +238,11 @@ func (s *lspServer) textDocumentDefinition(context *glsp.Context, params *lsp.De
 // Returns: []CompletionItem | CompletionList | nil.
 func (s *lspServer) textDocumentCompletion(context *glsp.Context, params *lsp.CompletionParams) (any, error) {
 	completionHandler := completionHandler{
-		parser: newParser(s.log),
+		parser: s.parser,
 	}
 	doc := s.storage.GetDocument(params.TextDocument.URI)
 
-	p := newParser(s.log)
-	switch p.getPositionType(doc, params.Position) {
+	switch s.parser.getPositionType(doc, params.Position) {
 	case PositionTypeDepends:
 		return completionHandler.buildDependsCompletions(doc, params)
 	default:

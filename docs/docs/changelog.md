@@ -11,7 +11,7 @@ title: Changelog
 * `[Added]` Expose `LETS_OS` and `LETS_ARCH` environment variables at command runtime.
 * `[Removed]` Drop deprecated `eval_env` directive. Use `env` with `sh` execution mode instead.
 * `[Added]` When a command or its `depends` chain fails, print an indented tree to stderr showing the full chain with the failing command highlighted
-* `[Changed]` Format command failure output as a `lets:`-prefixed tree plus a separate final status line such as `lets: exit status 1`.
+* `[Changed]` Format command failure output as a logger-prefixed `command failed:` block followed by the dependency tree, while preserving the final status line such as `lets: exit status 1`.
 * `[Added]` Support `env_file` in global config and commands. File names are expanded after `env` is resolved, and values loaded from env files override values from `env`.
 * `[Changed]` Migrate the LSP YAML parser from the CGO-based tree-sitter bindings to pure-Go [`gotreesitter`](https://github.com/odvcencio/gotreesitter), removing the C toolchain requirement from normal builds and release packaging.
 * `[Refactoring]` Move CLI startup flow from `cmd/lets/main.go` into `internal/cli/cli.go`, keeping `main.go` as a thin launcher.
@@ -19,6 +19,8 @@ title: Changelog
 * `[Added]` Show background update notifications for interactive sessions, with Homebrew-aware guidance and `LETS_CHECK_UPDATE` opt-out.
 * `[Changed]` Centralize the `lets:` log prefix in the formatter and render debug messages in blue.
 * `[Added]` Add user settings in `~/.config/lets/config.yaml` for lets behavior such as `no_color` and `upgrade_notify`, with env variables still taking precedence.
+* `[Fixed]` Resolve `go to definition` from YAML merge aliases such as `<<: *test` to the referenced command in `lets self lsp`.
+* `[Added]` Load local mixin files into LSP storage and command index so mixin commands are available for navigation.
 
 ## [0.0.59](https://github.com/lets-cli/lets/releases/tag/v0.0.59)
 
