@@ -44,6 +44,7 @@ func (e *DependencyError) FailureMessage() string {
 
 func (e *DependencyError) TreeMessage() string {
 	red := color.New(color.FgRed).SprintFunc()
+
 	var builder strings.Builder
 
 	builder.WriteString(dependencyTreeHeader)

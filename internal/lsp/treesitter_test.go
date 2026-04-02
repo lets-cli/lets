@@ -414,7 +414,14 @@ func TestFindCommandDefinitionFromAlias(t *testing.T) {
     <<: *docs
     cmd: npm start`
 
-	handler := definitionHandler{parser: newParser(logger)}
+	idx := newIndex(logger)
+	idx.IndexDocument("file:///tmp/lets.yaml", doc)
+
+	handler := definitionHandler{
+		log:    logger,
+		parser: newParser(logger),
+		index:  idx,
+	}
 	params := &lsp.DefinitionParams{
 		TextDocumentPositionParams: lsp.TextDocumentPositionParams{
 			TextDocument: lsp.TextDocumentIdentifier{URI: "file:///tmp/lets.yaml"},
@@ -537,6 +544,24 @@ commands:
 				t.Fatalf("extractFilenameFromMixins() = %q, want %q", gotFilename, tt.wantFilename)
 			}
 		})
+	}
+}
+
+func TestGetMixinFilenames(t *testing.T) {
+	doc := `shell: bash
+mixins:
+  - lets.base.yaml
+  - -lets.local.yaml
+commands:
+  build:
+    cmd: echo build`
+
+	p := newParser(logger)
+	got := p.getMixinFilenames(&doc)
+	want := []string{"lets.base.yaml", "-lets.local.yaml"}
+
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("getMixinFilenames() = %#v, want %#v", got, want)
 	}
 }
 

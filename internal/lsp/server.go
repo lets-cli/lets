@@ -18,6 +18,8 @@ type lspServer struct {
 	version string
 	server  *server.Server
 	storage *storage
+	parser  *parser
+	index   *index
 	log     commonlog.Logger
 }
 
@@ -54,6 +56,8 @@ func Run(ctx context.Context, version string) error {
 		version: version,
 		server:  glspServer,
 		storage: newStorage(),
+		parser:  newParser(logger),
+		index:   newIndex(logger),
 		log:     logger,
 	}
 
@@ -65,6 +69,7 @@ func Run(ctx context.Context, version string) error {
 	handler.TextDocumentDidChange = lspServer.textDocumentDidChange
 	handler.TextDocumentDefinition = lspServer.textDocumentDefinition
 	handler.TextDocumentCompletion = lspServer.textDocumentCompletion
+	// TODO: add onDelete
 
 	return lspServer.Run()
 }

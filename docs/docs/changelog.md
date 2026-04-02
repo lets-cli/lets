@@ -19,6 +19,7 @@ title: Changelog
 * `[Added]` Show background update notifications for interactive sessions, with Homebrew-aware guidance and `LETS_CHECK_UPDATE` opt-out.
 * `[Changed]` Centralize the `lets:` log prefix in the formatter and render debug messages in blue.
 * `[Fixed]` Resolve `go to definition` from YAML merge aliases such as `<<: *test` to the referenced command in `lets self lsp`.
+* `[Added]` Load local mixin files into LSP storage and command index so mixin commands are available for navigation.
 
 ## [0.0.59](https://github.com/lets-cli/lets/releases/tag/v0.0.59)
 
