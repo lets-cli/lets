@@ -18,6 +18,7 @@ type commandInfo struct {
 
 type index struct {
 	log           commonlog.Logger
+	parser        *parser
 	mu            sync.RWMutex
 	commands      map[string]commandInfo
 	commandsByURI map[string]set.Set[string]
@@ -26,6 +27,7 @@ type index struct {
 func newIndex(log commonlog.Logger) *index {
 	return &index{
 		log:           log,
+		parser:        newParser(log),
 		commands:      make(map[string]commandInfo),
 		commandsByURI: make(map[string]set.Set[string]),
 	}
@@ -33,8 +35,7 @@ func newIndex(log commonlog.Logger) *index {
 
 // IndexDocument extracts commands from a document and updates the index to reflect that document's current state.
 func (i *index) IndexDocument(uri string, doc string) {
-	parser := newParser(i.log)
-	commands := parser.getCommands(&doc)
+	commands := i.parser.getCommands(&doc)
 
 	indexedCommands := make(map[string]commandInfo, len(commands))
 	indexedNames := set.NewSet[string]()

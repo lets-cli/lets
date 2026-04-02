@@ -39,6 +39,7 @@ commands:
 
 	server := &lspServer{
 		storage: newStorage(),
+		parser:  newParser(logger),
 		index:   newIndex(logger),
 		log:     logger,
 	}
@@ -91,6 +92,7 @@ commands:
 
 	server := &lspServer{
 		storage: newStorage(),
+		parser:  newParser(logger),
 		index:   newIndex(logger),
 		log:     logger,
 	}

@@ -51,10 +51,9 @@ func (s *lspServer) loadMixins(uri string) {
 		return
 	}
 
-	parser := newParser(s.log)
 	path := normalizePath(uri)
 
-	for _, filename := range parser.getMixinFilenames(doc) {
+	for _, filename := range s.parser.getMixinFilenames(doc) {
 		mixinPath := replacePathFilename(path, strings.TrimPrefix(filename, "-"))
 		if !util.FileExists(mixinPath) {
 			s.log.Debugf("mixin target does not exist: %s", mixinPath)
@@ -211,13 +210,12 @@ func (h *completionHandler) buildDependsCompletions(doc *string, params *lsp.Com
 func (s *lspServer) textDocumentDefinition(context *glsp.Context, params *lsp.DefinitionParams) (any, error) {
 	definitionHandler := definitionHandler{
 		log:    s.log,
-		parser: newParser(s.log),
+		parser: s.parser,
 		index:  s.index,
 	}
 	doc := s.storage.GetDocument(params.TextDocument.URI)
 
-	p := newParser(s.log)
-	positionType := p.getPositionType(doc, params.Position)
+	positionType := s.parser.getPositionType(doc, params.Position)
 	s.log.Debugf(
 		"definition request uri=%s line=%d char=%d type=%s",
 		normalizePath(params.TextDocument.URI),
@@ -240,12 +238,11 @@ func (s *lspServer) textDocumentDefinition(context *glsp.Context, params *lsp.De
 // Returns: []CompletionItem | CompletionList | nil.
 func (s *lspServer) textDocumentCompletion(context *glsp.Context, params *lsp.CompletionParams) (any, error) {
 	completionHandler := completionHandler{
-		parser: newParser(s.log),
+		parser: s.parser,
 	}
 	doc := s.storage.GetDocument(params.TextDocument.URI)
 
-	p := newParser(s.log)
-	switch p.getPositionType(doc, params.Position) {
+	switch s.parser.getPositionType(doc, params.Position) {
 	case PositionTypeDepends:
 		return completionHandler.buildDependsCompletions(doc, params)
 	default:
