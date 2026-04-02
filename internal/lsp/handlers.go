@@ -5,6 +5,7 @@ import (
 	"slices"
 
 	"github.com/lets-cli/lets/internal/util"
+	"github.com/tliron/commonlog"
 	"github.com/tliron/glsp"
 	lsp "github.com/tliron/glsp/protocol_3_16"
 )
@@ -43,6 +44,7 @@ func (s *lspServer) setTrace(context *glsp.Context, params *lsp.SetTraceParams) 
 
 func (s *lspServer) textDocumentDidOpen(context *glsp.Context, params *lsp.DidOpenTextDocumentParams) error {
 	s.storage.AddDocument(params.TextDocument.URI, params.TextDocument.Text)
+	go s.index.IndexDocument(params.TextDocument.URI, params.TextDocument.Text)
 	return nil
 }
 
@@ -51,6 +53,7 @@ func (s *lspServer) textDocumentDidChange(context *glsp.Context, params *lsp.Did
 		switch c := change.(type) {
 		case lsp.TextDocumentContentChangeEventWhole:
 			s.storage.AddDocument(params.TextDocument.URI, c.Text)
+			go s.index.IndexDocument(params.TextDocument.URI, c.Text)
 		case lsp.TextDocumentContentChangeEvent:
 			return errors.New("incremental changes not supported")
 		}
@@ -60,7 +63,9 @@ func (s *lspServer) textDocumentDidChange(context *glsp.Context, params *lsp.Did
 }
 
 type definitionHandler struct {
+	log    commonlog.Logger
 	parser *parser
+	index  *index
 }
 
 func (h *definitionHandler) findMixinsDefinition(doc *string, params *lsp.DefinitionParams) (any, error) {
@@ -89,46 +94,47 @@ func (h *definitionHandler) findMixinsDefinition(doc *string, params *lsp.Defini
 	}, nil
 }
 
+func locationForCommand(uri string, position lsp.Position) lsp.Location {
+	return lsp.Location{
+		URI: uri,
+		Range: lsp.Range{
+			Start: lsp.Position{
+				Line:      position.Line,
+				Character: 2, // TODO: do we have to assume indentation?
+			},
+			End: lsp.Position{
+				Line:      position.Line,
+				Character: 2, // TODO: do we need + len ?
+			},
+		},
+	}
+}
+
 func (h *definitionHandler) findCommandDefinition(doc *string, params *lsp.DefinitionParams) (any, error) {
 	path := normalizePath(params.TextDocument.URI)
 
 	commandName := h.parser.extractCommandReference(doc, params.Position)
 	if commandName == "" {
-		h.parser.log.Debugf("no command reference resolved at %s:%d:%d", path, params.Position.Line, params.Position.Character)
+		h.log.Debugf("no command reference resolved at %s:%d:%d", path, params.Position.Line, params.Position.Character)
 		return nil, nil
 	}
 
-	command := h.parser.findCommand(doc, commandName)
-	if command == nil {
-		h.parser.log.Debugf("command reference %q did not match any local command", commandName)
+	commandInfo, found := h.index.findCommand(commandName)
+	if !found {
+		h.log.Debugf("command reference %q did not match any local command", commandName)
 		return nil, nil
 	}
 
-	h.parser.log.Debugf(
+	h.log.Debugf(
 		"resolved command definition %q -> %s:%d:%d",
 		commandName,
 		path,
-		command.position.Line,
-		command.position.Character,
+		commandInfo.position.Line,
+		commandInfo.position.Character,
 	)
 
-	// TODO: theoretically we can have multiple commands with the same name if we have mixins
-	return []lsp.Location{
-		{
-			// TODO: support commands in other files
-			URI: params.TextDocument.URI,
-			Range: lsp.Range{
-				Start: lsp.Position{
-					Line:      command.position.Line,
-					Character: 2, // TODO: do we have to assume indentation?
-				},
-				End: lsp.Position{
-					Line:      command.position.Line,
-					Character: 2, // TODO: do we need + len ?
-				},
-			},
-		},
-	}, nil
+	loc := locationForCommand(commandInfo.fileURI, commandInfo.position)
+	return []lsp.Location{loc}, nil
 }
 
 type completionHandler struct {
@@ -165,7 +171,9 @@ func (h *completionHandler) buildDependsCompletions(doc *string, params *lsp.Com
 // Returns: Location | []Location | []LocationLink | nil.
 func (s *lspServer) textDocumentDefinition(context *glsp.Context, params *lsp.DefinitionParams) (any, error) {
 	definitionHandler := definitionHandler{
+		log:    s.log,
 		parser: newParser(s.log),
+		index:  s.index,
 	}
 	doc := s.storage.GetDocument(params.TextDocument.URI)
 
