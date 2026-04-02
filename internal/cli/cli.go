@@ -16,6 +16,7 @@ import (
 	"github.com/lets-cli/lets/internal/executor"
 	"github.com/lets-cli/lets/internal/logging"
 	"github.com/lets-cli/lets/internal/set"
+	"github.com/lets-cli/lets/internal/settings"
 	"github.com/lets-cli/lets/internal/upgrade"
 	"github.com/lets-cli/lets/internal/upgrade/registry"
 	"github.com/lets-cli/lets/internal/workdir"
@@ -35,6 +36,14 @@ func Main(version string, buildDate string) int {
 	ctx := getContext()
 
 	configDir := os.Getenv("LETS_CONFIG_DIR")
+
+	appSettings, err := settings.Load()
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "lets: settings error: %s\n", err)
+		return 1
+	}
+
+	appSettings.Apply()
 
 	logging.InitLogging(os.Stdout, os.Stderr)
 
@@ -128,7 +137,7 @@ func Main(version string, buildDate string) int {
 		return 0
 	}
 
-	updateCh, cancelUpdateCheck := maybeStartUpdateCheck(ctx, version, command)
+	updateCh, cancelUpdateCheck := maybeStartUpdateCheck(ctx, version, command, appSettings)
 	defer cancelUpdateCheck()
 
 	if err := rootCmd.ExecuteContext(ctx); err != nil {
@@ -209,8 +218,9 @@ func maybeStartUpdateCheck(
 	ctx context.Context,
 	version string,
 	command *cobra.Command,
+	appSettings settings.Settings,
 ) (<-chan updateCheckResult, context.CancelFunc) {
-	if !shouldCheckForUpdate(command.Name(), isInteractiveStderr()) {
+	if !shouldCheckForUpdate(command.Name(), isInteractiveStderr(), appSettings) {
 		return nil, func() {}
 	}
 
@@ -263,8 +273,8 @@ func printUpdateNotice(updateCh <-chan updateCheckResult) {
 	}
 }
 
-func shouldCheckForUpdate(commandName string, interactive bool) bool {
-	if !interactive || os.Getenv("CI") != "" || os.Getenv("LETS_CHECK_UPDATE") != "" {
+func shouldCheckForUpdate(commandName string, interactive bool, appSettings settings.Settings) bool {
+	if !interactive || !appSettings.UpgradeNotify || os.Getenv("CI") != "" {
 		return false
 	}
 

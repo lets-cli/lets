@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	cmdpkg "github.com/lets-cli/lets/internal/cmd"
+	"github.com/lets-cli/lets/internal/settings"
 	"github.com/spf13/cobra"
 )
 
@@ -59,38 +60,41 @@ func TestAllowsMissingConfig(t *testing.T) {
 }
 
 func TestShouldCheckForUpdate(t *testing.T) {
+	defaultSettings := settings.Default()
+
 	t.Run("should allow normal interactive commands", func(t *testing.T) {
 		t.Setenv("CI", "")
-		t.Setenv("LETS_CHECK_UPDATE", "")
 
-		if !shouldCheckForUpdate("lets", true) {
+		if !shouldCheckForUpdate("lets", true, defaultSettings) {
 			t.Fatal("expected update check to be enabled")
 		}
 	})
 
 	t.Run("should skip non interactive sessions", func(t *testing.T) {
-		if shouldCheckForUpdate("lets", false) {
+		if shouldCheckForUpdate("lets", false, defaultSettings) {
 			t.Fatal("expected non-interactive session to skip update check")
 		}
 	})
 
 	t.Run("should skip when CI is set", func(t *testing.T) {
 		t.Setenv("CI", "1")
-		if shouldCheckForUpdate("lets", true) {
+		if shouldCheckForUpdate("lets", true, defaultSettings) {
 			t.Fatal("expected CI to skip update check")
 		}
 	})
 
-	t.Run("should skip when notifier disabled", func(t *testing.T) {
-		t.Setenv("LETS_CHECK_UPDATE", "1")
-		if shouldCheckForUpdate("lets", true) {
-			t.Fatal("expected opt-out env to skip update check")
+	t.Run("should skip when notifier disabled in settings", func(t *testing.T) {
+		disabled := settings.Default()
+		disabled.UpgradeNotify = false
+
+		if shouldCheckForUpdate("lets", true, disabled) {
+			t.Fatal("expected disabled settings to skip update check")
 		}
 	})
 
 	t.Run("should skip internal commands", func(t *testing.T) {
 		for _, name := range []string{"completion", "help", "lsp", "self"} {
-			if shouldCheckForUpdate(name, true) {
+			if shouldCheckForUpdate(name, true, defaultSettings) {
 				t.Fatalf("expected %q to skip update check", name)
 			}
 		}
