@@ -1,8 +1,10 @@
 package lsp
 
 import (
+	"maps"
 	"sync"
 
+	"github.com/lets-cli/lets/internal/set"
 	"github.com/tliron/commonlog"
 	lsp "github.com/tliron/glsp/protocol_3_16"
 )
@@ -18,14 +20,14 @@ type index struct {
 	log           commonlog.Logger
 	mu            sync.RWMutex
 	commands      map[string]commandInfo
-	commandsByURI map[string]map[string]struct{}
+	commandsByURI map[string]set.Set[string]
 }
 
 func newIndex(log commonlog.Logger) *index {
 	return &index{
 		log:           log,
 		commands:      make(map[string]commandInfo),
-		commandsByURI: make(map[string]map[string]struct{}),
+		commandsByURI: make(map[string]set.Set[string]),
 	}
 }
 
@@ -35,15 +37,14 @@ func (i *index) IndexDocument(uri string, doc string) {
 	commands := parser.getCommands(&doc)
 
 	indexedCommands := make(map[string]commandInfo, len(commands))
-	indexedNames := make(map[string]struct{}, len(commands))
+	indexedNames := set.NewSet[string]()
 
 	for _, command := range commands {
 		indexedCommands[command.name] = commandInfo{
 			fileURI:  uri,
 			position: command.position,
 		}
-		// TODOL maybe use Set
-		indexedNames[command.name] = struct{}{}
+		indexedNames.Add(command.name)
 	}
 
 	i.mu.Lock()
@@ -55,9 +56,7 @@ func (i *index) IndexDocument(uri string, doc string) {
 		delete(i.commands, name)
 	}
 
-	for name, info := range indexedCommands {
-		i.commands[name] = info
-	}
+	maps.Copy(i.commands, indexedCommands)
 
 	if len(indexedNames) == 0 {
 		delete(i.commandsByURI, uri)
@@ -72,5 +71,6 @@ func (i *index) findCommand(name string) (commandInfo, bool) {
 	defer i.mu.RUnlock()
 
 	command, ok := i.commands[name]
+
 	return command, ok
 }

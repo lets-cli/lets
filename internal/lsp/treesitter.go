@@ -295,6 +295,31 @@ func (p *parser) extractFilenameFromMixins(document *string, position lsp.Positi
 	return ""
 }
 
+func (p *parser) getMixinFilenames(document *string) []string {
+	var filenames []string
+
+	executeYAMLQuery(document, `
+		(block_mapping_pair
+			key: (flow_node) @key
+			value: (block_node
+				(block_sequence
+					(block_sequence_item
+						(flow_node
+							(plain_scalar
+								(string_scalar)) @value))))
+			(#eq? @key "mixins")
+		)
+	`, func(capture ts.QueryCapture, docBytes []byte) bool {
+		if capture.Name == "value" {
+			filenames = append(filenames, capture.Node.Text(docBytes))
+		}
+
+		return false
+	})
+
+	return filenames
+}
+
 func (p *parser) extractCommandReference(document *string, position lsp.Position) string {
 	if commandName := p.extractDependsCommandReference(document, position); commandName != "" {
 		p.log.Debugf("resolved command reference from depends: %q", commandName)
@@ -550,7 +575,7 @@ func (p *parser) getCurrentCommand(document *string, position lsp.Position) *Com
 	return nil
 }
 
-func (p *parser) findCommand(document *string, commandName string) *Command {
+func (p *parser) findCommand(document *string, commandName string) *Command { //nolint
 	tree, docBytes, err := parseYAMLDocument(document)
 	if err != nil {
 		return nil

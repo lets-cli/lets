@@ -2,7 +2,9 @@ package lsp
 
 import (
 	"errors"
+	"os"
 	"slices"
+	"strings"
 
 	"github.com/lets-cli/lets/internal/util"
 	"github.com/tliron/commonlog"
@@ -42,9 +44,43 @@ func (s *lspServer) setTrace(context *glsp.Context, params *lsp.SetTraceParams) 
 	return nil
 }
 
+// loadMixins reads local mixin files referenced by a document and adds them to storage and index.
+func (s *lspServer) loadMixins(uri string) {
+	doc := s.storage.GetDocument(uri)
+	if doc == nil {
+		return
+	}
+
+	parser := newParser(s.log)
+	path := normalizePath(uri)
+
+	for _, filename := range parser.getMixinFilenames(doc) {
+		mixinPath := replacePathFilename(path, strings.TrimPrefix(filename, "-"))
+		if !util.FileExists(mixinPath) {
+			s.log.Debugf("mixin target does not exist: %s", mixinPath)
+			continue
+		}
+
+		data, err := os.ReadFile(mixinPath)
+		if err != nil {
+			s.log.Warningf("failed to read mixin %s: %v", mixinPath, err)
+			continue
+		}
+
+		mixinURI := pathToURI(mixinPath)
+		text := string(data)
+
+		s.storage.AddDocument(mixinURI, text)
+		s.index.IndexDocument(mixinURI, text)
+	}
+}
+
 func (s *lspServer) textDocumentDidOpen(context *glsp.Context, params *lsp.DidOpenTextDocumentParams) error {
 	s.storage.AddDocument(params.TextDocument.URI, params.TextDocument.Text)
+
 	go s.index.IndexDocument(params.TextDocument.URI, params.TextDocument.Text)
+	go s.loadMixins(params.TextDocument.URI)
+
 	return nil
 }
 
@@ -53,7 +89,9 @@ func (s *lspServer) textDocumentDidChange(context *glsp.Context, params *lsp.Did
 		switch c := change.(type) {
 		case lsp.TextDocumentContentChangeEventWhole:
 			s.storage.AddDocument(params.TextDocument.URI, c.Text)
+
 			go s.index.IndexDocument(params.TextDocument.URI, c.Text)
+			go s.loadMixins(params.TextDocument.URI)
 		case lsp.TextDocumentContentChangeEvent:
 			return errors.New("incremental changes not supported")
 		}
@@ -134,6 +172,7 @@ func (h *definitionHandler) findCommandDefinition(doc *string, params *lsp.Defin
 	)
 
 	loc := locationForCommand(commandInfo.fileURI, commandInfo.position)
+
 	return []lsp.Location{loc}, nil
 }
 
