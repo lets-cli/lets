@@ -65,20 +65,20 @@ func TestShouldCheckForUpdate(t *testing.T) {
 	t.Run("should allow normal interactive commands", func(t *testing.T) {
 		t.Setenv("CI", "")
 
-		if !shouldCheckForUpdate("lets", true, defaultSettings) {
+		if !shouldCheckForUpdate(&cobra.Command{Use: "run"}, true, defaultSettings) {
 			t.Fatal("expected update check to be enabled")
 		}
 	})
 
 	t.Run("should skip non interactive sessions", func(t *testing.T) {
-		if shouldCheckForUpdate("lets", false, defaultSettings) {
+		if shouldCheckForUpdate(&cobra.Command{Use: "run"}, false, defaultSettings) {
 			t.Fatal("expected non-interactive session to skip update check")
 		}
 	})
 
 	t.Run("should skip when CI is set", func(t *testing.T) {
 		t.Setenv("CI", "1")
-		if shouldCheckForUpdate("lets", true, defaultSettings) {
+		if shouldCheckForUpdate(&cobra.Command{Use: "run"}, true, defaultSettings) {
 			t.Fatal("expected CI to skip update check")
 		}
 	})
@@ -87,16 +87,45 @@ func TestShouldCheckForUpdate(t *testing.T) {
 		disabled := settings.Default()
 		disabled.UpgradeNotify = false
 
-		if shouldCheckForUpdate("lets", true, disabled) {
+		if shouldCheckForUpdate(&cobra.Command{Use: "run"}, true, disabled) {
 			t.Fatal("expected disabled settings to skip update check")
 		}
 	})
 
-	t.Run("should skip internal commands", func(t *testing.T) {
-		for _, name := range []string{"completion", "help", "lsp", "self"} {
-			if shouldCheckForUpdate(name, true, defaultSettings) {
-				t.Fatalf("expected %q to skip update check", name)
+	t.Run("should skip completion and help commands", func(t *testing.T) {
+		for _, command := range []*cobra.Command{{Use: "completion"}, {Use: "help"}} {
+			if shouldCheckForUpdate(command, true, defaultSettings) {
+				t.Fatalf("expected %q to skip update check", command.Name())
 			}
+		}
+	})
+
+	t.Run("should skip self subcommands", func(t *testing.T) {
+		root := cmdpkg.CreateRootCommand("v0.0.0-test", "")
+		cmdpkg.InitSelfCmd(root, "v0.0.0-test")
+
+		for _, args := range [][]string{{"self"}, {"self", "doc"}, {"self", "upgrade"}} {
+			command, _, err := root.Find(args)
+			if err != nil {
+				t.Fatalf("unexpected error for %v: %v", args, err)
+			}
+
+			if shouldCheckForUpdate(command, true, defaultSettings) {
+				t.Fatalf("expected %v to skip update check", args)
+			}
+		}
+	})
+}
+
+func TestParseRootFlags(t *testing.T) {
+	t.Run("should reject legacy upgrade flag", func(t *testing.T) {
+		_, err := parseRootFlags([]string{"--upgrade"})
+		if err == nil {
+			t.Fatal("expected legacy upgrade flag error")
+		}
+
+		if err.Error() != "--upgrade has been replaced with 'lets self upgrade'" {
+			t.Fatalf("unexpected error: %v", err)
 		}
 	})
 }

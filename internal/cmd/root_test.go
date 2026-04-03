@@ -2,11 +2,13 @@ package cmd
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"strings"
 	"testing"
 
 	"github.com/lets-cli/lets/internal/config/config"
+	"github.com/lets-cli/lets/internal/upgrade"
 	"github.com/spf13/cobra"
 )
 
@@ -298,4 +300,71 @@ func TestSelfCmd(t *testing.T) {
 			t.Fatalf("expected no suggestions, got %q", err.Error())
 		}
 	})
+
+	t.Run("should run self upgrade subcommand", func(t *testing.T) {
+		bufOut := new(bytes.Buffer)
+		called := false
+
+		rootCmd := CreateRootCommand("v0.0.0-test", "")
+		rootCmd.SetArgs([]string{"self", "upgrade"})
+		rootCmd.SetOut(bufOut)
+		rootCmd.SetErr(bufOut)
+		selfCmd := &cobra.Command{
+			Use:   "self",
+			Short: "Manage lets CLI itself",
+		}
+		rootCmd.AddCommand(selfCmd)
+
+		selfCmd.AddCommand(initUpgradeCommandWith(func() (upgrade.Upgrader, error) {
+			return mockUpgraderFunc(func(ctx context.Context) error {
+				called = true
+
+				return nil
+			}), nil
+		}))
+
+		err := rootCmd.Execute()
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if !called {
+			t.Fatal("expected upgrader to be called")
+		}
+	})
+
+	t.Run("should return upgrader error for self upgrade command", func(t *testing.T) {
+		bufOut := new(bytes.Buffer)
+
+		rootCmd := CreateRootCommand("v0.0.0-test", "")
+		rootCmd.SetArgs([]string{"self", "upgrade"})
+		rootCmd.SetOut(bufOut)
+		rootCmd.SetErr(bufOut)
+		selfCmd := &cobra.Command{
+			Use:   "self",
+			Short: "Manage lets CLI itself",
+		}
+		rootCmd.AddCommand(selfCmd)
+
+		selfCmd.AddCommand(initUpgradeCommandWith(func() (upgrade.Upgrader, error) {
+			return mockUpgraderFunc(func(ctx context.Context) error {
+				return errors.New("upgrade failed")
+			}), nil
+		}))
+
+		err := rootCmd.Execute()
+		if err == nil {
+			t.Fatal("expected upgrader error")
+		}
+
+		if !strings.Contains(err.Error(), "can not self-upgrade binary") {
+			t.Fatalf("expected self-upgrade error, got %q", err.Error())
+		}
+	})
+}
+
+type mockUpgraderFunc func(context.Context) error
+
+func (f mockUpgraderFunc) Upgrade(ctx context.Context) error {
+	return f(ctx)
 }

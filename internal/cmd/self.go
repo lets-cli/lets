@@ -26,4 +26,5 @@ func initSelfCmd(rootCmd *cobra.Command, version string, openURL func(string) er
 
 	selfCmd.AddCommand(initDocCommand(openURL))
 	selfCmd.AddCommand(initLspCommand(version))
+	selfCmd.AddCommand(initUpgradeCommand(version))
 }

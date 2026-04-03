@@ -39,7 +39,6 @@ Flags:
       --init                  create a new lets.yaml in the current folder
       --no-depends            skip 'depends' for running command
       --only stringArray      run only specified command(s) described in cmd as map
-      --upgrade               upgrade lets to latest version
   -v, --version               version for lets
 
 Use "lets help [command]" for more information about a command.
