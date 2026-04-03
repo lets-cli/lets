@@ -190,3 +190,11 @@ func (m *Mixin) UnmarshalYAML(unmarshal func(any) error) error {
 func (m *Mixin) IsRemote() bool {
 	return m.Remote != nil
 }
+
+func (m *Mixin) Source() string {
+	if m.IsRemote() {
+		return m.Remote.URL
+	}
+
+	return m.FileName
+}
