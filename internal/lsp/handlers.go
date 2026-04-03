@@ -262,7 +262,7 @@ func (s *lspServer) textDocumentDefinition(context *glsp.Context, params *lsp.De
 	switch positionType {
 	case PositionTypeMixins:
 		return definitionHandler.findMixinsDefinition(doc, params)
-	case PositionTypeDepends, PositionTypeCommandAlias:
+	case PositionTypeDepends, PositionTypeCommandAlias, PositionTypeRef:
 		return definitionHandler.findCommandDefinition(doc, params)
 	default:
 		s.log.Debugf("definition request ignored: unsupported cursor position")

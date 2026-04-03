@@ -229,6 +229,37 @@ func TestDetectCommandAliasPosition(t *testing.T) {
 	}
 }
 
+func TestDetectRefPosition(t *testing.T) {
+	doc := `commands:
+  build:
+    cmd: echo Build
+  deploy:
+    ref: build
+    args: --prod`
+
+	tests := []struct {
+		pos  lsp.Position
+		want bool
+	}{
+		{pos: pos(4, 7), want: false},
+		{pos: pos(4, 9), want: true},
+		{pos: pos(4, 12), want: true},
+		{pos: pos(5, 8), want: false},
+	}
+
+	p := newParser(logger)
+	for i, tt := range tests {
+		got := p.inRefPosition(&doc, tt.pos)
+		if got != tt.want {
+			t.Errorf("case %d: expected %v, actual %v", i, tt.want, got)
+		}
+	}
+
+	if got := p.getPositionType(&doc, pos(4, 11)); got != PositionTypeRef {
+		t.Fatalf("expected PositionTypeRef, got %v", got)
+	}
+}
+
 func TestGetCommands(t *testing.T) {
 	doc := `shell: bash
 mixins:
@@ -379,7 +410,9 @@ func TestExtractCommandReference(t *testing.T) {
   run-test:
     <<: *test
     depends: [build, test]
-    cmd: echo Run`
+    cmd: echo Run
+  deploy:
+    ref: build`
 
 	tests := []struct {
 		name string
@@ -392,6 +425,7 @@ func TestExtractCommandReference(t *testing.T) {
 		{name: "flow depends first item", pos: pos(9, 14), want: "build"},
 		{name: "flow depends second item", pos: pos(9, 21), want: "test"},
 		{name: "outside reference", pos: pos(10, 10), want: ""},
+		{name: "ref command value", pos: pos(12, 10), want: "build"},
 	}
 
 	p := newParser(logger)
@@ -426,6 +460,54 @@ func TestFindCommandDefinitionFromAlias(t *testing.T) {
 		TextDocumentPositionParams: lsp.TextDocumentPositionParams{
 			TextDocument: lsp.TextDocumentIdentifier{URI: "file:///tmp/lets.yaml"},
 			Position:     pos(5, 10),
+		},
+	}
+
+	got, err := handler.findCommandDefinition(&doc, params)
+	if err != nil {
+		t.Fatalf("findCommandDefinition() error = %v", err)
+	}
+
+	locations, ok := got.([]lsp.Location)
+	if !ok {
+		t.Fatalf("findCommandDefinition() type = %T, want []lsp.Location", got)
+	}
+
+	want := []lsp.Location{
+		{
+			URI: "file:///tmp/lets.yaml",
+			Range: lsp.Range{
+				Start: pos(1, 2),
+				End:   pos(1, 2),
+			},
+		},
+	}
+
+	if !reflect.DeepEqual(locations, want) {
+		t.Fatalf("findCommandDefinition() = %#v, want %#v", locations, want)
+	}
+}
+
+func TestFindCommandDefinitionFromRef(t *testing.T) {
+	doc := `commands:
+  build:
+    cmd: echo Build
+  deploy:
+    ref: build
+    args: --prod`
+
+	idx := newIndex(logger)
+	idx.IndexDocument("file:///tmp/lets.yaml", doc)
+
+	handler := definitionHandler{
+		log:    logger,
+		parser: newParser(logger),
+		index:  idx,
+	}
+	params := &lsp.DefinitionParams{
+		TextDocumentPositionParams: lsp.TextDocumentPositionParams{
+			TextDocument: lsp.TextDocumentIdentifier{URI: "file:///tmp/lets.yaml"},
+			Position:     pos(4, 10),
 		},
 	}
 

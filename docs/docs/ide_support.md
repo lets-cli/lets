@@ -33,7 +33,7 @@ Lsp support includes:
 
 - [x] Goto definition
   - Navigate to definitions of mixins files
-  - Navigate to definitions of command from `depends`
+  - Navigate to definitions of command from `depends`, `ref`, and YAML merge aliases
 - [x] Completion
   - Complete commands in depends
 - [ ] Diagnostics
@@ -122,4 +122,3 @@ servers = {
   },
 }
 ```
-

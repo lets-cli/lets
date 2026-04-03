@@ -15,6 +15,7 @@ const (
 	PositionTypeMixins PositionType = iota
 	PositionTypeDepends
 	PositionTypeCommandAlias
+	PositionTypeRef
 	PositionTypeNone
 )
 
@@ -26,6 +27,8 @@ func (p PositionType) String() string {
 		return "depends"
 	case PositionTypeCommandAlias:
 		return "command_alias"
+	case PositionTypeRef:
+		return "ref"
 	default:
 		return "none"
 	}
@@ -123,6 +126,8 @@ func (p *parser) getPositionType(document *string, position lsp.Position) Positi
 		return PositionTypeDepends
 	} else if p.inCommandAliasPosition(document, position) {
 		return PositionTypeCommandAlias
+	} else if p.inRefPosition(document, position) {
+		return PositionTypeRef
 	}
 
 	return PositionTypeNone
@@ -249,6 +254,20 @@ func (p *parser) inCommandAliasPosition(document *string, position lsp.Position)
 	})
 }
 
+func (p *parser) inRefPosition(document *string, position lsp.Position) bool {
+	return executeYAMLQuery(document, `
+		(block_mapping_pair
+			key: (flow_node) @keyref
+			value: (flow_node
+				(plain_scalar
+					(string_scalar)) @reference)
+			(#eq? @keyref "ref")
+		)
+	`, func(capture ts.QueryCapture, _ []byte) bool {
+		return capture.Name == "reference" && isCursorWithinNode(capture.Node, position)
+	})
+}
+
 func (p *parser) extractFilenameFromMixins(document *string, position lsp.Position) string {
 	tree, docBytes, err := parseYAMLDocument(document)
 	if err != nil {
@@ -326,9 +345,14 @@ func (p *parser) extractCommandReference(document *string, position lsp.Position
 		return commandName
 	}
 
-	commandName := p.extractAliasCommandReference(document, position)
-	if commandName != "" {
+	if commandName := p.extractAliasCommandReference(document, position); commandName != "" {
 		p.log.Debugf("resolved command reference from alias: %q", commandName)
+		return commandName
+	}
+
+	commandName := p.extractRefCommandReference(document, position)
+	if commandName != "" {
+		p.log.Debugf("resolved command reference from ref: %q", commandName)
 	}
 
 	return commandName
@@ -396,6 +420,29 @@ func (p *parser) extractAliasCommandReference(document *string, position lsp.Pos
 	}
 
 	p.log.Debugf("resolved alias anchor %q to command %q", anchorName, commandName)
+
+	return commandName
+}
+
+func (p *parser) extractRefCommandReference(document *string, position lsp.Position) string {
+	var commandName string
+
+	executeYAMLQuery(document, `
+		(block_mapping_pair
+			key: (flow_node) @keyref
+			value: (flow_node
+				(plain_scalar
+					(string_scalar)) @reference)
+			(#eq? @keyref "ref")
+		)
+	`, func(capture ts.QueryCapture, docBytes []byte) bool {
+		if capture.Name == "reference" && isCursorWithinNode(capture.Node, position) {
+			commandName = capture.Node.Text(docBytes)
+			return true
+		}
+
+		return false
+	})
 
 	return commandName
 }

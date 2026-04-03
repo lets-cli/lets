@@ -20,6 +20,7 @@ title: Changelog
 * `[Changed]` Centralize the `lets:` log prefix in the formatter and render debug messages in blue.
 * `[Added]` Add user settings in `~/.config/lets/config.yaml` for lets behavior such as `no_color` and `upgrade_notify`, with env variables still taking precedence.
 * `[Fixed]` Resolve `go to definition` from YAML merge aliases such as `<<: *test` to the referenced command in `lets self lsp`.
+* `[Fixed]` Resolve `go to definition` from command references such as `ref: build` to the referenced command in `lets self lsp`.
 * `[Added]` Load local mixin files into LSP storage and command index so mixin commands are available for navigation.
 
 ## [0.0.59](https://github.com/lets-cli/lets/releases/tag/v0.0.59)
