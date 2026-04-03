@@ -30,6 +30,7 @@ func (d *documentDebouncer) Schedule(uri string) {
 	}
 
 	var timer *time.Timer
+
 	timer = time.AfterFunc(d.delay, func() {
 		d.fire(uri, timer)
 	})
@@ -49,6 +50,7 @@ func (d *documentDebouncer) Stop() {
 
 func (d *documentDebouncer) fire(uri string, timer *time.Timer) {
 	d.mu.Lock()
+
 	current, ok := d.timers[uri]
 	if !ok || current != timer {
 		d.mu.Unlock()

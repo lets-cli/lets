@@ -11,8 +11,10 @@ import (
 	"github.com/tliron/glsp/server"
 )
 
-const lsName = "lets_ls"
-const documentRefreshDebounce = 200 * time.Millisecond
+const (
+	lsName                  = "lets_ls"
+	documentRefreshDebounce = 500 * time.Millisecond
+)
 
 var handler lsp.Handler
 
