@@ -22,6 +22,7 @@ title: Changelog
 * `[Fixed]` Resolve `go to definition` from YAML merge aliases such as `<<: *test` to the referenced command in `lets self lsp`.
 * `[Fixed]` Resolve `go to definition` from command references such as `ref: build` to the referenced command in `lets self lsp`.
 * `[Added]` Load local mixin files into LSP storage and command index so mixin commands are available for navigation.
+* `[Changed]` Replace the top-level `--upgrade` flag with the `lets self upgrade` command.
 
 ## [0.0.59](https://github.com/lets-cli/lets/releases/tag/v0.0.59)
 

@@ -98,7 +98,6 @@ func initRootFlags(rootCmd *cobra.Command) {
 	rootCmd.Flags().StringToStringP("env", "E", nil, "set env variable for running command KEY=VALUE")
 	rootCmd.Flags().StringArray("only", []string{}, "run only specified command(s) described in cmd as map")
 	rootCmd.Flags().StringArray("exclude", []string{}, "run all but excluded command(s) described in cmd as map")
-	rootCmd.Flags().Bool("upgrade", false, "upgrade lets to latest version")
 	rootCmd.Flags().Bool("init", false, "create a new lets.yaml in the current folder")
 	rootCmd.Flags().Bool("no-depends", false, "skip 'depends' for running command")
 	rootCmd.Flags().CountP("debug", "d", "show debug logs (or use LETS_DEBUG=1). If used multiple times, shows more verbose logs") //nolint:lll

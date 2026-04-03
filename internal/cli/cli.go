@@ -112,20 +112,6 @@ func Main(version string, buildDate string) int {
 		return 0
 	}
 
-	if rootFlags.upgrade {
-		upgrader, err := upgrade.NewBinaryUpgrader(registry.NewGithubRegistry(), version)
-		if err == nil {
-			err = upgrader.Upgrade(ctx)
-		}
-
-		if err != nil {
-			log.Errorf("can not self-upgrade binary: %s", err)
-			return 1
-		}
-
-		return 0
-	}
-
 	showUsage := rootFlags.help || (command.Name() == "help" && len(args) == 0) || (len(os.Args) == 1)
 
 	if showUsage {
@@ -204,6 +190,10 @@ func allowsMissingConfig(current *cobra.Command) bool {
 		return true
 	}
 
+	return isSelfCommand(current)
+}
+
+func isSelfCommand(current *cobra.Command) bool {
 	for cmd := current; cmd != nil; cmd = cmd.Parent() {
 		parent := cmd.Parent()
 		if cmd.Name() == "self" && parent != nil && parent.Name() == "lets" {
@@ -220,7 +210,7 @@ func maybeStartUpdateCheck(
 	command *cobra.Command,
 	appSettings settings.Settings,
 ) (<-chan updateCheckResult, context.CancelFunc) {
-	if !shouldCheckForUpdate(command.Name(), isInteractiveStderr(), appSettings) {
+	if !shouldCheckForUpdate(command, isInteractiveStderr(), appSettings) {
 		return nil, func() {}
 	}
 
@@ -273,17 +263,21 @@ func printUpdateNotice(updateCh <-chan updateCheckResult) {
 	}
 }
 
-func shouldCheckForUpdate(commandName string, interactive bool, appSettings settings.Settings) bool {
+func shouldCheckForUpdate(command *cobra.Command, interactive bool, appSettings settings.Settings) bool {
 	if !interactive || !appSettings.UpgradeNotify || os.Getenv("CI") != "" {
 		return false
 	}
 
-	switch commandName {
-	case "completion", "help", "lsp", "self":
-		return false
-	default:
+	if command == nil {
 		return true
 	}
+
+	switch command.Name() {
+	case "completion", "help":
+		return false
+	}
+
+	return !isSelfCommand(command)
 }
 
 func isInteractiveStderr() bool {
@@ -298,7 +292,6 @@ type flags struct {
 	version bool
 	all     bool
 	init    bool
-	upgrade bool
 }
 
 // We can not parse --config and --debug flags using cobra.Command.ParseFlags
@@ -379,9 +372,7 @@ func parseRootFlags(args []string) (*flags, error) {
 				f.init = true
 			}
 		case "--upgrade":
-			if !isFlagVisited("upgrade") {
-				f.upgrade = true
-			}
+			return nil, errors.New("--upgrade has been replaced with 'lets self upgrade'")
 		}
 
 		idx += 1 //nolint:revive,golint

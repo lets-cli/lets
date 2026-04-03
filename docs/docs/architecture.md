@@ -71,7 +71,8 @@ To achieve this we are creating so-called `root` command and `subcommands` from 
 #### Root command
 
 Root command is responsible for:
-  - `lets` own command line flags such as `--version`, `--upgrade`, `--help` and so on.
+  - `lets` own command line flags such as `--version`, `--help` and so on.
+  - `lets self` subcommands such as `lets self upgrade`
   - `lets` commands autocompletion in terminal
 
 #### Subcommands

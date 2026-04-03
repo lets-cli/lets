@@ -46,7 +46,7 @@ func validateVersion(cfg *config.Config, letsVersion string) error {
 		return fmt.Errorf(
 			"config version '%s' is not compatible with 'lets' version '%s'. "+
 				"Please upgrade 'lets' to '%s' "+
-				"using 'lets --upgrade' command or following documentation at https://lets-cli.org/docs/installation'",
+				"using 'lets self upgrade' command or following documentation at https://lets-cli.org/docs/installation'",
 			cfgVersionParsed,
 			letsVersionParsed,
 			cfgVersionParsed,
