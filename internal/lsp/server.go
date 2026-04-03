@@ -2,6 +2,7 @@ package lsp
 
 import (
 	"context"
+	"time"
 
 	"github.com/lets-cli/lets/internal/env"
 	"github.com/tliron/commonlog"
@@ -10,7 +11,10 @@ import (
 	"github.com/tliron/glsp/server"
 )
 
-const lsName = "lets_ls"
+const (
+	lsName                  = "lets_ls"
+	documentRefreshDebounce = 500 * time.Millisecond
+)
 
 var handler lsp.Handler
 
@@ -20,6 +24,7 @@ type lspServer struct {
 	storage *storage
 	parser  *parser
 	index   *index
+	refresh *documentDebouncer
 	log     commonlog.Logger
 }
 
@@ -60,6 +65,7 @@ func Run(ctx context.Context, version string) error {
 		index:   newIndex(logger),
 		log:     logger,
 	}
+	lspServer.refresh = newDocumentDebouncer(documentRefreshDebounce, lspServer.refreshDocument)
 
 	handler.Initialize = lspServer.initialize
 	handler.Initialized = lspServer.initialized

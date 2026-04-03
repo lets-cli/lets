@@ -51,8 +51,10 @@ func LoadFile(path string) (Settings, error) {
 	defer file.Close()
 
 	var fileSettings FileSettings
+
 	decoder := yaml.NewDecoder(file)
 	decoder.KnownFields(true)
+
 	if err := decoder.Decode(&fileSettings); err != nil {
 		return Settings{}, fmt.Errorf("failed to decode settings file: %w", err)
 	}

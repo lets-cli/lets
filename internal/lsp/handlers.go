@@ -35,7 +35,12 @@ func (s *lspServer) initialized(context *glsp.Context, params *lsp.InitializedPa
 }
 
 func (s *lspServer) shutdown(context *glsp.Context) error {
+	if s.refresh != nil {
+		s.refresh.Stop()
+	}
+
 	lsp.SetTraceValue(lsp.TraceValueOff)
+
 	return nil
 }
 
@@ -53,8 +58,25 @@ func (s *lspServer) loadMixins(uri string) {
 
 	path := normalizePath(uri)
 
-	for _, filename := range s.parser.getMixinFilenames(doc) {
+	currentMixins := s.parser.getMixinFilenames(doc)
+	previousMixins := s.storage.GetMixins(uri)
+
+	s.storage.SetMixins(uri, currentMixins)
+
+	for _, filename := range currentMixins {
+		if slices.Contains(previousMixins, filename) {
+			continue
+		}
+
 		mixinPath := replacePathFilename(path, strings.TrimPrefix(filename, "-"))
+		mixinURI := pathToURI(mixinPath)
+
+		// skip if the document is already managed by the storage
+		// e.g. opened manually in the editor or already loaded
+		if s.storage.GetDocument(mixinURI) != nil {
+			continue
+		}
+
 		if !util.FileExists(mixinPath) {
 			s.log.Debugf("mixin target does not exist: %s", mixinPath)
 			continue
@@ -66,7 +88,8 @@ func (s *lspServer) loadMixins(uri string) {
 			continue
 		}
 
-		mixinURI := pathToURI(mixinPath)
+		s.log.Debugf("load mixin %s", mixinPath)
+
 		text := string(data)
 
 		s.storage.AddDocument(mixinURI, text)
@@ -74,11 +97,20 @@ func (s *lspServer) loadMixins(uri string) {
 	}
 }
 
+func (s *lspServer) refreshDocument(uri string) {
+	doc := s.storage.GetDocument(uri)
+	if doc == nil {
+		return
+	}
+
+	s.index.IndexDocument(uri, *doc)
+	s.loadMixins(uri)
+}
+
 func (s *lspServer) textDocumentDidOpen(context *glsp.Context, params *lsp.DidOpenTextDocumentParams) error {
 	s.storage.AddDocument(params.TextDocument.URI, params.TextDocument.Text)
 
-	go s.index.IndexDocument(params.TextDocument.URI, params.TextDocument.Text)
-	go s.loadMixins(params.TextDocument.URI)
+	go s.refreshDocument(params.TextDocument.URI)
 
 	return nil
 }
@@ -89,8 +121,11 @@ func (s *lspServer) textDocumentDidChange(context *glsp.Context, params *lsp.Did
 		case lsp.TextDocumentContentChangeEventWhole:
 			s.storage.AddDocument(params.TextDocument.URI, c.Text)
 
-			go s.index.IndexDocument(params.TextDocument.URI, c.Text)
-			go s.loadMixins(params.TextDocument.URI)
+			if s.refresh != nil {
+				s.refresh.Schedule(params.TextDocument.URI)
+			} else {
+				go s.refreshDocument(params.TextDocument.URI)
+			}
 		case lsp.TextDocumentContentChangeEvent:
 			return errors.New("incremental changes not supported")
 		}
