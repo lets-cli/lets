@@ -5,6 +5,8 @@ title: Changelog
 
 ## [Unreleased](https://github.com/lets-cli/lets/releases/tag/v0.0.X)
 
+## [0.0.60](https://github.com/lets-cli/lets/releases/tag/v0.0.60)
+
 * `[Dependency]` update go to `1.26`
 * `[Added]` Show similar command suggestions on typos.
 * `[Changed]` Exit code 2 on unknown command.
@@ -32,7 +34,7 @@ title: Changelog
 
 ## [0.0.58](https://github.com/lets-cli/lets/releases/tag/v0.0.58)
 
-* `[Added]` `group` directive for commands. Organize commands into groups for better readability in help output. See [config reference for group](/docs/config#group).
+* `[0Added]` `group` directive for commands. Organize commands into groups for better readability in help output. See [config reference for group](/docs/config#group).
 
   ```yaml
   commands:
