@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strings"
 	"testing"
 	"time"
 
@@ -142,6 +143,46 @@ func TestSelfUpgrade(t *testing.T) {
 
 		if binaryModTime != binaryUpdatedModTime {
 			t.Errorf("binary must not been updated")
+		}
+	})
+
+	t.Run("should not self-upgrade homebrew-managed binary", func(t *testing.T) {
+		currentVersion := "v0.0.1"
+		latestVersion := "v0.0.2"
+
+		tempDir := t.TempDir()
+		binaryPath := path.Join(tempDir, "Cellar", "lets", currentVersion, "bin", "lets")
+		if err := os.MkdirAll(path.Dir(binaryPath), 0o755); err != nil {
+			t.Fatalf("failed to create homebrew binary dir: %s", err)
+		}
+
+		if err := os.WriteFile(binaryPath, []byte(currentVersion), 0o755); err != nil {
+			t.Fatalf("failed to write homebrew binary: %s", err)
+		}
+
+		upgrader := &BinaryUpgrader{
+			registry:       &MockRegistry{latestVersion: latestVersion},
+			currentVersion: currentVersion,
+			binaryPath:     binaryPath,
+			downloadPath:   path.Join(tempDir, "lets.download"),
+			backupPath:     path.Join(tempDir, "lets.backup"),
+		}
+
+		err := upgrader.Upgrade(context.Background())
+		if err == nil {
+			t.Fatal("expected homebrew upgrade error")
+		}
+
+		if !strings.Contains(err.Error(), "brew upgrade lets-cli/tap/lets") {
+			t.Fatalf("expected homebrew upgrade command in error, got %q", err.Error())
+		}
+
+		if !testVersion(binaryPath, currentVersion) {
+			t.Errorf("expected version %s", currentVersion)
+		}
+
+		if _, err := os.Stat(upgrader.downloadPath); !os.IsNotExist(err) {
+			t.Fatalf("expected no downloaded binary, got err %v", err)
 		}
 	})
 }
