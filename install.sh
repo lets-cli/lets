@@ -42,9 +42,11 @@ parse_args() {
 # out preventing half-done work
 execute() {
   tmpdir=$(mktemp -d)
-  log_debug "downloading files into ${tmpdir}"
+  log_debug "Downloading files into ${tmpdir}"
   http_download "${tmpdir}/${TARBALL}" "${TARBALL_URL}"
+  log_message "Downloading checksum"
   http_download "${tmpdir}/${CHECKSUM}" "${CHECKSUM_URL}"
+  log_message "Verifying checksum"
   hash_sha256_verify "${tmpdir}/${TARBALL}" "${tmpdir}/${CHECKSUM}"
   srcdir="${tmpdir}"
   (cd "${tmpdir}" && untar "${TARBALL}")
@@ -54,7 +56,7 @@ execute() {
       binexe="${binexe}.exe"
     fi
     install "${srcdir}/${binexe}" "${BIN_DIR}/"
-    log_info "installed ${BIN_DIR}/${binexe}"
+    log_info "Installed ${BIN_DIR}/${binexe}"
   done
   rm -rf "${tmpdir}"
 }
@@ -65,20 +67,15 @@ get_binaries() {
     linux/386) BINARIES="lets" ;;
     linux/amd64) BINARIES="lets" ;;
     *)
-      log_crit "platform $PLATFORM is not supported.  Make sure this script is up-to-date and file request at https://github.com/${PREFIX}/issues/new"
+      log_crit "Platform $PLATFORM is not supported. Make sure this script is up-to-date and file request at https://github.com/${PREFIX}/issues/new"
       exit 1
       ;;
   esac
 }
 tag_to_version() {
-  if [ -z "${TAG}" ]; then
-    log_info "checking GitHub for latest tag"
-  else
-    log_info "checking GitHub for tag '${TAG}'"
-  fi
   REALTAG=$(github_release "$OWNER/$REPO" "${TAG}") && true
   if test -z "$REALTAG"; then
-    log_crit "unable to find '${TAG}' - use 'latest' or see https://github.com/${PREFIX}/releases for details"
+    log_crit "Unable to find '${TAG}' - use 'latest' or see https://github.com/${PREFIX}/releases for details"
     exit 1
   fi
   # if version starts with 'v', remove it
@@ -126,6 +123,35 @@ is_command() {
 echoerr() {
   echo "$@" 1>&2
 }
+supports_color() {
+  [ -t 2 ] && [ -z "${NO_COLOR:-}" ] && [ "${TERM:-}" != "dumb" ]
+}
+brand_color_start() {
+  if supports_color; then
+    printf '\033[38;2;29;216;216m'
+  fi
+}
+color_reset() {
+  if supports_color; then
+    printf '\033[0m'
+  fi
+}
+warning_color() {
+  if supports_color; then
+    printf '\033[1;33m%s\033[0m\n' "$1"
+    return
+  fi
+
+  printf '%s\n' "$1"
+}
+brand_color() {
+  if supports_color; then
+    printf '\033[38;2;29;216;216m%s\033[0m\n' "$1"
+    return
+  fi
+
+  printf '%s\n' "$1"
+}
 log_prefix() {
   echo "$0"
 }
@@ -155,19 +181,27 @@ log_tag() {
 }
 log_debug() {
   log_priority 7 || return 0
-  echoerr "$(log_prefix)" "$(log_tag 7)" "$@"
+  echoerr "$(log_prefix)" "$@"
 }
 log_info() {
   log_priority 6 || return 0
-  echoerr "$(log_prefix)" "$(log_tag 6)" "$@"
+  echoerr "$(log_prefix)" "$@"
+}
+log_message() {
+  log_priority 6 || return 0
+  echoerr "$(log_prefix)" "$@"
 }
 log_err() {
   log_priority 3 || return 0
-  echoerr "$(log_prefix)" "$(log_tag 3)" "$@"
+  echoerr "$(log_prefix)" "$@"
 }
 log_crit() {
   log_priority 2 || return 0
-  echoerr "$(log_prefix)" "$(log_tag 2)" "$@"
+  echoerr "$(log_prefix)" "$@"
+}
+log_warning_message() {
+  log_priority 4 || return 0
+  echoerr "$(log_prefix)" "$(warning_color "$*")"
 }
 resolve_path() {
   source_path=$1
@@ -224,14 +258,13 @@ check_old_usr_local_install() {
   fi
 
   if is_homebrew_lets "$old_path"; then
-    log_info "detected Homebrew-managed ${old_path}; leaving it untouched"
+    log_info "Detected Homebrew-managed ${old_path}; leaving it untouched"
     return
   fi
 
-  log_crit "found old system-wide lets installation at ${old_path}"
-  log_crit "remove it before continuing:"
-  log_crit "  sudo rm ${old_path}"
-  log_crit "then run this installer again"
+  log_warning_message "Found old system-wide lets installation at ${old_path}"
+  log_warning_message "Remove it before continuing by running: sudo rm ${old_path}"
+  log_warning_message "Then run this installer again"
   exit 1
 }
 dir_in_path() {
@@ -266,7 +299,7 @@ try_symlink_in_path() {
     fi
 
     if ln -sf "$target_path" "$symlink_path" 2>/dev/null; then
-      log_info "created symlink: ${symlink_path} -> ${target_path}"
+      log_info "Created symlink: ${symlink_path} -> ${target_path}"
       return 0
     fi
   done
@@ -290,10 +323,10 @@ update_shell_profile() {
   fi
 
   if ln -sf "$target_path" "$symlink_path" 2>/dev/null; then
-    log_info "created symlink: ${symlink_path} -> ${target_path}"
+    log_info "Created symlink: ${symlink_path} -> ${target_path}"
   else
-    log_err "could not create symlink in ${local_bin_dir}"
-    log_err "please add ${BIN_DIR} to your PATH manually:"
+    log_err "Could not create symlink in ${local_bin_dir}"
+    log_err "Please add ${BIN_DIR} to your PATH manually:"
     echo "  export PATH=\"${BIN_DIR}:\$PATH\""
     return
   fi
@@ -338,17 +371,17 @@ update_shell_profile() {
       path_export="fish_add_path \"\$HOME/.local/bin\""
       ;;
     *)
-      log_err "unknown shell: ${shell_name}"
-      log_err "please add ~/.local/bin to your PATH manually:"
+      log_err "Unknown shell: ${shell_name}"
+      log_err "Please add ~/.local/bin to your PATH manually:"
       echo "  export PATH=\"\$HOME/.local/bin:\$PATH\""
       return
       ;;
   esac
 
   if [ -f "$shell_profile" ] && grep -v '^[[:space:]]*#' "$shell_profile" 2>/dev/null | grep -qE 'PATH=.*\.local/bin|fish_add_path .*\.local/bin'; then
-    log_info "~/.local/bin already configured in ${shell_profile/#$HOME/\~}"
+    log_info "Path ~/.local/bin already configured in ${shell_profile/#$HOME/\~}"
     echo ""
-    log_info "to use lets immediately, run:"
+    log_info "To use lets immediately, run:"
     echo "  ${path_export}"
     return
   fi
@@ -361,14 +394,14 @@ update_shell_profile() {
     case "$REPLY" in
       [Yy]) ;;
       *)
-        log_info "skipped modifying shell config"
-        log_info "to use lets, add ~/.local/bin to your PATH manually:"
+        log_info "Skipped modifying shell config"
+        log_info "To use lets, add ~/.local/bin to your PATH manually:"
         echo "  ${path_export}"
         return
         ;;
     esac
   else
-    log_info "adding ~/.local/bin to PATH in ${tilde_profile}"
+    log_info "Adding ~/.local/bin to PATH in ${tilde_profile}"
   fi
 
   if [ ! -f "$shell_profile" ]; then
@@ -382,9 +415,9 @@ update_shell_profile() {
     echo "$path_export"
   } >>"$shell_profile"
 
-  log_info "added ~/.local/bin to PATH in ${tilde_profile}"
+  log_info "Added ~/.local/bin to PATH in ${tilde_profile}"
   echo ""
-  log_info "to use lets immediately, run:"
+  log_info "To use lets immediately, run:"
   echo "  ${path_export}"
 }
 uname_os() {
@@ -425,7 +458,7 @@ uname_os_check() {
     solaris) return 0 ;;
     windows) return 0 ;;
   esac
-  log_crit "uname_os_check '$(uname -s)' got converted to '$os' which is not a GOOS value. Please file bug at https://github.com/client9/shlib"
+  log_crit "Uname_os_check '$(uname -s)' got converted to '$os' which is not a GOOS value. Please file bug at https://github.com/client9/shlib"
   return 1
 }
 uname_arch_check() {
@@ -446,7 +479,7 @@ uname_arch_check() {
     s390x) return 0 ;;
     amd64p32) return 0 ;;
   esac
-  log_crit "uname_arch_check '$(uname -m)' got converted to '$arch' which is not a GOARCH value.  Please file bug report at https://github.com/client9/shlib"
+  log_crit "Uname_arch_check '$(uname -m)' got converted to '$arch' which is not a GOARCH value. Please file bug report at https://github.com/client9/shlib"
   return 1
 }
 untar() {
@@ -456,22 +489,142 @@ untar() {
     *.tar) tar --no-same-owner -xf "${tarball}" ;;
     *.zip) unzip "${tarball}" ;;
     *)
-      log_err "untar unknown archive format for ${tarball}"
+      log_err "Untar unknown archive format for ${tarball}"
       return 1
       ;;
   esac
+}
+unbuffered_sed() {
+  if echo | sed -u -e "" >/dev/null 2>&1; then
+    sed -nu "$@"
+  elif echo | sed -l -e "" >/dev/null 2>&1; then
+    sed -nl "$@"
+  else
+    local pad
+    pad="$(printf "\n%512s" "")"
+    sed -ne "s/$/\\${pad}/" "$@"
+  fi
+}
+print_progress() {
+  local bytes=$1
+  local length=$2
+  [ "$length" -gt 0 ] || return 0
+
+  local width=50
+  local percent=$((bytes * 100 / length))
+  [ "$percent" -gt 100 ] && percent=100
+  local on=$((percent * width / 100))
+  local off=$((width - on))
+  local filled
+  local empty
+
+  filled=$(printf "%*s" "$on" "")
+  filled=${filled// /■}
+  empty=$(printf "%*s" "$off" "")
+  empty=${empty// /･}
+
+  printf "\r" >&4
+  brand_color_start >&4
+  printf "%s%s %3d%%" "$filled" "$empty" "$percent" >&4
+  color_reset >&4
+}
+print_logo() {
+  echoerr ""
+  brand_color_start >&2
+  cat >&2 <<EOF
+██╗     ███████╗████████╗███████╗
+██║     ██╔════╝╚══██╔══╝██╔════╝
+██║     █████╗     ██║   ███████╗
+██║     ██╔══╝     ██║   ╚════██║
+███████╗███████╗   ██║   ███████║
+╚══════╝╚══════╝   ╚═╝   ╚══════╝
+EOF
+  color_reset >&2
+  echoerr ""
+}
+should_show_progress() {
+  [ -t 2 ] || return 1
+  is_command mkfifo || return 1
+
+  case "$1" in
+    */releases/download/*.tar.gz | */releases/download/*.tgz | */releases/download/*.tar | */releases/download/*.zip) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+http_download_curl_progress() {
+  local local_file=$1
+  local source_url=$2
+  local header=$3
+  local tmp_dir=${TMPDIR:-/tmp}
+  local basename="${tmp_dir}/lets_install_$$"
+  local tracefile="${basename}.trace"
+
+  exec 4>&2
+  rm -f "$tracefile"
+  mkfifo "$tracefile" || {
+    exec 4>&-
+    return 1
+  }
+
+  printf "\033[?25l" >&4
+  trap "trap - RETURN; rm -f \"$tracefile\"; printf '\033[?25h' >&4; exec 4>&-" RETURN
+
+  if [ -z "$header" ]; then
+    curl --fail --trace-ascii "$tracefile" -sL -o "$local_file" "$source_url" &
+  else
+    curl --fail --trace-ascii "$tracefile" -sL -H "$header" -o "$local_file" "$source_url" &
+  fi
+  local curl_pid=$!
+
+  unbuffered_sed \
+    -e 'y/ACDEGHLNORTV/acdeghlnortv/' \
+    -e '/^0000: content-length:/p' \
+    -e '/^<= recv data/p' \
+    "$tracefile" |
+    {
+      local length=0
+      local bytes=0
+
+      while IFS=" " read -r -a line; do
+        [ "${#line[@]}" -lt 2 ] && continue
+
+        local tag="${line[0]} ${line[1]}"
+        if [ "$tag" = "0000: content-length:" ]; then
+          length="${line[2]}"
+          length=$(echo "$length" | tr -d '\r')
+          bytes=0
+        elif [ "$tag" = "<= recv" ]; then
+          local size="${line[3]}"
+          bytes=$((bytes + size))
+          if [ "$length" -gt 0 ]; then
+            print_progress "$bytes" "$length"
+          fi
+        fi
+      done
+    }
+
+  local ret=0
+  wait "$curl_pid" || ret=$?
+  echo "" >&4
+  return "$ret"
 }
 http_download_curl() {
   local_file=$1
   source_url=$2
   header=$3
+
+  if should_show_progress "$source_url"; then
+    http_download_curl_progress "$@"
+    return
+  fi
+
   if [ -z "$header" ]; then
     code=$(curl -w '%{http_code}' -sL -o "$local_file" "$source_url")
   else
     code=$(curl -w '%{http_code}' -sL -H "$header" -o "$local_file" "$source_url")
   fi
   if [ "$code" != "200" ]; then
-    log_debug "http_download_curl received HTTP status $code"
+    log_debug "Http_download_curl received HTTP status $code"
     return 1
   fi
   return 0
@@ -487,7 +640,7 @@ http_download_wget() {
   fi
 }
 http_download() {
-  log_debug "http_download $2"
+  log_debug "Http_download $2"
   if is_command curl; then
     http_download_curl "$@"
     return
@@ -495,7 +648,7 @@ http_download() {
     http_download_wget "$@"
     return
   fi
-  log_crit "http_download unable to find wget or curl"
+  log_crit "Http_download unable to find wget or curl"
   return 1
 }
 http_copy() {
@@ -531,7 +684,7 @@ hash_sha256() {
     hash=$(openssl -dst openssl dgst -sha256 "$TARGET") || return 1
     echo "$hash" | cut -d ' ' -f a
   else
-    log_crit "hash_sha256 unable to find command to compute sha-256 hash"
+    log_crit "Hash_sha256 unable to find command to compute sha-256 hash"
     return 1
   fi
 }
@@ -539,18 +692,18 @@ hash_sha256_verify() {
   TARGET=$1
   checksums=$2
   if [ -z "$checksums" ]; then
-    log_err "hash_sha256_verify checksum file not specified in arg2"
+    log_err "Hash_sha256_verify checksum file not specified in arg2"
     return 1
   fi
   BASENAME=${TARGET##*/}
   want=$(grep "${BASENAME}" "${checksums}" 2>/dev/null | tr '\t' ' ' | cut -d ' ' -f 1)
   if [ -z "$want" ]; then
-    log_err "hash_sha256_verify unable to find checksum for '${TARGET}' in '${checksums}'"
+    log_err "Hash_sha256_verify unable to find checksum for '${TARGET}' in '${checksums}'"
     return 1
   fi
   got=$(hash_sha256 "$TARGET")
   if [ "$want" != "$got" ]; then
-    log_err "hash_sha256_verify checksum for '$TARGET' did not verify ${want} vs $got"
+    log_err "Hash_sha256_verify checksum for '$TARGET' did not verify ${want} vs $got"
     return 1
   fi
 }
@@ -571,7 +724,7 @@ PREFIX="$OWNER/$REPO"
 
 # use in logging routines
 log_prefix() {
-	echo "$PREFIX"
+	brand_color "$PREFIX"
 }
 PLATFORM="${OS}/${ARCH}"
 GITHUB_DOWNLOAD=https://github.com/${OWNER}/${REPO}/releases/download
@@ -585,15 +738,18 @@ check_old_usr_local_install
 
 get_binaries
 
-tag_to_version
-
 adjust_format
 
 adjust_os
 
 adjust_arch
 
-log_info "found version: ${VERSION} for ${TAG}/${OS}/${ARCH}"
+log_message "Detected platform: ${OS}/${ARCH}"
+log_message "Fetching latest version..."
+
+tag_to_version
+
+log_message "Downloading version ${VERSION}"
 
 NAME=${PROJECT_NAME}_${OS}_${ARCH}
 TARBALL=${NAME}.${FORMAT}
@@ -605,3 +761,9 @@ CHECKSUM_URL=${GITHUB_DOWNLOAD}/${TAG}/${CHECKSUM}
 execute
 
 update_shell_profile
+
+print_logo
+
+log_message "CLI installed successfully!"
+log_message "Run 'lets --help' to get started"
+log_message "Visit https://lets-cli.org/docs for documentation"
