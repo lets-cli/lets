@@ -4,20 +4,30 @@ title: Installation
 sidebar_label: Installation
 ---
 
+## Homebrew
 
-### Binary
+```bash
+brew tap lets-cli/tap
+brew install lets-cli/tap/lets
+```
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
+## Arch
 
-<Tabs
-    defaultValue="shell"
-    values={[
-        { label: 'Shell', value: 'shell', },
-        { label: 'Binary', value: 'binary', },
-    ]}
->
-<TabItem value="shell">
+Install the latest binary release from [AUR lets-bin](https://aur.archlinux.org/packages/lets-bin/).
+
+If you use `yay` as your AUR helper:
+
+```bash
+yay -S lets-bin
+```
+
+You can also install the bleeding edge version from [AUR lets-git](https://aur.archlinux.org/packages/lets-git/).
+
+```bash
+yay -S lets-git
+```
+
+## Shell Script
 
 ```bash
 curl -fsSL https://lets-cli.org/install.sh | bash
@@ -35,9 +45,8 @@ directory from this list:
 If none of these directories are in `PATH`, the installer creates `$HOME/.local/bin`, links `lets` there, and adds
 `$HOME/.local/bin` to your shell profile.
 
-To skip interactive shell profile prompts, set `LETS_INSTALL_NO_PROMPT=1`. This is recommended for CI and other
-non-interactive installs. When PATH setup is needed, the installer will use the same non-interactive behavior and
-update the detected shell profile.
+For CI and other non-interactive installs, set `LETS_INSTALL_NO_PROMPT=1` to skip shell profile prompts. When PATH
+setup is needed, the installer will use the same non-interactive behavior and update the detected shell profile.
 
 ```bash
 curl -fsSL https://lets-cli.org/install.sh | LETS_INSTALL_NO_PROMPT=1 bash
@@ -61,8 +70,7 @@ To install into a custom lets home directory, set `LETS_HOME`. The binary will b
 curl -fsSL https://lets-cli.org/install.sh | LETS_HOME=$HOME/tools/lets bash
 ```
 
-</TabItem>
-<TabItem value='binary'>
+## Binary (Manual)
 
 Download the version you need for your platform from [Lets Releases](https://github.com/lets-cli/lets/releases).
 
@@ -70,99 +78,120 @@ Once downloaded, the binary can be run from anywhere.
 
 Ideally, install it somewhere in your user `PATH`, such as `$HOME/.local/bin`.
 
-</TabItem>
-</Tabs>
+## GitHub Action
 
+Use [lets-cli/lets-action](https://github.com/lets-cli/lets-action) in a GitHub Actions workflow:
 
-### Package managers
-
-<Tabs
-    defaultValue="snap"
-    values={[
-        { label: 'Snap', value: 'snap', },
-        { label: 'Homebrew', value: 'homebrew', },
-        { label: 'Arch', value: 'arch', },
-    ]}
->
-<TabItem value="arch">
-
-You can get binary release from https://aur.archlinux.org/packages/lets-bin/
-
-If you are using `yay` as AUR helper:
-
-```bash
-yay -S lets-bin
+```yaml
+- name: Install Lets
+  uses: lets-cli/lets-action@v1.1
+  with:
+    version: latest
 ```
-
-Also you can get bleeding edge version from https://aur.archlinux.org/packages/lets-git/
-
-```bash
-yay -S lets-git
-```
-
-</TabItem>
-<TabItem value="snap">
-
-TODO
-
-</TabItem>
-<TabItem value="homebrew">
-
-```bash
-brew tap lets-cli/tap
-```
-
-```bash
-brew install lets-cli/tap/lets
-```
-
-</TabItem>
-</Tabs>
 
 ## Update
 
-<Tabs
-    defaultValue="self"
-    values={[
-        { label: 'Self upgrade', value: 'self', },
-        { label: 'Shell script', value: 'shell', },
-        { label: 'Binary', value: 'binary', },
-        { label: 'Arch', value: 'arch', },
-    ]}
->
-<TabItem value="self">
+### Self Upgrade
 
-Starting from version `0.0.30` lets has a built-in self-upgrade command.
+Starting from version `0.0.30`, lets has a built-in self-upgrade command.
 
-It updates binary located at `which lets`
-
+It updates the binary located at `which lets`.
 
 ```bash
 lets self upgrade
 ```
 
-If your `lets` version is below `0.0.30` - use shell script and specify the latest version.
+If your `lets` version is below `0.0.30`, use the shell script and specify the latest version.
 
-</TabItem>
-<TabItem value="shell">
+### Homebrew
 
-To update `lets` you can use shell script
-
+```bash
+brew upgrade lets-cli/tap/lets
 ```
+
+### Arch
+
+AUR packages provide the latest version.
+
+```bash
+yay -Syu lets-bin
+```
+
+For the bleeding edge package:
+
+```bash
+yay -Syu lets-git
+```
+
+### Shell Script
+
+Run the install script again to update `lets` to the latest version.
+
+```bash
 curl -fsSL https://lets-cli.org/install.sh | bash
 ```
 
-Running script will update `lets` to **latest** version.
+To update to a specific version:
 
-</TabItem>
-<TabItem value="binary">
+```bash
+curl -fsSL https://lets-cli.org/install.sh | LETS_VERSION=v0.0.21 bash
+```
 
-You can download latest version from [Lets Releases](https://github.com/lets-cli/lets/releases).
+### Binary
 
-</TabItem>
-<TabItem value="arch">
+Download the latest version from [Lets Releases](https://github.com/lets-cli/lets/releases) and replace your existing
+`lets` binary.
 
-AUR repository always provides **latest** version.
+## Uninstall Lets
 
-</TabItem>
-</Tabs>
+### Self Upgrade
+
+Self upgrade is not a separate install source. If your current binary came from Homebrew or Arch, use the package
+manager uninstall instructions below. Otherwise, use the Shell Script or Binary instructions.
+
+### Homebrew
+
+```bash
+brew uninstall lets-cli/tap/lets
+```
+
+Optionally remove the tap after uninstalling:
+
+```bash
+brew untap lets-cli/tap
+```
+
+### Arch
+
+```bash
+yay -R lets-bin
+```
+
+For the bleeding edge package:
+
+```bash
+yay -R lets-git
+```
+
+### Shell Script
+
+Remove the install script binary and common PATH symlinks:
+
+```bash
+rm -f "$HOME/.local/bin/lets" "$HOME/bin/lets" "$HOME/.bin/lets"
+rm -rf "$HOME/.lets"
+```
+
+If you installed with a custom `LETS_HOME`, remove that directory instead of `$HOME/.lets`.
+
+If the installer added `$HOME/.local/bin` to your shell profile, remove the `# lets` block from that profile.
+
+### Binary
+
+Remove the binary from the location where you installed it.
+
+For example, if it is the active `lets` on your `PATH` and is not managed by Homebrew or Arch:
+
+```bash
+rm -f "$(command -v lets)"
+```
