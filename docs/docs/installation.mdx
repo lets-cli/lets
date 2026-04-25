@@ -35,6 +35,14 @@ directory from this list:
 If none of these directories are in `PATH`, the installer creates `$HOME/.local/bin`, links `lets` there, and adds
 `$HOME/.local/bin` to your shell profile.
 
+To skip interactive shell profile prompts, set `LETS_INSTALL_NO_PROMPT=1`. This is recommended for CI and other
+non-interactive installs. When PATH setup is needed, the installer will use the same non-interactive behavior and
+update the detected shell profile.
+
+```bash
+curl -fsSL https://lets-cli.org/install.sh | LETS_INSTALL_NO_PROMPT=1 bash
+```
+
 To install a specific version of `lets` (for example `v0.0.21`):
 
 ```bash

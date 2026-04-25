@@ -4,6 +4,7 @@ set -e
 LETS_HOME="${LETS_HOME:-$HOME/.lets}"
 BIN_DIR="${LETS_HOME}/bin"
 LETS_VERSION="${LETS_VERSION:-}"
+LETS_INSTALL_NO_PROMPT="${LETS_INSTALL_NO_PROMPT:-}"
 
 usage() {
   this=$1
@@ -17,6 +18,7 @@ Usage: $this [-d] [tag]
    If tag is missing, then the latest will be used.
    LETS_VERSION environment variable overrides [tag].
    LETS_HOME sets installation home, Defaults to $HOME/.lets
+   LETS_INSTALL_NO_PROMPT skips interactive shell profile prompts.
 
 EOF
   exit 2
@@ -388,7 +390,7 @@ update_shell_profile() {
 
   tilde_profile="${shell_profile/#$HOME/\~}"
   echo ""
-  if [ -t 0 ]; then
+  if [ -t 0 ] && [ -z "$LETS_INSTALL_NO_PROMPT" ]; then
     read -r -p "Add ~/.local/bin to your PATH in ${tilde_profile}? [y/n] " -n 1
     echo ""
     case "$REPLY" in

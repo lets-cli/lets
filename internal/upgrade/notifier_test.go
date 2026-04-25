@@ -213,7 +213,7 @@ func TestIsHomebrewInstall(t *testing.T) {
 	t.Run("detects cellar path without brew", func(t *testing.T) {
 		t.Setenv("PATH", t.TempDir())
 
-		if !isHomebrewInstall("/opt/homebrew/Cellar/lets/0.0.1/bin/lets") {
+		if !isHomebrewInstall(context.Background(), "/opt/homebrew/Cellar/lets/0.0.1/bin/lets") {
 			t.Fatal("expected homebrew path to be detected")
 		}
 	})
@@ -221,7 +221,7 @@ func TestIsHomebrewInstall(t *testing.T) {
 	t.Run("ignores generic path without brew", func(t *testing.T) {
 		t.Setenv("PATH", t.TempDir())
 
-		if isHomebrewInstall("/usr/local/bin/lets") {
+		if isHomebrewInstall(context.Background(), "/usr/local/bin/lets") {
 			t.Fatal("did not expect generic install path to be detected as homebrew")
 		}
 	})
@@ -242,7 +242,7 @@ esac
 		}
 		t.Setenv("PATH", fakeBrewDir)
 
-		if !isHomebrewInstall("/opt/homebrew/bin/lets") {
+		if !isHomebrewInstall(context.Background(), "/opt/homebrew/bin/lets") {
 			t.Fatal("expected brew bin path to be detected")
 		}
 	})
@@ -263,7 +263,7 @@ esac
 		}
 		t.Setenv("PATH", fakeBrewDir)
 
-		if !isHomebrewInstall("/opt/homebrew/opt/lets/bin/lets") {
+		if !isHomebrewInstall(context.Background(), "/opt/homebrew/opt/lets/bin/lets") {
 			t.Fatal("expected brew opt path to be detected")
 		}
 	})

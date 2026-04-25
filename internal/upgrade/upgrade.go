@@ -41,7 +41,7 @@ func NewBinaryUpgrader(reg registry.RepoRegistry, currentVersion string) (*Binar
 }
 
 func (up *BinaryUpgrader) Upgrade(ctx context.Context) error {
-	if isHomebrewInstall(up.binaryPath) {
+	if isHomebrewInstall(ctx, up.binaryPath) {
 		return fmt.Errorf("homebrew-managed lets install must be upgraded with %q", "brew upgrade lets-cli/tap/lets")
 	}
 

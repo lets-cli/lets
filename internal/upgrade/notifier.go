@@ -95,12 +95,12 @@ func (n *UpdateNotifier) Check(ctx context.Context, currentVersion string) (*Upd
 	now := n.now()
 	if now.Sub(state.CheckedAt) < updateCheckInterval {
 		log.Debugf("skip update check: next check at %s", state.CheckedAt.Add(updateCheckInterval))
-		return n.noticeFromState(state, currentVersion, current, now), nil
+		return n.noticeFromState(ctx, state, currentVersion, current, now), nil
 	}
 
 	release, err := n.registry.GetLatestReleaseInfo(ctx)
 	if err != nil {
-		return n.noticeFromState(state, currentVersion, current, now), err
+		return n.noticeFromState(ctx, state, currentVersion, current, now), err
 	}
 
 	state.CheckedAt = now
@@ -111,7 +111,7 @@ func (n *UpdateNotifier) Check(ctx context.Context, currentVersion string) (*Upd
 		return nil, err
 	}
 
-	return n.noticeFromState(state, currentVersion, current, now), nil
+	return n.noticeFromState(ctx, state, currentVersion, current, now), nil
 }
 
 func (n *UpdateNotifier) MarkNotified(notice *UpdateNotice) error {
@@ -134,6 +134,7 @@ func (n *UpdateNotifier) MarkNotified(notice *UpdateNotice) error {
 }
 
 func (n *UpdateNotifier) noticeFromState(
+	ctx context.Context,
 	state notifierState,
 	currentVersion string,
 	current *semver.Version,
@@ -154,7 +155,7 @@ func (n *UpdateNotifier) noticeFromState(
 
 	command := "lets self upgrade"
 
-	if isHomebrewInstall(n.executablePath) {
+	if isHomebrewInstall(ctx, n.executablePath) {
 		if !state.LatestPublishedAt.IsZero() && now.Sub(state.LatestPublishedAt) < homebrewNoticeDelay {
 			return nil
 		}
@@ -238,7 +239,7 @@ func parseStableVersion(version string) (*semver.Version, bool) {
 	return parsed, true
 }
 
-func isHomebrewInstall(binaryPath string) bool {
+func isHomebrewInstall(ctx context.Context, binaryPath string) bool {
 	if binaryPath == "" {
 		return false
 	}
@@ -254,17 +255,17 @@ func isHomebrewInstall(binaryPath string) bool {
 		}
 	}
 
-	brewPrefix, ok := homebrewOutput("--prefix")
+	brewPrefix, ok := homebrewOutput(ctx, "--prefix")
 	if !ok {
 		return false
 	}
 
-	letsPrefix, ok := homebrewOutput("--prefix", "lets")
+	letsPrefix, ok := homebrewOutput(ctx, "--prefix", "lets")
 	if !ok {
 		return false
 	}
 
-	letsCellar, _ := homebrewOutput("--cellar", "lets")
+	letsCellar, _ := homebrewOutput(ctx, "--cellar", "lets")
 	managedPaths := []string{
 		filepath.Join(brewPrefix, "bin", "lets"),
 		filepath.Join(letsPrefix, "bin", "lets"),
@@ -285,8 +286,8 @@ func isHomebrewInstall(binaryPath string) bool {
 	return false
 }
 
-func homebrewOutput(args ...string) (string, bool) {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+func homebrewOutput(ctx context.Context, args ...string) (string, bool) {
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 
 	output, err := exec.CommandContext(ctx, "brew", args...).Output()
@@ -295,6 +296,7 @@ func homebrewOutput(args ...string) (string, bool) {
 	}
 
 	value := strings.TrimSpace(string(output))
+
 	return value, value != ""
 }
 
