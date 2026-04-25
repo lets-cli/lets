@@ -188,8 +188,33 @@ is_homebrew_lets() {
   resolved_path=$(resolve_path "$1") || return 1
   case "$resolved_path" in
     */Cellar/lets/*) return 0 ;;
-    *) return 1 ;;
   esac
+
+  if ! is_command brew; then
+    return 1
+  fi
+
+  brew_prefix=$(brew --prefix 2>/dev/null) || return 1
+  brew_lets_prefix=$(brew --prefix lets 2>/dev/null) || return 1
+  brew_lets_cellar=$(brew --cellar lets 2>/dev/null) || true
+
+  case "$1" in
+    "${brew_prefix}/bin/lets") return 0 ;;
+    "${brew_lets_prefix}/bin/lets") return 0 ;;
+  esac
+
+  case "$resolved_path" in
+    "${brew_prefix}/bin/lets") return 0 ;;
+    "${brew_lets_prefix}/bin/lets") return 0 ;;
+  esac
+
+  if [ -n "$brew_lets_cellar" ]; then
+    case "$resolved_path" in
+      "${brew_lets_cellar}"/*) return 0 ;;
+    esac
+  fi
+
+  return 1
 }
 check_old_usr_local_install() {
   old_path="/usr/local/bin/lets"

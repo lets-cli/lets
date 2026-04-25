@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -237,8 +238,71 @@ func parseStableVersion(version string) (*semver.Version, bool) {
 	return parsed, true
 }
 
-func isHomebrewInstall(path string) bool {
-	return strings.Contains(path, "/Cellar/lets/")
+func isHomebrewInstall(binaryPath string) bool {
+	if binaryPath == "" {
+		return false
+	}
+
+	paths := []string{filepath.Clean(binaryPath)}
+	if resolvedPath, err := filepath.EvalSymlinks(binaryPath); err == nil {
+		paths = append(paths, filepath.Clean(resolvedPath))
+	}
+
+	for _, path := range paths {
+		if strings.Contains(path, "/Cellar/lets/") {
+			return true
+		}
+	}
+
+	brewPrefix, ok := homebrewOutput("--prefix")
+	if !ok {
+		return false
+	}
+
+	letsPrefix, ok := homebrewOutput("--prefix", "lets")
+	if !ok {
+		return false
+	}
+
+	letsCellar, _ := homebrewOutput("--cellar", "lets")
+	managedPaths := []string{
+		filepath.Join(brewPrefix, "bin", "lets"),
+		filepath.Join(letsPrefix, "bin", "lets"),
+	}
+
+	for _, path := range paths {
+		for _, managedPath := range managedPaths {
+			if path == filepath.Clean(managedPath) {
+				return true
+			}
+		}
+
+		if letsCellar != "" && isPathInside(path, letsCellar) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func homebrewOutput(args ...string) (string, bool) {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	output, err := exec.CommandContext(ctx, "brew", args...).Output()
+	if err != nil {
+		return "", false
+	}
+
+	value := strings.TrimSpace(string(output))
+	return value, value != ""
+}
+
+func isPathInside(path string, dir string) bool {
+	path = filepath.Clean(path)
+	dir = filepath.Clean(dir)
+
+	return path == dir || strings.HasPrefix(path, dir+string(os.PathSeparator))
 }
 
 func LogUpdateCheckError(err error) {
