@@ -5,6 +5,8 @@ title: Changelog
 
 ## [Unreleased](https://github.com/lets-cli/lets/releases/tag/v0.0.X)
 
+* `[Fixed]` Prevent `lets self upgrade` from overwriting Homebrew-managed installs. Issue [#338](https://github.com/lets-cli/lets/issues/338)
+
 ## [0.0.60](https://github.com/lets-cli/lets/releases/tag/v0.0.60)
 
 * `[Dependency]` update go to `1.26`
