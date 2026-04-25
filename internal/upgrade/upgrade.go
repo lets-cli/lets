@@ -89,7 +89,7 @@ func (up *BinaryUpgrader) Upgrade(ctx context.Context) error {
 }
 
 func binaryPath() (string, error) {
-	// TODO after implementing $HOME/.lets/bin, deny upgrading in other places
+	// TODO decide whether self-upgrade should be limited to supported installer-managed paths.
 	return os.Executable()
 }
 

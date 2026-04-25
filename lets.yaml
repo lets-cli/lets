@@ -98,20 +98,21 @@ commands:
         --bin=<bin>          Binary name (default: lets-dev)
       Example:
         lets build-and-install
-        lets build-and-install -p ~/bin
-        lets build-and-install -p ~/bin --bin=my-lets
+        lets build-and-install -p ~/.local/bin
+        lets build-and-install -p ~/.local/bin --bin=my-lets
     cmd: |
       VERSION=$(git describe)
-      PATH2LETSDEV="/usr/local/bin"
+      PATH2LETSDEV="${HOME}/.local/bin"
       BIN="${LETSOPT_BIN:-lets-dev}"
 
       if [[ -n ${LETSOPT_PATH} ]]; then
         PATH2LETSDEV=$LETSOPT_PATH
       fi
 
+      mkdir -p "${PATH2LETSDEV}"
       go build -ldflags="-X main.Version=${VERSION:1}-dev -X main.BuildDate=$(date -u +%Y-%m-%dT%H:%M:%SZ)" -o "${BIN}" ./cmd/lets && \
-      sudo mv ./${BIN} $PATH2LETSDEV/${BIN} && \
-      echo " - binary ${BIN} version $($PATH2LETSDEV/${BIN} --version) successfully installed in ${PATH2LETSDEV}"
+      mv ./${BIN} "${PATH2LETSDEV}/${BIN}" && \
+      echo " - binary ${BIN} version $("${PATH2LETSDEV}/${BIN}" --version) successfully installed in ${PATH2LETSDEV}"
 
   build:
     description: Build lets from source code
