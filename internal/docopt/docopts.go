@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	dopt "github.com/docopt/docopt-go"
+	dopt "github.com/kindermax/docopt.go"
 )
 
 // aliases for docopt types.
