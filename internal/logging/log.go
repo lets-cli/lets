@@ -85,6 +85,14 @@ func (l *ExecLogger) Info(format string, a ...any) {
 	l.log.Logf(log.InfoLevel, format, a...)
 }
 
+func (l *ExecLogger) Warn(format string, a ...any) {
+	if l.prefix != "" {
+		format = fmt.Sprintf("%s %s", l.prefix, format)
+	}
+
+	l.log.Logf(log.WarnLevel, format, a...)
+}
+
 func (l *ExecLogger) Debug(format string, a ...any) {
 	if l.prefix != "" {
 		format = fmt.Sprintf("%s %s", l.prefix, format)

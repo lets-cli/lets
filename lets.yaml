@@ -1,13 +1,10 @@
 shell: bash
-
 mixins:
   - lets.build.yaml
   - -lets.my.yaml
-
 env:
   CURRENT_UID:
     sh: echo "`id -u`:`id -g`"
-
 commands:
   release:
     description: |
@@ -46,6 +43,10 @@ commands:
   test-bats:
     description: Run bats tests
     depends: [build-lets-image]
+    checksum:
+      files:
+        - go.sum
+      persist: true
     options: |
       Usage: lets test-bats [<test>] [--opts=<opts>]
       Example:
@@ -121,11 +122,11 @@ commands:
     cmd: |
       VERSION=$(git describe)
       BIN=${LETSOPT_BIN:-lets}
-      
+
       go build \
         -ldflags="-X main.Version=${VERSION:1}-dev -X main.BuildDate=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
         -o ${BIN} ./cmd/lets
-      
+
       success=$?
       if [[ $success -eq 0 ]]; then
         version=$(./${BIN} --version)

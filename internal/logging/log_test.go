@@ -69,6 +69,23 @@ func TestFormatterColorsDebugMessages(t *testing.T) {
 	}
 }
 
+func TestFormatterColorsWarnMessages(t *testing.T) {
+	setNoColorForTest(t, false)
+
+	line, err := (&Formatter{}).Format(&log.Entry{
+		Level:   log.WarnLevel,
+		Message: "warn message",
+	})
+	if err != nil {
+		t.Fatalf("Format() error = %v", err)
+	}
+
+	expected := color.YellowString("lets:") + " " + color.YellowString("warn message") + "\n"
+	if string(line) != expected {
+		t.Fatalf("unexpected warn line: %q", string(line))
+	}
+}
+
 func TestFormatterFormatsLevelsAndFields(t *testing.T) {
 	setNoColorForTest(t, true)
 
@@ -131,7 +148,7 @@ func TestFormatterFormatsLevelsAndFields(t *testing.T) {
 			}
 
 			if strings.Contains(line, "\x1b[") {
-				t.Fatalf("expected non-colorized output for non-debug levels, got: %q", line)
+				t.Fatalf("expected non-colorized output when color is disabled, got: %q", line)
 			}
 
 			if len(tt.fields) == 0 {
