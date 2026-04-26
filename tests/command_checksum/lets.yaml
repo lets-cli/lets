@@ -16,6 +16,21 @@ commands:
       - bar_1.txt
     cmd: echo "${LETS_CHECKSUM}"
 
+  as-new-list-of-files:
+    description: Test checksum
+    checksum:
+      files:
+        - foo_1.txt
+        - foo_2.txt
+        - bar_1.txt
+    cmd: echo "${LETS_CHECKSUM}"
+
+  as-new-sh:
+    description: Test checksum
+    checksum:
+      sh: printf custom-checksum
+    cmd: echo "${LETS_CHECKSUM}"
+
   as-map-of-list-of-files:
     description: Test checksum
     checksum:

@@ -1,0 +1,12 @@
+shell: bash
+
+mixins:
+  - mixin.yaml
+  - url: https://example.com/lets.mixin.yaml
+
+commands:
+  build:
+    persist_checksum: true
+    checksum:
+      - go.mod
+    cmd: echo build

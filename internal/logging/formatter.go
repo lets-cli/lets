@@ -40,12 +40,20 @@ func formatPrefix(entry *log.Entry) string {
 		return color.BlueString("lets:")
 	}
 
+	if entry.Level == log.WarnLevel {
+		return color.YellowString("lets:")
+	}
+
 	return "lets:"
 }
 
 func formatMessage(entry *log.Entry) string {
 	if entry.Level == log.DebugLevel {
 		return color.BlueString(entry.Message)
+	}
+
+	if entry.Level == log.WarnLevel {
+		return color.YellowString(entry.Message)
 	}
 
 	return entry.Message

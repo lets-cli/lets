@@ -19,3 +19,5 @@ title: CLI options
 |`-v, --version`|||version for lets|
 
 Upgrade the lets binary with `lets self upgrade`.
+
+Migrate deprecated config syntax with `lets self fix`. Use `lets self fix --dry-run` to print migrated config content before writing files.

@@ -6,8 +6,10 @@ import (
 	"encoding/hex"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	"github.com/lets-cli/lets/internal/set"
 	"github.com/lets-cli/lets/internal/util"
@@ -145,6 +147,44 @@ func CalculateChecksumFromSources(workDir string, checksumSources map[string][]s
 	checksumMap[DefaultChecksumKey] = hex.EncodeToString(hasher.Sum(nil))
 
 	return checksumMap, nil
+}
+
+func CalculateChecksumFromConfig(
+	workDir string,
+	checksumSources map[string][]string,
+	shell string,
+	script string,
+	env map[string]string,
+) (map[string]string, error) {
+	if script != "" {
+		result, err := CalculateChecksumFromScript(workDir, shell, script, env)
+		if err != nil {
+			return nil, err
+		}
+
+		return map[string]string{DefaultChecksumKey: result}, nil
+	}
+
+	return CalculateChecksumFromSources(workDir, checksumSources)
+}
+
+func CalculateChecksumFromScript(workDir string, shell string, script string, env map[string]string) (string, error) {
+	cmd := exec.Command(shell, "-c", script)
+	cmd.Dir = workDir
+
+	envList := os.Environ()
+	for key, value := range env {
+		envList = append(envList, fmt.Sprintf("%s=%s", key, value))
+	}
+
+	cmd.Env = envList
+
+	out, err := cmd.Output()
+	if err != nil {
+		return "", fmt.Errorf("can not get output from checksum.sh script: %s: %w", script, err)
+	}
+
+	return strings.TrimSpace(string(out)), nil
 }
 
 func ReadChecksumFromDisk(checksumsDir, cmdName, checksumName string) (string, error) {

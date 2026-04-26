@@ -24,6 +24,18 @@ CHECKSUM_FROM_FOO_AND_BAR_CHECKSUMS="b778d48759ad4e6e9a755bd595d23eeaa2f7ff65"
     assert_line --index 0 ${ALL_CHECKSUM}
 }
 
+@test "command_checksum: should calculate checksum using new files syntax" {
+    run lets as-new-list-of-files
+    assert_success
+    assert_line --index 0 ${ALL_CHECKSUM}
+}
+
+@test "command_checksum: should calculate checksum using sh" {
+    run lets as-new-sh
+    assert_success
+    assert_line --index 0 custom-checksum
+}
+
 @test "command_checksum: should calculate checksum as map of list of files" {
     run lets as-map-of-list-of-files
     assert_success

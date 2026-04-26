@@ -33,8 +33,9 @@ TEMP_FILE=foo_test.txt
     # 3. check checksum persisted
 
     assert_success
-    assert_line --index 0 "LETS_CHECKSUM=${FIRST_CHECKSUM}"
-    assert_line --index 1 "LETS_CHECKSUM_CHANGED=true"
+    assert_line --index 0 --partial "deprecated 'persist_checksum'"
+    assert_line --index 1 "LETS_CHECKSUM=${FIRST_CHECKSUM}"
+    assert_line --index 2 "LETS_CHECKSUM_CHANGED=true"
 
     # it creates .lets
     [[ -d .lets ]]
@@ -50,8 +51,9 @@ TEMP_FILE=foo_test.txt
     printf "second run: %s\n" "${lines[@]}"
 
     assert_success
-    assert_line --index 0 "LETS_CHECKSUM=${FIRST_CHECKSUM}"
-    assert_line --index 1 "LETS_CHECKSUM_CHANGED=false"
+    assert_line --index 0 --partial "deprecated 'persist_checksum'"
+    assert_line --index 1 "LETS_CHECKSUM=${FIRST_CHECKSUM}"
+    assert_line --index 2 "LETS_CHECKSUM_CHANGED=false"
 
     # third run, there is stored checksum and we creating new file. checksum must be changed now
 
@@ -65,8 +67,9 @@ TEMP_FILE=foo_test.txt
     printf "third run: %s\n" "${lines[@]}"
 
     assert_success
-    assert_line --index 0 "LETS_CHECKSUM=${CHANGED_CHECKSUM}"
-    assert_line --index 1 "LETS_CHECKSUM_CHANGED=true"
+    assert_line --index 0 --partial "deprecated 'persist_checksum'"
+    assert_line --index 1 "LETS_CHECKSUM=${CHANGED_CHECKSUM}"
+    assert_line --index 2 "LETS_CHECKSUM_CHANGED=true"
 }
 
 @test "command_persist_checksum: should persist checksum for cmd-as-map" {
@@ -124,12 +127,31 @@ TEMP_FILE=foo_test.txt
     assert_line --index 1 "2 LETS_CHECKSUM_CHANGED=true"
 }
 
+@test "command_persist_checksum: should check if checksum has changed using new syntax" {
+    export CMD_NAME=persist-checksum-new
+
+    run lets ${CMD_NAME}
+
+    assert_success
+    assert_line --index 0 "LETS_CHECKSUM=${FIRST_CHECKSUM}"
+    assert_line --index 1 "LETS_CHECKSUM_CHANGED=true"
+
+    [[ -f .lets/checksums/${CMD_NAME}/lets_default_checksum ]]
+
+    run lets ${CMD_NAME}
+
+    assert_success
+    assert_line --index 0 "LETS_CHECKSUM=${FIRST_CHECKSUM}"
+    assert_line --index 1 "LETS_CHECKSUM_CHANGED=false"
+}
+
 @test "command_persist_checksum: should persist checksum only if exit code = 0" {
     run lets with-error-code-1
 
     [[ $status = 1 ]]
-    assert_line --index 0 "LETS_CHECKSUM=${FIRST_CHECKSUM}"
-    assert_line --index 1 "LETS_CHECKSUM_CHANGED=true"
+    assert_line --index 0 --partial "deprecated 'persist_checksum'"
+    assert_line --index 1 "LETS_CHECKSUM=${FIRST_CHECKSUM}"
+    assert_line --index 2 "LETS_CHECKSUM_CHANGED=true"
 
     [[ -d .lets ]]
     [[ ! -d .lets/checksums ]]

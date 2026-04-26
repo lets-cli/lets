@@ -789,11 +789,11 @@ commands:
 
 `key: checksum`
 
-`type: array of string | mapping string => array of string`
+`type: object`
 
 Checksum used for computing file hashes. It is useful when you depend on some files content changes.
 
-In `checksum` you can specify:
+In `checksum.files` you can specify:
 
 - a list of file names
 - a list of file regexp patterns (parsed via go `path/filepath.Glob`)
@@ -814,10 +814,11 @@ If checksum is a mapping, e.g:
 commands:
   build:
     checksum:
-      deps:
-        - package.json
-      doc:
-        - Readme.md
+      files:
+        deps:
+          - package.json
+        doc:
+          - Readme.md
 ```
 
 Resulting env will be:
@@ -830,6 +831,18 @@ Checksum is calculated with `sha1`.
 
 If you specify patterns, `lets` will try to find all matches and will calculate checksum of that files.
 
+You can use `checksum.sh` instead of `checksum.files` when you need to provide the checksum value from a shell command:
+
+```yaml
+commands:
+  build:
+    checksum:
+      sh: git rev-parse HEAD
+    cmd: docker build -t myrepo/app:${LETS_CHECKSUM} .
+```
+
+`checksum.files` and `checksum.sh` are mutually exclusive.
+
 Example:
 
 ```yaml
@@ -837,22 +850,23 @@ shell: bash
 commands:
   app-build:
     checksum:
-      - requirements-*.txt
+      files:
+        - requirements-*.txt
     cmd: |
       docker pull myrepo/app:${LETS_CHECKSUM}
       docker run --rm myrepo/app${LETS_CHECKSUM} python -m app
 ```
 
 
-### `persist_checksum`
+### `checksum.persist`
 
-`key: persist_checksum`
+`key: checksum.persist`
 
 `type: bool`
 
 This feature is useful when you want to know that something has changed between two executions of a command.
 
-`persist_checksum` can be used only if `checksum` declared for command.
+`checksum.persist` can be used only if `checksum.files` or `checksum.sh` declared for command.
 
 If set to `true`, each run all calculated checksums will be stored to disk.
 
@@ -869,12 +883,13 @@ Example:
 ```yaml
 commands:
   build:
-    persist_checksum: true
     checksum:
-      deps:
-        - package.json
-      doc:
-        - Readme.md
+      persist: true
+      files:
+        deps:
+          - package.json
+        doc:
+          - Readme.md
 ```
 
 Resulting env will be:
@@ -886,6 +901,8 @@ Resulting env will be:
 * `LETS_CHECKSUM_DEPS_CHANGED` - is checksum of deps files changed
 * `LETS_CHECKSUM_DOC_CHANGED` - is checksum of doc files changed
 * `LETS_CHECKSUM_CHANGED` - is checksum of all checksums (deps and doc) changed
+
+`checksum` as a direct list/map and command-level `persist_checksum` are deprecated compatibility syntax. Use `lets self fix` to migrate local configs to `checksum.files` and `checksum.persist`.
 
 ### `ref`
 

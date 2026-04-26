@@ -5,6 +5,8 @@ title: Changelog
 
 ## [Unreleased](https://github.com/lets-cli/lets/releases/tag/v0.0.X)
 
+* `[Added]` Add `checksum.files`, `checksum.sh`, and `checksum.persist` command checksum syntax while keeping the old checksum format compatible.
+* `[Added]` Add `lets self fix` config migration command with `--dry-run` preview output for deprecated checksum syntax.
 * `[Refactoring]` Use Go 1.26 `errors.AsType` for type-safe error unwrapping.
 
 ## [0.0.61](https://github.com/lets-cli/lets/releases/tag/v0.0.61)
