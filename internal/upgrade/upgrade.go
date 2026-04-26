@@ -2,11 +2,14 @@ package upgrade
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path"
+	"path/filepath"
 	"runtime"
+	"strings"
 
 	"github.com/lets-cli/lets/internal/upgrade/registry"
 	log "github.com/sirupsen/logrus"
@@ -41,8 +44,9 @@ func NewBinaryUpgrader(reg registry.RepoRegistry, currentVersion string) (*Binar
 }
 
 func (up *BinaryUpgrader) Upgrade(ctx context.Context) error {
-	if isHomebrewInstall(up.binaryPath) {
-		return fmt.Errorf("homebrew-managed lets install must be upgraded with %q", "brew upgrade lets-cli/tap/lets")
+	binaryPath, err := selfUpgradeBinaryPath(ctx, up.binaryPath)
+	if err != nil {
+		return err
 	}
 
 	latestVersion, err := up.registry.GetLatestRelease(ctx)
@@ -73,12 +77,12 @@ func (up *BinaryUpgrader) Upgrade(ctx context.Context) error {
 		return fmt.Errorf("failed to download release %s version %s: %w", packageName, latestVersion, err)
 	}
 
-	err = backupExecutable(up.binaryPath, up.backupPath)
+	err = backupExecutable(binaryPath, up.backupPath)
 	if err != nil {
 		return err
 	}
 
-	err = replaceBinaries(up.downloadPath, up.binaryPath, up.backupPath)
+	err = replaceBinaries(up.downloadPath, binaryPath, up.backupPath)
 	if err != nil {
 		return err
 	}
@@ -89,8 +93,51 @@ func (up *BinaryUpgrader) Upgrade(ctx context.Context) error {
 }
 
 func binaryPath() (string, error) {
-	// TODO after implementing $HOME/.lets/bin, deny upgrading in other places
 	return os.Executable()
+}
+
+func selfUpgradeBinaryPath(ctx context.Context, executablePath string) (string, error) {
+	if executablePath == "" {
+		return "", errors.New("failed to determine lets binary path")
+	}
+
+	binaryPath := filepath.Clean(executablePath)
+
+	resolvedPath := binaryPath
+	if resolved, err := filepath.EvalSymlinks(binaryPath); err == nil {
+		resolvedPath = filepath.Clean(resolved)
+	}
+
+	if isHomebrewInstall(ctx, binaryPath) || isHomebrewInstall(ctx, resolvedPath) {
+		return "", fmt.Errorf("homebrew-managed lets install must be upgraded with %q", "brew upgrade lets-cli/tap/lets")
+	}
+
+	if isSystemManagedInstallPath(binaryPath) || isSystemManagedInstallPath(resolvedPath) {
+		return "", fmt.Errorf(
+			"system-managed lets install at %s must be upgraded with its package manager or replaced manually",
+			binaryPath,
+		)
+	}
+
+	return resolvedPath, nil
+}
+
+func isSystemManagedInstallPath(binaryPath string) bool {
+	binaryPath = filepath.Clean(binaryPath)
+	dir := filepath.Dir(binaryPath)
+
+	switch dir {
+	case "/bin", "/sbin", "/usr/bin", "/usr/sbin", "/usr/local/bin", "/opt/local/bin", "/snap/bin":
+		return true
+	}
+
+	for _, prefix := range []string{"/nix/store/", "/snap/"} {
+		if strings.HasPrefix(binaryPath, prefix) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func backupExecutable(executablePath string, backupPath string) error {

@@ -11,13 +11,14 @@ have stable `lets` version untouched.
 To build a binary:
 
 ```bash
-go build -o lets-dev *.go
+go build -o lets-dev ./cmd/lets
 ```
 
-To install in system
+To install in your user `PATH`:
 
 ```bash
-go build -o lets-dev *.go && sudo mv ./lets-dev /usr/local/bin/lets-dev
+mkdir -p "$HOME/.local/bin"
+go build -o "$HOME/.local/bin/lets-dev" ./cmd/lets
 ```
 
 Or if you already have `lets` installed in your system:
@@ -25,11 +26,11 @@ Or if you already have `lets` installed in your system:
 ```bash
 lets build-and-install [--path=<path>]
 ```
-`path` - your custom executable $PATH, defaults to `/usr/local/bin`
+`path` - your custom executable $PATH, defaults to `$HOME/.local/bin`
 
 After install - check version of lets - `lets-dev --version` - it should be development
 
-It will install `lets-dev` to /usr/local/bin/lets-dev, or wherever you`ve specified in path, and set version to development with current tag and timestamp
+It will install `lets-dev` to `$HOME/.local/bin/lets-dev`, or wherever you`ve specified in path, and set version to development with current tag and timestamp
 
 ## Test
 

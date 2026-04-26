@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -94,12 +95,12 @@ func (n *UpdateNotifier) Check(ctx context.Context, currentVersion string) (*Upd
 	now := n.now()
 	if now.Sub(state.CheckedAt) < updateCheckInterval {
 		log.Debugf("skip update check: next check at %s", state.CheckedAt.Add(updateCheckInterval))
-		return n.noticeFromState(state, currentVersion, current, now), nil
+		return n.noticeFromState(ctx, state, currentVersion, current, now), nil
 	}
 
 	release, err := n.registry.GetLatestReleaseInfo(ctx)
 	if err != nil {
-		return n.noticeFromState(state, currentVersion, current, now), err
+		return n.noticeFromState(ctx, state, currentVersion, current, now), err
 	}
 
 	state.CheckedAt = now
@@ -110,7 +111,7 @@ func (n *UpdateNotifier) Check(ctx context.Context, currentVersion string) (*Upd
 		return nil, err
 	}
 
-	return n.noticeFromState(state, currentVersion, current, now), nil
+	return n.noticeFromState(ctx, state, currentVersion, current, now), nil
 }
 
 func (n *UpdateNotifier) MarkNotified(notice *UpdateNotice) error {
@@ -133,6 +134,7 @@ func (n *UpdateNotifier) MarkNotified(notice *UpdateNotice) error {
 }
 
 func (n *UpdateNotifier) noticeFromState(
+	ctx context.Context,
 	state notifierState,
 	currentVersion string,
 	current *semver.Version,
@@ -153,7 +155,7 @@ func (n *UpdateNotifier) noticeFromState(
 
 	command := "lets self upgrade"
 
-	if isHomebrewInstall(n.executablePath) {
+	if isHomebrewInstall(ctx, n.executablePath) {
 		if !state.LatestPublishedAt.IsZero() && now.Sub(state.LatestPublishedAt) < homebrewNoticeDelay {
 			return nil
 		}
@@ -237,8 +239,72 @@ func parseStableVersion(version string) (*semver.Version, bool) {
 	return parsed, true
 }
 
-func isHomebrewInstall(path string) bool {
-	return strings.Contains(path, "/Cellar/lets/")
+func isHomebrewInstall(ctx context.Context, binaryPath string) bool {
+	if binaryPath == "" {
+		return false
+	}
+
+	paths := []string{filepath.Clean(binaryPath)}
+	if resolvedPath, err := filepath.EvalSymlinks(binaryPath); err == nil {
+		paths = append(paths, filepath.Clean(resolvedPath))
+	}
+
+	for _, path := range paths {
+		if strings.Contains(path, "/Cellar/lets/") {
+			return true
+		}
+	}
+
+	brewPrefix, ok := homebrewOutput(ctx, "--prefix")
+	if !ok {
+		return false
+	}
+
+	letsPrefix, ok := homebrewOutput(ctx, "--prefix", "lets")
+	if !ok {
+		return false
+	}
+
+	letsCellar, _ := homebrewOutput(ctx, "--cellar", "lets")
+	managedPaths := []string{
+		filepath.Join(brewPrefix, "bin", "lets"),
+		filepath.Join(letsPrefix, "bin", "lets"),
+	}
+
+	for _, path := range paths {
+		for _, managedPath := range managedPaths {
+			if path == filepath.Clean(managedPath) {
+				return true
+			}
+		}
+
+		if letsCellar != "" && isPathInside(path, letsCellar) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func homebrewOutput(ctx context.Context, args ...string) (string, bool) {
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+
+	output, err := exec.CommandContext(ctx, "brew", args...).Output()
+	if err != nil {
+		return "", false
+	}
+
+	value := strings.TrimSpace(string(output))
+
+	return value, value != ""
+}
+
+func isPathInside(path string, dir string) bool {
+	path = filepath.Clean(path)
+	dir = filepath.Clean(dir)
+
+	return path == dir || strings.HasPrefix(path, dir+string(os.PathSeparator))
 }
 
 func LogUpdateCheckError(err error) {

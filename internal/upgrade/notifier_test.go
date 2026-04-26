@@ -2,6 +2,7 @@ package upgrade
 
 import (
 	"context"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -209,10 +210,61 @@ func TestLetsStatePath(t *testing.T) {
 }
 
 func TestIsHomebrewInstall(t *testing.T) {
-	if !isHomebrewInstall("/opt/homebrew/Cellar/lets/0.0.1/bin/lets") {
-		t.Fatal("expected homebrew path to be detected")
-	}
-	if isHomebrewInstall("/usr/local/bin/lets") {
-		t.Fatal("did not expect generic install path to be detected as homebrew")
-	}
+	t.Run("detects cellar path without brew", func(t *testing.T) {
+		t.Setenv("PATH", t.TempDir())
+
+		if !isHomebrewInstall(context.Background(), "/opt/homebrew/Cellar/lets/0.0.1/bin/lets") {
+			t.Fatal("expected homebrew path to be detected")
+		}
+	})
+
+	t.Run("ignores generic path without brew", func(t *testing.T) {
+		t.Setenv("PATH", t.TempDir())
+
+		if isHomebrewInstall(context.Background(), "/usr/local/bin/lets") {
+			t.Fatal("did not expect generic install path to be detected as homebrew")
+		}
+	})
+
+	t.Run("detects brew prefix bin path", func(t *testing.T) {
+		fakeBrewDir := t.TempDir()
+		fakeBrewPath := filepath.Join(fakeBrewDir, "brew")
+		fakeBrew := `#!/bin/sh
+case "$*" in
+  "--prefix") echo "/opt/homebrew" ;;
+  "--prefix lets") echo "/opt/homebrew/opt/lets" ;;
+  "--cellar lets") echo "/opt/homebrew/Cellar/lets" ;;
+  *) exit 1 ;;
+esac
+`
+		if err := os.WriteFile(fakeBrewPath, []byte(fakeBrew), 0o755); err != nil {
+			t.Fatalf("failed to write fake brew: %s", err)
+		}
+		t.Setenv("PATH", fakeBrewDir)
+
+		if !isHomebrewInstall(context.Background(), "/opt/homebrew/bin/lets") {
+			t.Fatal("expected brew bin path to be detected")
+		}
+	})
+
+	t.Run("detects brew opt path", func(t *testing.T) {
+		fakeBrewDir := t.TempDir()
+		fakeBrewPath := filepath.Join(fakeBrewDir, "brew")
+		fakeBrew := `#!/bin/sh
+case "$*" in
+  "--prefix") echo "/opt/homebrew" ;;
+  "--prefix lets") echo "/opt/homebrew/opt/lets" ;;
+  "--cellar lets") echo "/opt/homebrew/Cellar/lets" ;;
+  *) exit 1 ;;
+esac
+`
+		if err := os.WriteFile(fakeBrewPath, []byte(fakeBrew), 0o755); err != nil {
+			t.Fatalf("failed to write fake brew: %s", err)
+		}
+		t.Setenv("PATH", fakeBrewDir)
+
+		if !isHomebrewInstall(context.Background(), "/opt/homebrew/opt/lets/bin/lets") {
+			t.Fatal("expected brew opt path to be detected")
+		}
+	})
 }

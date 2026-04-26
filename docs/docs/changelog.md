@@ -5,7 +5,9 @@ title: Changelog
 
 ## [Unreleased](https://github.com/lets-cli/lets/releases/tag/v0.0.X)
 
+* `[Changed]` Install script now installs to `$HOME/.lets/bin`, exposes `lets` through a user PATH symlink, and stops on old non-Homebrew `/usr/local/bin/lets` installs. Issue [#121](https://github.com/lets-cli/lets/issues/121)
 * `[Fixed]` Prevent `lets self upgrade` from overwriting Homebrew-managed installs. Issue [#338](https://github.com/lets-cli/lets/issues/338)
+* `[Fixed]` `lets self upgrade` now updates symlink targets and refuses common system-managed install paths.
 
 ## [0.0.60](https://github.com/lets-cli/lets/releases/tag/v0.0.60)
 
