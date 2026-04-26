@@ -25,8 +25,7 @@ func (e *DependencyError) Unwrap() error { return e.Err }
 
 // ExitCode propagates the exit code from the innermost ExecuteError, or returns 1.
 func (e *DependencyError) ExitCode() int {
-	var exitErr *ExecuteError
-	if errors.As(e.Err, &exitErr) {
+	if exitErr, ok := errors.AsType[*ExecuteError](e.Err); ok {
 		return exitErr.ExitCode()
 	}
 
@@ -34,8 +33,7 @@ func (e *DependencyError) ExitCode() int {
 }
 
 func (e *DependencyError) FailureMessage() string {
-	var executeErr *ExecuteError
-	if errors.As(e.Err, &executeErr) {
+	if executeErr, ok := errors.AsType[*ExecuteError](e.Err); ok {
 		return executeErr.Cause().Error()
 	}
 
@@ -67,8 +65,7 @@ func (e *DependencyError) TreeMessage() string {
 // prependToChain prepends name to the chain in err if err is already a *DependencyError,
 // otherwise wraps err in a new single-element DependencyError.
 func prependToChain(name string, err error) error {
-	var depErr *DependencyError
-	if errors.As(err, &depErr) {
+	if depErr, ok := errors.AsType[*DependencyError](err); ok {
 		return &DependencyError{Chain: append([]string{name}, depErr.Chain...), Err: depErr.Err}
 	}
 

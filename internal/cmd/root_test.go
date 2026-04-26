@@ -12,6 +12,22 @@ import (
 	"github.com/spf13/cobra"
 )
 
+type testErrorWithExitCode interface {
+	error
+	ExitCode() int
+}
+
+func requireErrorWithExitCode(t *testing.T, err error) testErrorWithExitCode {
+	t.Helper()
+
+	errWithExitCode, ok := errors.AsType[testErrorWithExitCode](err)
+	if !ok {
+		t.Fatal("expected error with exit code")
+	}
+
+	return errWithExitCode
+}
+
 func newTestRootCmd(args []string) (rootCmd *cobra.Command) {
 	root := CreateRootCommand("v0.0.0-test", "")
 	root.SetArgs(args)
@@ -91,12 +107,9 @@ func TestRootCmdWithConfig(t *testing.T) {
 			t.Fatal("expected unknown command error")
 		}
 
-		var exitCoder interface{ ExitCode() int }
-		if !errors.As(err, &exitCoder) {
-			t.Fatal("expected error with exit code")
-		}
+		errWithExitCode := requireErrorWithExitCode(t, err)
 
-		if exitCode := exitCoder.ExitCode(); exitCode != 2 {
+		if exitCode := errWithExitCode.ExitCode(); exitCode != 2 {
 			t.Fatalf("expected exit code 2, got %d", exitCode)
 		}
 
@@ -121,12 +134,9 @@ func TestRootCmdWithConfig(t *testing.T) {
 			t.Fatal("expected unknown command error")
 		}
 
-		var exitCoder interface{ ExitCode() int }
-		if !errors.As(err, &exitCoder) {
-			t.Fatal("expected error with exit code")
-		}
+		errWithExitCode := requireErrorWithExitCode(t, err)
 
-		if exitCode := exitCoder.ExitCode(); exitCode != 2 {
+		if exitCode := errWithExitCode.ExitCode(); exitCode != 2 {
 			t.Fatalf("expected exit code 2, got %d", exitCode)
 		}
 
@@ -247,12 +257,9 @@ func TestSelfCmd(t *testing.T) {
 			t.Fatal("expected unknown command error")
 		}
 
-		var exitCoder interface{ ExitCode() int }
-		if !errors.As(err, &exitCoder) {
-			t.Fatal("expected error with exit code")
-		}
+		errWithExitCode := requireErrorWithExitCode(t, err)
 
-		if exitCode := exitCoder.ExitCode(); exitCode != 2 {
+		if exitCode := errWithExitCode.ExitCode(); exitCode != 2 {
 			t.Fatalf("expected exit code 2, got %d", exitCode)
 		}
 
@@ -283,12 +290,9 @@ func TestSelfCmd(t *testing.T) {
 			t.Fatal("expected unknown command error")
 		}
 
-		var exitCoder interface{ ExitCode() int }
-		if !errors.As(err, &exitCoder) {
-			t.Fatal("expected error with exit code")
-		}
+		errWithExitCode := requireErrorWithExitCode(t, err)
 
-		if exitCode := exitCoder.ExitCode(); exitCode != 2 {
+		if exitCode := errWithExitCode.ExitCode(); exitCode != 2 {
 			t.Fatalf("expected exit code 2, got %d", exitCode)
 		}
 

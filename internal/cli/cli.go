@@ -127,8 +127,7 @@ func Main(version string, buildDate string) int {
 	defer cancelUpdateCheck()
 
 	if err := rootCmd.ExecuteContext(ctx); err != nil {
-		var depErr *executor.DependencyError
-		if errors.As(err, &depErr) {
+		if depErr, ok := errors.AsType[*executor.DependencyError](err); ok {
 			log.Errorf("%s", depErr.TreeMessage())
 			log.Errorf("%s", depErr.FailureMessage())
 
@@ -167,9 +166,13 @@ func getContext() context.Context {
 }
 
 func getExitCode(err error, defaultCode int) int {
-	var exitCoder interface{ ExitCode() int }
-	if errors.As(err, &exitCoder) {
-		return exitCoder.ExitCode()
+	type errorWithExitCode interface {
+		error
+		ExitCode() int
+	}
+
+	if errWithExitCode, ok := errors.AsType[errorWithExitCode](err); ok {
+		return errWithExitCode.ExitCode()
 	}
 
 	return defaultCode

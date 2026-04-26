@@ -3,6 +3,10 @@ id: changelog
 title: Changelog
 ---
 
+## [Unreleased](https://github.com/lets-cli/lets/releases/tag/v0.0.X)
+
+* `[Refactoring]` Use Go 1.26 `errors.AsType` for type-safe error unwrapping.
+
 ## [0.0.61](https://github.com/lets-cli/lets/releases/tag/v0.0.61)
 
 * `[Changed]` Install script now installs to `$HOME/.lets/bin`, exposes `lets` through a user PATH symlink, and stops on old non-Homebrew `/usr/local/bin/lets` installs. Issue [#121](https://github.com/lets-cli/lets/issues/121)

@@ -39,8 +39,7 @@ func (e *ExecuteError) Cause() error {
 
 // ExitCode will return exit code from underlying ExitError or returns default error code.
 func (e *ExecuteError) ExitCode() int {
-	var exitErr *exec.ExitError
-	if ok := errors.As(e.err, &exitErr); ok {
+	if exitErr, ok := errors.AsType[*exec.ExitError](e.err); ok {
 		return exitErr.ExitCode()
 	}
 
