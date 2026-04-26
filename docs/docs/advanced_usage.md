@@ -91,17 +91,17 @@ But we have one downside - run `npm install` may take some time and we do not wa
 
 Checksums allow you to know when some of the files have changed and made a decision based on that.
 
-When you add `checksum` directive to a command - `lets` will calculate checksum from all of the files listed in `checksum` and put `LETS_CHECKSUM` env variable to command env.
+When you add `checksum.files` directive to a command - `lets` will calculate checksum from all of the listed files and put `LETS_CHECKSUM` env variable to command env.
 
 `LETS_CHECKSUM` will have a checksum value.
 
 We then can store this checksum somewhere in the file and check that stored checksum with a checksum from env.
 
-Fortunately, `lets` have an option for that - `persist_checksum`.
+Fortunately, `lets` have an option for that - `checksum.persist`.
 
-If `persist_cheksum` used with `checksum` `lets` will store new checksum to `.lets` dir and each time you run a command `lets` will check if stored checksum changed from the one from env.
+If `checksum.persist` is used with `checksum.files`, `lets` will store new checksum to `.lets` dir and each time you run a command `lets` will check if stored checksum changed from the one from env.
 
-While using `persist_checksum`, `lets` will add new env variable to command env - `LETS_CHECKUM_CHANGED`.
+While using `checksum.persist`, `lets` will add new env variable to command env - `LETS_CHECKSUM_CHANGED`.
 
 You can learn more about checksum in [Checksum section](config.md#checksum)
 
@@ -112,8 +112,9 @@ commands:
   build-deps:
     description: Install project dependencies
     checksum:
-      - package.json
-    persist_checksum: true
+      files:
+        - package.json
+      persist: true
     cmd: |
       if [[ ${LETS_CHECKSUM_CHANGED} == true ]]; then
         npm install
@@ -142,8 +143,9 @@ commands:
   build-deps:
     description: Install project dependencies
     checksum:
-      - package.json
-    persist_checksum: true
+      files:
+        - package.json
+      persist: true
     cmd: |
       if [[ ${LETS_CHECKSUM_CHANGED} == true ]]; then
         npm install

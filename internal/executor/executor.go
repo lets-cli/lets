@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"os/exec"
 
 	"github.com/lets-cli/lets/internal/checksum"
@@ -164,6 +165,10 @@ func formatOptsUsageError(err error, opts docopt.Opts, cmdName string, rawOption
 func (e *Executor) initCmd(ctx *Context) error {
 	cmd := ctx.command
 
+	if cmd.DeprecatedPersistChecksum {
+		ctx.logger.Warn("command uses deprecated 'persist_checksum'; use 'checksum.persist' instead")
+	}
+
 	if !cmd.SkipDocopts {
 		ctx.logger.Debug("parse docopt: %s, args: %s", cmd.Docopts, cmd.Args)
 
@@ -180,8 +185,21 @@ func (e *Executor) initCmd(ctx *Context) error {
 		cmd.CliOptions = docopt.OptsToLetsCli(opts)
 	}
 
+	checksumShell := e.cfg.Shell
+	if cmd.Shell != "" {
+		checksumShell = cmd.Shell
+	}
+
+	checksumWorkDir := e.cfg.WorkDir
+	if cmd.WorkDir != "" {
+		checksumWorkDir = cmd.WorkDir
+	}
+
+	checksumEnv := e.cfg.CommandBuiltinEnv(cmd, checksumShell, checksumWorkDir)
+	maps.Copy(checksumEnv, e.cfg.GetEnv())
+
 	// calculate checksum if needed
-	if err := cmd.ChecksumCalculator(e.cfg.WorkDir); err != nil {
+	if err := cmd.ChecksumCalculator(e.cfg.WorkDir, checksumShell, checksumEnv); err != nil {
 		return fmt.Errorf("failed to calculate checksum for command '%s': %w", cmd.Name, err)
 	}
 

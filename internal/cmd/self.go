@@ -33,6 +33,7 @@ func initSelfCmd(
 
 	selfCmd.AddCommand(initConfigCommand(openEditor))
 	selfCmd.AddCommand(initDocCommand(openURL))
+	selfCmd.AddCommand(initFixCommand())
 	selfCmd.AddCommand(initLspCommand(version))
 	selfCmd.AddCommand(initSkillsCommand())
 	selfCmd.AddCommand(initUpgradeCommand(version, appSettings))

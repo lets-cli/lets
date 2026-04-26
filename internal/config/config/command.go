@@ -29,13 +29,15 @@ type Command struct {
 	// env files from command
 	EnvFiles *EnvFiles
 	// store docopts from options directive
-	Docopts         string
-	SkipDocopts     bool // default false
-	Options         map[string]string
-	CliOptions      map[string]string
-	Depends         *Deps
-	ChecksumMap     map[string]string
-	PersistChecksum bool
+	Docopts                   string
+	SkipDocopts               bool // default false
+	Options                   map[string]string
+	CliOptions                map[string]string
+	Depends                   *Deps
+	ChecksumMap               map[string]string
+	PersistChecksum           bool
+	DeprecatedPersistChecksum bool
+	ChecksumSh                string
 	// args from 'lets run --debug' will become [--debug]
 	Args []string
 
@@ -72,8 +74,8 @@ func (c *Command) UnmarshalYAML(unmarshal func(any) error) error {
 		WorkDir         string `yaml:"work_dir"`
 		After           string
 		Ref             string
-		Checksum        *Checksum
-		PersistChecksum bool `yaml:"persist_checksum"`
+		Checksum        *CommandChecksum
+		PersistChecksum *bool `yaml:"persist_checksum"`
 	}
 
 	if err := unmarshal(&cmd); err != nil {
@@ -117,12 +119,34 @@ func (c *Command) UnmarshalYAML(unmarshal func(any) error) error {
 	c.After = cmd.After
 	// TODO: checksum must be refactored
 	if cmd.Checksum != nil {
-		c.ChecksumSources = *cmd.Checksum
+		c.ChecksumSources = cmd.Checksum.Files
+
+		c.ChecksumSh = cmd.Checksum.Sh
+		if cmd.Checksum.Persist != nil {
+			c.PersistChecksum = *cmd.Checksum.Persist
+		}
 	}
 
-	c.PersistChecksum = cmd.PersistChecksum
-	if len(c.ChecksumSources) == 0 && c.PersistChecksum {
+	if cmd.PersistChecksum != nil {
+		c.DeprecatedPersistChecksum = true
+
+		if cmd.Checksum != nil && cmd.Checksum.Persist != nil && *cmd.PersistChecksum != *cmd.Checksum.Persist {
+			return errors.New("'persist_checksum' conflicts with 'checksum.persist'")
+		}
+
+		c.PersistChecksum = *cmd.PersistChecksum
+	}
+
+	if c.ChecksumSh != "" && len(c.ChecksumSources) > 0 {
+		return errors.New("checksum must use only one of 'files' or 'sh'")
+	}
+
+	if c.PersistChecksum && cmd.Checksum == nil {
 		return errors.New("'persist_checksum' must be used with 'checksum'")
+	}
+
+	if c.PersistChecksum && len(c.ChecksumSources) == 0 && c.ChecksumSh == "" {
+		return errors.New("'persist_checksum' or 'checksum.persist' must be used with 'checksum.files' or 'checksum.sh'")
 	}
 
 	if cmd.Ref != "" {
@@ -173,25 +197,27 @@ func (c *Command) GetEnv(cfg Config, builtinEnv map[string]string) (map[string]s
 
 func (c *Command) Clone() *Command {
 	cmd := &Command{
-		Name:               c.Name,
-		GroupName:          c.GroupName,
-		Cmds:               c.Cmds.Clone(),
-		After:              c.After,
-		Shell:              c.Shell,
-		WorkDir:            c.WorkDir,
-		Description:        c.Description,
-		Env:                c.Env.Clone(),
-		EnvFiles:           c.EnvFiles.Clone(),
-		Docopts:            c.Docopts,
-		SkipDocopts:        c.SkipDocopts,
-		Options:            cloneMap(c.Options),
-		CliOptions:         cloneMap(c.CliOptions),
-		Depends:            c.Depends.Clone(),
-		ChecksumMap:        cloneMap(c.ChecksumMap),
-		PersistChecksum:    c.PersistChecksum,
-		ChecksumSources:    cloneMapSlice(c.ChecksumSources),
-		persistedChecksums: cloneMap(c.persistedChecksums),
-		Args:               cloneSlice(c.Args),
+		Name:                      c.Name,
+		GroupName:                 c.GroupName,
+		Cmds:                      c.Cmds.Clone(),
+		After:                     c.After,
+		Shell:                     c.Shell,
+		WorkDir:                   c.WorkDir,
+		Description:               c.Description,
+		Env:                       c.Env.Clone(),
+		EnvFiles:                  c.EnvFiles.Clone(),
+		Docopts:                   c.Docopts,
+		SkipDocopts:               c.SkipDocopts,
+		Options:                   cloneMap(c.Options),
+		CliOptions:                cloneMap(c.CliOptions),
+		Depends:                   c.Depends.Clone(),
+		ChecksumMap:               cloneMap(c.ChecksumMap),
+		PersistChecksum:           c.PersistChecksum,
+		DeprecatedPersistChecksum: c.DeprecatedPersistChecksum,
+		ChecksumSh:                c.ChecksumSh,
+		ChecksumSources:           cloneMapSlice(c.ChecksumSources),
+		persistedChecksums:        cloneMap(c.persistedChecksums),
+		Args:                      cloneSlice(c.Args),
 	}
 
 	return cmd
@@ -227,12 +253,12 @@ func (c *Command) Help() string {
 	return strings.TrimSuffix(buf.String(), "\n")
 }
 
-func (c *Command) ChecksumCalculator(workDir string) error {
-	if len(c.ChecksumSources) == 0 {
+func (c *Command) ChecksumCalculator(workDir string, shell string, env map[string]string) error {
+	if len(c.ChecksumSources) == 0 && c.ChecksumSh == "" {
 		return nil
 	}
 
-	checksumMap, err := checksum.CalculateChecksumFromSources(workDir, c.ChecksumSources)
+	checksumMap, err := checksum.CalculateChecksumFromConfig(workDir, c.ChecksumSources, shell, c.ChecksumSh, env)
 	if err != nil {
 		return err
 	}

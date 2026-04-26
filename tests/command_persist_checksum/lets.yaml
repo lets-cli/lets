@@ -10,6 +10,16 @@ commands:
       echo LETS_CHECKSUM=${LETS_CHECKSUM}
       echo LETS_CHECKSUM_CHANGED=${LETS_CHECKSUM_CHANGED}
 
+  persist-checksum-new:
+    description: Test checksum
+    checksum:
+      files:
+        - foo_*.txt
+      persist: true
+    cmd: |
+      echo LETS_CHECKSUM=${LETS_CHECKSUM}
+      echo LETS_CHECKSUM_CHANGED=${LETS_CHECKSUM_CHANGED}
+
   with-error-code-1:
     persist_checksum: true
     checksum:
