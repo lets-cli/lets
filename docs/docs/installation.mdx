@@ -78,6 +78,22 @@ Once downloaded, the binary can be run from anywhere.
 
 Ideally, install it somewhere in your user `PATH`, such as `$HOME/.local/bin`.
 
+## Build from source
+
+Ensure you have a supported version of Go installed and configured. You can find the minimum required Go version in the project's [`go.mod`](https://github.com/lets-cli/lets/blob/master/go.mod).
+
+You can install the latest release globally with:
+
+```bash
+go install github.com/lets-cli/lets/cmd/lets@latest
+```
+
+Or install it into another directory:
+
+```bash
+env GOBIN=$HOME/.local/bin go install github.com/lets-cli/lets/cmd/lets@latest
+```
+
 ## GitHub Action
 
 Use [lets-cli/lets-action](https://github.com/lets-cli/lets-action) in a GitHub Actions workflow:

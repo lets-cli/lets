@@ -9,6 +9,7 @@ title: Changelog
 * `[Fixed]` Prevent `lets self upgrade` from overwriting Homebrew-managed installs. Issue [#338](https://github.com/lets-cli/lets/issues/338)
 * `[Fixed]` `lets self upgrade` now updates symlink targets and refuses common system-managed install paths.
 * `[Fixed]` Replace the released `go.mod` docopt override with a direct fork dependency so `go install github.com/lets-cli/lets/cmd/lets@version` works again.
+* `[Docs]` Add a `Build from source` section to the installation guide with `go install` examples.
 
 ## [0.0.60](https://github.com/lets-cli/lets/releases/tag/v0.0.60)
 
