@@ -18,7 +18,7 @@ func initSelfCmd(rootCmd *cobra.Command, version string, openURL func(string) er
 		GroupID: "internal",
 		Args:    validateCommandArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return PrintHelpMessage(cmd)
+			return cmd.Help()
 		},
 	}
 

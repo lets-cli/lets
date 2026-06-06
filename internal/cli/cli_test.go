@@ -59,6 +59,15 @@ func TestAllowsMissingConfig(t *testing.T) {
 	})
 }
 
+func TestFailOnConfigError(t *testing.T) {
+	root := cmdpkg.CreateRootCommand("v0.0.0-test", "")
+	current := &cobra.Command{Use: "run"}
+
+	if failOnConfigError(root, current, &flags{version: true}) {
+		t.Fatal("expected --version to allow missing config")
+	}
+}
+
 func TestShouldCheckForUpdate(t *testing.T) {
 	defaultSettings := settings.Default()
 
