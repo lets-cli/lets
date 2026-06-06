@@ -61,33 +61,55 @@ func validateCommandArgs(cmd *cobra.Command, args []string) error {
 	}
 }
 
-// newRootCmd represents the base command when called without any subcommands.
-func newRootCmd(version string) *cobra.Command {
+// newRootCmd creates root cobra command that represents the base command
+// when called without any subcommands.
+func newRootCmd(version, buildDate string) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "lets",
 		Short: "A CLI task runner",
 		Args:  validateCommandArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return PrintHelpMessage(cmd)
+			return cmd.Help()
 		},
+		Version:            buildVersion(version, buildDate),
+		Annotations:        map[string]string{"buildDate": buildDate},
 		TraverseChildren:   true,
 		FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},
-		Version:            version,
 		// handle errors manually
 		SilenceErrors: true,
 		// print help message manyally
 		SilenceUsage: true,
 	}
+
+	cmd.SetHelpFunc(func(c *cobra.Command, _ []string) {
+		var err error
+		if c == c.Root() {
+			err = PrintRootHelpMessage(c)
+		} else {
+			err = PrintHelpMessage(c)
+		}
+
+		if err != nil {
+			c.Println(err)
+		}
+	})
 	cmd.AddGroup(&cobra.Group{ID: "main", Title: "Commands:"}, &cobra.Group{ID: "internal", Title: "Internal commands:"})
 	cmd.SetHelpCommandGroupID("internal")
 
 	return cmd
 }
 
+func buildVersion(version string, buildDate string) string {
+	msg := "lets version " + version
+	if buildDate != "" {
+		msg += fmt.Sprintf(" (%s)", buildDate)
+	}
+	return msg
+}
+
 // CreateRootCommand used to run only root command without config.
 func CreateRootCommand(version string, buildDate string) *cobra.Command {
-	rootCmd := newRootCmd(version)
-	rootCmd.Annotations = map[string]string{"buildDate": buildDate}
+	rootCmd := newRootCmd(version, buildDate)
 
 	initRootFlags(rootCmd)
 
@@ -259,12 +281,7 @@ func PrintRootHelpMessage(cmd *cobra.Command) error {
 }
 
 func PrintVersionMessage(cmd *cobra.Command) error {
-	msg := "lets version " + cmd.Version
-	if buildDate := cmd.Annotations["buildDate"]; buildDate != "" {
-		msg += fmt.Sprintf(" (%s)", buildDate)
-	}
-
-	_, err := fmt.Fprintln(cmd.OutOrStdout(), msg)
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), cmd.Version)
 
 	return err
 }

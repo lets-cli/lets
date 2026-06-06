@@ -76,6 +76,24 @@ func TestRootCmd(t *testing.T) {
 			)
 		}
 	})
+
+	t.Run("should use help func when run without args", func(t *testing.T) {
+		rootCmd := CreateRootCommand("v0.0.0-test", "")
+		rootCmd.SetArgs([]string{})
+
+		called := false
+		rootCmd.SetHelpFunc(func(c *cobra.Command, args []string) {
+			called = true
+		})
+
+		if err := rootCmd.Execute(); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if !called {
+			t.Fatal("expected root command to delegate to help func")
+		}
+	})
 }
 
 func TestRootCmdWithConfig(t *testing.T) {
@@ -150,44 +168,48 @@ func TestRootCmdWithConfig(t *testing.T) {
 	})
 }
 
-func TestPrintVersionMessage(t *testing.T) {
+func TestRootCommandVersion(t *testing.T) {
 	t.Run("should include build date in parentheses when non-empty", func(t *testing.T) {
-		buf := new(bytes.Buffer)
 		root := CreateRootCommand("v0.0.0-test", "2024-01-15T10:30:00Z")
-		root.SetOut(buf)
 
-		err := PrintVersionMessage(root)
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-
-		out := buf.String()
-		if !strings.Contains(out, "v0.0.0-test") {
-			t.Errorf("expected version in output, got %q", out)
-		}
-		if !strings.Contains(out, "(2024-01-15T10:30:00Z)") {
-			t.Errorf("expected build date in parentheses, got %q", out)
+		expected := "lets version v0.0.0-test (2024-01-15T10:30:00Z)"
+		if root.Version != expected {
+			t.Errorf("expected: %s, got %s", expected, root.Version)
 		}
 	})
 
 	t.Run("should omit parentheses when build date is empty", func(t *testing.T) {
-		buf := new(bytes.Buffer)
 		root := CreateRootCommand("v0.0.0-test", "")
-		root.SetOut(buf)
 
-		err := PrintVersionMessage(root)
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-
-		out := buf.String()
-		if strings.Contains(out, "(") {
-			t.Errorf("expected no parentheses when build date is empty, got %q", out)
+		expected := "lets version v0.0.0-test"
+		if root.Version != expected {
+			t.Errorf("expected: %s, got %s", expected, root.Version)
 		}
 	})
 }
 
 func TestSelfCmd(t *testing.T) {
+	t.Run("should use help func when run without args", func(t *testing.T) {
+		rootCmd := CreateRootCommand("v0.0.0-test", "")
+		rootCmd.SetArgs([]string{"self"})
+		initSelfCmd(rootCmd, "v0.0.0-test", func(string) error { return nil })
+
+		called := false
+		rootCmd.SetHelpFunc(func(c *cobra.Command, args []string) {
+			if c.Name() == "self" {
+				called = true
+			}
+		})
+
+		if err := rootCmd.Execute(); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if !called {
+			t.Fatal("expected self command to delegate to help func")
+		}
+	})
+
 	t.Run("should open documentation in browser", func(t *testing.T) {
 		bufOut := new(bytes.Buffer)
 		called := false

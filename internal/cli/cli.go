@@ -112,17 +112,6 @@ func Main(version string, buildDate string) int {
 		return 0
 	}
 
-	showUsage := rootFlags.help || (command.Name() == "help" && len(args) == 0) || (len(os.Args) == 1)
-
-	if showUsage {
-		if err := cmd.PrintRootHelpMessage(rootCmd); err != nil {
-			log.Errorf("print help error: %s", err)
-			return 1
-		}
-
-		return 0
-	}
-
 	updateCh, cancelUpdateCheck := maybeStartUpdateCheck(ctx, version, command, appSettings)
 	defer cancelUpdateCheck()
 
@@ -178,9 +167,12 @@ func getExitCode(err error, defaultCode int) int {
 	return defaultCode
 }
 
-// do not fail on config error if it is help (-h, --help), --init, completion, or lets self.
+// do not fail on config error if it is help (-h, --help), --version, --init, completion, or lets self.
 func failOnConfigError(root *cobra.Command, current *cobra.Command, rootFlags *flags) bool {
-	return (root.Flags().NFlag() == 0 && !allowsMissingConfig(current)) && !rootFlags.help && !rootFlags.init
+	return (root.Flags().NFlag() == 0 && !allowsMissingConfig(current)) &&
+		!rootFlags.help &&
+		!rootFlags.version &&
+		!rootFlags.init
 }
 
 func allowsMissingConfig(current *cobra.Command) bool {
