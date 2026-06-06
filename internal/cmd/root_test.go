@@ -169,21 +169,47 @@ func TestRootCmdWithConfig(t *testing.T) {
 }
 
 func TestRootCommandVersion(t *testing.T) {
-	t.Run("should include build date in parentheses when non-empty", func(t *testing.T) {
+	t.Run("should keep raw version on command", func(t *testing.T) {
 		root := CreateRootCommand("v0.0.0-test", "2024-01-15T10:30:00Z")
 
-		expected := "lets version v0.0.0-test (2024-01-15T10:30:00Z)"
-		if root.Version != expected {
-			t.Errorf("expected: %s, got %s", expected, root.Version)
+		if root.Version != "v0.0.0-test (2024-01-15T10:30:00Z)" {
+			t.Errorf("expected raw version, got %s", root.Version)
 		}
 	})
 
-	t.Run("should omit parentheses when build date is empty", func(t *testing.T) {
-		root := CreateRootCommand("v0.0.0-test", "")
+	t.Run("print version with build date", func(t *testing.T) {
+		buf := new(bytes.Buffer)
+		root := CreateRootCommand("v0.0.0-test", "2024-01-15T10:30:00Z")
+		root.SetOut(buf)
+		root.SetErr(buf)
+		root.InitDefaultVersionFlag()
+		root.SetArgs([]string{"--version"})
 
-		expected := "lets version v0.0.0-test"
-		if root.Version != expected {
-			t.Errorf("expected: %s, got %s", expected, root.Version)
+		if err := root.Execute(); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		expected := "lets version v0.0.0-test (2024-01-15T10:30:00Z)\n"
+		if buf.String() != expected {
+			t.Errorf("expected %q, got %q", expected, buf.String())
+		}
+	})
+
+	t.Run("omit build date from version output when empty", func(t *testing.T) {
+		buf := new(bytes.Buffer)
+		root := CreateRootCommand("v0.0.0-test", "")
+		root.SetOut(buf)
+		root.SetErr(buf)
+		root.InitDefaultVersionFlag()
+		root.SetArgs([]string{"--version"})
+
+		if err := root.Execute(); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		expected := "lets version v0.0.0-test\n"
+		if buf.String() != expected {
+			t.Errorf("expected %q, got %q", expected, buf.String())
 		}
 	})
 }

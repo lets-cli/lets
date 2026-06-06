@@ -66,15 +66,6 @@ func Main(version string, buildDate string) int {
 		return 1
 	}
 
-	if rootFlags.version {
-		if err := cmd.PrintVersionMessage(rootCmd); err != nil {
-			log.Errorf("print version error: %s", err)
-			return 1
-		}
-
-		return 0
-	}
-
 	debugLevel := env.SetDebugLevel(rootFlags.debug)
 
 	if debugLevel > 0 {

@@ -100,11 +100,11 @@ func newRootCmd(version, buildDate string) *cobra.Command {
 }
 
 func buildVersion(version string, buildDate string) string {
-	msg := "lets version " + version
 	if buildDate != "" {
-		msg += fmt.Sprintf(" (%s)", buildDate)
+		version += fmt.Sprintf(" (%s)", buildDate)
 	}
-	return msg
+
+	return version
 }
 
 // CreateRootCommand used to run only root command without config.
@@ -276,12 +276,6 @@ func PrintRootHelpMessage(cmd *cobra.Command) error {
 	fmt.Fprintf(&builder, `Use "%s help [command]" for more information about a command.`, cmd.CommandPath())
 
 	_, err := fmt.Fprint(cmd.OutOrStdout(), builder.String())
-
-	return err
-}
-
-func PrintVersionMessage(cmd *cobra.Command) error {
-	_, err := fmt.Fprintln(cmd.OutOrStdout(), cmd.Version)
 
 	return err
 }
