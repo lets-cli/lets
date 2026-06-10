@@ -10,13 +10,13 @@ require (
 	github.com/fatih/color v1.16.0
 	github.com/kindermax/docopt.go v0.8.0
 	github.com/mattn/go-isatty v0.0.20
-	github.com/odvcencio/gotreesitter v0.12.1
+	github.com/odvcencio/gotreesitter v0.15.3
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.10.2
 	github.com/tliron/commonlog v0.2.8
 	github.com/tliron/glsp v0.2.2
-	golang.org/x/sync v0.3.0
+	golang.org/x/sync v0.20.0
 )
 
 require (
