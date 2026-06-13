@@ -8,6 +8,35 @@ import (
 	"github.com/lets-cli/fang"
 )
 
+// Supported theme names.
+const (
+	DefaultName   = "default"
+	ANSIName      = "ansi"
+	SynthwaveName = "synthwave"
+)
+
+// ValidName reports whether name is a supported theme.
+func ValidName(name string) bool {
+	switch name {
+	case DefaultName, ANSIName, SynthwaveName:
+		return true
+	default:
+		return false
+	}
+}
+
+// ColorSchemeByName resolves a theme name to a Fang color scheme.
+func ColorSchemeByName(name string) fang.ColorSchemeFunc {
+	switch name {
+	case ANSIName:
+		return AnsiColorScheme
+	case SynthwaveName:
+		return SynthwaveColorScheme
+	default:
+		return DefaultColorScheme
+	}
+}
+
 // DefaultColorScheme is the default colorscheme.
 func DefaultColorScheme(c lipgloss.LightDarkFunc) fang.ColorScheme {
 	baseCyan := charmtone.Turtle

@@ -5,7 +5,7 @@ title: Settings
 
 `lets` settings control the behavior of `lets` itself.
 
-Use settings for things like colored output or update notifications. Do not use this file for project commands or runtime env. Project behavior still belongs in `lets.yaml`.
+Use settings for things like colored output, theming, or update notifications. Do not use this file for project commands or runtime env. Project behavior still belongs in `lets.yaml`.
 
 ## Settings file location
 
@@ -48,6 +48,35 @@ Note:
 - this affects `lets` output itself
 - it does not inject `NO_COLOR` into commands from `lets.yaml`
 
+### `theme`
+
+Choose the theme for `lets` styled help and error output.
+
+Supported values:
+
+- `default`
+- `ansi`
+- `synthwave`
+
+Example:
+
+```yaml
+theme: synthwave
+```
+
+Environment override:
+
+- none
+
+Default:
+
+- `theme: default`
+
+Notes:
+
+- this affects `lets` output itself
+- project commands still control their own colors
+
 ### `upgrade_notify`
 
 Enable or disable background update notifications for interactive sessions.
@@ -69,7 +98,8 @@ Default:
 ## Example
 
 ```yaml
-no_color: true
+no_color: false
+theme: default
 upgrade_notify: false
 ```
 

@@ -39,6 +39,9 @@ func TestLoadFile(t *testing.T) {
 		if cfg.NoColor {
 			t.Fatal("expected no_color default to be false")
 		}
+		if cfg.Theme != "default" {
+			t.Fatalf("expected theme default to be %q, got %q", "default", cfg.Theme)
+		}
 		if !cfg.UpgradeNotify {
 			t.Fatal("expected upgrade_notify default to be true")
 		}
@@ -49,7 +52,7 @@ func TestLoadFile(t *testing.T) {
 		unsetEnv(t, "LETS_CHECK_UPDATE")
 
 		path := filepath.Join(t.TempDir(), "config.yaml")
-		err := os.WriteFile(path, []byte("no_color: true\nupgrade_notify: false\n"), 0o644)
+		err := os.WriteFile(path, []byte("no_color: true\ntheme: synthwave\nupgrade_notify: false\n"), 0o644)
 		if err != nil {
 			t.Fatalf("failed to write settings file: %v", err)
 		}
@@ -62,6 +65,9 @@ func TestLoadFile(t *testing.T) {
 		if !cfg.NoColor {
 			t.Fatal("expected no_color to be true")
 		}
+		if cfg.Theme != "synthwave" {
+			t.Fatalf("expected theme to be %q, got %q", "synthwave", cfg.Theme)
+		}
 		if cfg.UpgradeNotify {
 			t.Fatal("expected upgrade_notify to be false")
 		}
@@ -69,7 +75,7 @@ func TestLoadFile(t *testing.T) {
 
 	t.Run("env overrides file values", func(t *testing.T) {
 		path := filepath.Join(t.TempDir(), "config.yaml")
-		err := os.WriteFile(path, []byte("no_color: false\nupgrade_notify: true\n"), 0o644)
+		err := os.WriteFile(path, []byte("no_color: false\ntheme: ansi\nupgrade_notify: true\n"), 0o644)
 		if err != nil {
 			t.Fatalf("failed to write settings file: %v", err)
 		}
@@ -85,8 +91,27 @@ func TestLoadFile(t *testing.T) {
 		if !cfg.NoColor {
 			t.Fatal("expected NO_COLOR to override settings file")
 		}
+		if cfg.Theme != "ansi" {
+			t.Fatalf("expected theme to remain %q, got %q", "ansi", cfg.Theme)
+		}
 		if cfg.UpgradeNotify {
 			t.Fatal("expected LETS_CHECK_UPDATE to disable notifications")
+		}
+	})
+
+	t.Run("rejects invalid theme", func(t *testing.T) {
+		unsetEnv(t, "NO_COLOR")
+		unsetEnv(t, "LETS_CHECK_UPDATE")
+
+		path := filepath.Join(t.TempDir(), "config.yaml")
+		err := os.WriteFile(path, []byte("theme: vaporwave\n"), 0o644)
+		if err != nil {
+			t.Fatalf("failed to write settings file: %v", err)
+		}
+
+		_, err = LoadFile(path)
+		if err == nil {
+			t.Fatal("expected error")
 		}
 	})
 
@@ -119,7 +144,7 @@ func TestLoad(t *testing.T) {
 		t.Fatalf("failed to create config dir: %v", err)
 	}
 
-	err = os.WriteFile(configPath, []byte("no_color: true\n"), 0o644)
+	err = os.WriteFile(configPath, []byte("no_color: true\ntheme: ansi\n"), 0o644)
 	if err != nil {
 		t.Fatalf("failed to write settings file: %v", err)
 	}
@@ -131,6 +156,9 @@ func TestLoad(t *testing.T) {
 
 	if !cfg.NoColor {
 		t.Fatal("expected loaded no_color to be true")
+	}
+	if cfg.Theme != "ansi" {
+		t.Fatalf("expected loaded theme to be %q, got %q", "ansi", cfg.Theme)
 	}
 }
 
