@@ -5,6 +5,9 @@ title: Changelog
 
 ## [Unreleased](https://github.com/lets-cli/lets/releases/tag/v0.0.X)
 
+* `[Added]` Add `lets self skills` commands to show, install, and update the bundled lets agent skill.
+* `[Docs]` Document the bundled lets Agent Skill and link it from the config reference.
+* `[Changed]` Expand the bundled lets agent skill with config authoring guidance.
 * `[Fixed]` Make root and `self` help paths delegate through Cobra help handling, and allow `--version` without requiring config.
 * `[Changed]` Add breathing room between the `USAGE` heading and its usage block in help output.
 * `[Refactoring]` Use Go 1.26 `errors.AsType` for type-safe error unwrapping.

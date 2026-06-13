@@ -3,6 +3,7 @@ id: config
 title: Config reference
 ---
 
+- [Agent Skills](#agent-skills)
 - [Top-level directives:](#top-level-directives)
   - [Version](#version)
   - [Shell](#shell)
@@ -33,6 +34,11 @@ title: Config reference
 - [Aliasing:](#aliasing)
   - [Env aliasing](#env-aliasing)
 
+## Agent Skills
+
+Agent Skills are not configured in `lets.yaml`. They are installed and managed with the `lets self skills` command.
+
+Use [`lets self skills`](agent_skills.md) to show, install, update, or remove the bundled `lets` agent skill.
 
 ## Top-level directives:
 
