@@ -277,6 +277,7 @@ type flags struct {
 	version bool
 	all     bool
 	init    bool
+	noCache bool
 }
 
 // We can not parse --config and --debug flags using cobra.Command.ParseFlags
@@ -355,6 +356,10 @@ func parseRootFlags(args []string) (*flags, error) {
 		case "--init":
 			if !isFlagVisited("init") {
 				f.init = true
+			}
+		case "--no-cache":
+			if !isFlagVisited("no-cache") {
+				f.noCache = true
 			}
 		case "--upgrade":
 			return nil, errors.New("--upgrade has been replaced with 'lets self upgrade'")
