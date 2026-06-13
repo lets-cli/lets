@@ -176,7 +176,7 @@ func ParseDocoptParts(docopt string) docoptParts {
 
 	section := ""
 
-	for _, line := range strings.Split(docopt, "\n") {
+	for line := range strings.SplitSeq(docopt, "\n") {
 		switch {
 		case strings.HasPrefix(line, "Usage:"):
 			section = "usage"
@@ -197,6 +197,7 @@ func ParseDocoptParts(docopt string) docoptParts {
 		if text.Len() > 0 {
 			text.WriteByte('\n')
 		}
+
 		text.WriteString(line)
 	}
 
@@ -220,7 +221,7 @@ func ParseHelpOptions(docopt string, cmdName string) []HelpOption {
 
 	var options []HelpOption
 
-	for _, line := range strings.Split(parts.Options, "\n") {
+	for line := range strings.SplitSeq(parts.Options, "\n") {
 		trimmed := strings.TrimLeft(line, " \t")
 		if trimmed == "" {
 			continue
@@ -249,7 +250,9 @@ func ParseHelpOptions(docopt string, cmdName string) []HelpOption {
 			if options[len(options)-1].Description != "" {
 				options[len(options)-1].Description += "\n"
 			}
+
 			options[len(options)-1].Description += description
+
 			continue
 		}
 
@@ -268,6 +271,7 @@ func ParseHelpOptions(docopt string, cmdName string) []HelpOption {
 			if rawOpt.Name == cmdName {
 				continue
 			}
+
 			if !strings.Contains(display, rawOpt.Name) && (rawOpt.Short == "" || !strings.Contains(display, rawOpt.Short)) {
 				continue
 			}
@@ -275,6 +279,7 @@ func ParseHelpOptions(docopt string, cmdName string) []HelpOption {
 			option.Name = rawOpt.Name
 			option.Short = rawOpt.Short
 			option.Long = rawOpt.Long
+
 			break
 		}
 

@@ -177,14 +177,14 @@ func hasHelpArg(args []string) bool {
 
 func buildCommandUse(commandName string, usage string) string {
 	lines := make([]string, 0)
-	for _, line := range strings.Split(usage, "\n") {
+
+	for line := range strings.SplitSeq(usage, "\n") {
 		line = strings.TrimSpace(line)
 		if line == "" {
 			continue
 		}
-		if strings.HasPrefix(line, "lets ") {
-			line = strings.TrimPrefix(line, "lets ")
-		}
+
+		line = strings.TrimPrefix(line, "lets ")
 		lines = append(lines, line)
 	}
 

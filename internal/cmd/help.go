@@ -77,24 +77,24 @@ func newHelpOutput(ctx fang.HelpContext) helpOutput {
 	return helpOutput{w: ctx.Writer, styles: ctx.Styles}
 }
 
-// println writes one help output line and intentionally ignores write errors.
-func (o helpOutput) println(v ...any) {
+// writeln writes one help output line and intentionally ignores write errors.
+func (o helpOutput) writeln(v ...any) {
 	_, _ = fmt.Fprintln(o.w, v...)
 }
 
 // blank writes one blank help output line.
 func (o helpOutput) blank() {
-	o.println()
+	o.writeln()
 }
 
 // sectionTitle writes a top-level help section title.
 func (o helpOutput) sectionTitle(title string) {
-	o.println(compactTitleStyle(o.styles).Render(title))
+	o.writeln(compactTitleStyle(o.styles).Render(title))
 }
 
 // subgroupTitle writes a nested command subgroup title.
 func (o helpOutput) subgroupTitle(title string) {
-	o.println(subgroupTitleStyle(o.styles).Render(title))
+	o.writeln(subgroupTitleStyle(o.styles).Render(title))
 }
 
 // Render prints the complete help view for the renderer's command.
@@ -133,8 +133,9 @@ func (r helpRenderer) renderLongShort(longShort string) {
 	}
 
 	longShort = strings.TrimRight(longShort, "\n")
+
 	r.out.blank()
-	r.out.println(r.ctx.Styles.Text.Width(r.ctx.Width).Render(longShort))
+	r.out.writeln(r.ctx.Styles.Text.Width(r.ctx.Width).Render(longShort))
 }
 
 // renderUsageAndExamples prints usage and example code blocks.
@@ -153,17 +154,20 @@ func (r helpRenderer) renderUsageAndExamples() {
 
 	r.out.sectionTitle("usage")
 	r.out.blank()
-	r.out.println(blockStyle.Render(usage))
+	r.out.writeln(blockStyle.Render(usage))
 
 	if len(examples) > 0 {
 		cw := blockStyle.GetWidth() - blockStyle.GetHorizontalPadding()
+
 		r.out.sectionTitle("examples")
+
 		for i, example := range examples {
 			if lipgloss.Width(example) > cw {
 				examples[i] = ansi.Truncate(example, cw, "…")
 			}
 		}
-		r.out.println(blockStyle.Render(strings.Join(examples, "\n")))
+
+		r.out.writeln(blockStyle.Render(strings.Join(examples, "\n")))
 	}
 }
 
@@ -202,6 +206,7 @@ func (r helpRenderer) renderCommandGroups(content helpContent) {
 		if len(items) == 0 {
 			continue
 		}
+
 		r.renderCommandGroup(content.space, content.groups[groupID], items, content.hasSubgroups)
 	}
 }
@@ -233,10 +238,12 @@ func subgroupTitleStyle(styles fang.Styles) lipgloss.Style {
 func compactCodeBlockStyle(ctx fang.HelpContext, blocks ...string) lipgloss.Style {
 	base := ctx.Styles.Codeblock.Base.Padding(1, 2)
 	padding := base.GetHorizontalPadding()
+
 	blockWidth := 0
 	for _, block := range blocks {
 		blockWidth = max(blockWidth, lipgloss.Width(block))
 	}
+
 	blockWidth = min(ctx.Width-padding, blockWidth+padding)
 	blockStyle := base.Width(blockWidth)
 
@@ -255,14 +262,17 @@ func styleHelpUsage(cmd *cobra.Command, styles fang.Program, complete bool) stri
 	}
 
 	var lines []string
-	for _, line := range strings.Split(usage, "\n") {
+
+	for line := range strings.SplitSeq(usage, "\n") {
 		line = strings.TrimSpace(line)
 		if line == "" {
 			continue
 		}
+
 		if complete {
 			line = completeHelpUsage(cmd, line)
 		}
+
 		lines = append(lines, styleUsageText(cmd, styles, line, complete))
 	}
 
@@ -296,6 +306,7 @@ func styleUsageText(cmd *cobra.Command, styles fang.Program, usage string, compl
 		cmd.HasFlags() ||
 		cmd.HasPersistentFlags() ||
 		cmd.HasAvailableFlags()
+
 	hasCommands := strings.Contains(usage, "[command]") || cmd.HasAvailableSubCommands()
 	for _, marker := range []string{
 		"[args]",
@@ -306,6 +317,7 @@ func styleUsageText(cmd *cobra.Command, styles fang.Program, usage string, compl
 	}
 
 	var optionalArgs []string //nolint:prealloc
+
 	for _, arg := range optionalArgsRe.FindAllString(usage, -1) {
 		usage = strings.ReplaceAll(usage, arg, "")
 		optionalArgs = append(optionalArgs, arg)
@@ -314,26 +326,32 @@ func styleUsageText(cmd *cobra.Command, styles fang.Program, usage string, compl
 	usage = strings.TrimSpace(usage)
 
 	var useLine []string
+
 	if complete {
 		parts := strings.Fields(usage)
 		if len(parts) > 0 {
 			useLine = append(useLine, styles.Name.Render(parts[0]))
 		}
+
 		if len(parts) > 1 {
 			useLine = append(useLine, styles.Command.Render(" "+strings.Join(parts[1:], " ")))
 		}
 	} else {
 		useLine = append(useLine, styles.Command.Render(usage))
 	}
+
 	if hasCommands {
 		useLine = append(useLine, styles.DimmedArgument.Render(" [command]"))
 	}
+
 	if hasArgs {
 		useLine = append(useLine, styles.DimmedArgument.Render(" [args]"))
 	}
+
 	for _, arg := range optionalArgs {
 		useLine = append(useLine, styles.DimmedArgument.Render(" "+arg))
 	}
+
 	if hasFlags {
 		useLine = append(useLine, styles.DimmedArgument.Render(" [--flags]"))
 	}
@@ -480,10 +498,12 @@ func renderHelpDescription(styles fang.Styles, usage string) string {
 			lines = append(lines, "")
 			continue
 		}
+
 		if i == 0 {
 			lines = append(lines, styles.FlagDescription.Render(line))
 			continue
 		}
+
 		lines = append(lines, noTransform.Render(line))
 	}
 
@@ -498,6 +518,7 @@ func renderHelpDescription(styles fang.Styles, usage string) string {
 //	  --debug  Enable debug logging
 func (r helpRenderer) renderHelpGroup(space int, title string, items []helpItem) {
 	r.out.sectionTitle(title)
+
 	for _, item := range items {
 		r.renderHelpItem(space, item.key, item.help)
 	}
@@ -519,7 +540,9 @@ func (r helpRenderer) renderCommandGroup(space int, title string, items []comman
 	showSubgroupTitles := len(names) > 1
 
 	bySubgroup := make(map[string][]commandHelpItem, len(names))
+
 	var ungrouped []commandHelpItem
+
 	for _, item := range items {
 		if item.subgroup == "" {
 			ungrouped = append(ungrouped, item)
@@ -532,6 +555,7 @@ func (r helpRenderer) renderCommandGroup(space int, title string, items []comman
 		if showSubgroupTitles {
 			r.out.subgroupTitle(subgroup)
 		}
+
 		for _, item := range bySubgroup[subgroup] {
 			r.renderHelpItem(space, displayCommandKey(item, hasSubgroups), item.help)
 		}
@@ -548,7 +572,7 @@ func (r helpRenderer) renderCommandGroup(space int, title string, items []comman
 //
 //	--config  Path to lets config
 func (r helpRenderer) renderHelpItem(space int, key string, help string) {
-	r.out.println(lipgloss.JoinHorizontal(
+	r.out.writeln(lipgloss.JoinHorizontal(
 		lipgloss.Left,
 		paddedLeft2.Render(key),
 		strings.Repeat(" ", max(space-lipgloss.Width(key), 0)),
@@ -559,15 +583,18 @@ func (r helpRenderer) renderHelpItem(space int, key string, help string) {
 // subgroupNames returns sorted unique subgroup names present in command items.
 func subgroupNames(items []commandHelpItem) []string {
 	seen := map[string]struct{}{}
+
 	var names []string
 
 	for _, item := range items {
 		if item.subgroup == "" {
 			continue
 		}
+
 		if _, ok := seen[item.subgroup]; ok {
 			continue
 		}
+
 		seen[item.subgroup] = struct{}{}
 		names = append(names, item.subgroup)
 	}
@@ -586,6 +613,7 @@ func hasMultipleSubgroups(commands map[string][]commandHelpItem) bool {
 			if item.subgroup == "" {
 				continue
 			}
+
 			seen[item.subgroup] = struct{}{}
 			if len(seen) > 1 {
 				return true
@@ -601,6 +629,7 @@ func displayCommandKey(item commandHelpItem, hasSubgroups bool) string {
 	if !hasSubgroups {
 		return item.key
 	}
+
 	if item.subgroup != "" {
 		return "  " + item.key
 	}

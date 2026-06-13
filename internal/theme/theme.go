@@ -13,6 +13,7 @@ func DefaultColorScheme(c lipgloss.LightDarkFunc) fang.ColorScheme {
 	baseCyan := charmtone.Turtle
 	baseWhite := charmtone.Ash
 	baseGray := charmtone.Oyster
+
 	return fang.ColorScheme{
 		Base:           c(charmtone.Charcoal, baseCyan),
 		Title:          baseWhite,
@@ -36,6 +37,7 @@ func DefaultColorScheme(c lipgloss.LightDarkFunc) fang.ColorScheme {
 // AnsiColorScheme is a ANSI colorscheme.
 func AnsiColorScheme(c lipgloss.LightDarkFunc) fang.ColorScheme {
 	base := c(lipgloss.Black, lipgloss.White)
+
 	return fang.ColorScheme{
 		Base:         base,
 		Title:        lipgloss.White,

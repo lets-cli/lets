@@ -40,31 +40,31 @@ func newErrorOutput(w io.Writer, styles fang.Styles) errorOutput {
 	return errorOutput{w: w, styles: styles}
 }
 
-// println writes one error output line and intentionally ignores write errors.
-func (o errorOutput) println(v ...any) {
+// writeln writes one error output line and intentionally ignores write errors.
+func (o errorOutput) writeln(v ...any) {
 	_, _ = fmt.Fprintln(o.w, v...)
 }
 
 // blank writes one blank error output line.
 func (o errorOutput) blank() {
-	o.println()
+	o.writeln()
 }
 
 // header writes the styled error heading.
 func (o errorOutput) header() {
-	o.println(o.styles.ErrorHeader.String())
+	o.writeln(o.styles.ErrorHeader.String())
 }
 
 // commandTreeTitle writes the dependency tree section heading.
 func (o errorOutput) commandTreeTitle() {
 	title := o.styles.Title.Margin(0, 0).MarginLeft(2).Padding(0, 0)
-	o.println(title.Render("command tree:"))
+	o.writeln(title.Render("command tree:"))
 }
 
 // Render prints the complete error view or a plain error for non-terminal output.
 func (r errorRenderer) Render() {
 	if r.shouldRenderPlain() {
-		r.out.println(r.err.Error())
+		r.out.writeln(r.err.Error())
 		return
 	}
 
@@ -77,6 +77,7 @@ func (r errorRenderer) Render() {
 	if depErr := r.dependencyError(); depErr != nil {
 		r.renderDependencyTree(depErr)
 		r.out.blank()
+
 		return
 	}
 
@@ -104,15 +105,16 @@ func (r errorRenderer) dependencyError() *executor.DependencyError {
 // renderMessage prints the primary error and, when present, its split cause.
 func (r errorRenderer) renderMessage(style lipgloss.Style) {
 	message, cause := splitExecuteError(r.err)
-	r.out.println(style.Render(message + "."))
+	r.out.writeln(style.Render(message + "."))
+
 	if cause != "" {
-		r.out.println(style.UnsetTransform().Render(capitalizeExitStatus(cause) + "."))
+		r.out.writeln(style.UnsetTransform().Render(capitalizeExitStatus(cause) + "."))
 	}
 }
 
 // renderUsageHint prints the compact help suggestion for usage errors.
 func (r errorRenderer) renderUsageHint(errorText lipgloss.Style) {
-	r.out.println(lipgloss.JoinHorizontal(
+	r.out.writeln(lipgloss.JoinHorizontal(
 		lipgloss.Left,
 		errorText.UnsetWidth().Render("Try"),
 		" ",
@@ -128,19 +130,21 @@ func (r errorRenderer) renderDependencyTree(depErr *executor.DependencyError) {
 	failed := r.styles.ErrorHeader.UnsetMargins().UnsetString().Render("<-- failed here")
 
 	r.out.commandTreeTitle()
+
 	for i, name := range depErr.Chain {
 		line := strings.Repeat("  ", i+2) + joint + r.styles.Program.Command.Render(name)
 		if i == len(depErr.Chain)-1 {
 			line += "  " + failed
 		}
-		r.out.println(line)
+
+		r.out.writeln(line)
 	}
 }
 
 // capitalizeExitStatus normalizes Go command exit messages for user-facing output.
 func capitalizeExitStatus(text string) string {
-	if strings.HasPrefix(text, "exit status") {
-		return "Exit status" + strings.TrimPrefix(text, "exit status")
+	if after, ok := strings.CutPrefix(text, "exit status"); ok {
+		return "Exit status" + after
 	}
 
 	return text
