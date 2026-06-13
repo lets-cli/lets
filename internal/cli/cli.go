@@ -13,6 +13,7 @@ import (
 	"github.com/lets-cli/fang"
 	"github.com/lets-cli/lets/internal/cmd"
 	"github.com/lets-cli/lets/internal/config"
+	configpkg "github.com/lets-cli/lets/internal/config/config"
 	"github.com/lets-cli/lets/internal/env"
 	"github.com/lets-cli/lets/internal/logging"
 	"github.com/lets-cli/lets/internal/set"
@@ -77,7 +78,12 @@ func Main(version string, buildDate string) int {
 		rootFlags.config = os.Getenv("LETS_CONFIG")
 	}
 
-	cfg, err := config.Load(rootFlags.config, configDir, version)
+	var cfg *configpkg.Config
+	if isRemoteURL(rootFlags.config) {
+		cfg, err = config.LoadRemote(rootFlags.config, rootFlags.noCache, version)
+	} else {
+		cfg, err = config.Load(rootFlags.config, configDir, version)
+	}
 	if err != nil {
 		if failOnConfigError(rootCmd, command, rootFlags) {
 			log.Errorf("config error: %s", err)
@@ -268,6 +274,10 @@ func shouldCheckForUpdate(command *cobra.Command, interactive bool, appSettings 
 func isInteractiveStderr() bool {
 	fd := os.Stderr.Fd()
 	return isatty.IsTerminal(fd) || isatty.IsCygwinTerminal(fd)
+}
+
+func isRemoteURL(s string) bool {
+	return strings.HasPrefix(s, "http://") || strings.HasPrefix(s, "https://")
 }
 
 type flags struct {
