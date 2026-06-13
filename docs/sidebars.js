@@ -39,6 +39,7 @@ module.exports = {
     },
     "config",
     "settings",
+    "agent_skills",
     {
       type: "category",
       label: "API Reference",
