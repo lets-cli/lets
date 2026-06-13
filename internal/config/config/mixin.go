@@ -5,37 +5,14 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"io"
-	"mime"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
-	"github.com/lets-cli/lets/internal/set"
+	"github.com/lets-cli/lets/internal/fetch"
 	"github.com/lets-cli/lets/internal/util"
 )
-
-var allowedContentTypes = set.NewSet(
-	"text/plain",
-	"text/yaml",
-	"text/x-yaml",
-	"application/yaml",
-	"application/x-yaml",
-)
-
-// normalizeContentType extracts the media type from a Content-Type header,
-// removing parameters like charset to enable robust matching.
-func normalizeContentType(contentType string) string {
-	mediaType, _, err := mime.ParseMediaType(contentType)
-	if err != nil {
-		// If parsing fails, return the original string
-		return contentType
-	}
-
-	return mediaType
-}
 
 type Mixins []*Mixin
 
@@ -102,50 +79,10 @@ func (rm *RemoteMixin) tryRead() ([]byte, error) {
 }
 
 func (rm *RemoteMixin) download() ([]byte, error) {
-	// TODO: maybe create a client for this?
 	ctx, cancel := context.WithTimeout(context.Background(), 60*5*time.Second)
 	defer cancel()
 
-	req, err := http.NewRequestWithContext(
-		ctx,
-		http.MethodGet,
-		rm.URL,
-		nil,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	client := &http.Client{
-		Timeout: 15 * 60 * time.Second, // TODO: move to client struct
-	}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to make request: %w", err)
-	}
-
-	defer resp.Body.Close()
-
-	if resp.StatusCode == http.StatusNotFound {
-		return nil, fmt.Errorf("no such file at: %s", rm.URL)
-	} else if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		return nil, fmt.Errorf("network error: %s", resp.Status)
-	}
-
-	contentType := resp.Header.Get("Content-Type")
-
-	normalizedContentType := normalizeContentType(contentType)
-	if !allowedContentTypes.Contains(normalizedContentType) {
-		return nil, fmt.Errorf("unsupported content type: %s", contentType)
-	}
-
-	data, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read response: %w", err)
-	}
-
-	return data, nil
+	return fetch.Download(ctx, rm.URL)
 }
 
 // Trim `-` prefix.
