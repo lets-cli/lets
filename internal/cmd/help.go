@@ -8,7 +8,7 @@ import (
 	"io"
 	"reflect"
 	"regexp"
-	"sort"
+	"slices"
 	"strings"
 
 	"charm.land/lipgloss/v2"
@@ -45,10 +45,9 @@ func HelpRenderer(cmd *cobra.Command, ctx fang.HelpContext) {
 	usage := styleHelpUsage(cmd, ctx.Styles.Codeblock.Program, true)
 	examples := fang.StyleExamples(cmd, ctx.Styles)
 	blockStyle := compactCodeBlockStyle(ctx, append([]string{usage}, examples...)...)
-	usageTitle := ctx.Styles.Title.Margin(0, 0)
 	sectionTitle := compactTitleStyle(ctx.Styles)
 
-	_, _ = fmt.Fprintln(ctx.Writer, usageTitle.Render("usage"))
+	_, _ = fmt.Fprintln(ctx.Writer, sectionTitle.Render("usage"))
 	_, _ = fmt.Fprintln(ctx.Writer, blockStyle.Render(usage))
 
 	if len(examples) > 0 {
@@ -91,10 +90,9 @@ func ErrorHandler(w io.Writer, styles fang.Styles, err error) {
 		}
 	}
 
-	errorHeader := styles.ErrorHeader
 	errorText := styles.ErrorText
 
-	_, _ = fmt.Fprintln(w, errorHeader.String())
+	_, _ = fmt.Fprintln(w, styles.ErrorHeader.String())
 	_, _ = fmt.Fprintln(w, errorText.Render(err.Error()+"."))
 	_, _ = fmt.Fprintln(w)
 	var depErr *executor.DependencyError
@@ -148,7 +146,11 @@ func isUsageError(err error) bool {
 }
 
 func compactTitleStyle(styles fang.Styles) lipgloss.Style {
-	return styles.Title.Margin(0, 0).MarginBottom(0).PaddingBottom(0)
+	return styles.Title.Margin(0, 0).PaddingBottom(0)
+}
+
+func subgroupTitleStyle(styles fang.Styles) lipgloss.Style {
+	return compactTitleStyle(styles).PaddingTop(0).PaddingLeft(2)
 }
 
 func compactCodeBlockStyle(ctx fang.HelpContext, blocks ...string) lipgloss.Style {
@@ -174,13 +176,16 @@ func styleHelpUsage(cmd *cobra.Command, styles fang.Program, complete bool) stri
 		return fang.StyleUsage(cmd, styles, complete)
 	}
 
-	lines := make([]string, 0)
+	var lines []string
 	for _, line := range strings.Split(usage, "\n") {
 		line = strings.TrimSpace(line)
 		if line == "" {
 			continue
 		}
-		lines = append(lines, styleHelpUsageLine(cmd, styles, line, complete))
+		if complete {
+			line = completeHelpUsage(cmd, line)
+		}
+		lines = append(lines, styleUsageText(cmd, styles, line, complete))
 	}
 
 	if len(lines) == 0 {
@@ -188,14 +193,6 @@ func styleHelpUsage(cmd *cobra.Command, styles fang.Program, complete bool) stri
 	}
 
 	return strings.Join(lines, "\n")
-}
-
-func styleHelpUsageLine(cmd *cobra.Command, styles fang.Program, usage string, complete bool) string {
-	if complete {
-		usage = completeHelpUsage(cmd, usage)
-	}
-
-	return styleUsageText(cmd, styles, usage, complete)
 }
 
 func completeHelpUsage(cmd *cobra.Command, usage string) string {
@@ -236,7 +233,7 @@ func styleUsageText(cmd *cobra.Command, styles fang.Program, usage string, compl
 
 	usage = strings.TrimSpace(usage)
 
-	useLine := []string{}
+	var useLine []string
 	if complete {
 		parts := strings.Fields(usage)
 		if len(parts) > 0 {
@@ -303,8 +300,8 @@ func helpCommands(cmd *cobra.Command, styles fang.Styles) map[string][]commandHe
 	}
 
 	for groupID := range commands {
-		sort.Slice(commands[groupID], func(i, j int) bool {
-			return commands[groupID][i].name < commands[groupID][j].name
+		slices.SortFunc(commands[groupID], func(a, b commandHelpItem) int {
+			return strings.Compare(a.name, b.name)
 		})
 	}
 
@@ -368,10 +365,7 @@ func renderCobraFlag(styles fang.Program, flag *pflag.Flag) string {
 		return styles.Flag.Render("--" + flag.Name)
 	}
 
-	return lipgloss.JoinHorizontal(
-		lipgloss.Left,
-		styles.Flag.Render("-"+flag.Shorthand+" --"+flag.Name),
-	)
+	return styles.Flag.Render("-" + flag.Shorthand + " --" + flag.Name)
 }
 
 func renderDocoptFlag(styles fang.Program, display string) string {
@@ -394,6 +388,10 @@ func renderDocoptFlagPart(styles fang.Program, part string) string {
 }
 
 func renderHelpDescription(styles fang.Styles, usage string) string {
+	if !strings.Contains(usage, "\n") {
+		return styles.FlagDescription.Render(usage)
+	}
+
 	noTransform := styles.FlagDescription.UnsetTransform()
 	parts := strings.Split(usage, "\n")
 	lines := make([]string, 0, len(parts))
@@ -438,7 +436,7 @@ func renderCommandGroup(w io.Writer, styles fang.Styles, space int, title string
 
 	for _, subgroup := range names {
 		if showSubgroupTitles {
-			_, _ = fmt.Fprintln(w, compactTitleStyle(styles).PaddingTop(0).PaddingLeft(2).Render(subgroup))
+			_, _ = fmt.Fprintln(w, subgroupTitleStyle(styles).Render(subgroup))
 		}
 		for _, item := range bySubgroup[subgroup] {
 			renderHelpItem(w, space, displayCommandKey(item, hasSubgroups), item.help)
@@ -461,7 +459,7 @@ func renderHelpItem(w io.Writer, space int, key string, help string) {
 
 func subgroupNames(items []commandHelpItem) []string {
 	seen := map[string]struct{}{}
-	names := make([]string, 0, len(items))
+	var names []string
 
 	for _, item := range items {
 		if item.subgroup == "" {
@@ -474,7 +472,7 @@ func subgroupNames(items []commandHelpItem) []string {
 		names = append(names, item.subgroup)
 	}
 
-	sort.Strings(names)
+	slices.Sort(names)
 
 	return names
 }
