@@ -3,7 +3,6 @@ package cmd
 import (
 	"cmp"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"reflect"
@@ -14,19 +13,19 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/colorprofile"
 	"github.com/charmbracelet/x/ansi"
-	"github.com/charmbracelet/x/term"
 	"github.com/lets-cli/fang"
 	"github.com/lets-cli/lets/internal/docopt"
-	"github.com/lets-cli/lets/internal/executor"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
 
+// helpItem is a pre-rendered key/description row in a help section.
 type helpItem struct {
 	key  string
 	help string
 }
 
+// commandHelpItem carries command metadata needed for grouping and row rendering.
 type commandHelpItem struct {
 	name     string
 	subgroup string
@@ -39,148 +38,197 @@ var (
 	paddedLeft2    = lipgloss.NewStyle().PaddingLeft(2)
 )
 
+// HelpRenderer renders Cobra help using lets' Fang-based layout.
+//
+// It coordinates the full output, for example:
+//
+//	USAGE
+//	  lets build [<bin>] [--flags]
+//
+//	COMMANDS
+//	  test        Run all tests
+//
+//	OPTIONS
+//	  --help, -h  Show help
 func HelpRenderer(cmd *cobra.Command, ctx fang.HelpContext) {
-	renderLongShort(ctx.Writer, ctx.Styles, ctx.Width, cmp.Or(cmd.Long, cmd.Short))
+	newHelpRenderer(cmd, ctx).Render()
+}
 
-	usage := styleHelpUsage(cmd, ctx.Styles.Codeblock.Program, true)
-	examples := fang.StyleExamples(cmd, ctx.Styles)
-	blockStyle := compactCodeBlockStyle(ctx, append([]string{usage}, examples...)...)
-	sectionTitle := compactTitleStyle(ctx.Styles)
+// helpRenderer owns the full help rendering flow for one command.
+type helpRenderer struct {
+	cmd *cobra.Command
+	ctx fang.HelpContext
+	out helpOutput
+}
 
-	_, _ = fmt.Fprintln(ctx.Writer, sectionTitle.Render("usage"))
-	_, _ = fmt.Fprintln(ctx.Writer, blockStyle.Render(usage))
+// newHelpRenderer wires a command, Fang context, and output helper together.
+func newHelpRenderer(cmd *cobra.Command, ctx fang.HelpContext) helpRenderer {
+	return helpRenderer{cmd: cmd, ctx: ctx, out: newHelpOutput(ctx)}
+}
+
+// helpOutput hides low-level writes and common help-specific styled lines.
+type helpOutput struct {
+	w      io.Writer
+	styles fang.Styles
+}
+
+// newHelpOutput creates the help output adapter from Fang's help context.
+func newHelpOutput(ctx fang.HelpContext) helpOutput {
+	return helpOutput{w: ctx.Writer, styles: ctx.Styles}
+}
+
+// println writes one help output line and intentionally ignores write errors.
+func (o helpOutput) println(v ...any) {
+	_, _ = fmt.Fprintln(o.w, v...)
+}
+
+// blank writes one blank help output line.
+func (o helpOutput) blank() {
+	o.println()
+}
+
+// sectionTitle writes a top-level help section title.
+func (o helpOutput) sectionTitle(title string) {
+	o.println(compactTitleStyle(o.styles).Render(title))
+}
+
+// subgroupTitle writes a nested command subgroup title.
+func (o helpOutput) subgroupTitle(title string) {
+	o.println(subgroupTitleStyle(o.styles).Render(title))
+}
+
+// Render prints the complete help view for the renderer's command.
+//
+// It owns the section order: description, usage/examples, command groups, options.
+func (r helpRenderer) Render() {
+	r.renderLongShort(cmp.Or(r.cmd.Long, r.cmd.Short))
+	r.renderUsageAndExamples()
+
+	content := r.collectContent()
+	r.renderCommandGroups(content)
+	r.renderOptions(content)
+
+	r.out.blank()
+}
+
+// helpContent is the collected command/options model used by the render phase.
+type helpContent struct {
+	groups       map[string]string
+	groupKeys    []string
+	commands     map[string][]commandHelpItem
+	options      []helpItem
+	optionsTitle string
+	hasSubgroups bool
+	space        int
+}
+
+// renderLongShort prints the command description before structured sections.
+//
+// Example output:
+//
+//	Run build tasks defined in lets.yaml.
+func (r helpRenderer) renderLongShort(longShort string) {
+	if longShort == "" {
+		return
+	}
+
+	longShort = strings.TrimRight(longShort, "\n")
+	r.out.blank()
+	r.out.println(r.ctx.Styles.Text.Width(r.ctx.Width).Render(longShort))
+}
+
+// renderUsageAndExamples prints usage and example code blocks.
+//
+// Example output:
+//
+//	USAGE
+//	  lets release <version> [--flags]
+//
+//	EXAMPLES
+//	  lets release 1.2.3 --message "Release"
+func (r helpRenderer) renderUsageAndExamples() {
+	usage := styleHelpUsage(r.cmd, r.ctx.Styles.Codeblock.Program, true)
+	examples := fang.StyleExamples(r.cmd, r.ctx.Styles)
+	blockStyle := compactCodeBlockStyle(r.ctx, append([]string{usage}, examples...)...)
+
+	r.out.sectionTitle("usage")
+	r.out.println(blockStyle.Render(usage))
 
 	if len(examples) > 0 {
 		cw := blockStyle.GetWidth() - blockStyle.GetHorizontalPadding()
-		_, _ = fmt.Fprintln(ctx.Writer, sectionTitle.Render("examples"))
+		r.out.sectionTitle("examples")
 		for i, example := range examples {
 			if lipgloss.Width(example) > cw {
 				examples[i] = ansi.Truncate(example, cw, "…")
 			}
 		}
-		_, _ = fmt.Fprintln(ctx.Writer, blockStyle.Render(strings.Join(examples, "\n")))
+		r.out.println(blockStyle.Render(strings.Join(examples, "\n")))
 	}
+}
 
-	groups, groupKeys := helpGroups(cmd)
-	commands := helpCommands(cmd, ctx.Styles)
-	options, optionsTitle := helpOptions(cmd, ctx.Styles)
+// collectContent builds the command and option model before rendering rows.
+func (r helpRenderer) collectContent() helpContent {
+	groups, groupKeys := r.groups()
+	commands := r.commandGroups()
+	options, optionsTitle := r.optionItems()
 	hasSubgroups := hasMultipleSubgroups(commands)
-	space := helpSpace(commands, options, hasSubgroups)
+	space := r.helpSpace(commands, options, hasSubgroups)
 
-	for _, groupID := range groupKeys {
-		items := commands[groupID]
+	return helpContent{
+		groups:       groups,
+		groupKeys:    groupKeys,
+		commands:     commands,
+		options:      options,
+		optionsTitle: optionsTitle,
+		hasSubgroups: hasSubgroups,
+		space:        space,
+	}
+}
+
+// renderCommandGroups prints all non-empty command groups in Cobra group order.
+//
+// Example output:
+//
+//	COMMANDS
+//	  build       Build lets
+//	  test        Run all tests
+//
+//	INTERNAL COMMANDS
+//	  completion  Generate completion scripts
+func (r helpRenderer) renderCommandGroups(content helpContent) {
+	for _, groupID := range content.groupKeys {
+		items := content.commands[groupID]
 		if len(items) == 0 {
 			continue
 		}
-		renderCommandGroup(ctx.Writer, ctx.Styles, space, groups[groupID], items, hasSubgroups)
-	}
-
-	if len(options) > 0 {
-		renderHelpGroup(ctx.Writer, ctx.Styles, space, optionsTitle, options)
-	}
-
-	_, _ = fmt.Fprintln(ctx.Writer)
-}
-
-func ErrorHandler(w io.Writer, styles fang.Styles, err error) {
-	if w, ok := w.(term.File); ok {
-		if !term.IsTerminal(w.Fd()) {
-			_, _ = fmt.Fprintln(w, err.Error())
-			return
-		}
-	}
-
-	errorText := styles.ErrorText
-
-	_, _ = fmt.Fprintln(w, styles.ErrorHeader.String())
-	renderErrorMessage(w, errorText, err)
-	_, _ = fmt.Fprintln(w)
-	var depErr *executor.DependencyError
-	if errors.As(err, &depErr) {
-		renderDependencyTree(w, styles, depErr)
-		_, _ = fmt.Fprintln(w)
-		return
-	}
-	if isUsageError(err) {
-		_, _ = fmt.Fprintln(w, lipgloss.JoinHorizontal(
-			lipgloss.Left,
-			errorText.UnsetWidth().Render("Try"),
-			" ",
-			styles.Program.Flag.Render("--help"),
-			" for usage.",
-		))
-		_, _ = fmt.Fprintln(w)
+		r.renderCommandGroup(content.space, content.groups[groupID], items, content.hasSubgroups)
 	}
 }
 
-func renderErrorMessage(w io.Writer, style lipgloss.Style, err error) {
-	message, cause := splitExecuteError(err)
-	_, _ = fmt.Fprintln(w, style.Render(message+"."))
-	if cause != "" {
-		_, _ = fmt.Fprintln(w, style.UnsetTransform().Render(capitalizeExitStatus(cause)+"."))
+// renderOptions prints flags or docopt options when the command exposes any.
+//
+// Example output:
+//
+//	OPTIONS
+//	  <version>                Set version
+//	  --message=<message>, -m  Release message
+func (r helpRenderer) renderOptions(content helpContent) {
+	if len(content.options) > 0 {
+		r.renderHelpGroup(content.space, content.optionsTitle, content.options)
 	}
 }
 
-func capitalizeExitStatus(text string) string {
-	if strings.HasPrefix(text, "exit status") {
-		return "Exit status" + strings.TrimPrefix(text, "exit status")
-	}
-
-	return text
-}
-
-func splitExecuteError(err error) (string, string) {
-	var executeErr *executor.ExecuteError
-	if !errors.As(err, &executeErr) {
-		return err.Error(), ""
-	}
-
-	cause := executeErr.Cause().Error()
-	message := strings.TrimSuffix(err.Error(), ": "+cause)
-
-	return message, cause
-}
-
-func renderDependencyTree(w io.Writer, styles fang.Styles, depErr *executor.DependencyError) {
-	title := styles.Title.Margin(0, 0).MarginLeft(2).Padding(0, 0)
-	joint := styles.Program.DimmedArgument.Render("└─ ")
-	failed := styles.ErrorHeader.UnsetMargins().UnsetString().Render("<-- failed here")
-
-	_, _ = fmt.Fprintln(w, title.Render("command tree:"))
-	for i, name := range depErr.Chain {
-		line := strings.Repeat("  ", i+2) + joint + styles.Program.Command.Render(name)
-		if i == len(depErr.Chain)-1 {
-			line += "  " + failed
-		}
-		_, _ = fmt.Fprintln(w, line)
-	}
-}
-
-func isUsageError(err error) bool {
-	s := err.Error()
-	for _, prefix := range []string{
-		"flag needs an argument:",
-		"unknown flag:",
-		"unknown shorthand flag:",
-		"unknown command",
-		"invalid argument",
-	} {
-		if strings.HasPrefix(s, prefix) {
-			return true
-		}
-	}
-
-	return false
-}
-
+// compactTitleStyle removes title spacing that Fang's defaults add for broader layouts.
 func compactTitleStyle(styles fang.Styles) lipgloss.Style {
 	return styles.Title.Margin(0, 0).PaddingBottom(0)
 }
 
+// subgroupTitleStyle derives the nested subgroup title from the compact title style.
 func subgroupTitleStyle(styles fang.Styles) lipgloss.Style {
 	return compactTitleStyle(styles).PaddingTop(0).PaddingLeft(2)
 }
 
+// compactCodeBlockStyle sizes code blocks to their content while respecting terminal width.
 func compactCodeBlockStyle(ctx fang.HelpContext, blocks ...string) lipgloss.Style {
 	base := ctx.Styles.Codeblock.Base.Padding(1, 2)
 	padding := base.GetHorizontalPadding()
@@ -198,6 +246,7 @@ func compactCodeBlockStyle(ctx fang.HelpContext, blocks ...string) lipgloss.Styl
 	return blockStyle
 }
 
+// styleHelpUsage renders custom docopt usage annotations or falls back to Fang's usage renderer.
 func styleHelpUsage(cmd *cobra.Command, styles fang.Program, complete bool) string {
 	usage := cmd.Annotations[annotationHelpUsage]
 	if usage == "" {
@@ -223,6 +272,7 @@ func styleHelpUsage(cmd *cobra.Command, styles fang.Program, complete bool) stri
 	return strings.Join(lines, "\n")
 }
 
+// completeHelpUsage prefixes custom usage lines with the parent command path when needed.
 func completeHelpUsage(cmd *cobra.Command, usage string) string {
 	parent := cmd.Parent()
 	if parent == nil {
@@ -237,6 +287,7 @@ func completeHelpUsage(cmd *cobra.Command, usage string) string {
 	return parentPath + " " + usage
 }
 
+// styleUsageText applies Fang program styles to one normalized usage line.
 func styleUsageText(cmd *cobra.Command, styles fang.Program, usage string, complete bool) string {
 	hasArgs := strings.Contains(usage, "[args]")
 	hasFlags := strings.Contains(usage, "[flags]") ||
@@ -289,21 +340,12 @@ func styleUsageText(cmd *cobra.Command, styles fang.Program, usage string, compl
 	return lipgloss.JoinHorizontal(lipgloss.Left, useLine...)
 }
 
-func renderLongShort(w io.Writer, styles fang.Styles, width int, longShort string) {
-	if longShort == "" {
-		return
-	}
-
-	longShort = strings.TrimRight(longShort, "\n")
-	_, _ = fmt.Fprintln(w)
-	_, _ = fmt.Fprintln(w, styles.Text.Width(width).Render(longShort))
-}
-
-func helpGroups(cmd *cobra.Command) (map[string]string, []string) {
+// groups returns Cobra command group titles in their render order.
+func (r helpRenderer) groups() (map[string]string, []string) {
 	ids := []string{""}
 	groups := map[string]string{"": "commands"}
 
-	for _, group := range cmd.Groups() {
+	for _, group := range r.cmd.Groups() {
 		ids = append(ids, group.ID)
 		groups[group.ID] = group.Title
 	}
@@ -311,10 +353,11 @@ func helpGroups(cmd *cobra.Command) (map[string]string, []string) {
 	return groups, ids
 }
 
-func helpCommands(cmd *cobra.Command, styles fang.Styles) map[string][]commandHelpItem {
+// commandGroups collects available subcommands grouped by Cobra group ID.
+func (r helpRenderer) commandGroups() map[string][]commandHelpItem {
 	commands := map[string][]commandHelpItem{}
 
-	for _, subCmd := range cmd.Commands() {
+	for _, subCmd := range r.cmd.Commands() {
 		if !subCmd.IsAvailableCommand() && subCmd.Name() != "help" {
 			continue
 		}
@@ -322,8 +365,8 @@ func helpCommands(cmd *cobra.Command, styles fang.Styles) map[string][]commandHe
 		commands[subCmd.GroupID] = append(commands[subCmd.GroupID], commandHelpItem{
 			name:     subCmd.Name(),
 			subgroup: subCmd.Annotations[annotationSubGroupName],
-			key:      styles.Program.Command.Render(subCmd.Name()),
-			help:     renderHelpDescription(styles, subCmd.Short),
+			key:      r.ctx.Styles.Program.Command.Render(subCmd.Name()),
+			help:     renderHelpDescription(r.ctx.Styles, subCmd.Short),
 		})
 	}
 
@@ -336,29 +379,30 @@ func helpCommands(cmd *cobra.Command, styles fang.Styles) map[string][]commandHe
 	return commands
 }
 
-func helpOptions(cmd *cobra.Command, styles fang.Styles) ([]helpItem, string) {
+// optionItems merges docopt options and Cobra flags into one rendered option list.
+func (r helpRenderer) optionItems() ([]helpItem, string) {
 	items := make([]helpItem, 0)
-	docoptOptions := commandHelpOptions(cmd)
+	docoptOptions := commandHelpOptions(r.cmd)
 
 	for _, option := range docoptOptions {
 		items = append(items, helpItem{
-			key:  renderDocoptFlag(styles.Program, option.Display),
-			help: renderHelpDescription(styles, option.Description),
+			key:  renderDocoptFlag(r.ctx.Styles.Program, option.Display),
+			help: renderHelpDescription(r.ctx.Styles, option.Description),
 		})
 	}
 
-	cmd.Flags().VisitAll(func(flag *pflag.Flag) {
-		if flag.Hidden || shouldSkipHelpFlag(cmd, flag) {
+	r.cmd.Flags().VisitAll(func(flag *pflag.Flag) {
+		if flag.Hidden || shouldSkipHelpFlag(r.cmd, flag) {
 			return
 		}
 
-		help := renderHelpDescription(styles, flag.Usage)
+		help := renderHelpDescription(r.ctx.Styles, flag.Usage)
 		if flag.DefValue != "" && flag.DefValue != "false" && flag.DefValue != "0" && flag.DefValue != "[]" {
-			help += styles.FlagDefault.Render(" (" + flag.DefValue + ")")
+			help += r.ctx.Styles.FlagDefault.Render(" (" + flag.DefValue + ")")
 		}
 
 		items = append(items, helpItem{
-			key:  renderCobraFlag(styles.Program, flag),
+			key:  renderCobraFlag(r.ctx.Styles.Program, flag),
 			help: help,
 		})
 	})
@@ -370,6 +414,7 @@ func helpOptions(cmd *cobra.Command, styles fang.Styles) ([]helpItem, string) {
 	return items, "flags"
 }
 
+// commandHelpOptions decodes docopt help options stored on the Cobra command.
 func commandHelpOptions(cmd *cobra.Command) []docopt.HelpOption {
 	payload := cmd.Annotations[annotationHelpOptions]
 	if payload == "" {
@@ -384,10 +429,12 @@ func commandHelpOptions(cmd *cobra.Command) []docopt.HelpOption {
 	return options
 }
 
+// shouldSkipHelpFlag hides inherited help flags on subcommands unless explicitly changed.
 func shouldSkipHelpFlag(cmd *cobra.Command, flag *pflag.Flag) bool {
 	return flag.Name == "help" && cmd != cmd.Root() && !flag.Changed
 }
 
+// renderCobraFlag renders one Cobra flag key with lets' program styles.
 func renderCobraFlag(styles fang.Program, flag *pflag.Flag) string {
 	if flag.Shorthand == "" {
 		return styles.Flag.Render("--" + flag.Name)
@@ -396,6 +443,7 @@ func renderCobraFlag(styles fang.Program, flag *pflag.Flag) string {
 	return styles.Flag.Render("-" + flag.Shorthand + " --" + flag.Name)
 }
 
+// renderDocoptFlag renders a docopt option display string, including aliases.
 func renderDocoptFlag(styles fang.Program, display string) string {
 	parts := strings.Split(display, ", ")
 	rendered := make([]string, 0, len(parts))
@@ -407,6 +455,7 @@ func renderDocoptFlag(styles fang.Program, display string) string {
 	return strings.Join(rendered, styles.DimmedArgument.Render(", "))
 }
 
+// renderDocoptFlagPart styles one docopt option or argument fragment.
 func renderDocoptFlagPart(styles fang.Program, part string) string {
 	if left, right, ok := strings.Cut(part, "="); ok {
 		return styles.Flag.Render(left+"=") + styles.Flag.Render(right)
@@ -415,6 +464,7 @@ func renderDocoptFlagPart(styles fang.Program, part string) string {
 	return styles.Flag.Render(part)
 }
 
+// renderHelpDescription styles single and multi-line help descriptions.
 func renderHelpDescription(styles fang.Styles, usage string) string {
 	if !strings.Contains(usage, "\n") {
 		return styles.FlagDescription.Render(usage)
@@ -439,15 +489,30 @@ func renderHelpDescription(styles fang.Styles, usage string) string {
 	return strings.Join(lines, "\n")
 }
 
-func renderHelpGroup(w io.Writer, styles fang.Styles, space int, title string, items []helpItem) {
-	_, _ = fmt.Fprintln(w, compactTitleStyle(styles).Render(title))
+// renderHelpGroup prints a generic key/description help section.
+//
+// Example output:
+//
+//	FLAGS
+//	  --debug  Enable debug logging
+func (r helpRenderer) renderHelpGroup(space int, title string, items []helpItem) {
+	r.out.sectionTitle(title)
 	for _, item := range items {
-		renderHelpItem(w, space, item.key, item.help)
+		r.renderHelpItem(space, item.key, item.help)
 	}
 }
 
-func renderCommandGroup(w io.Writer, styles fang.Styles, space int, title string, items []commandHelpItem, hasSubgroups bool) {
-	_, _ = fmt.Fprintln(w, compactTitleStyle(styles).Render(title))
+// renderCommandGroup prints one command section, including subgroup headings when useful.
+//
+// Example output:
+//
+//	COMMANDS
+//	  release  Create a release
+//
+//	  CI
+//	    lint   Run lint checks
+func (r helpRenderer) renderCommandGroup(space int, title string, items []commandHelpItem, hasSubgroups bool) {
+	r.out.sectionTitle(title)
 
 	names := subgroupNames(items)
 	showSubgroupTitles := len(names) > 1
@@ -464,20 +529,25 @@ func renderCommandGroup(w io.Writer, styles fang.Styles, space int, title string
 
 	for _, subgroup := range names {
 		if showSubgroupTitles {
-			_, _ = fmt.Fprintln(w, subgroupTitleStyle(styles).Render(subgroup))
+			r.out.subgroupTitle(subgroup)
 		}
 		for _, item := range bySubgroup[subgroup] {
-			renderHelpItem(w, space, displayCommandKey(item, hasSubgroups), item.help)
+			r.renderHelpItem(space, displayCommandKey(item, hasSubgroups), item.help)
 		}
 	}
 
 	for _, item := range ungrouped {
-		renderHelpItem(w, space, displayCommandKey(item, hasSubgroups), item.help)
+		r.renderHelpItem(space, displayCommandKey(item, hasSubgroups), item.help)
 	}
 }
 
-func renderHelpItem(w io.Writer, space int, key string, help string) {
-	_, _ = fmt.Fprintln(w, lipgloss.JoinHorizontal(
+// renderHelpItem prints one aligned key/description row.
+//
+// Example output:
+//
+//	--config  Path to lets config
+func (r helpRenderer) renderHelpItem(space int, key string, help string) {
+	r.out.println(lipgloss.JoinHorizontal(
 		lipgloss.Left,
 		paddedLeft2.Render(key),
 		strings.Repeat(" ", max(space-lipgloss.Width(key), 0)),
@@ -485,6 +555,7 @@ func renderHelpItem(w io.Writer, space int, key string, help string) {
 	))
 }
 
+// subgroupNames returns sorted unique subgroup names present in command items.
 func subgroupNames(items []commandHelpItem) []string {
 	seen := map[string]struct{}{}
 	var names []string
@@ -505,6 +576,7 @@ func subgroupNames(items []commandHelpItem) []string {
 	return names
 }
 
+// hasMultipleSubgroups reports whether command rendering needs subgroup-aware alignment.
 func hasMultipleSubgroups(commands map[string][]commandHelpItem) bool {
 	seen := map[string]struct{}{}
 
@@ -523,6 +595,7 @@ func hasMultipleSubgroups(commands map[string][]commandHelpItem) bool {
 	return false
 }
 
+// displayCommandKey adjusts command key spacing for mixed grouped and ungrouped commands.
 func displayCommandKey(item commandHelpItem, hasSubgroups bool) string {
 	if !hasSubgroups {
 		return item.key
@@ -534,7 +607,8 @@ func displayCommandKey(item commandHelpItem, hasSubgroups bool) string {
 	return item.key + "  "
 }
 
-func helpSpace(commands map[string][]commandHelpItem, flags []helpItem, hasSubgroups bool) int {
+// helpSpace calculates the aligned key column width for commands and options.
+func (r helpRenderer) helpSpace(commands map[string][]commandHelpItem, flags []helpItem, hasSubgroups bool) int {
 	space := 10
 
 	for _, items := range commands {
