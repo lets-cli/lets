@@ -51,10 +51,10 @@ func TestHelpRendererShowsSubgroups(t *testing.T) {
 	}
 
 	out := stdout.String()
-	if !strings.Contains(out, "Development") {
+	if !strings.Contains(out, "DEVELOPMENT") {
 		t.Fatalf("expected Development subgroup in output: %q", out)
 	}
-	if !strings.Contains(out, "Operations") {
+	if !strings.Contains(out, "OPERATIONS") {
 		t.Fatalf("expected Operations subgroup in output: %q", out)
 	}
 }
