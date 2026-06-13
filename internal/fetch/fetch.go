@@ -19,8 +19,9 @@ var allowedContentTypes = set.NewSet(
 	"application/x-yaml",
 )
 
+// httpClient backstop timeout guards against hung connections when callers pass context.Background().
 var httpClient = &http.Client{
-	Timeout: 15 * 60 * time.Second,
+	Timeout: 30 * time.Second,
 }
 
 // Download fetches the content at url, validates the Content-Type is a YAML variant,
