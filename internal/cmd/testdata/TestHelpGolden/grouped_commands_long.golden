@@ -1,0 +1,32 @@
+
+A CLI task runner                                                               
+     
+USAGE
+    lets [command] [--flags]  
+         
+COMMANDS:
+  A GROUP
+    c                                     C command
+  B GROUP
+    a                                     A command
+    b                                     B command
+  COMMON
+    d                                     D command
+    super_long_command_longer_than_usual  Super long command
+                  
+INTERNAL COMMANDS:
+  help                                    Help about any command
+  self                                    Manage lets CLI itself
+     
+FLAGS
+  --all                                   Show all commands (including the ones with _)
+  -c --config                             Config file (default is lets.yaml)
+  -d --debug                              Show debug logs (or use LETS_DEBUG=1). If used multiple times, shows more verbose logs
+  -E --env                                Set env variable for running command KEY=VALUE
+  --exclude                               Run all but excluded command(s) described in cmd as map
+  -h --help                               Help for lets
+  --init                                  Create a new lets.yaml in the current folder
+  --no-depends                            Skip 'depends' for running command
+  --only                                  Run only specified command(s) described in cmd as map
+  -v --version                            Version for lets
+

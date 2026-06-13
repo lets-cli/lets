@@ -17,31 +17,22 @@ setup() {
     run lets
     assert_success
     assert_output --partial "A CLI task runner"
-    assert_output --partial "bar"
-    assert_output --partial "foo"
-    assert_output --partial "--config"
 }
 
 @test "help: run 'lets --help' (must be same as running lets as is)" {
     run lets --help
     assert_success
     assert_output --partial "A CLI task runner"
-    assert_output --partial "bar"
-    assert_output --partial "foo"
 }
 
 @test "help: run 'lets help' (must be same as running lets as is)" {
     run lets help
     assert_success
     assert_output --partial "A CLI task runner"
-    assert_output --partial "bar"
-    assert_output --partial "foo"
 }
 
 @test "help: show hidden commands" {
     run lets --all
     assert_success
     assert_output --partial "_x"
-    assert_output --partial "bar"
-    assert_output --partial "foo"
 }

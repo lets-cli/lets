@@ -10,13 +10,10 @@ setup() {
     run lets help test
     assert_success
     assert_output --partial "Run tests"
-    assert_output --partial "Unit tests are essention for success."
-    assert_output --partial "lets test"
 }
 
 @test "command_help: must add new line between description and options" {
     run lets help test2
     assert_success
     assert_output --partial "Run tests"
-    assert_output --partial "lets test2"
 }

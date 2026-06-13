@@ -62,6 +62,24 @@ lets test-bats
 lets test-bats global_env.bats
 ```
 
+### Golden tests
+
+Help and error rendering is verified with golden-file (snapshot) tests in `internal/cmd/`. Each test renders output into a buffer and compares it against a `.golden` file in `internal/cmd/testdata/`.
+
+Run golden tests:
+
+```bash
+go test ./internal/cmd/ -run "TestHelpGolden|TestCommandHelpGolden|TestErrorGolden"
+```
+
+When help rendering changes intentionally (e.g. new flags, updated styles), regenerate the golden files:
+
+```bash
+go test ./internal/cmd/ -run "TestHelpGolden|TestCommandHelpGolden|TestErrorGolden" -update
+```
+
+Review the diff of `internal/cmd/testdata/*.golden` before committing to confirm the rendered output looks correct.
+
 ## Release
 
 To release a new version:
