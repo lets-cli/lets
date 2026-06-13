@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/lets-cli/lets/internal/fetch"
 	"github.com/lets-cli/lets/internal/util"
@@ -79,10 +78,7 @@ func (rm *RemoteMixin) tryRead() ([]byte, error) {
 }
 
 func (rm *RemoteMixin) download() ([]byte, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 60*5*time.Second)
-	defer cancel()
-
-	return fetch.Download(ctx, rm.URL)
+	return fetch.Download(context.Background(), rm.URL)
 }
 
 // Trim `-` prefix.
