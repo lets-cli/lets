@@ -111,7 +111,7 @@ func Main(version string, buildDate string) int {
 		ctx,
 		rootCmd,
 		fang.WithVersion(rootCmd.Version),
-		fang.WithColorSchemeFunc(theme.DefaultColorScheme),
+		fang.WithColorSchemeFunc(theme.ColorSchemeByName(appSettings.Theme)),
 		fang.WithErrorHandler(cmd.ErrorHandler),
 		fang.WithHelpRenderer(cmd.HelpRenderer),
 	); err != nil {

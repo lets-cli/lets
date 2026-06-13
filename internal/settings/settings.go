@@ -5,23 +5,27 @@ import (
 	"os"
 
 	"github.com/fatih/color"
+	"github.com/lets-cli/lets/internal/theme"
 	"github.com/lets-cli/lets/internal/util"
 	"gopkg.in/yaml.v3"
 )
 
 type FileSettings struct {
-	NoColor       *bool `yaml:"no_color"`
-	UpgradeNotify *bool `yaml:"upgrade_notify"`
+	NoColor       *bool   `yaml:"no_color"`
+	Theme         *string `yaml:"theme"`
+	UpgradeNotify *bool   `yaml:"upgrade_notify"`
 }
 
 type Settings struct {
 	NoColor       bool
+	Theme         string
 	UpgradeNotify bool
 }
 
 func Default() Settings {
 	return Settings{
 		NoColor:       false,
+		Theme:         theme.DefaultName,
 		UpgradeNotify: true,
 	}
 }
@@ -63,11 +67,25 @@ func LoadFile(path string) (Settings, error) {
 		cfg.NoColor = *fileSettings.NoColor
 	}
 
+	if fileSettings.Theme != nil {
+		cfg.Theme = *fileSettings.Theme
+	}
+
 	if fileSettings.UpgradeNotify != nil {
 		cfg.UpgradeNotify = *fileSettings.UpgradeNotify
 	}
 
 	applyEnvOverrides(&cfg)
+
+	if !theme.ValidName(cfg.Theme) {
+		return Settings{}, fmt.Errorf(
+			"invalid theme %q: must be one of %q, %q, %q",
+			cfg.Theme,
+			theme.DefaultName,
+			theme.ANSIName,
+			theme.SynthwaveName,
+		)
+	}
 
 	return cfg, nil
 }
