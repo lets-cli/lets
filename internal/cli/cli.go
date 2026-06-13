@@ -80,7 +80,11 @@ func Main(version string, buildDate string) int {
 
 	var cfg *config.Config
 	if isRemoteURL(rootFlags.config) {
-		cfg, err = loader.LoadRemote(rootFlags.config, rootFlags.noCache, version)
+		if configDir != "" {
+			log.Warnf("LETS_CONFIG_DIR is ignored when using a remote config URL")
+		}
+
+		cfg, err = loader.LoadRemote(ctx, rootFlags.config, rootFlags.noCache, version)
 	} else {
 		cfg, err = loader.Load(rootFlags.config, configDir, version)
 	}
@@ -337,7 +341,7 @@ func parseRootFlags(args []string) (*flags, error) {
 					}
 
 					f.config = value
-				} else if len(args[idx:]) > 0 {
+				} else if idx+1 < len(args) {
 					f.config = args[idx+1]
 					idx += 2
 

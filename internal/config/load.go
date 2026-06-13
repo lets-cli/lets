@@ -22,35 +22,13 @@ func Load(configName string, configDir string, version string) (*config.Config, 
 		return nil, err
 	}
 
-	f, err := os.Open(configPath.AbsPath)
-	if err != nil {
-		return nil, err
-	}
-
-	c := config.NewConfig(
-		configPath.WorkDir,
-		configPath.AbsPath,
-		configPath.DotLetsDir,
-	)
-	if err := yaml.NewDecoder(f).Decode(c); err != nil {
-		return nil, fmt.Errorf("failed to parse %s: %w", configPath.Filename, err)
-	}
-
-	if err = validate(c, version); err != nil {
-		return nil, err
-	}
-
-	if err := c.SetupEnv(); err != nil {
-		return nil, err
-	}
-
-	return c, nil
+	return loadConfigFromFile(configPath.AbsPath, configPath.WorkDir, configPath.DotLetsDir, configPath.Filename, version)
 }
 
 // LoadRemote downloads (or loads from cache) a remote lets.yaml at url and
 // returns a Config with the working directory set to the caller's CWD.
-func LoadRemote(url string, noCache bool, version string) (*config.Config, error) {
-	cachedPath, err := ensureRemoteConfig(url, noCache)
+func LoadRemote(ctx context.Context, url string, noCache bool, version string) (*config.Config, error) {
+	cachedPath, err := ensureRemoteConfig(ctx, url, noCache)
 	if err != nil {
 		return nil, err
 	}
@@ -69,15 +47,28 @@ func LoadRemote(url string, noCache bool, version string) (*config.Config, error
 		return nil, fmt.Errorf("can not create .lets dir: %w", err)
 	}
 
-	f, err := os.Open(cachedPath)
+	c, err := loadConfigFromFile(cachedPath, cwd, dotLetsDir, url, version)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open cached remote config: %w", err)
+		return nil, fmt.Errorf("%w (use --no-cache to re-download)", err)
+	}
+
+	c.RemoteSource = url
+
+	return c, nil
+}
+
+// loadConfigFromFile is shared by Load and LoadRemote: opens the file at absPath,
+// decodes YAML, validates, and sets up env. displayName appears in parse error messages.
+func loadConfigFromFile(absPath, workDir, dotLetsDir, displayName, version string) (*config.Config, error) {
+	f, err := os.Open(absPath)
+	if err != nil {
+		return nil, err
 	}
 	defer f.Close()
 
-	c := config.NewConfig(cwd, cachedPath, dotLetsDir)
+	c := config.NewConfig(workDir, absPath, dotLetsDir)
 	if err := yaml.NewDecoder(f).Decode(c); err != nil {
-		return nil, fmt.Errorf("failed to parse remote config %s: %w", url, err)
+		return nil, fmt.Errorf("failed to parse %s: %w", displayName, err)
 	}
 
 	if err = validate(c, version); err != nil {
@@ -91,7 +82,7 @@ func LoadRemote(url string, noCache bool, version string) (*config.Config, error
 	return c, nil
 }
 
-func ensureRemoteConfig(url string, noCache bool) (string, error) {
+func ensureRemoteConfig(ctx context.Context, url string, noCache bool) (string, error) {
 	cacheDir, err := remoteConfigCacheDir()
 	if err != nil {
 		return "", err
@@ -107,7 +98,7 @@ func ensureRemoteConfig(url string, noCache bool) (string, error) {
 		return cachePath, nil
 	}
 
-	data, downloadErr := fetch.Download(context.Background(), url)
+	data, downloadErr := fetch.Download(ctx, url)
 	if downloadErr != nil {
 		if util.FileExists(cachePath) {
 			log.Warnf("failed to download remote config (%v), falling back to cached version", downloadErr)
@@ -117,12 +108,49 @@ func ensureRemoteConfig(url string, noCache bool) (string, error) {
 		return "", fmt.Errorf("failed to download remote config: %w", downloadErr)
 	}
 
-	//#nosec G306
-	if err := os.WriteFile(cachePath, data, 0o644); err != nil {
-		return "", fmt.Errorf("failed to cache remote config: %w", err)
+	if err := writeCacheAtomic(cachePath, data); err != nil {
+		return "", err
 	}
 
 	return cachePath, nil
+}
+
+// writeCacheAtomic writes data to a sibling temp file then renames it to dst,
+// ensuring the cache path is never left in a partially-written state.
+func writeCacheAtomic(dst string, data []byte) error {
+	dir := filepath.Dir(dst)
+
+	tmp, err := os.CreateTemp(dir, "*.yaml.tmp")
+	if err != nil {
+		return fmt.Errorf("failed to create temp cache file: %w", err)
+	}
+
+	tmpPath := tmp.Name()
+
+	_, writeErr := tmp.Write(data)
+	closeErr := tmp.Close()
+
+	if writeErr != nil || closeErr != nil {
+		os.Remove(tmpPath)
+		if writeErr != nil {
+			return fmt.Errorf("failed to write temp cache file: %w", writeErr)
+		}
+
+		return fmt.Errorf("failed to close temp cache file: %w", closeErr)
+	}
+
+	//#nosec G306
+	if err := os.Chmod(tmpPath, 0o644); err != nil {
+		os.Remove(tmpPath)
+		return fmt.Errorf("failed to chmod temp cache file: %w", err)
+	}
+
+	if err := os.Rename(tmpPath, dst); err != nil {
+		os.Remove(tmpPath)
+		return fmt.Errorf("failed to cache remote config: %w", err)
+	}
+
+	return nil
 }
 
 func remoteConfigCacheDir() (string, error) {

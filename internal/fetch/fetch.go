@@ -20,8 +20,9 @@ var allowedContentTypes = set.NewSet(
 )
 
 // httpClient backstop timeout guards against hung connections when callers pass context.Background().
+// 5 minutes matches the previous per-request context timeout used by RemoteMixin downloads.
 var httpClient = &http.Client{
-	Timeout: 30 * time.Second,
+	Timeout: 5 * 60 * time.Second,
 }
 
 // Download fetches the content at url, validates the Content-Type is a YAML variant,

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -47,6 +48,7 @@ func TestLoadConfig(t *testing.T) {
 
 func TestLoadRemote(t *testing.T) {
 	validConfig := "shell: bash\ncommands:\n  hello:\n    cmd: echo hello\n"
+	ctx := context.Background()
 
 	t.Run("downloads and caches config", func(t *testing.T) {
 		requests := 0
@@ -60,12 +62,15 @@ func TestLoadRemote(t *testing.T) {
 		t.Setenv("HOME", t.TempDir())
 		t.Chdir(t.TempDir())
 
-		cfg, err := LoadRemote(srv.URL, false, "0.0.0-test")
+		cfg, err := LoadRemote(ctx, srv.URL, false, "0.0.0-test")
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
 		if _, ok := cfg.Commands["hello"]; !ok {
 			t.Fatal("expected hello command")
+		}
+		if cfg.RemoteSource != srv.URL {
+			t.Fatalf("expected RemoteSource=%q, got %q", srv.URL, cfg.RemoteSource)
 		}
 		if requests != 1 {
 			t.Fatalf("expected 1 HTTP request, got %d", requests)
@@ -84,10 +89,10 @@ func TestLoadRemote(t *testing.T) {
 		t.Setenv("HOME", t.TempDir())
 		t.Chdir(t.TempDir())
 
-		if _, err := LoadRemote(srv.URL, false, "0.0.0-test"); err != nil {
+		if _, err := LoadRemote(ctx, srv.URL, false, "0.0.0-test"); err != nil {
 			t.Fatalf("first call error: %v", err)
 		}
-		if _, err := LoadRemote(srv.URL, false, "0.0.0-test"); err != nil {
+		if _, err := LoadRemote(ctx, srv.URL, false, "0.0.0-test"); err != nil {
 			t.Fatalf("second call error: %v", err)
 		}
 		if requests != 1 {
@@ -107,10 +112,10 @@ func TestLoadRemote(t *testing.T) {
 		t.Setenv("HOME", t.TempDir())
 		t.Chdir(t.TempDir())
 
-		if _, err := LoadRemote(srv.URL, false, "0.0.0-test"); err != nil {
+		if _, err := LoadRemote(ctx, srv.URL, false, "0.0.0-test"); err != nil {
 			t.Fatalf("prime cache error: %v", err)
 		}
-		if _, err := LoadRemote(srv.URL, true, "0.0.0-test"); err != nil {
+		if _, err := LoadRemote(ctx, srv.URL, true, "0.0.0-test"); err != nil {
 			t.Fatalf("no-cache call error: %v", err)
 		}
 		if requests != 2 {
@@ -128,13 +133,13 @@ func TestLoadRemote(t *testing.T) {
 		t.Chdir(t.TempDir())
 		url := srv.URL
 
-		if _, err := LoadRemote(url, false, "0.0.0-test"); err != nil {
+		if _, err := LoadRemote(ctx, url, false, "0.0.0-test"); err != nil {
 			t.Fatalf("prime cache error: %v", err)
 		}
 
 		srv.Close()
 
-		cfg, err := LoadRemote(url, true, "0.0.0-test")
+		cfg, err := LoadRemote(ctx, url, true, "0.0.0-test")
 		if err != nil {
 			t.Fatalf("expected fallback to cache, got error: %v", err)
 		}
@@ -152,7 +157,7 @@ func TestLoadRemote(t *testing.T) {
 		t.Setenv("HOME", t.TempDir())
 		t.Chdir(t.TempDir())
 
-		_, err := LoadRemote(srv.URL, false, "0.0.0-test")
+		_, err := LoadRemote(ctx, srv.URL, false, "0.0.0-test")
 		if err == nil {
 			t.Fatal("expected error when no cache and download fails")
 		}
