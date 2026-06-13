@@ -93,7 +93,7 @@ func ErrorHandler(w io.Writer, styles fang.Styles, err error) {
 	errorText := styles.ErrorText
 
 	_, _ = fmt.Fprintln(w, styles.ErrorHeader.String())
-	_, _ = fmt.Fprintln(w, errorText.Render(err.Error()+"."))
+	renderErrorMessage(w, errorText, err)
 	_, _ = fmt.Fprintln(w)
 	var depErr *executor.DependencyError
 	if errors.As(err, &depErr) {
@@ -113,10 +113,38 @@ func ErrorHandler(w io.Writer, styles fang.Styles, err error) {
 	}
 }
 
+func renderErrorMessage(w io.Writer, style lipgloss.Style, err error) {
+	message, cause := splitExecuteError(err)
+	_, _ = fmt.Fprintln(w, style.Render(message+"."))
+	if cause != "" {
+		_, _ = fmt.Fprintln(w, style.UnsetTransform().Render(capitalizeExitStatus(cause)+"."))
+	}
+}
+
+func capitalizeExitStatus(text string) string {
+	if strings.HasPrefix(text, "exit status") {
+		return "Exit status" + strings.TrimPrefix(text, "exit status")
+	}
+
+	return text
+}
+
+func splitExecuteError(err error) (string, string) {
+	var executeErr *executor.ExecuteError
+	if !errors.As(err, &executeErr) {
+		return err.Error(), ""
+	}
+
+	cause := executeErr.Cause().Error()
+	message := strings.TrimSuffix(err.Error(), ": "+cause)
+
+	return message, cause
+}
+
 func renderDependencyTree(w io.Writer, styles fang.Styles, depErr *executor.DependencyError) {
-	title := styles.Title.Margin(0, 2).Padding(0, 0)
+	title := styles.Title.Margin(0, 0).MarginLeft(2).Padding(0, 0)
 	joint := styles.Program.DimmedArgument.Render("└─ ")
-	failed := styles.ErrorText.UnsetWidth().UnsetTransform().Render("<-- failed here")
+	failed := styles.ErrorHeader.UnsetMargins().UnsetString().Render("<-- failed here")
 
 	_, _ = fmt.Fprintln(w, title.Render("command tree:"))
 	for i, name := range depErr.Chain {
@@ -294,7 +322,7 @@ func helpCommands(cmd *cobra.Command, styles fang.Styles) map[string][]commandHe
 		commands[subCmd.GroupID] = append(commands[subCmd.GroupID], commandHelpItem{
 			name:     subCmd.Name(),
 			subgroup: subCmd.Annotations[annotationSubGroupName],
-			key:      styleHelpUsage(subCmd, styles.Program, false),
+			key:      styles.Program.Command.Render(subCmd.Name()),
 			help:     renderHelpDescription(styles, subCmd.Short),
 		})
 	}

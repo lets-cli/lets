@@ -17,7 +17,7 @@ setup() {
 @test "command_not_found: suggest root command for close typo" {
     run lets slef
     assert_failure 2
-    assert_output --partial 'unknown command "slef" for "lets"'
+    assert_output --partial 'Unknown command "slef" for "lets"'
     assert_output --partial 'Did you mean this?'
     assert_output --partial 'self'
 }
@@ -25,7 +25,7 @@ setup() {
 @test "command_not_found: suggest self subcommand for close typo" {
     run lets self ls
     assert_failure 2
-    assert_output --partial 'unknown command "ls" for "lets self"'
+    assert_output --partial 'Unknown command "ls" for "lets self"'
     assert_output --partial 'Did you mean this?'
     assert_output --partial 'lsp'
 }
@@ -33,13 +33,13 @@ setup() {
 @test "command_not_found: no suggestions for completely unrelated command" {
     run lets zzzznotacommand
     assert_failure 2
-    assert_output --partial 'unknown command "zzzznotacommand" for "lets"'
+    assert_output --partial 'Unknown command "zzzznotacommand" for "lets"'
     refute_output --partial 'Did you mean this?'
 }
 
 @test "command_not_found: no suggestions for completely unrelated self subcommand" {
     run lets self zzzznotacommand
     assert_failure 2
-    assert_output --partial 'unknown command "zzzznotacommand" for "lets self"'
+    assert_output --partial 'Unknown command "zzzznotacommand" for "lets self"'
     refute_output --partial 'Did you mean this?'
 }

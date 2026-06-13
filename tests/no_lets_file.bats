@@ -52,19 +52,19 @@ teardown() {
     LETS_CONFIG=${NOT_EXISTED_LETS_FILE} run lets help
 
     assert_success
-    assert_line --index 0  "A CLI task runner"
+    assert_output --partial "A CLI task runner"
 }
 
 @test "no_lets_file: show help for 'lets --help' even if no config file" {
     LETS_CONFIG=${NOT_EXISTED_LETS_FILE} run lets --help
     assert_success
-    assert_line --index 0  "A CLI task runner"
+    assert_output --partial "A CLI task runner"
 }
 
 @test "no_lets_file: show help for 'lets -h' even if no config file" {
     LETS_CONFIG=${NOT_EXISTED_LETS_FILE} run lets -h
     assert_success
-    assert_line --index 0  "A CLI task runner"
+    assert_output --partial "A CLI task runner"
 }
 
 @test "no_lets_file: lets self doc opens docs without config" {

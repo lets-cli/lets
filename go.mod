@@ -5,10 +5,16 @@ go 1.26
 toolchain go1.26.0
 
 require (
+	charm.land/lipgloss/v2 v2.0.1
+	github.com/charmbracelet/colorprofile v0.4.2
+	github.com/charmbracelet/x/ansi v0.11.6
+	github.com/charmbracelet/x/exp/charmtone v0.0.0-20250603201427-c31516f43444
+	github.com/charmbracelet/x/term v0.2.2
 	github.com/codeclysm/extract v2.2.0+incompatible
 	github.com/coreos/go-semver v0.3.1
 	github.com/fatih/color v1.16.0
 	github.com/kindermax/docopt.go v0.8.0
+	github.com/lets-cli/fang v0.1.0
 	github.com/mattn/go-isatty v0.0.20
 	github.com/odvcencio/gotreesitter v0.12.1
 	github.com/pkg/errors v0.9.1
@@ -20,20 +26,14 @@ require (
 )
 
 require (
-	charm.land/lipgloss/v2 v2.0.1 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
-	github.com/charmbracelet/colorprofile v0.4.2 // indirect
 	github.com/charmbracelet/ultraviolet v0.0.0-20260205113103-524a6607adb8 // indirect
-	github.com/charmbracelet/x/ansi v0.11.6 // indirect
-	github.com/charmbracelet/x/exp/charmtone v0.0.0-20250603201427-c31516f43444 // indirect
-	github.com/charmbracelet/x/term v0.2.2 // indirect
 	github.com/charmbracelet/x/termios v0.1.1 // indirect
 	github.com/charmbracelet/x/windows v0.2.2 // indirect
 	github.com/clipperhouse/displaywidth v0.11.0 // indirect
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
 	github.com/gorilla/websocket v1.5.1 // indirect
 	github.com/iancoleman/strcase v0.3.0 // indirect
-	github.com/lets-cli/fang v0.0.0-20260606200525-e1065b982d8f // indirect
 	github.com/lucasb-eyer/go-colorful v1.3.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-runewidth v0.0.20 // indirect
@@ -63,10 +63,8 @@ require (
 	github.com/juju/testing v0.0.0-20201216035041-2be42bba85f3 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 	github.com/lithammer/dedent v1.1.0
-	github.com/spf13/pflag v1.0.9 // indirect
+	github.com/spf13/pflag v1.0.9
 	golang.org/x/sys v0.42.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b // indirect
 	gopkg.in/yaml.v3 v3.0.1
 )
-
-replace github.com/lets-cli/fang => ../fang

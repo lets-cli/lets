@@ -13,14 +13,14 @@ setup() {
 
     LETS_CONFIG_DIR="no_lets_file" run lets completion
     assert_success
-    assert_line --index 0 "Generates completion scripts for bash, zsh"
+    assert_output --partial "Generates completion scripts for bash, zsh"
     [[ ! -d .lets ]]
 }
 
 @test "completion: should return completion if lets.yaml exists" {
     run lets completion
     assert_success
-    assert_line --index 0 "Generates completion scripts for bash, zsh"
+    assert_output --partial "Generates completion scripts for bash, zsh"
     [[ -d .lets ]]
 }
 

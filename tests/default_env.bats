@@ -61,7 +61,7 @@ setup() {
     LETS_CONFIG_DIR=./a run lets print-workdir
 
     assert_failure
-    assert_line --index 0 "lets: command failed:"
-    assert_line --index 1 "  └─ print-workdir  <-- failed here"
-    assert_line --index 2 "lets: chdir ${TEST_DIR}/b: no such file or directory"
+    assert_output --partial "print-workdir"
+    assert_output --partial "<-- failed here"
+    assert_output --partial "chdir ${TEST_DIR}/b: no such file or directory"
 }

@@ -9,6 +9,8 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/lets-cli/fang"
 	configpkg "github.com/lets-cli/lets/internal/config/config"
+	"github.com/lets-cli/lets/internal/env"
+	"github.com/lets-cli/lets/internal/executor"
 	"github.com/spf13/cobra"
 )
 
@@ -110,7 +112,7 @@ Example:
 	}
 }
 
-func TestHelpRendererUsesDocoptUsageInRootCommandList(t *testing.T) {
+func TestHelpRendererUsesCommandNameInRootCommandList(t *testing.T) {
 	root := CreateRootCommand("v0.0.0-test", "")
 	root.InitDefaultHelpFlag()
 	root.SetArgs(nil)
@@ -134,8 +136,12 @@ Options:
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if !strings.Contains(stdout.String(), "release <version> --message=<message>") {
-		t.Fatalf("expected command usage in output: %q", stdout.String())
+	out := stdout.String()
+	if !strings.Contains(out, "release") {
+		t.Fatalf("expected command name in output: %q", out)
+	}
+	if strings.Contains(out, "release <version> --message=<message>") {
+		t.Fatalf("did not expect command usage in root command list: %q", out)
 	}
 }
 
@@ -189,5 +195,44 @@ func TestErrorHandlerRemovesErrorHeaderLeftPadding(t *testing.T) {
 	}
 	if !strings.Contains(out, "\nTry --help for usage.") {
 		t.Fatalf("expected usage hint in output: %q", out)
+	}
+}
+
+func TestErrorHandlerSplitsExecuteErrorCause(t *testing.T) {
+	var stderr bytes.Buffer
+	styles := fang.Styles{
+		ErrorHeader: lipgloss.NewStyle().SetString("ERROR"),
+		ErrorText:   lipgloss.NewStyle(),
+		Program: fang.Program{
+			Command:        lipgloss.NewStyle(),
+			DimmedArgument: lipgloss.NewStyle(),
+			Flag:           lipgloss.NewStyle(),
+		},
+		Title: lipgloss.NewStyle(),
+	}
+	command := &configpkg.Command{
+		Name: "build-lets-image",
+		Cmds: configpkg.Cmds{
+			Commands: []*configpkg.Cmd{{Script: "exit 127"}},
+		},
+	}
+	conf := &configpkg.Config{Shell: "bash"}
+	env.SetDebugLevel(0)
+	err := executor.NewExecutor(conf, nil).Execute(executor.NewExecutorCtx(context.Background(), command))
+	if err == nil {
+		t.Fatal("expected executor error")
+	}
+
+	ErrorHandler(&stderr, styles, err)
+
+	out := stderr.String()
+	if !strings.Contains(out, "failed to run command 'build-lets-image'.") {
+		t.Fatalf("expected split error message in output: %q", out)
+	}
+	if !strings.Contains(out, "Exit status 127.") {
+		t.Fatalf("expected split exit status in output: %q", out)
+	}
+	if strings.Contains(out, "failed to run command 'build-lets-image': exit status 127.") {
+		t.Fatalf("did not expect combined error message in output: %q", out)
 	}
 }

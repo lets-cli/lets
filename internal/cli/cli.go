@@ -110,6 +110,7 @@ func Main(version string, buildDate string) int {
 	if err := fang.Execute(
 		ctx,
 		rootCmd,
+		fang.WithVersion(rootCmd.Version),
 		fang.WithColorSchemeFunc(theme.DefaultColorScheme),
 		fang.WithErrorHandler(cmd.ErrorHandler),
 		fang.WithHelpRenderer(cmd.HelpRenderer),

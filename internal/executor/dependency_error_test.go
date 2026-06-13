@@ -98,4 +98,3 @@ func TestDependencyErrorError(t *testing.T) {
 		t.Errorf("expected Error() to delegate to Err, got %q", depErr.Error())
 	}
 }
-
