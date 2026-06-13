@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/lets-cli/fang"
 	"github.com/lets-cli/lets/internal/cmd"
 	"github.com/lets-cli/lets/internal/config"
 	"github.com/lets-cli/lets/internal/env"
@@ -17,6 +18,7 @@ import (
 	"github.com/lets-cli/lets/internal/logging"
 	"github.com/lets-cli/lets/internal/set"
 	"github.com/lets-cli/lets/internal/settings"
+	"github.com/lets-cli/lets/internal/theme"
 	"github.com/lets-cli/lets/internal/upgrade"
 	"github.com/lets-cli/lets/internal/upgrade/registry"
 	"github.com/lets-cli/lets/internal/workdir"
@@ -106,15 +108,19 @@ func Main(version string, buildDate string) int {
 	updateCh, cancelUpdateCheck := maybeStartUpdateCheck(ctx, version, command, appSettings)
 	defer cancelUpdateCheck()
 
-	if err := rootCmd.ExecuteContext(ctx); err != nil {
+	if err := fang.Execute(
+		ctx,
+		rootCmd,
+		fang.WithColorSchemeFunc(theme.DefaultColorScheme),
+		fang.WithErrorHandler(cmd.ErrorHandler),
+		fang.WithHelpRenderer(cmd.HelpRenderer),
+	); err != nil {
 		if depErr, ok := errors.AsType[*executor.DependencyError](err); ok {
 			log.Errorf("%s", depErr.TreeMessage())
 			log.Errorf("%s", depErr.FailureMessage())
 
 			return getExitCode(err, 1)
 		}
-
-		log.Errorf("%s", err.Error())
 
 		return getExitCode(err, 1)
 	}

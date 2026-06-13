@@ -73,22 +73,9 @@ func newRootCmd(version, buildDate string) *cobra.Command {
 		FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},
 		// handle errors manually
 		SilenceErrors: true,
-		// print help message manyally
-		SilenceUsage: true,
+		SilenceUsage:  true,
 	}
 
-	cmd.SetHelpFunc(func(c *cobra.Command, _ []string) {
-		var err error
-		if c == c.Root() {
-			err = PrintRootHelpMessage(c)
-		} else {
-			err = PrintHelpMessage(c)
-		}
-
-		if err != nil {
-			c.Println(err)
-		}
-	})
 	cmd.AddGroup(&cobra.Group{ID: "main", Title: "Commands:"}, &cobra.Group{ID: "internal", Title: "Internal commands:"})
 	cmd.SetHelpCommandGroupID("internal")
 
