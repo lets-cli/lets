@@ -12,8 +12,8 @@ import (
 
 	"github.com/lets-cli/fang"
 	"github.com/lets-cli/lets/internal/cmd"
-	"github.com/lets-cli/lets/internal/config"
-	configpkg "github.com/lets-cli/lets/internal/config/config"
+	"github.com/lets-cli/lets/internal/config/config"
+	loader "github.com/lets-cli/lets/internal/config"
 	"github.com/lets-cli/lets/internal/env"
 	"github.com/lets-cli/lets/internal/logging"
 	"github.com/lets-cli/lets/internal/set"
@@ -78,11 +78,11 @@ func Main(version string, buildDate string) int {
 		rootFlags.config = os.Getenv("LETS_CONFIG")
 	}
 
-	var cfg *configpkg.Config
+	var cfg *config.Config
 	if isRemoteURL(rootFlags.config) {
-		cfg, err = config.LoadRemote(rootFlags.config, rootFlags.noCache, version)
+		cfg, err = loader.LoadRemote(rootFlags.config, rootFlags.noCache, version)
 	} else {
-		cfg, err = config.Load(rootFlags.config, configDir, version)
+		cfg, err = loader.Load(rootFlags.config, configDir, version)
 	}
 	if err != nil {
 		if failOnConfigError(rootCmd, command, rootFlags) {
