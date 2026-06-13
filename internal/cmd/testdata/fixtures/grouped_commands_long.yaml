@@ -1,0 +1,25 @@
+shell: bash
+
+commands:
+  b:
+    group: B group
+    description: b command
+    cmd: echo
+
+  a:
+    group: B group
+    description: a command
+    cmd: echo
+
+  c:
+    group: A group
+    description: c command
+    cmd: echo
+
+  d:
+    description: d command
+    cmd: echo
+
+  super_long_command_longer_than_usual:
+    description: Super long command
+    cmd: echo "long command"
