@@ -14,7 +14,6 @@ import (
 	"github.com/lets-cli/lets/internal/cmd"
 	"github.com/lets-cli/lets/internal/config"
 	"github.com/lets-cli/lets/internal/env"
-	"github.com/lets-cli/lets/internal/executor"
 	"github.com/lets-cli/lets/internal/logging"
 	"github.com/lets-cli/lets/internal/set"
 	"github.com/lets-cli/lets/internal/settings"
@@ -115,13 +114,6 @@ func Main(version string, buildDate string) int {
 		fang.WithErrorHandler(cmd.ErrorHandler),
 		fang.WithHelpRenderer(cmd.HelpRenderer),
 	); err != nil {
-		if depErr, ok := errors.AsType[*executor.DependencyError](err); ok {
-			log.Errorf("%s", depErr.TreeMessage())
-			log.Errorf("%s", depErr.FailureMessage())
-
-			return getExitCode(err, 1)
-		}
-
 		return getExitCode(err, 1)
 	}
 

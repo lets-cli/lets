@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"reflect"
@@ -15,6 +16,7 @@ import (
 	"github.com/charmbracelet/x/term"
 	"github.com/lets-cli/fang"
 	"github.com/lets-cli/lets/internal/docopt"
+	"github.com/lets-cli/lets/internal/executor"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -91,6 +93,12 @@ func ErrorHandler(w io.Writer, styles fang.Styles, err error) {
 	_, _ = fmt.Fprintln(w, errorHeader.String())
 	_, _ = fmt.Fprintln(w, errorText.Render(err.Error()+"."))
 	_, _ = fmt.Fprintln(w)
+	var depErr *executor.DependencyError
+	if errors.As(err, &depErr) {
+		renderDependencyTree(w, styles, depErr)
+		_, _ = fmt.Fprintln(w)
+		return
+	}
 	if isUsageError(err) {
 		_, _ = fmt.Fprintln(w, lipgloss.JoinHorizontal(
 			lipgloss.Left,
@@ -100,6 +108,21 @@ func ErrorHandler(w io.Writer, styles fang.Styles, err error) {
 			" for usage.",
 		))
 		_, _ = fmt.Fprintln(w)
+	}
+}
+
+func renderDependencyTree(w io.Writer, styles fang.Styles, depErr *executor.DependencyError) {
+	title := styles.Title.Margin(0, 2).Padding(0, 0)
+	joint := styles.Program.DimmedArgument.Render("└─ ")
+	failed := styles.ErrorText.UnsetWidth().UnsetTransform().Render("<-- failed here")
+
+	_, _ = fmt.Fprintln(w, title.Render("command tree:"))
+	for i, name := range depErr.Chain {
+		line := strings.Repeat("  ", i+2) + joint + styles.Program.Command.Render(name)
+		if i == len(depErr.Chain)-1 {
+			line += "  " + failed
+		}
+		_, _ = fmt.Fprintln(w, line)
 	}
 }
 

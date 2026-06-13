@@ -1,17 +1,6 @@
 package executor
 
-import (
-	"errors"
-	"fmt"
-	"io"
-	"strings"
-
-	"github.com/fatih/color"
-)
-
-const dependencyTreeIndent = "  "
-const dependencyTreeHeader = "command failed:"
-const dependencyTreeJoint = "└─ "
+import "errors"
 
 // DependencyError carries the full dependency chain when a command fails.
 // Chain is outermost-first (e.g., ["deploy", "build", "lint"]).
@@ -32,36 +21,6 @@ func (e *DependencyError) ExitCode() int {
 	return 1
 }
 
-func (e *DependencyError) FailureMessage() string {
-	if executeErr, ok := errors.AsType[*ExecuteError](e.Err); ok {
-		return executeErr.Cause().Error()
-	}
-
-	return e.Err.Error()
-}
-
-func (e *DependencyError) TreeMessage() string {
-	red := color.New(color.FgRed).SprintFunc()
-
-	var builder strings.Builder
-
-	builder.WriteString(dependencyTreeHeader)
-
-	for i, name := range e.Chain {
-		builder.WriteByte('\n')
-		builder.WriteString(strings.Repeat(dependencyTreeIndent, i+1))
-		builder.WriteString(dependencyTreeJoint)
-		builder.WriteString(name)
-
-		if i == len(e.Chain)-1 {
-			builder.WriteString(dependencyTreeIndent)
-			builder.WriteString(red("<-- failed here"))
-		}
-	}
-
-	return builder.String()
-}
-
 // prependToChain prepends name to the chain in err if err is already a *DependencyError,
 // otherwise wraps err in a new single-element DependencyError.
 func prependToChain(name string, err error) error {
@@ -70,11 +29,4 @@ func prependToChain(name string, err error) error {
 	}
 
 	return &DependencyError{Chain: []string{name}, Err: err}
-}
-
-// PrintDependencyTree writes an indented tree of the dependency chain to w.
-// The failing node (last in chain) is annotated in red.
-// Respects NO_COLOR automatically via fatih/color.
-func PrintDependencyTree(e *DependencyError, w io.Writer) {
-	fmt.Fprintln(w, e.TreeMessage())
 }
