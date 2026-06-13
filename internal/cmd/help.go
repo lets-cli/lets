@@ -152,6 +152,7 @@ func (r helpRenderer) renderUsageAndExamples() {
 	blockStyle := compactCodeBlockStyle(r.ctx, append([]string{usage}, examples...)...)
 
 	r.out.sectionTitle("usage")
+	r.out.blank()
 	r.out.println(blockStyle.Render(usage))
 
 	if len(examples) > 0 {

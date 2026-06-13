@@ -2,6 +2,7 @@
 A CLI task runner                                                               
      
 USAGE
+
     lets [command] [--flags]  
          
 COMMANDS:
