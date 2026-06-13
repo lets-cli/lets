@@ -19,6 +19,6 @@ setup() {
     run lets cmd-2 posarg --config=some_path
 
     assert_failure
-    assert_line --partial "failed to parse docopt options for cmd cmd-2"
-    assert_line --partial "Usage: lets cmd [<posarg>] [--config=<config>]"
+    assert_output --partial "Failed to parse docopt options for cmd cmd-2"
+    assert_output --partial "Usage: lets cmd [<posarg>] [--config=<config>]"
 }

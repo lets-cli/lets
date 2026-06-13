@@ -6,7 +6,9 @@ title: Changelog
 ## [Unreleased](https://github.com/lets-cli/lets/releases/tag/v0.0.X)
 
 * `[Fixed]` Make root and `self` help paths delegate through Cobra help handling, and allow `--version` without requiring config.
+* `[Changed]` Add breathing room between the `USAGE` heading and its usage block in help output.
 * `[Refactoring]` Use Go 1.26 `errors.AsType` for type-safe error unwrapping.
+* `[Testing]` Add golden-file tests for help and error rendering in `internal/cmd`, replacing bats format checks with snapshot comparisons.
 
 ## [0.0.61](https://github.com/lets-cli/lets/releases/tag/v0.0.61)
 

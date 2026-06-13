@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -9,12 +10,16 @@ import (
 	"strings"
 
 	"github.com/lets-cli/lets/internal/config/config"
+	"github.com/lets-cli/lets/internal/docopt"
 	"github.com/lets-cli/lets/internal/executor"
 	"github.com/spf13/cobra"
 )
 
 const (
-	shortLimit = 120
+	shortLimit             = 120
+	annotationSubGroupName = "SubGroupName"
+	annotationHelpOptions  = "lets.helpOptions"
+	annotationHelpUsage    = "lets.helpUsage"
 )
 
 // cut all elements after command name.
@@ -103,11 +108,17 @@ func filterCmds(
 	return filteredCmds
 }
 
+func replaceDocoptNamePlaceholder(docopts string, cmdName string) string {
+	docopts = strings.Replace(docopts, "${LETS_COMMAND_NAME}", cmdName, 1)
+	docopts = strings.Replace(docopts, "$LETS_COMMAND_NAME", cmdName, 1)
+
+	return docopts
+}
+
 // Replace command name placeholder if present
 // E.g. if command name is foo, lets ${LETS_COMMAND_NAME} will be lets foo.
 func setDocoptNamePlaceholder(c *config.Command) {
-	c.Docopts = strings.Replace(c.Docopts, "${LETS_COMMAND_NAME}", c.Name, 1)
-	c.Docopts = strings.Replace(c.Docopts, "$LETS_COMMAND_NAME", c.Name, 1)
+	c.Docopts = replaceDocoptNamePlaceholder(c.Docopts, c.Name)
 }
 
 type cmdFlags struct {
@@ -154,14 +165,78 @@ func isHidden(cmdName string, showAll bool) bool {
 	return false
 }
 
+func hasHelpArg(args []string) bool {
+	for _, arg := range args {
+		if arg == "--help" || arg == "-h" {
+			return true
+		}
+	}
+
+	return false
+}
+
+func buildCommandUse(commandName string, usage string) string {
+	lines := make([]string, 0)
+
+	for line := range strings.SplitSeq(usage, "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+
+		line = strings.TrimPrefix(line, "lets ")
+		lines = append(lines, line)
+	}
+
+	if len(lines) == 0 {
+		return commandName
+	}
+
+	return strings.Join(lines, "\n")
+}
+
+func buildCommandAnnotations(command *config.Command, docopts string) map[string]string {
+	annotations := map[string]string{
+		annotationSubGroupName: command.GroupName,
+	}
+
+	docoptParts := docopt.ParseDocoptParts(docopts)
+	if usage := buildCommandUse(command.Name, docoptParts.Usage); usage != "" {
+		annotations[annotationHelpUsage] = usage
+	}
+
+	helpOptions := docopt.ParseHelpOptions(docopts, command.Name)
+	if len(helpOptions) == 0 {
+		return annotations
+	}
+
+	payload, err := json.Marshal(helpOptions)
+	if err != nil {
+		return annotations
+	}
+
+	annotations[annotationHelpOptions] = string(payload)
+
+	return annotations
+}
+
 // newSubcommand creates new cobra root subcommand from config.Command.
 func newSubcommand(command *config.Command, conf *config.Config, showAll bool, out io.Writer) *cobra.Command {
+	docopts := replaceDocoptNamePlaceholder(command.Docopts, command.Name)
+	docoptParts := docopt.ParseDocoptParts(docopts)
+
 	subCmd := &cobra.Command{
 		Use:     command.Name,
+		Example: docoptParts.Example,
 		Short:   short(command.Description),
+		Long:    command.Description,
 		GroupID: "main",
 		Hidden:  isHidden(command.Name, showAll),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if hasHelpArg(args) {
+				return cmd.Help()
+			}
+
 			command.Args = append(command.Args, prepareArgs(command.Name, os.Args)...)
 			command.Cmds.AppendArgs(args)
 
@@ -198,14 +273,7 @@ func newSubcommand(command *config.Command, conf *config.Config, showAll bool, o
 		SilenceUsage: true,
 	}
 
-	subCmd.SetHelpFunc(func(c *cobra.Command, strings []string) {
-		if _, err := fmt.Fprint(c.OutOrStdout(), command.Help()); err != nil {
-			c.Println(err)
-		}
-	})
-	subCmd.Annotations = map[string]string{
-		"SubGroupName": command.GroupName,
-	}
+	subCmd.Annotations = buildCommandAnnotations(command, docopts)
 
 	return subCmd
 }

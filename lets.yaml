@@ -36,12 +36,16 @@ commands:
   test-unit:
     description: Run unit tests
     depends: [build-lets-image]
-    cmd:
-      - docker
-      - compose
-      - run
-      - --rm
-      - test
+    options: |
+      Usage: lets test-unit [--update-golden]
+      Options:
+        --update-golden    Regenerate golden test snapshot files
+    cmd: |
+      if [[ -n "${LETSOPT_UPDATE_GOLDEN}" ]]; then
+        docker compose run --rm test gotestsum --format testname -- ./internal/cmd/... -update
+      else
+        docker compose run --rm test gotestsum --format testname -- ./... -coverprofile=coverage.out
+      fi
 
   test-bats:
     description: Run bats tests

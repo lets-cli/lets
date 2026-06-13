@@ -59,6 +59,7 @@ lets publish-docs             # deploy docs site
 - Fixtures in matching `tests/<scenario>/` folder, use `lets.yaml` unless variant needed
 - Bats tests use `run` + `assert_success`/`assert_line` pattern
 - Run at least `go test ./...` before considering work complete; `lets test-bats` for CLI-path changes
+- **Golden tests** — `internal/cmd/testdata/*` are snapshot of the rendered help and error output. If you change anything that affects help or error rendering (flags, styles, section titles, error messages), regenerate them with `go test ./internal/cmd/ -run -update` (or `lets test-unit --update-golden` in Docker), then commit the updated `.golden` files. If you add a new rendering behaviour (new section, new error type, new command layout), add a corresponding golden test in `internal/cmd/help_golden_test.go` with a fixture YAML in `internal/cmd/testdata/fixtures/` if needed, then run with `-update` to create the golden file.
 - Commits: short imperative subjects (`Add ...`, `Fix ...`, `Use ...`), explain non-obvious context in body
 - **Changelog workflow**: add entries to the `Unreleased` section in `docs/docs/changelog.md` with each commit/PR. At release time, rename `Unreleased` to the new tag version
 - Do not commit `lets.my.yaml`, generated binaries, `.lets/`, `coverage.out`, or `node_modules`

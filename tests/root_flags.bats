@@ -7,7 +7,7 @@ setup() {
 @test "root_flags: --config works (no subcommand)" {
     run lets --config lets1.yaml
     assert_success
-    assert_line --index 0 "A CLI task runner"
+    assert_output --partial "A CLI task runner"
 }
 
 @test "root_flags: --debug works (no subcommand)" {
