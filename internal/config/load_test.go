@@ -58,6 +58,7 @@ func TestLoadRemote(t *testing.T) {
 		defer srv.Close()
 
 		t.Setenv("HOME", t.TempDir())
+		t.Chdir(t.TempDir())
 
 		cfg, err := LoadRemote(srv.URL, false, "0.0.0-test")
 		if err != nil {
@@ -81,6 +82,7 @@ func TestLoadRemote(t *testing.T) {
 		defer srv.Close()
 
 		t.Setenv("HOME", t.TempDir())
+		t.Chdir(t.TempDir())
 
 		if _, err := LoadRemote(srv.URL, false, "0.0.0-test"); err != nil {
 			t.Fatalf("first call error: %v", err)
@@ -103,6 +105,7 @@ func TestLoadRemote(t *testing.T) {
 		defer srv.Close()
 
 		t.Setenv("HOME", t.TempDir())
+		t.Chdir(t.TempDir())
 
 		if _, err := LoadRemote(srv.URL, false, "0.0.0-test"); err != nil {
 			t.Fatalf("prime cache error: %v", err)
@@ -122,6 +125,7 @@ func TestLoadRemote(t *testing.T) {
 		}))
 
 		t.Setenv("HOME", t.TempDir())
+		t.Chdir(t.TempDir())
 		url := srv.URL
 
 		if _, err := LoadRemote(url, false, "0.0.0-test"); err != nil {
@@ -146,6 +150,7 @@ func TestLoadRemote(t *testing.T) {
 		srv.Close()
 
 		t.Setenv("HOME", t.TempDir())
+		t.Chdir(t.TempDir())
 
 		_, err := LoadRemote(srv.URL, false, "0.0.0-test")
 		if err == nil {

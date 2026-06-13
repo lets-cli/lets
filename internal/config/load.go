@@ -110,7 +110,7 @@ func ensureRemoteConfig(url string, noCache bool) (string, error) {
 	data, downloadErr := fetch.Download(context.Background(), url)
 	if downloadErr != nil {
 		if util.FileExists(cachePath) {
-			log.Warnf("failed to refresh remote config, using cached version: %s", downloadErr)
+			log.Warnf("failed to download remote config (%v), falling back to cached version", downloadErr)
 			return cachePath, nil
 		}
 
