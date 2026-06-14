@@ -110,7 +110,7 @@ func loadConfigFromFile(
 	defer f.Close()
 
 	c := config.NewConfig(workDir, absPath, dotLetsDir)
-	c.SetDownloadOptions(ctx, opts.progress, opts.noCache)
+	c.SetDownloadOptions(ctx, opts.progress, log.Warnf, opts.noCache)
 
 	if err := yaml.NewDecoder(f).Decode(c); err != nil {
 		return nil, fmt.Errorf("failed to parse %s: %w", displayName, err)

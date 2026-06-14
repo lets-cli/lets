@@ -14,7 +14,6 @@ import (
 	"github.com/lets-cli/lets/internal/fetch"
 	"github.com/lets-cli/lets/internal/set"
 	"github.com/lets-cli/lets/internal/util"
-	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 )
 
@@ -58,13 +57,20 @@ type Config struct {
 	cachedEnv        map[string]string
 	downloadContext  context.Context
 	downloadProgress fetch.ProgressObserver
+	downloadWarnf    func(string, ...any)
 	noCache          bool
 	isMixin          bool // if true, we consider config as mixin and apply different parsing and validation
 }
 
-func (c *Config) SetDownloadOptions(ctx context.Context, progress fetch.ProgressObserver, noCache bool) {
+func (c *Config) SetDownloadOptions(
+	ctx context.Context,
+	progress fetch.ProgressObserver,
+	warnf func(string, ...any),
+	noCache bool,
+) {
 	c.downloadContext = ctx
 	c.downloadProgress = progress
+	c.downloadWarnf = warnf
 	c.noCache = noCache
 }
 
@@ -74,6 +80,12 @@ func (c *Config) context() context.Context {
 	}
 
 	return c.downloadContext
+}
+
+func (c *Config) warnf(format string, args ...any) {
+	if c.downloadWarnf != nil {
+		c.downloadWarnf(format, args...)
+	}
 }
 
 func (c *Config) UnmarshalYAML(unmarshal func(any) error) error {
@@ -262,7 +274,7 @@ func (c *Config) readMixin(mixin *Mixin) error {
 					}
 
 					if cachedData != nil {
-						log.Warnf("failed to download remote mixin (%v), falling back to cached version", downloadErr)
+						c.warnf("failed to download remote mixin (%v), falling back to cached version", downloadErr)
 
 						data = cachedData
 					} else {
@@ -404,7 +416,7 @@ func NewConfig(workDir string, configAbsPath string, dotLetsDir string) *Config 
 func NewMixinConfig(cfg *Config, configAbsPath string) *Config {
 	mixin := NewConfig(cfg.WorkDir, configAbsPath, cfg.DotLetsDir)
 	mixin.isMixin = true
-	mixin.SetDownloadOptions(cfg.context(), cfg.downloadProgress, cfg.noCache)
+	mixin.SetDownloadOptions(cfg.context(), cfg.downloadProgress, cfg.downloadWarnf, cfg.noCache)
 
 	return mixin
 }
