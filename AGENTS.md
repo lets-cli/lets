@@ -8,7 +8,7 @@ Use `lets` task runner for all build/test/lint operations instead of raw command
 
 ```bash
 lets build [bin]              # build CLI with version metadata
-lets build-and-install        # build and install lets-dev locally
+lets build-and-install        # build and install lets binary locally
 lets test                     # full suite: unit + bats + completions
 lets test-unit                # Go unit tests only
 lets test-bats [test]         # Docker-based Bats integration tests
@@ -61,11 +61,6 @@ This is a Single-context repo; skills should read the root Context and root ADRs
 - `internal/set/` — generic Set data structure
 - `internal/test/` — test utilities (temp files, args helpers)
 
-## Key lets.yaml Fields
-
-- Top-level: `shell`, `env`, `before`, `init`, `mixins`, `commands`
-- Command: `cmd`, `description`, `depends`, `env`, `options` (docopt), `work_dir`, `after`, `checksum`, `persist_checksum`, `ref`, `args`, `shell`
-
 ## Project Rules
 
 - Follow `gofmt` exactly; tabs for indentation, ~120 char lines
@@ -74,6 +69,8 @@ This is a Single-context repo; skills should read the root Context and root ADRs
 - Bats tests use `run` + `assert_success`/`assert_line` pattern
 - Run at least `go test ./...` before considering work complete; `lets test-bats` for CLI-path changes
 - Run `lets lint` to verify code quality before commit/push/PR creation
+- If you discover non-obvious knowledge needed to make something work or avoid a known issue, document it in code comments or docs so it is not lost
+- Add concise code comments for non-obvious logic, invariants, and surprising decisions; do not comment self-explanatory code
 - **Golden tests** — `internal/cmd/testdata/*` are snapshot of the rendered help and error output. If you change anything that affects help or error rendering (flags, styles, section titles, error messages), regenerate them with `go test ./internal/cmd/ -run -update` (or `lets test-unit --update-golden` in Docker), then commit the updated `.golden` files. If you add a new rendering behaviour (new section, new error type, new command layout), add a corresponding golden test in `internal/cmd/help_golden_test.go` with a fixture YAML in `internal/cmd/testdata/fixtures/` if needed, then run with `-update` to create the golden file.
 - Commits: short imperative subjects (`Add ...`, `Fix ...`, `Use ...`), explain non-obvious context in body
 - **Changelog workflow**: add entries to the `Unreleased` section in `docs/docs/changelog.md` with each commit/PR. At release time, rename `Unreleased` to the new tag version
