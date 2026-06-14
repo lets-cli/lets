@@ -17,6 +17,18 @@ Use settings for things like colored output, theming, or update notifications. D
 
 This file is per-user and applies to all projects on the machine.
 
+Print the path:
+
+```bash
+lets self config path
+```
+
+Open the file in `$EDITOR`:
+
+```bash
+lets self config edit
+```
+
 ## Precedence
 
 Settings are resolved in this order:
