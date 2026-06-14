@@ -51,6 +51,7 @@ func newFormatter(errWriter io.Writer, cs fang.ColorSchemeFunc) *Formatter {
 	if err != nil || w == 0 {
 		w = 160
 	}
+
 	if w > 160 {
 		w = 160
 	}
@@ -99,6 +100,7 @@ func (f *Formatter) formatStyledError(entry *log.Entry) []byte {
 	buf.WriteString("\n")
 	buf.WriteString(f.errorStyles.text.Render(capitalizeFirst(entry.Message) + "."))
 	buf.WriteString("\n\n")
+
 	return buf.Bytes()
 }
 
@@ -137,7 +139,9 @@ func capitalizeFirst(s string) string {
 	if s == "" {
 		return s
 	}
+
 	runes := []rune(s)
 	runes[0] = unicode.ToUpper(runes[0])
+
 	return string(runes)
 }

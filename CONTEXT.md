@@ -19,8 +19,10 @@ This is a single-context repo.
 | Term | Definition | Aliases to avoid |
 | ---- | ---------- | ---------------- |
 | **Project config** | The repository-level declaration in `lets.yaml` that defines commands and shared execution rules. | Settings, user config |
+| **Remote config** | A main Project config loaded from a URL instead of from a local `lets.yaml` file. | Remote root config, URL config |
 | **Settings** | Per-user lets behavior stored in `~/.config/lets/config.yaml`. | Project config |
 | **Mixin** | An additional config file merged additively into a Project config. | Override, patch |
+| **Remote mixin** | A Mixin loaded from a URL and merged into the main Project config. | Remote config, URL mixin |
 | **Global env** | Top-level environment entries shared by all Project commands. | Process env |
 | **Env file** | A dotenv-style file loaded into command execution at global or command scope. | Settings file, config file |
 | **Theme** | A named style for lets help and styled error output. | Color scheme, palette |
@@ -47,6 +49,7 @@ This is a single-context repo.
 | **Before script** | A top-level script prepended to each Project command invocation, including dependencies. | Init script |
 | **After script** | A command-scoped script run after a Project command execution attempt. | Cleanup hook |
 | **Work dir** | The directory where a Project command runs after config and command resolution. | Repo root |
+| **Download progress indicator** | A user-visible status shown while lets retrieves a Remote config or Remote mixin. | Progress bar |
 | **Help surface** | The rendered CLI help for root and Project commands. | Docs page |
 | **LSP surface** | The editor-facing language-server features exposed by `lets self lsp`. | CLI help |
 

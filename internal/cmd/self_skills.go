@@ -136,7 +136,7 @@ func promptSkillScope(in io.Reader, out io.Writer, localDir string, globalDir st
 	_, _ = fmt.Fprint(out, "Select [1/2]: ")
 
 	line, err := bufio.NewReader(in).ReadString('\n')
-	if err != nil && !(errors.Is(err, io.EOF) && line != "") {
+	if err != nil && (!errors.Is(err, io.EOF) || line == "") {
 		return "", fmt.Errorf("reading install scope: %w", err)
 	}
 
@@ -180,6 +180,7 @@ func validateSkillNameArg(args []string) error {
 
 func installLetsSkill(out io.Writer, targetDir string, force bool) error {
 	skillDir := filepath.Join(targetDir, skillpkg.LetsName)
+
 	skillPath := filepath.Join(skillDir, skillpkg.SkillFile)
 	if _, err := os.Stat(skillPath); err == nil && !force {
 		_, _ = fmt.Fprintf(out, "%s already exists. Use --force to overwrite.\n", skillPath)
@@ -193,6 +194,7 @@ func installLetsSkill(out io.Writer, targetDir string, force bool) error {
 	}
 
 	_, _ = fmt.Fprintf(out, "Installed %s\n", skillDir)
+
 	return nil
 }
 
@@ -203,12 +205,15 @@ func updateLetsSkill(out io.Writer) error {
 	}
 
 	updated := 0
+
 	for _, skillDir := range dirs {
 		skillPath := filepath.Join(skillDir, skillpkg.SkillFile)
+
 		current, err := os.ReadFile(skillPath)
 		if errors.Is(err, os.ErrNotExist) {
 			continue
 		}
+
 		if err != nil {
 			return fmt.Errorf("reading %s: %w", skillPath, err)
 		}
@@ -216,6 +221,7 @@ func updateLetsSkill(out io.Writer) error {
 		if bytes.Equal(current, skillpkg.LetsSkill()) {
 			_, _ = fmt.Fprintf(out, "%s already up to date.\n", skillDir)
 			updated++
+
 			continue
 		}
 
@@ -257,6 +263,7 @@ func knownLetsSkillDirs() ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	dirs = append(dirs, filepath.Join(globalDir, skillpkg.LetsName))
 
 	return dirs, nil
@@ -302,6 +309,7 @@ func findGitRoot(start string) (string, error) {
 		if parent == dir {
 			return "", errors.New("not in a Git repository. Use --global or --path to specify a target")
 		}
+
 		dir = parent
 	}
 }
