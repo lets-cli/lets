@@ -218,7 +218,7 @@ func TestErrorHandlerSplitsExecuteErrorCause(t *testing.T) {
 	}
 	conf := &configpkg.Config{Shell: "bash"}
 	env.SetDebugLevel(0)
-	err := executor.NewExecutor(conf, nil).Execute(executor.NewExecutorCtx(context.Background(), command))
+	err := executor.NewExecutor(conf, executor.NewShellRunner(conf, nil)).Execute(executor.NewExecutorCtx(context.Background(), command))
 	if err == nil {
 		t.Fatal("expected executor error")
 	}
