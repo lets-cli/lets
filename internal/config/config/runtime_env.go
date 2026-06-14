@@ -7,9 +7,17 @@ import (
 )
 
 func (c *Config) BuiltinEnv(shell string) map[string]string {
+	letsConfig := filepath.Base(c.FilePath)
+	letsConfigDir := filepath.Dir(c.FilePath)
+
+	if c.RemoteSource != "" {
+		letsConfig = c.RemoteSource
+		letsConfigDir = c.WorkDir
+	}
+
 	return map[string]string{
-		"LETS_CONFIG":     filepath.Base(c.FilePath),
-		"LETS_CONFIG_DIR": filepath.Dir(c.FilePath),
+		"LETS_CONFIG":     letsConfig,
+		"LETS_CONFIG_DIR": letsConfigDir,
 		"LETS_OS":         runtime.GOOS,
 		"LETS_ARCH":       runtime.GOARCH,
 		"LETS_SHELL":      shell,

@@ -5,6 +5,7 @@ title: Changelog
 
 ## [Unreleased](https://github.com/lets-cli/lets/releases/tag/v0.0.X)
 
+* `[Added]` Remote config support: `lets -c https://url` downloads and caches config to `~/.config/lets/remote-configs/`. Use `--no-cache` to force re-download. Only standalone configs (no `mixins:`) are supported for now.
 * `[Added]` Add `lets self skills` commands to show, install, and update the bundled lets agent skill.
 * `[Docs]` Document the bundled lets Agent Skill and link it from the config reference.
 * `[Changed]` Expand the bundled lets agent skill with config authoring guidance.

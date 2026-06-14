@@ -48,6 +48,9 @@ type Config struct {
 	// absolute path to .lets/mixins
 	MixinsDir string
 
+	// RemoteSource is the original URL when the config was loaded remotely; empty for local configs.
+	RemoteSource string
+
 	// cached env after config.SetupEnv, used in config.GetEnv
 	cachedEnv map[string]string
 	isMixin   bool // if true, we consider config as mixin and apply different parsing and validation

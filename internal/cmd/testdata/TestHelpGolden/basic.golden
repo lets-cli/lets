@@ -21,6 +21,7 @@ FLAGS
   --exclude     Run all but excluded command(s) described in cmd as map
   -h --help     Help for lets
   --init        Create a new lets.yaml in the current folder
+  --no-cache    Re-Download remote config instead of using cached version
   --no-depends  Skip 'depends' for running command
   --only        Run only specified command(s) described in cmd as map
   -v --version  Version for lets

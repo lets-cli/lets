@@ -12,7 +12,8 @@ import (
 
 	"github.com/lets-cli/fang"
 	"github.com/lets-cli/lets/internal/cmd"
-	"github.com/lets-cli/lets/internal/config"
+	"github.com/lets-cli/lets/internal/config/config"
+	loader "github.com/lets-cli/lets/internal/config"
 	"github.com/lets-cli/lets/internal/env"
 	"github.com/lets-cli/lets/internal/logging"
 	"github.com/lets-cli/lets/internal/set"
@@ -77,7 +78,16 @@ func Main(version string, buildDate string) int {
 		rootFlags.config = os.Getenv("LETS_CONFIG")
 	}
 
-	cfg, err := config.Load(rootFlags.config, configDir, version)
+	var cfg *config.Config
+	if isRemoteURL(rootFlags.config) {
+		if configDir != "" {
+			log.Warnf("LETS_CONFIG_DIR is ignored when using a remote config URL")
+		}
+
+		cfg, err = loader.LoadRemote(ctx, rootFlags.config, rootFlags.noCache, version)
+	} else {
+		cfg, err = loader.Load(rootFlags.config, configDir, version)
+	}
 	if err != nil {
 		if failOnConfigError(rootCmd, command, rootFlags) {
 			log.Errorf("config error: %s", err)
@@ -270,6 +280,10 @@ func isInteractiveStderr() bool {
 	return isatty.IsTerminal(fd) || isatty.IsCygwinTerminal(fd)
 }
 
+func isRemoteURL(s string) bool {
+	return strings.HasPrefix(s, "http://") || strings.HasPrefix(s, "https://")
+}
+
 type flags struct {
 	config  string
 	debug   int
@@ -277,6 +291,7 @@ type flags struct {
 	version bool
 	all     bool
 	init    bool
+	noCache bool
 }
 
 // We can not parse --config and --debug flags using cobra.Command.ParseFlags
@@ -326,7 +341,7 @@ func parseRootFlags(args []string) (*flags, error) {
 					}
 
 					f.config = value
-				} else if len(args[idx:]) > 0 {
+				} else if idx+1 < len(args) {
 					f.config = args[idx+1]
 					idx += 2
 
@@ -355,6 +370,10 @@ func parseRootFlags(args []string) (*flags, error) {
 		case "--init":
 			if !isFlagVisited("init") {
 				f.init = true
+			}
+		case "--no-cache":
+			if !isFlagVisited("no-cache") {
+				f.noCache = true
 			}
 		case "--upgrade":
 			return nil, errors.New("--upgrade has been replaced with 'lets self upgrade'")
