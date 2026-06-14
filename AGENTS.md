@@ -21,6 +21,20 @@ lets publish-docs             # deploy docs site
 
 `lets test-unit`, `lets test-bats`, and `lets lint` require Docker. Use `go test ./...` locally for quick iteration without Docker.
 
+## Agent skills
+
+### Issue tracker
+
+The Issue tracker for this repo is GitHub; work items live as GitHub Issues in `lets-cli/lets`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Triage uses the default Triage label names: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, and `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+This is a Single-context repo; skills should read the root Context and root ADRs. See `docs/agents/domain.md`.
+
 ## Agent Behavior
 
 - **Proactive execution** — Don't ask "Can I proceed?" for implementation. DO ask before changing success criteria, test thresholds, or what "working" means.
