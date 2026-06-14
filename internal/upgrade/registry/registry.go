@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/codeclysm/extract"
+	"github.com/lets-cli/lets/internal/fetch"
 )
 
 var archAdaptMap = map[string]string{
@@ -27,7 +28,13 @@ var osMap = map[string]string{
 type RepoRegistry interface {
 	GetLatestReleaseInfo(ctx context.Context) (*ReleaseInfo, error)
 	GetLatestRelease(ctx context.Context) (string, error)
-	DownloadReleaseBinary(ctx context.Context, packageName string, version string, dstPath string) error
+	DownloadReleaseBinary(
+		ctx context.Context,
+		packageName string,
+		version string,
+		dstPath string,
+		progress fetch.ProgressObserver,
+	) error
 	GetPackageName(os string, arch string) (string, error)
 	GetDownloadURL(repoURI string, packageName string, version string) string
 }
@@ -42,8 +49,12 @@ type GithubRegistry struct {
 }
 
 func NewGithubRegistry() *GithubRegistry {
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.DisableCompression = true
+
 	client := &http.Client{
-		Timeout: 15 * 60 * time.Second, // global timeout
+		Timeout:   15 * 60 * time.Second, // global timeout
+		Transport: transport,
 	}
 
 	reg := &GithubRegistry{
@@ -78,6 +89,7 @@ func (reg *GithubRegistry) DownloadReleaseBinary(
 	packageName string,
 	version string,
 	dstPath string,
+	progress fetch.ProgressObserver,
 ) error {
 	downloadURL := reg.GetDownloadURL(reg.repoURI, packageName+".tar.gz", version)
 
@@ -125,9 +137,17 @@ func (reg *GithubRegistry) DownloadReleaseBinary(
 		}
 	}
 
-	// TODO add download progress bar
 	// TODO drop extract dependency, replace with own code
-	err = extract.Gz(ctx, resp.Body, dstDir, nil)
+	tracker := progress.Start(fetch.ProgressInfo{
+		Kind:       fetch.SourceSelfUpdate,
+		URL:        downloadURL,
+		TotalBytes: resp.ContentLength,
+	})
+	reader := progressReadCloser{ReadCloser: resp.Body, tracker: tracker}
+
+	err = extract.Gz(ctx, reader, dstDir, nil)
+	tracker.Done(err)
+
 	if err != nil {
 		return fmt.Errorf("failed to extract package: %w", err)
 	}
@@ -139,6 +159,21 @@ func (reg *GithubRegistry) DownloadReleaseBinary(
 	}
 
 	return nil
+}
+
+type progressReadCloser struct {
+	io.ReadCloser
+
+	tracker fetch.ProgressTracker
+}
+
+func (r progressReadCloser) Read(p []byte) (int, error) {
+	n, err := r.ReadCloser.Read(p)
+	if n > 0 {
+		r.tracker.Add(int64(n))
+	}
+
+	return n, err
 }
 
 type ReleaseInfo struct {

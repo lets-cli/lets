@@ -11,6 +11,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/lets-cli/lets/internal/fetch"
 	"github.com/lets-cli/lets/internal/upgrade/registry"
 	log "github.com/sirupsen/logrus"
 )
@@ -25,22 +26,38 @@ type BinaryUpgrader struct {
 	binaryPath     string
 	downloadPath   string
 	backupPath     string
+	progress       fetch.ProgressObserver
 }
 
-func NewBinaryUpgrader(reg registry.RepoRegistry, currentVersion string) (*BinaryUpgrader, error) {
+type BinaryUpgraderOption func(*BinaryUpgrader)
+
+func WithProgress(progress fetch.ProgressObserver) BinaryUpgraderOption {
+	return func(upgrader *BinaryUpgrader) {
+		upgrader.progress = progress
+	}
+}
+
+func NewBinaryUpgrader(reg registry.RepoRegistry, currentVersion string, options ...BinaryUpgraderOption) (*BinaryUpgrader, error) {
 	executablePath, err := binaryPath()
 	if err != nil {
 		return nil, err
 	}
 
-	return &BinaryUpgrader{
+	upgrader := &BinaryUpgrader{
 		registry:       reg,
 		currentVersion: currentVersion,
 		// TODO rewrite all paths with home dir
 		binaryPath:   executablePath,
 		downloadPath: path.Join(os.TempDir(), "lets.download"),
 		backupPath:   path.Join(os.TempDir(), "lets.backup"),
-	}, nil
+		progress:     fetch.NopObserver{},
+	}
+
+	for _, option := range options {
+		option(upgrader)
+	}
+
+	return upgrader, nil
 }
 
 func (up *BinaryUpgrader) Upgrade(ctx context.Context) error {
@@ -72,6 +89,7 @@ func (up *BinaryUpgrader) Upgrade(ctx context.Context) error {
 		packageName,
 		latestVersion,
 		up.downloadPath,
+		up.progress,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to download release %s version %s: %w", packageName, latestVersion, err)

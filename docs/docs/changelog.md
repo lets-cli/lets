@@ -6,6 +6,9 @@ title: Changelog
 ## [Unreleased](https://github.com/lets-cli/lets/releases/tag/v0.0.X)
 
 * `[Docs]` Convert design specs into ADRs.
+* `[Refactoring]` Rename the internal download progress package to progressbar.
+* `[Added]` Show interactive download progress for `lets self upgrade`. Issue [#367](https://github.com/lets-cli/lets/issues/367)
+* `[Changed]` Unify terminal detection across the CLI; Cygwin/MSYS terminals are no longer treated as interactive (drops the direct `mattn/go-isatty` dependency).
 * `[Added]` Add `lets self config path` and `lets self config edit` for user settings. Issue [#370](https://github.com/lets-cli/lets/issues/370)
 * `[Added]` Show interactive download progress for remote configs and remote mixins. Issue [#360](https://github.com/lets-cli/lets/issues/360)
 * `[Fixed]` Make `--no-cache` re-download remote mixins for local and remote configs. Issue [#365](https://github.com/lets-cli/lets/issues/365)

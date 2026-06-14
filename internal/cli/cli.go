@@ -14,16 +14,16 @@ import (
 	"github.com/lets-cli/lets/internal/cmd"
 	loader "github.com/lets-cli/lets/internal/config"
 	"github.com/lets-cli/lets/internal/config/config"
-	"github.com/lets-cli/lets/internal/downloadprogress"
 	"github.com/lets-cli/lets/internal/env"
 	"github.com/lets-cli/lets/internal/logging"
+	"github.com/lets-cli/lets/internal/progressbar"
 	"github.com/lets-cli/lets/internal/set"
 	"github.com/lets-cli/lets/internal/settings"
 	"github.com/lets-cli/lets/internal/theme"
 	"github.com/lets-cli/lets/internal/upgrade"
 	"github.com/lets-cli/lets/internal/upgrade/registry"
+	"github.com/lets-cli/lets/internal/util"
 	"github.com/lets-cli/lets/internal/workdir"
-	"github.com/mattn/go-isatty"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -54,7 +54,7 @@ func Main(version string, buildDate string) int {
 	rootCmd.InitDefaultHelpFlag()
 	rootCmd.InitDefaultVersionFlag()
 	reinitCompletionCmd := cmd.InitCompletionCmd(rootCmd, nil)
-	cmd.InitSelfCmd(rootCmd, version)
+	cmd.InitSelfCmd(rootCmd, version, appSettings)
 	rootCmd.InitDefaultHelpCmd()
 
 	command, args, err := rootCmd.Traverse(os.Args[1:])
@@ -83,10 +83,10 @@ func Main(version string, buildDate string) int {
 
 	loadOptions := []loader.LoadOption{}
 	if isInteractiveStderr() {
-		loadOptions = append(loadOptions, loader.WithProgress(downloadprogress.New(
+		loadOptions = append(loadOptions, loader.WithProgress(progressbar.New(
 			os.Stderr,
-			downloadprogress.WithNoColor(appSettings.NoColor),
-			downloadprogress.WithTheme(appSettings.Theme),
+			progressbar.WithNoColor(appSettings.NoColor),
+			progressbar.WithTheme(appSettings.Theme),
 		)))
 	}
 
@@ -292,8 +292,7 @@ func shouldCheckForUpdate(command *cobra.Command, interactive bool, appSettings 
 }
 
 func isInteractiveStderr() bool {
-	fd := os.Stderr.Fd()
-	return isatty.IsTerminal(fd) || isatty.IsCygwinTerminal(fd)
+	return util.IsTerminalWriter(os.Stderr)
 }
 
 func isRemoteURL(s string) bool {
