@@ -248,7 +248,7 @@ func (e *Executor) persistChecksum(ctx *Context) error {
 func (e *Executor) runCmd(ctx *Context, cmd *config.Cmd) error {
 	command := ctx.command
 
-	if env.DebugLevel() >= 1 {
+	if env.DebugLevel() == 1 {
 		ctx.logger.Debug("executing script:\n%s", cmd.Script)
 	}
 

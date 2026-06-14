@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	"github.com/lets-cli/lets/internal/config/config"
+	"github.com/lets-cli/lets/internal/env"
+	log "github.com/sirupsen/logrus"
 )
 
 // ScriptRunner executes a shell script in the context of a command.
@@ -48,6 +50,10 @@ func (r *shellRunner) run(command *config.Command, cmdScript string) error {
 
 	if err := r.setupEnv(osCmd, command, shell); err != nil {
 		return err
+	}
+
+	if env.DebugLevel() > 1 {
+		log.Debugf("executing:\n  script: %s\n  env: %s", cmdScript, fmtEnv(osCmd.Env))
 	}
 
 	return osCmd.Run()
