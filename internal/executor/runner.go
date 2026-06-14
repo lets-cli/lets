@@ -38,7 +38,9 @@ func (r *shellRunner) run(command *config.Command, cmdScript string) error {
 		args = append(args, "--", strings.Join(command.Args, " "))
 	}
 
-	osCmd := exec.Command(shell, args...)
+	// shell and script come from developer-authored lets.yaml, not user runtime input.
+	// User CLI args land in args as positional parameters ($1, $2, …) after "--", not as code.
+	osCmd := exec.Command(shell, args...) //nolint:gosec
 	osCmd.Stdout = r.out
 	osCmd.Stderr = r.out
 	osCmd.Stdin = os.Stdin
