@@ -16,19 +16,48 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+type loadOptions struct {
+	progress fetch.ProgressObserver
+}
+
+type LoadOption func(*loadOptions)
+
+func WithProgress(progress fetch.ProgressObserver) LoadOption {
+	return func(opts *loadOptions) {
+		opts.progress = progress
+	}
+}
+
+func newLoadOptions(options []LoadOption) loadOptions {
+	opts := loadOptions{}
+	for _, option := range options {
+		option(&opts)
+	}
+
+	return opts
+}
+
 func Load(configName string, configDir string, version string) (*config.Config, error) {
+	return LoadWithContext(context.Background(), configName, configDir, version)
+}
+
+func LoadWithContext(ctx context.Context, configName string, configDir string, version string, options ...LoadOption) (*config.Config, error) {
+	opts := newLoadOptions(options)
+
 	configPath, err := FindConfig(configName, configDir)
 	if err != nil {
 		return nil, err
 	}
 
-	return loadConfigFromFile(configPath.AbsPath, configPath.WorkDir, configPath.DotLetsDir, configPath.Filename, version)
+	return loadConfigFromFile(ctx, configPath.AbsPath, configPath.WorkDir, configPath.DotLetsDir, configPath.Filename, version, opts)
 }
 
 // LoadRemote downloads (or loads from cache) a remote lets.yaml at url and
 // returns a Config with the working directory set to the caller's CWD.
-func LoadRemote(ctx context.Context, url string, noCache bool, version string) (*config.Config, error) {
-	cachedPath, err := ensureRemoteConfig(ctx, url, noCache)
+func LoadRemote(ctx context.Context, url string, noCache bool, version string, options ...LoadOption) (*config.Config, error) {
+	opts := newLoadOptions(options)
+
+	cachedPath, err := ensureRemoteConfig(ctx, url, noCache, opts.progress)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +76,7 @@ func LoadRemote(ctx context.Context, url string, noCache bool, version string) (
 		return nil, fmt.Errorf("can not create .lets dir: %w", err)
 	}
 
-	c, err := loadConfigFromFile(cachedPath, cwd, dotLetsDir, url, version)
+	c, err := loadConfigFromFile(ctx, cachedPath, cwd, dotLetsDir, url, version, opts)
 	if err != nil {
 		return nil, fmt.Errorf("%w (use --no-cache to re-download)", err)
 	}
@@ -59,7 +88,11 @@ func LoadRemote(ctx context.Context, url string, noCache bool, version string) (
 
 // loadConfigFromFile is shared by Load and LoadRemote: opens the file at absPath,
 // decodes YAML, validates, and sets up env. displayName appears in parse error messages.
-func loadConfigFromFile(absPath, workDir, dotLetsDir, displayName, version string) (*config.Config, error) {
+func loadConfigFromFile(
+	ctx context.Context,
+	absPath, workDir, dotLetsDir, displayName, version string,
+	opts loadOptions,
+) (*config.Config, error) {
 	f, err := os.Open(absPath)
 	if err != nil {
 		return nil, err
@@ -67,6 +100,8 @@ func loadConfigFromFile(absPath, workDir, dotLetsDir, displayName, version strin
 	defer f.Close()
 
 	c := config.NewConfig(workDir, absPath, dotLetsDir)
+	c.SetDownloadOptions(ctx, opts.progress)
+
 	if err := yaml.NewDecoder(f).Decode(c); err != nil {
 		return nil, fmt.Errorf("failed to parse %s: %w", displayName, err)
 	}
@@ -82,7 +117,7 @@ func loadConfigFromFile(absPath, workDir, dotLetsDir, displayName, version strin
 	return c, nil
 }
 
-func ensureRemoteConfig(ctx context.Context, url string, noCache bool) (string, error) {
+func ensureRemoteConfig(ctx context.Context, url string, noCache bool, progress fetch.ProgressObserver) (string, error) {
 	cacheDir, err := remoteConfigCacheDir()
 	if err != nil {
 		return "", err
@@ -98,7 +133,7 @@ func ensureRemoteConfig(ctx context.Context, url string, noCache bool) (string, 
 		return cachePath, nil
 	}
 
-	data, downloadErr := fetch.Download(ctx, url)
+	data, downloadErr := fetch.Download(ctx, url, fetch.WithProgress(fetch.SourceRemoteConfig, progress))
 	if downloadErr != nil {
 		if util.FileExists(cachePath) {
 			log.Warnf("failed to download remote config (%v), falling back to cached version", downloadErr)
@@ -132,6 +167,7 @@ func writeCacheAtomic(dst string, data []byte) error {
 
 	if writeErr != nil || closeErr != nil {
 		os.Remove(tmpPath)
+
 		if writeErr != nil {
 			return fmt.Errorf("failed to write temp cache file: %w", writeErr)
 		}

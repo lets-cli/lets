@@ -2,6 +2,7 @@ package config
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"maps"
@@ -10,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/lets-cli/lets/internal/config/path"
+	"github.com/lets-cli/lets/internal/fetch"
 	"github.com/lets-cli/lets/internal/set"
 	"github.com/lets-cli/lets/internal/util"
 	"gopkg.in/yaml.v3"
@@ -52,8 +54,23 @@ type Config struct {
 	RemoteSource string
 
 	// cached env after config.SetupEnv, used in config.GetEnv
-	cachedEnv map[string]string
-	isMixin   bool // if true, we consider config as mixin and apply different parsing and validation
+	cachedEnv        map[string]string
+	downloadContext  context.Context
+	downloadProgress fetch.ProgressObserver
+	isMixin          bool // if true, we consider config as mixin and apply different parsing and validation
+}
+
+func (c *Config) SetDownloadOptions(ctx context.Context, progress fetch.ProgressObserver) {
+	c.downloadContext = ctx
+	c.downloadProgress = progress
+}
+
+func (c *Config) context() context.Context {
+	if c.downloadContext == nil {
+		return context.Background()
+	}
+
+	return c.downloadContext
 }
 
 func (c *Config) UnmarshalYAML(unmarshal func(any) error) error {
@@ -225,7 +242,7 @@ func (c *Config) readMixin(mixin *Mixin) error {
 		}
 
 		if data == nil {
-			data, err = rm.download()
+			data, err = rm.download(c.context(), c.downloadProgress)
 			if err != nil {
 				return err
 			}
@@ -356,6 +373,7 @@ func NewConfig(workDir string, configAbsPath string, dotLetsDir string) *Config 
 func NewMixinConfig(cfg *Config, configAbsPath string) *Config {
 	mixin := NewConfig(cfg.WorkDir, configAbsPath, cfg.DotLetsDir)
 	mixin.isMixin = true
+	mixin.SetDownloadOptions(cfg.context(), cfg.downloadProgress)
 
 	return mixin
 }

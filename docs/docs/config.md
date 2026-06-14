@@ -14,6 +14,7 @@ title: Config reference
   - [Mixins](#mixins)
   - [Ignored mixins](#ignored-mixins)
   - [Remote mixins `(experimental)`](#remote-mixins-experimental)
+  - [Remote configs](#remote-configs)
   - [Commands](#commands)
 - [Command directives:](#command-directives)
   - [Short syntax](#short-syntax)
@@ -326,6 +327,7 @@ Now if `my.yaml` exists - it will be loaded as a mixin. If it is not exist - `le
 
 It is possible to specify mixin as url. Lets will download it and load it as a mixin.
 File will be stored in `.lets/mixins` directory.
+When stderr is an interactive terminal, lets shows download progress for remote mixin downloads. Cache hits do not show progress.
 
 By default mixin filename will be sha256 hash of url.
 
@@ -339,6 +341,23 @@ mixins:
   - url: https://raw.githubusercontent.com/lets-cli/lets/master/lets.build.yaml
     version: 1
 ```
+
+
+### Remote configs
+
+It is possible to load the main lets config from a url with `--config` / `-c`.
+
+For example:
+
+```bash
+lets -c https://example.com/lets.yaml build
+```
+
+Lets will download the config and cache it in `~/.config/lets/remote-configs`.
+Use `--no-cache` to force lets to re-download the remote config instead of using the cached copy.
+
+Commands from a remote config run from the directory where `lets` was invoked unless the command specifies `work_dir`.
+When stderr is an interactive terminal, lets shows download progress for remote config downloads. Cache hits do not show progress.
 
 
 ### Commands

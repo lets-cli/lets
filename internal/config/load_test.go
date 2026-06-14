@@ -8,7 +8,24 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/lets-cli/lets/internal/fetch"
 )
+
+type recordingProgress struct {
+	starts []fetch.ProgressInfo
+}
+
+func (p *recordingProgress) Start(info fetch.ProgressInfo) fetch.ProgressTracker {
+	p.starts = append(p.starts, info)
+	return noopTracker{}
+}
+
+type noopTracker struct{}
+
+func (noopTracker) Add(int64) {}
+
+func (noopTracker) Done(error) {}
 
 func TestLoadConfig(t *testing.T) {
 	t.Run("just load config", func(t *testing.T) {
@@ -92,11 +109,37 @@ func TestLoadRemote(t *testing.T) {
 		if _, err := LoadRemote(ctx, srv.URL, false, "0.0.0-test"); err != nil {
 			t.Fatalf("first call error: %v", err)
 		}
-		if _, err := LoadRemote(ctx, srv.URL, false, "0.0.0-test"); err != nil {
+		progress := &recordingProgress{}
+		if _, err := LoadRemote(ctx, srv.URL, false, "0.0.0-test", WithProgress(progress)); err != nil {
 			t.Fatalf("second call error: %v", err)
 		}
 		if requests != 1 {
 			t.Fatalf("expected 1 HTTP request, got %d", requests)
+		}
+		if len(progress.starts) != 0 {
+			t.Fatalf("expected no progress starts for cache hit, got %d", len(progress.starts))
+		}
+	})
+
+	t.Run("reports progress for remote config download", func(t *testing.T) {
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/yaml")
+			_, _ = w.Write([]byte(validConfig))
+		}))
+		defer srv.Close()
+
+		t.Setenv("HOME", t.TempDir())
+		t.Chdir(t.TempDir())
+
+		progress := &recordingProgress{}
+		if _, err := LoadRemote(ctx, srv.URL, false, "0.0.0-test", WithProgress(progress)); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if len(progress.starts) != 1 {
+			t.Fatalf("expected 1 progress start, got %d", len(progress.starts))
+		}
+		if progress.starts[0].Kind != fetch.SourceRemoteConfig {
+			t.Fatalf("expected remote config progress, got %q", progress.starts[0].Kind)
 		}
 	})
 
@@ -160,6 +203,40 @@ func TestLoadRemote(t *testing.T) {
 		_, err := LoadRemote(ctx, srv.URL, false, "0.0.0-test")
 		if err == nil {
 			t.Fatal("expected error when no cache and download fails")
+		}
+	})
+
+	t.Run("reports progress for remote mixin cache miss only", func(t *testing.T) {
+		mixinConfig := "commands:\n  mixed:\n    cmd: echo mixed\n"
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/yaml")
+			_, _ = w.Write([]byte(mixinConfig))
+		}))
+		defer srv.Close()
+
+		tempDir := t.TempDir()
+		mainConfig := "shell: bash\nmixins:\n  - url: " + srv.URL + "\ncommands:\n  ok:\n    cmd: echo ok\n"
+		if err := os.WriteFile(filepath.Join(tempDir, "lets.yaml"), []byte(mainConfig), 0o644); err != nil {
+			t.Fatalf("write config: %v", err)
+		}
+
+		progress := &recordingProgress{}
+		if _, err := LoadWithContext(ctx, "", tempDir, "0.0.0-test", WithProgress(progress)); err != nil {
+			t.Fatalf("first load error: %v", err)
+		}
+		if len(progress.starts) != 1 {
+			t.Fatalf("expected 1 progress start, got %d", len(progress.starts))
+		}
+		if progress.starts[0].Kind != fetch.SourceRemoteMixin {
+			t.Fatalf("expected remote mixin progress, got %q", progress.starts[0].Kind)
+		}
+
+		cacheHitProgress := &recordingProgress{}
+		if _, err := LoadWithContext(ctx, "", tempDir, "0.0.0-test", WithProgress(cacheHitProgress)); err != nil {
+			t.Fatalf("second load error: %v", err)
+		}
+		if len(cacheHitProgress.starts) != 0 {
+			t.Fatalf("expected no progress starts for remote mixin cache hit, got %d", len(cacheHitProgress.starts))
 		}
 	})
 }

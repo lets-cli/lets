@@ -12,8 +12,9 @@ import (
 
 	"github.com/lets-cli/fang"
 	"github.com/lets-cli/lets/internal/cmd"
-	"github.com/lets-cli/lets/internal/config/config"
 	loader "github.com/lets-cli/lets/internal/config"
+	"github.com/lets-cli/lets/internal/config/config"
+	"github.com/lets-cli/lets/internal/downloadprogress"
 	"github.com/lets-cli/lets/internal/env"
 	"github.com/lets-cli/lets/internal/logging"
 	"github.com/lets-cli/lets/internal/set"
@@ -79,15 +80,25 @@ func Main(version string, buildDate string) int {
 	}
 
 	var cfg *config.Config
+
+	loadOptions := []loader.LoadOption{}
+	if isInteractiveStderr() {
+		loadOptions = append(loadOptions, loader.WithProgress(downloadprogress.New(
+			os.Stderr,
+			downloadprogress.WithNoColor(appSettings.NoColor),
+		)))
+	}
+
 	if isRemoteURL(rootFlags.config) {
 		if configDir != "" {
 			log.Warnf("LETS_CONFIG_DIR is ignored when using a remote config URL")
 		}
 
-		cfg, err = loader.LoadRemote(ctx, rootFlags.config, rootFlags.noCache, version)
+		cfg, err = loader.LoadRemote(ctx, rootFlags.config, rootFlags.noCache, version, loadOptions...)
 	} else {
-		cfg, err = loader.Load(rootFlags.config, configDir, version)
+		cfg, err = loader.LoadWithContext(ctx, rootFlags.config, configDir, version, loadOptions...)
 	}
+
 	if err != nil {
 		if failOnConfigError(rootCmd, command, rootFlags) {
 			log.Errorf("config error: %s", err)

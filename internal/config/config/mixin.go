@@ -77,8 +77,8 @@ func (rm *RemoteMixin) tryRead() ([]byte, error) {
 	return data, nil
 }
 
-func (rm *RemoteMixin) download() ([]byte, error) {
-	return fetch.Download(context.Background(), rm.URL)
+func (rm *RemoteMixin) download(ctx context.Context, progress fetch.ProgressObserver) ([]byte, error) {
+	return fetch.Download(ctx, rm.URL, fetch.WithProgress(fetch.SourceRemoteMixin, progress))
 }
 
 // Trim `-` prefix.
