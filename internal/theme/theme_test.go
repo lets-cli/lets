@@ -36,3 +36,21 @@ func TestColorSchemeByName(t *testing.T) {
 		t.Fatalf("expected unknown theme to fall back to %v, got %v", charmtone.Ash, got)
 	}
 }
+
+func TestProgressColors(t *testing.T) {
+	fill, empty := ProgressColors(ColorSchemeByName(DefaultName)(lipgloss.LightDark(true)))
+	if fill != charmtone.Turtle {
+		t.Fatalf("expected default fill color %v, got %v", charmtone.Turtle, fill)
+	}
+	if empty != lipgloss.Color("#747282") {
+		t.Fatalf("expected default empty color %v, got %v", lipgloss.Color("#747282"), empty)
+	}
+
+	fill, empty = ProgressColors(ColorSchemeByName(ANSIName)(lipgloss.LightDark(true)))
+	if fill != lipgloss.White {
+		t.Fatalf("expected ansi fill color %v, got %v", lipgloss.White, fill)
+	}
+	if empty != lipgloss.BrightBlack {
+		t.Fatalf("expected ansi empty color %v, got %v", lipgloss.BrightBlack, empty)
+	}
+}

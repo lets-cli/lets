@@ -2,6 +2,7 @@ package downloadprogress
 
 import (
 	"fmt"
+	"image/color"
 	"io"
 	"math"
 	"net/url"
@@ -15,6 +16,7 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/term"
 	"github.com/lets-cli/lets/internal/fetch"
+	"github.com/lets-cli/lets/internal/theme"
 )
 
 const (
@@ -30,6 +32,8 @@ type Observer struct {
 	animate    bool
 	throttle   time.Duration
 	finalPause time.Duration
+	fillColor  color.Color
+	emptyColor color.Color
 	now        func() time.Time
 }
 
@@ -44,6 +48,21 @@ func WithWidth(width int) Option {
 func WithNoColor(noColor bool) Option {
 	return func(observer *Observer) {
 		observer.noColor = noColor
+	}
+}
+
+func WithTheme(themeName string) Option {
+	return func(observer *Observer) {
+		if observer.noColor {
+			return
+		}
+
+		file, ok := observer.writer.(term.File)
+		if !ok || !term.IsTerminal(file.Fd()) {
+			return
+		}
+
+		observer.fillColor, observer.emptyColor = theme.ProgressColorsByName(themeName, file)
 	}
 }
 
@@ -216,6 +235,8 @@ func (t *manualTracker) progressModel(width int) bubblesprogress.Model {
 	if t.observer.noColor {
 		model.FullColor = nil
 		model.EmptyColor = nil
+	} else {
+		applyProgressColors(&model, t.observer.fillColor, t.observer.emptyColor)
 	}
 
 	return model
@@ -297,13 +318,14 @@ func (t *animatedTracker) progressLine() string {
 func (t *animatedTracker) progressModel() bubblesprogress.Model {
 	model := bubblesprogress.New(
 		bubblesprogress.WithWidth(barWidthForTerminal(t.observer.width)),
-		bubblesprogress.WithDefaultBlend(),
 		bubblesprogress.WithoutPercentage(),
 		bubblesprogress.WithFillCharacters('#', '-'),
 	)
 	if t.observer.noColor {
 		model.FullColor = nil
 		model.EmptyColor = nil
+	} else {
+		applyProgressColors(&model, t.observer.fillColor, t.observer.emptyColor)
 	}
 
 	return model
@@ -337,13 +359,14 @@ type progressModel struct {
 func newProgressModel(observer *Observer, label string, total int64, ready chan struct{}) progressModel {
 	model := bubblesprogress.New(
 		bubblesprogress.WithWidth(barWidthForTerminal(observer.width)),
-		bubblesprogress.WithDefaultBlend(),
 		bubblesprogress.WithoutPercentage(),
 		bubblesprogress.WithFillCharacters('#', '-'),
 	)
 	if observer.noColor {
 		model.FullColor = nil
 		model.EmptyColor = nil
+	} else {
+		applyProgressColors(&model, observer.fillColor, observer.emptyColor)
 	}
 
 	return progressModel{
@@ -453,6 +476,16 @@ func detectWidth(writer io.Writer) int {
 func isTerminal(writer io.Writer) bool {
 	file, ok := writer.(term.File)
 	return ok && term.IsTerminal(file.Fd())
+}
+
+func applyProgressColors(model *bubblesprogress.Model, fill, empty color.Color) {
+	if fill != nil {
+		model.FullColor = fill
+	}
+
+	if empty != nil {
+		model.EmptyColor = empty
+	}
 }
 
 func labelLine(verb, label string, width int) string {

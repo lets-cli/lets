@@ -2,9 +2,11 @@ package theme
 
 import (
 	"image/color"
+	"os"
 
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/exp/charmtone"
+	"github.com/charmbracelet/x/term"
 	"github.com/lets-cli/fang"
 )
 
@@ -35,6 +37,37 @@ func ColorSchemeByName(name string) fang.ColorSchemeFunc {
 	default:
 		return DefaultColorScheme
 	}
+}
+
+// ProgressColorsByName resolves a theme name to fill and empty colors for download progress.
+func ProgressColorsByName(name string, out term.File) (color.Color, color.Color) {
+	isDark := lipgloss.HasDarkBackground(os.Stdin, out)
+	scheme := ColorSchemeByName(name)(lipgloss.LightDark(isDark))
+
+	return ProgressColors(scheme)
+}
+
+// ProgressColors resolves a Fang color scheme to fill and empty colors for download progress.
+func ProgressColors(scheme fang.ColorScheme) (color.Color, color.Color) {
+	fill := scheme.Command
+	if fill == nil {
+		fill = scheme.Flag
+	}
+
+	if fill == nil {
+		fill = scheme.Base
+	}
+
+	empty := scheme.Comment
+	if empty == nil {
+		empty = scheme.FlagDefault
+	}
+
+	if empty == nil {
+		empty = scheme.Base
+	}
+
+	return fill, empty
 }
 
 // DefaultColorScheme is the default colorscheme.

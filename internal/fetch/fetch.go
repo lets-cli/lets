@@ -24,6 +24,7 @@ var httpClient = newHTTPClient()
 
 func newHTTPClient() *http.Client {
 	transport := http.DefaultTransport.(*http.Transport).Clone()
+	// Keep Content-Length usable for known-size download progress bars.
 	transport.DisableCompression = true
 
 	// Timeout guards against hung connections when callers pass context.Background().
@@ -123,7 +124,7 @@ func Download(ctx context.Context, url string, options ...Option) ([]byte, error
 		})
 	}
 
-	data, err := readAll(resp.Body, tracker)
+	data, err := readAll(resp.Body, tracker, resp.ContentLength)
 	if tracker != nil {
 		tracker.Done(err)
 	}
@@ -135,8 +136,12 @@ func Download(ctx context.Context, url string, options ...Option) ([]byte, error
 	return data, nil
 }
 
-func readAll(reader io.Reader, tracker ProgressTracker) ([]byte, error) {
+func readAll(reader io.Reader, tracker ProgressTracker, contentLength int64) ([]byte, error) {
 	var buf bytes.Buffer
+	if contentLength > 0 && contentLength <= int64(^uint(0)>>1) {
+		buf.Grow(int(contentLength))
+	}
+
 	if tracker == nil {
 		_, err := io.Copy(&buf, reader)
 		return buf.Bytes(), err

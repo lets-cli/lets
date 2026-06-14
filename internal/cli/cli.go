@@ -86,6 +86,7 @@ func Main(version string, buildDate string) int {
 		loadOptions = append(loadOptions, loader.WithProgress(downloadprogress.New(
 			os.Stderr,
 			downloadprogress.WithNoColor(appSettings.NoColor),
+			downloadprogress.WithTheme(appSettings.Theme),
 		)))
 	}
 
