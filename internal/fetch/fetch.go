@@ -42,6 +42,9 @@ func Download(ctx context.Context, url string) ([]byte, error) {
 	if resp.StatusCode == http.StatusNotFound {
 		return nil, fmt.Errorf("no such file at: %s", url)
 	} else if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		return nil, fmt.Errorf("network error for %s: %s", url, resp.Status)
+	}
+	} else if resp.StatusCode < 200 || resp.StatusCode > 299 {
 		return nil, fmt.Errorf("network error: %s", resp.Status)
 	}
 
