@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -219,7 +220,7 @@ func TestSelfCmd(t *testing.T) {
 	t.Run("should use help func when run without args", func(t *testing.T) {
 		rootCmd := CreateRootCommand("v0.0.0-test", "")
 		rootCmd.SetArgs([]string{"self"})
-		initSelfCmd(rootCmd, "v0.0.0-test", func(string) error { return nil })
+		initSelfCmd(rootCmd, "v0.0.0-test", func(string) error { return nil }, func(string) error { return nil })
 
 		called := false
 		rootCmd.SetHelpFunc(func(c *cobra.Command, args []string) {
@@ -246,7 +247,7 @@ func TestSelfCmd(t *testing.T) {
 		rootCmd.SetArgs([]string{"self", "config", "path"})
 		rootCmd.SetOut(bufOut)
 		rootCmd.SetErr(bufOut)
-		initSelfCmd(rootCmd, "v0.0.0-test", func(string) error { return nil })
+		initSelfCmd(rootCmd, "v0.0.0-test", func(string) error { return nil }, func(string) error { return nil })
 
 		if err := rootCmd.Execute(); err != nil {
 			t.Fatalf("unexpected error: %v", err)
@@ -269,7 +270,7 @@ func TestSelfCmd(t *testing.T) {
 		rootCmd.SetArgs([]string{"self", "config", "edit"})
 		rootCmd.SetOut(bufOut)
 		rootCmd.SetErr(bufOut)
-		initSelfCmdWithEditor(rootCmd, "v0.0.0-test", func(string) error { return nil }, func(path string) error {
+		initSelfCmd(rootCmd, "v0.0.0-test", func(string) error { return nil }, func(path string) error {
 			called = true
 			gotPath = path
 
@@ -287,6 +288,15 @@ func TestSelfCmd(t *testing.T) {
 
 		if gotPath != expected {
 			t.Fatalf("expected editor path %q, got %q", expected, gotPath)
+		}
+
+		info, err := os.Stat(filepath.Dir(expected))
+		if err != nil {
+			t.Fatalf("expected config directory to exist: %v", err)
+		}
+
+		if perm := info.Mode().Perm(); perm != 0o700 {
+			t.Fatalf("expected config directory permissions 0700, got %o", perm)
 		}
 	})
 
@@ -306,7 +316,7 @@ func TestSelfCmd(t *testing.T) {
 		rootCmd.SetArgs([]string{"self", "doc"})
 		rootCmd.SetOut(bufOut)
 		rootCmd.SetErr(bufOut)
-		initSelfCmd(rootCmd, "v0.0.0-test", openURL)
+		initSelfCmd(rootCmd, "v0.0.0-test", openURL, func(string) error { return nil })
 
 		err := rootCmd.Execute()
 		if err != nil {
@@ -333,7 +343,7 @@ func TestSelfCmd(t *testing.T) {
 		rootCmd.SetArgs([]string{"self", "doc"})
 		rootCmd.SetOut(bufOut)
 		rootCmd.SetErr(bufOut)
-		initSelfCmd(rootCmd, "v0.0.0-test", openURL)
+		initSelfCmd(rootCmd, "v0.0.0-test", openURL, func(string) error { return nil })
 
 		err := rootCmd.Execute()
 		if err == nil {
