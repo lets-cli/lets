@@ -208,7 +208,9 @@ func TestLoadRemote(t *testing.T) {
 
 	t.Run("reports progress for remote mixin cache miss only", func(t *testing.T) {
 		mixinConfig := "commands:\n  mixed:\n    cmd: echo mixed\n"
+		requests := 0
 		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			requests++
 			w.Header().Set("Content-Type", "application/yaml")
 			_, _ = w.Write([]byte(mixinConfig))
 		}))
@@ -237,6 +239,74 @@ func TestLoadRemote(t *testing.T) {
 		}
 		if len(cacheHitProgress.starts) != 0 {
 			t.Fatalf("expected no progress starts for remote mixin cache hit, got %d", len(cacheHitProgress.starts))
+		}
+		if requests != 1 {
+			t.Fatalf("expected 1 HTTP request, got %d", requests)
+		}
+	})
+
+	t.Run("re-downloads remote mixins with --no-cache", func(t *testing.T) {
+		requests := 0
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			requests++
+			w.Header().Set("Content-Type", "application/yaml")
+			_, _ = w.Write([]byte("commands:\n  mixed:\n    cmd: echo mixed\n"))
+		}))
+		defer srv.Close()
+
+		tempDir := t.TempDir()
+		mainConfig := "shell: bash\nmixins:\n  - url: " + srv.URL + "\ncommands:\n  ok:\n    cmd: echo ok\n"
+		if err := os.WriteFile(filepath.Join(tempDir, "lets.yaml"), []byte(mainConfig), 0o644); err != nil {
+			t.Fatalf("write config: %v", err)
+		}
+
+		if _, err := LoadWithContext(ctx, "", tempDir, "0.0.0-test"); err != nil {
+			t.Fatalf("prime cache error: %v", err)
+		}
+		progress := &recordingProgress{}
+		if _, err := LoadWithContext(ctx, "", tempDir, "0.0.0-test", WithNoCache(), WithProgress(progress)); err != nil {
+			t.Fatalf("no-cache load error: %v", err)
+		}
+		if requests != 2 {
+			t.Fatalf("expected 2 HTTP requests, got %d", requests)
+		}
+		if len(progress.starts) != 1 {
+			t.Fatalf("expected 1 progress start, got %d", len(progress.starts))
+		}
+		if progress.starts[0].Kind != fetch.SourceRemoteMixin {
+			t.Fatalf("expected remote mixin progress, got %q", progress.starts[0].Kind)
+		}
+	})
+
+	t.Run("does not replace remote mixin cache until downloaded mixin is valid", func(t *testing.T) {
+		mixinConfig := "commands:\n  mixed:\n    cmd: echo mixed\n"
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/yaml")
+			_, _ = w.Write([]byte(mixinConfig))
+		}))
+		defer srv.Close()
+
+		tempDir := t.TempDir()
+		mainConfig := "shell: bash\nmixins:\n  - url: " + srv.URL + "\ncommands:\n  ok:\n    cmd: echo ok\n"
+		if err := os.WriteFile(filepath.Join(tempDir, "lets.yaml"), []byte(mainConfig), 0o644); err != nil {
+			t.Fatalf("write config: %v", err)
+		}
+
+		if _, err := LoadWithContext(ctx, "", tempDir, "0.0.0-test"); err != nil {
+			t.Fatalf("prime cache error: %v", err)
+		}
+
+		mixinConfig = "commands:\n  broken:\n    xxx\n    cmd: echo broken\n"
+		if _, err := LoadWithContext(ctx, "", tempDir, "0.0.0-test", WithNoCache()); err == nil {
+			t.Fatal("expected no-cache load to fail for invalid downloaded mixin")
+		}
+
+		cfg, err := LoadWithContext(ctx, "", tempDir, "0.0.0-test")
+		if err != nil {
+			t.Fatalf("cached load error: %v", err)
+		}
+		if _, ok := cfg.Commands["mixed"]; !ok {
+			t.Fatal("expected valid cached mixin command")
 		}
 	})
 }

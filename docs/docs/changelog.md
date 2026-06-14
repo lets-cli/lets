@@ -6,6 +6,7 @@ title: Changelog
 ## [Unreleased](https://github.com/lets-cli/lets/releases/tag/v0.0.X)
 
 * `[Added]` Show interactive download progress for remote configs and remote mixins. Issue [#360](https://github.com/lets-cli/lets/issues/360)
+* `[Fixed]` Make `--no-cache` re-download remote mixins for local and remote configs. Issue [#365](https://github.com/lets-cli/lets/issues/365)
 * `[Added]` Remote config support: `lets -c https://url` downloads and caches config to `~/.config/lets/remote-configs/`. Use `--no-cache` to force re-download.
 * `[Added]` Add `lets self skills` commands to show, install, and update the bundled lets agent skill.
 * `[Docs]` Document the bundled lets Agent Skill and link it from the config reference.
