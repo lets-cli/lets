@@ -255,19 +255,17 @@ func (c *Config) readMixin(mixin *Mixin) error {
 		if data == nil {
 			downloadedData, downloadErr := rm.download(c.context(), c.downloadProgress)
 			if downloadErr != nil {
-				if c.noCache {
-					cachedData, readErr := rm.tryRead()
-					if readErr != nil {
-						return readErr
-					}
+				// Always fall back to cached version on download failure, consistent with
+				// ensureRemoteConfig's behavior for the top-level remote config.
+				cachedData, readErr := rm.tryRead()
+				if readErr != nil {
+					return fmt.Errorf("download failed (%w); also failed to read cached version: %v", downloadErr, readErr)
+				}
 
-					if cachedData != nil {
-						log.Warnf("failed to download remote mixin (%v), falling back to cached version", downloadErr)
+				if cachedData != nil {
+					log.Warnf("failed to download remote mixin (%v), falling back to cached version", downloadErr)
 
-						data = cachedData
-					} else {
-						return downloadErr
-					}
+					data = cachedData
 				} else {
 					return downloadErr
 				}
