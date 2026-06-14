@@ -7,10 +7,12 @@ import (
 
 // InitSelfCmd intializes root 'self' subcommand.
 func InitSelfCmd(rootCmd *cobra.Command, version string) {
-	initSelfCmd(rootCmd, version, util.OpenURL)
+	initSelfCmd(rootCmd, version, util.OpenURL, util.OpenEditor)
 }
 
-func initSelfCmd(rootCmd *cobra.Command, version string, openURL func(string) error) {
+func initSelfCmd(
+	rootCmd *cobra.Command, version string, openURL func(string) error, openEditor func(string) error,
+) {
 	selfCmd := &cobra.Command{
 		Use:     "self",
 		Hidden:  false,
@@ -24,6 +26,7 @@ func initSelfCmd(rootCmd *cobra.Command, version string, openURL func(string) er
 
 	rootCmd.AddCommand(selfCmd)
 
+	selfCmd.AddCommand(initConfigCommand(openEditor))
 	selfCmd.AddCommand(initDocCommand(openURL))
 	selfCmd.AddCommand(initLspCommand(version))
 	selfCmd.AddCommand(initSkillsCommand())
