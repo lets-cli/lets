@@ -47,7 +47,7 @@ func Main(version string, buildDate string) int {
 
 	appSettings.Apply()
 
-	logging.InitLogging(os.Stdout, os.Stderr)
+	logging.InitLogging(os.Stdout, os.Stderr, theme.ColorSchemeByName(appSettings.Theme))
 
 	rootCmd := cmd.CreateRootCommand(version, buildDate)
 	rootCmd.InitDefaultHelpFlag()

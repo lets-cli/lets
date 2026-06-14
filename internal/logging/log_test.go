@@ -36,7 +36,7 @@ func TestLoggingToStd(t *testing.T) {
 
 		setNoColorForTest(t, true)
 
-		InitLogging(&stdBuff, &errBuff)
+		InitLogging(&stdBuff, &errBuff, nil)
 
 		log.Info(stdOutMsg)
 		log.Error(stdErrMsg)

@@ -5,14 +5,16 @@ import (
 	"io"
 
 	"github.com/fatih/color"
+	"github.com/lets-cli/fang"
 	log "github.com/sirupsen/logrus"
 )
 
-// Log is the main application logger.
-// InitLogging for logrus.
+// InitLogging configures the global logrus logger. Pass a non-nil cs to enable
+// lipgloss-styled error output when errWriter is a terminal.
 func InitLogging(
 	stdWriter io.Writer,
 	errWriter io.Writer,
+	cs fang.ColorSchemeFunc,
 ) {
 	log.SetOutput(io.Discard)
 
@@ -36,7 +38,7 @@ func InitLogging(
 		},
 	})
 
-	log.SetFormatter(&Formatter{})
+	log.SetFormatter(newFormatter(errWriter, cs))
 }
 
 // ExecLogger is used in Executor.
