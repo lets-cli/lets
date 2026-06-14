@@ -262,7 +262,7 @@ func newSubcommand(command *config.Command, conf *config.Config, showAll bool, o
 
 			ctx := executor.NewExecutorCtx(cmd.Context(), command)
 
-			return executor.NewExecutor(conf, out).Execute(ctx)
+			return executor.NewExecutor(conf, executor.NewShellRunner(conf, out)).Execute(ctx)
 		},
 		// we use docopt to parse flags on our own, so any flag is valid flag here
 		FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},

@@ -4,10 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
-	"os"
 	"os/exec"
-	"strings"
 
 	"github.com/lets-cli/lets/internal/checksum"
 	"github.com/lets-cli/lets/internal/config/config"
@@ -48,14 +45,14 @@ func (e *ExecuteError) ExitCode() int {
 
 type Executor struct {
 	cfg        *config.Config
-	out        io.Writer
+	runner     ScriptRunner
 	initCalled bool
 }
 
-func NewExecutor(cfg *config.Config, out io.Writer) *Executor {
+func NewExecutor(cfg *config.Config, runner ScriptRunner) *Executor {
 	return &Executor{
-		cfg: cfg,
-		out: out,
+		cfg:    cfg,
+		runner: runner,
 	}
 }
 
@@ -142,16 +139,10 @@ func (e *Executor) execute(ctx *Context) error {
 func (e *Executor) executeAfterScript(ctx *Context) {
 	command := ctx.command
 
-	osCmd, err := e.newOsCommand(command, command.After)
-	if err != nil {
+	ctx.logger.Debug("executing 'after':\n  cmd: %s", command.After)
+
+	if err := e.runner(command, command.After); err != nil {
 		ctx.logger.Info("failed to run `after` script: %s", err)
-		return
-	}
-
-	ctx.logger.Debug("executing 'after':\n  cmd: %s\n  env: %s", command.After, fmtEnv(osCmd.Env))
-
-	if ExecuteError := osCmd.Run(); ExecuteError != nil {
-		ctx.logger.Info("failed to run `after` script: %s", ExecuteError)
 	}
 }
 
@@ -207,99 +198,6 @@ func (e *Executor) initCmd(ctx *Context) error {
 	return nil
 }
 
-func joinBeforeAndScript(before string, script string) string {
-	if before == "" {
-		return script
-	}
-
-	before = strings.TrimSpace(before)
-
-	return strings.Join([]string{before, script}, "\n")
-}
-
-// Setup env for cmd.
-func (e *Executor) setupEnv(osCmd *exec.Cmd, command *config.Command, shell string) error {
-	defaultEnv := e.cfg.CommandBuiltinEnv(command, shell, osCmd.Dir)
-
-	checksumEnvMap := getChecksumEnvMap(command.ChecksumMap)
-
-	var changedChecksumEnvMap map[string]string
-	if command.PersistChecksum {
-		changedChecksumEnvMap = getChangedChecksumEnvMap(
-			command.ChecksumMap,
-			command.GetPersistedChecksums(),
-		)
-	}
-
-	cmdEnv, err := command.GetEnv(*e.cfg, defaultEnv)
-	if err != nil {
-		return err
-	}
-
-	envMaps := []map[string]string{
-		defaultEnv,
-		e.cfg.GetEnv(),
-		cmdEnv,
-		command.Options,
-		command.CliOptions,
-		checksumEnvMap,
-		changedChecksumEnvMap,
-	}
-
-	envList := os.Environ()
-	for _, envMap := range envMaps {
-		envList = append(envList, convertEnvMapToList(envMap)...)
-	}
-
-	osCmd.Env = envList
-
-	return nil
-}
-
-// Prepare cmd to be executed:
-// - set in/out
-// - set dir
-// - prepare environment
-//
-// NOTE: We intentionally do not passing ctx to exec.Command because we want to wait for process end.
-// Passing ctx will change behavior of program drastically - it will kill process if context will be canceled.
-func (e *Executor) newOsCommand(command *config.Command, cmdScript string) (*exec.Cmd, error) {
-	script := joinBeforeAndScript(e.cfg.Before, cmdScript)
-
-	shell := e.cfg.Shell
-	if command.Shell != "" {
-		shell = command.Shell
-	}
-
-	args := []string{"-c", script}
-	if len(command.Args) > 0 {
-		// for "--" see https://linux.die.net/man/1/bash
-		args = append(args, "--", strings.Join(command.Args, " "))
-	}
-
-	osCmd := exec.Command(
-		shell,
-		args...,
-	)
-
-	// setup std out and err
-	osCmd.Stdout = e.out
-	osCmd.Stderr = e.out
-	osCmd.Stdin = os.Stdin
-
-	// set working directory for command
-	osCmd.Dir = e.cfg.WorkDir
-	if command.WorkDir != "" {
-		osCmd.Dir = command.WorkDir
-	}
-
-	if err := e.setupEnv(osCmd, command, shell); err != nil {
-		return nil, err
-	}
-
-	return osCmd, nil
-}
-
 // Run all commands from Depends in sequential order.
 func (e *Executor) executeDepends(ctx *Context) error {
 	return ctx.command.Depends.Range(func(depName string, dep config.Dep) error {
@@ -350,18 +248,11 @@ func (e *Executor) persistChecksum(ctx *Context) error {
 func (e *Executor) runCmd(ctx *Context, cmd *config.Cmd) error {
 	command := ctx.command
 
-	osCmd, err := e.newOsCommand(command, cmd.Script)
-	if err != nil {
-		return err
-	}
-
 	if env.DebugLevel() == 1 {
 		ctx.logger.Debug("executing script:\n%s", cmd.Script)
-	} else if env.DebugLevel() > 1 {
-		ctx.logger.Debug("executing:\nscript: %s\nenv: %s\n", cmd.Script, fmtEnv(osCmd.Env))
 	}
 
-	if err := osCmd.Run(); err != nil {
+	if err := e.runner(command, cmd.Script); err != nil {
 		return &ExecuteError{err: fmt.Errorf("failed to run command '%s': %w", command.Name, err)}
 	}
 
