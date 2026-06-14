@@ -14,6 +14,7 @@ import (
 	"github.com/lets-cli/lets/internal/fetch"
 	"github.com/lets-cli/lets/internal/set"
 	"github.com/lets-cli/lets/internal/util"
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 )
 
@@ -57,12 +58,14 @@ type Config struct {
 	cachedEnv        map[string]string
 	downloadContext  context.Context
 	downloadProgress fetch.ProgressObserver
+	noCache          bool
 	isMixin          bool // if true, we consider config as mixin and apply different parsing and validation
 }
 
-func (c *Config) SetDownloadOptions(ctx context.Context, progress fetch.ProgressObserver) {
+func (c *Config) SetDownloadOptions(ctx context.Context, progress fetch.ProgressObserver, noCache bool) {
 	c.downloadContext = ctx
 	c.downloadProgress = progress
+	c.noCache = noCache
 }
 
 func (c *Config) context() context.Context {
@@ -236,15 +239,41 @@ func (c *Config) readMixin(mixin *Mixin) error {
 
 		rm := mixin.Remote
 
-		data, err := rm.tryRead()
-		if err != nil {
-			return err
+		var (
+			data       []byte
+			err        error
+			downloaded bool
+		)
+
+		if !c.noCache {
+			data, err = rm.tryRead()
+			if err != nil {
+				return err
+			}
 		}
 
 		if data == nil {
-			data, err = rm.download(c.context(), c.downloadProgress)
-			if err != nil {
-				return err
+			downloadedData, downloadErr := rm.download(c.context(), c.downloadProgress)
+			if downloadErr != nil {
+				if c.noCache {
+					cachedData, readErr := rm.tryRead()
+					if readErr != nil {
+						return readErr
+					}
+
+					if cachedData != nil {
+						log.Warnf("failed to download remote mixin (%v), falling back to cached version", downloadErr)
+
+						data = cachedData
+					} else {
+						return downloadErr
+					}
+				} else {
+					return downloadErr
+				}
+			} else {
+				data = downloadedData
+				downloaded = true
 			}
 		}
 
@@ -263,8 +292,10 @@ func (c *Config) readMixin(mixin *Mixin) error {
 			return fmt.Errorf("failed to merge remote mixin config '%s' with main config: %w", rm.URL, err)
 		}
 
-		if err := rm.persist(data); err != nil {
-			return fmt.Errorf("failed to persist remote mixin config %s: %w", rm.URL, err)
+		if downloaded {
+			if err := rm.persist(data); err != nil {
+				return fmt.Errorf("failed to persist remote mixin config %s: %w", rm.URL, err)
+			}
 		}
 	} else {
 		mixinAbsPath, err := path.GetFullConfigPath(mixin.FileName, c.WorkDir)
@@ -373,7 +404,7 @@ func NewConfig(workDir string, configAbsPath string, dotLetsDir string) *Config 
 func NewMixinConfig(cfg *Config, configAbsPath string) *Config {
 	mixin := NewConfig(cfg.WorkDir, configAbsPath, cfg.DotLetsDir)
 	mixin.isMixin = true
-	mixin.SetDownloadOptions(cfg.context(), cfg.downloadProgress)
+	mixin.SetDownloadOptions(cfg.context(), cfg.downloadProgress, cfg.noCache)
 
 	return mixin
 }

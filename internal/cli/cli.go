@@ -90,6 +90,10 @@ func Main(version string, buildDate string) int {
 		)))
 	}
 
+	if rootFlags.noCache {
+		loadOptions = append(loadOptions, loader.WithNoCache())
+	}
+
 	if isRemoteURL(rootFlags.config) {
 		if configDir != "" {
 			log.Warnf("LETS_CONFIG_DIR is ignored when using a remote config URL")

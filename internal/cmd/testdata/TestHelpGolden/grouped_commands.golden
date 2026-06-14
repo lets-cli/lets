@@ -21,12 +21,12 @@ INTERNAL COMMANDS:
 FLAGS
   --all         Show all commands (including the ones with _)
   -c --config   Config file (default is lets.yaml)
-  -d --debug    Show debug logs (or use LETS_DEBUG=1). If used multiple times, shows more verbose logs
+  -d --debug    Show debug logs; repeat for verbose output
   -E --env      Set env variable for running command KEY=VALUE
   --exclude     Run all but excluded command(s) described in cmd as map
   -h --help     Help for lets
   --init        Create a new lets.yaml in the current folder
-  --no-cache    Re-Download remote config instead of using cached version
+  --no-cache    Re-Download remote config and mixins instead of using cached versions
   --no-depends  Skip 'depends' for running command
   --only        Run only specified command(s) described in cmd as map
   -v --version  Version for lets

@@ -18,6 +18,7 @@ import (
 
 type loadOptions struct {
 	progress fetch.ProgressObserver
+	noCache  bool
 }
 
 type LoadOption func(*loadOptions)
@@ -25,6 +26,12 @@ type LoadOption func(*loadOptions)
 func WithProgress(progress fetch.ProgressObserver) LoadOption {
 	return func(opts *loadOptions) {
 		opts.progress = progress
+	}
+}
+
+func WithNoCache() LoadOption {
+	return func(opts *loadOptions) {
+		opts.noCache = true
 	}
 }
 
@@ -56,6 +63,9 @@ func LoadWithContext(ctx context.Context, configName string, configDir string, v
 // returns a Config with the working directory set to the caller's CWD.
 func LoadRemote(ctx context.Context, url string, noCache bool, version string, options ...LoadOption) (*config.Config, error) {
 	opts := newLoadOptions(options)
+	if noCache {
+		opts.noCache = true
+	}
 
 	cachedPath, err := ensureRemoteConfig(ctx, url, noCache, opts.progress)
 	if err != nil {
@@ -100,7 +110,7 @@ func loadConfigFromFile(
 	defer f.Close()
 
 	c := config.NewConfig(workDir, absPath, dotLetsDir)
-	c.SetDownloadOptions(ctx, opts.progress)
+	c.SetDownloadOptions(ctx, opts.progress, opts.noCache)
 
 	if err := yaml.NewDecoder(f).Decode(c); err != nil {
 		return nil, fmt.Errorf("failed to parse %s: %w", displayName, err)
