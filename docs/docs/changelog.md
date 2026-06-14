@@ -5,6 +5,7 @@ title: Changelog
 
 ## [Unreleased](https://github.com/lets-cli/lets/releases/tag/v0.0.X)
 
+* `[Docs]` Convert design specs into ADRs.
 * `[Added]` Add `lets self config path` and `lets self config edit` for user settings. Issue [#370](https://github.com/lets-cli/lets/issues/370)
 * `[Added]` Show interactive download progress for remote configs and remote mixins. Issue [#360](https://github.com/lets-cli/lets/issues/360)
 * `[Fixed]` Make `--no-cache` re-download remote mixins for local and remote configs. Issue [#365](https://github.com/lets-cli/lets/issues/365)
