@@ -300,7 +300,7 @@ func TestAfterScriptErrorDoesNotOverrideMainError(t *testing.T) {
 	mainErr := fmt.Errorf("main script failed")
 
 	r := newRecordingRunner()
-	r.failOn(0, mainErr)                        // main script fails
+	r.failOn(0, mainErr)                           // main script fails
 	r.failOn(1, fmt.Errorf("after script failed")) // after script also fails (logged, not returned)
 	ex := NewExecutor(cfg, r.run)
 

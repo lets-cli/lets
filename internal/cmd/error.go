@@ -52,12 +52,12 @@ func (o errorOutput) blank() {
 
 // header writes the styled error heading.
 func (o errorOutput) header() {
-	o.writeln(o.styles.ErrorHeader.String())
+	o.writeln(o.styles.ErrorHeader.UnsetMarginLeft().String())
 }
 
 // commandTreeTitle writes the dependency tree section heading.
 func (o errorOutput) commandTreeTitle() {
-	title := o.styles.Title.Margin(0, 0).MarginLeft(2).Padding(0, 0)
+	title := o.styles.Title.Margin(0, 0).Padding(0, 0)
 	o.writeln(title.Render("command tree:"))
 }
 
@@ -68,7 +68,7 @@ func (r errorRenderer) Render() {
 		return
 	}
 
-	errorText := r.styles.ErrorText
+	errorText := r.styles.ErrorText.UnsetMarginLeft()
 
 	r.out.header()
 	r.renderMessage(errorText)
@@ -132,7 +132,7 @@ func (r errorRenderer) renderDependencyTree(depErr *executor.DependencyError) {
 	r.out.commandTreeTitle()
 
 	for i, name := range depErr.Chain {
-		line := strings.Repeat("  ", i+2) + joint + r.styles.Program.Command.Render(name)
+		line := strings.Repeat("  ", i+1) + joint + r.styles.Program.Command.Render(name)
 		if i == len(depErr.Chain)-1 {
 			line += "  " + failed
 		}

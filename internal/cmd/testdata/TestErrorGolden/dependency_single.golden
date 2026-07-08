@@ -1,8 +1,8 @@
-          
-   ERROR  
-          
-  Exit status 1.                                                              
+        
+ ERROR  
+        
+Exit status 1.                                                              
 
-  COMMAND TREE:
-    └─ lint   <-- failed here 
+COMMAND TREE:
+  └─ lint   <-- failed here 
 
