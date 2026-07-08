@@ -73,14 +73,15 @@ func ProgressColors(scheme fang.ColorScheme) (color.Color, color.Color) {
 // DefaultColorScheme is the default colorscheme.
 func DefaultColorScheme(c lipgloss.LightDarkFunc) fang.ColorScheme {
 	baseCyan := charmtone.Turtle
+	baseCyanLighter := lipgloss.Color("#0BF4F1")
 	baseWhite := charmtone.Ash
 	baseGray := charmtone.Oyster
 
 	return fang.ColorScheme{
-		Base:           c(charmtone.Charcoal, baseCyan),
-		Title:          baseWhite,
+		Base:           c(charmtone.Charcoal, baseCyanLighter),
+		Title:          baseCyanLighter,
 		Codeblock:      c(charmtone.Salt, lipgloss.Color("#2F2E36")),
-		Program:        c(charmtone.Malibu, baseWhite),
+		Program:        c(charmtone.Malibu, baseCyan),
 		Command:        c(charmtone.Pony, baseCyan),
 		DimmedArgument: c(charmtone.Squid, baseGray),
 		Comment:        c(charmtone.Squid, lipgloss.Color("#747282")),
@@ -118,15 +119,17 @@ func AnsiColorScheme(c lipgloss.LightDarkFunc) fang.ColorScheme {
 }
 
 func SynthwaveColorScheme(c lipgloss.LightDarkFunc) fang.ColorScheme {
+	basePink := lipgloss.Color("#f24db8")
+
 	return fang.ColorScheme{
-		Base:           c(charmtone.Charcoal, charmtone.Cheeky),
+		Base:           c(charmtone.Charcoal, basePink),
 		Title:          charmtone.Grape,
 		Codeblock:      c(charmtone.Salt, lipgloss.Color("#2F2E36")),
 		Program:        c(charmtone.Malibu, charmtone.Grape),
-		Command:        c(charmtone.Pony, charmtone.Cheeky),
+		Command:        c(charmtone.Pony, basePink),
 		DimmedArgument: c(charmtone.Squid, charmtone.Oyster),
 		Comment:        c(charmtone.Squid, lipgloss.Color("#747282")),
-		Flag:           c(lipgloss.Color("#0CB37F"), charmtone.Cheeky),
+		Flag:           c(lipgloss.Color("#0CB37F"), basePink),
 		Argument:       c(charmtone.Charcoal, charmtone.Ash),
 		Description:    c(charmtone.Charcoal, charmtone.Ash),
 		FlagDefault:    c(charmtone.Smoke, charmtone.Squid),
