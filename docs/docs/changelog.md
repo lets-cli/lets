@@ -5,6 +5,8 @@ title: Changelog
 
 ## [Unreleased](https://github.com/lets-cli/lets/releases/tag/v0.0.X)
 
+* `[Fixed]` Add spacing between the `EXAMPLES` help title and its examples.
+* `[Fixed]` Align styled error output to the left while preserving the padded error badge.
 * `[Docs]` Convert design specs into ADRs.
 * `[Refactoring]` Rename the internal download progress package to progressbar.
 * `[Added]` Show interactive download progress for `lets self upgrade`. Issue [#367](https://github.com/lets-cli/lets/issues/367)

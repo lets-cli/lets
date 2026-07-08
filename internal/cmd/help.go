@@ -160,6 +160,7 @@ func (r helpRenderer) renderUsageAndExamples() {
 		cw := blockStyle.GetWidth() - blockStyle.GetHorizontalPadding()
 
 		r.out.sectionTitle("examples")
+		r.out.blank()
 
 		for i, example := range examples {
 			if lipgloss.Width(example) > cw {

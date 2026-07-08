@@ -1,10 +1,10 @@
-          
-   ERROR  
-          
-  Exit status 1.                                                              
+        
+ ERROR  
+        
+Exit status 1.                                                              
 
-  COMMAND TREE:
-    └─ deploy
-      └─ build
-        └─ lint   <-- failed here 
+COMMAND TREE:
+  └─ deploy
+    └─ build
+      └─ lint   <-- failed here 
 

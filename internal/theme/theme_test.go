@@ -7,6 +7,8 @@ import (
 	"github.com/charmbracelet/x/exp/charmtone"
 )
 
+var defaultTitleColor = lipgloss.Color("#0BF4F1")
+
 func TestValidName(t *testing.T) {
 	for _, name := range []string{DefaultName, ANSIName, SynthwaveName} {
 		if !ValidName(name) {
@@ -20,8 +22,8 @@ func TestValidName(t *testing.T) {
 }
 
 func TestColorSchemeByName(t *testing.T) {
-	if got := ColorSchemeByName(DefaultName)(lipgloss.LightDark(true)).Title; got != charmtone.Ash {
-		t.Fatalf("expected default theme title color %v, got %v", charmtone.Ash, got)
+	if got := ColorSchemeByName(DefaultName)(lipgloss.LightDark(true)).Title; got != defaultTitleColor {
+		t.Fatalf("expected default theme title color %v, got %v", defaultTitleColor, got)
 	}
 
 	if got := ColorSchemeByName(ANSIName)(lipgloss.LightDark(true)).ErrorDetails; got != lipgloss.Red {
@@ -32,8 +34,8 @@ func TestColorSchemeByName(t *testing.T) {
 		t.Fatalf("expected synthwave theme title color %v, got %v", charmtone.Grape, got)
 	}
 
-	if got := ColorSchemeByName("unknown")(lipgloss.LightDark(true)).Title; got != charmtone.Ash {
-		t.Fatalf("expected unknown theme to fall back to %v, got %v", charmtone.Ash, got)
+	if got := ColorSchemeByName("unknown")(lipgloss.LightDark(true)).Title; got != defaultTitleColor {
+		t.Fatalf("expected unknown theme to fall back to %v, got %v", defaultTitleColor, got)
 	}
 }
 
