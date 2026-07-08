@@ -67,7 +67,7 @@ func LoadRemote(ctx context.Context, url string, noCache bool, version string, o
 		opts.noCache = true
 	}
 
-	cachedPath, err := ensureRemoteConfig(ctx, url, noCache, opts.progress)
+	cachedPath, err := ensureRemoteConfig(ctx, url, opts.noCache, opts.progress)
 	if err != nil {
 		return nil, err
 	}
@@ -153,50 +153,11 @@ func ensureRemoteConfig(ctx context.Context, url string, noCache bool, progress 
 		return "", fmt.Errorf("failed to download remote config: %w", downloadErr)
 	}
 
-	if err := writeCacheAtomic(cachePath, data); err != nil {
+	if err := util.WriteFileAtomic(cachePath, data); err != nil {
 		return "", err
 	}
 
 	return cachePath, nil
-}
-
-// writeCacheAtomic writes data to a sibling temp file then renames it to dst,
-// ensuring the cache path is never left in a partially-written state.
-func writeCacheAtomic(dst string, data []byte) error {
-	dir := filepath.Dir(dst)
-
-	tmp, err := os.CreateTemp(dir, "*.yaml.tmp")
-	if err != nil {
-		return fmt.Errorf("failed to create temp cache file: %w", err)
-	}
-
-	tmpPath := tmp.Name()
-
-	_, writeErr := tmp.Write(data)
-	closeErr := tmp.Close()
-
-	if writeErr != nil || closeErr != nil {
-		os.Remove(tmpPath)
-
-		if writeErr != nil {
-			return fmt.Errorf("failed to write temp cache file: %w", writeErr)
-		}
-
-		return fmt.Errorf("failed to close temp cache file: %w", closeErr)
-	}
-
-	//#nosec G306
-	if err := os.Chmod(tmpPath, 0o644); err != nil {
-		os.Remove(tmpPath)
-		return fmt.Errorf("failed to chmod temp cache file: %w", err)
-	}
-
-	if err := os.Rename(tmpPath, dst); err != nil {
-		os.Remove(tmpPath)
-		return fmt.Errorf("failed to cache remote config: %w", err)
-	}
-
-	return nil
 }
 
 func remoteConfigCacheDir() (string, error) {

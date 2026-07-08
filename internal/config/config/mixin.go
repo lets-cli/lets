@@ -47,15 +47,8 @@ func (rm *RemoteMixin) Path() string {
 }
 
 func (rm *RemoteMixin) persist(data []byte) error {
-	f, err := os.OpenFile(rm.Path(), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644) //nolint:nosnakecase
-	if err != nil {
-		return fmt.Errorf("can not open file %s to persist mixin: %w", rm.Path(), err)
-	}
-	defer f.Close()
-
-	_, err = f.Write(data)
-	if err != nil {
-		return fmt.Errorf("can not write mixin to file %s: %w", rm.Path(), err)
+	if err := util.WriteFileAtomic(rm.Path(), data); err != nil {
+		return fmt.Errorf("failed to persist remote mixin config: %w", err)
 	}
 
 	return nil
