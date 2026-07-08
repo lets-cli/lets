@@ -96,6 +96,12 @@ Example:
 	if !strings.Contains(out, "OPTIONS") {
 		t.Fatalf("expected options title in output: %q", out)
 	}
+	if !strings.Contains(out, "EXAMPLES\n\n") {
+		t.Fatalf("expected blank line after examples title in output: %q", out)
+	}
+	if !strings.Contains(out, `lets release 1.0.0 -m "Release 1.0.0"`) {
+		t.Fatalf("expected example in output: %q", out)
+	}
 	argIdx := strings.Index(out, "<version>")
 	flagIdx := strings.Index(out, "--message=<message>, -m")
 	if argIdx == -1 {
