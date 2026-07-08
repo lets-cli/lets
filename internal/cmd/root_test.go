@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/lets-cli/lets/internal/config/config"
+	"github.com/lets-cli/lets/internal/settings"
 	"github.com/lets-cli/lets/internal/upgrade"
 	"github.com/spf13/cobra"
 )
@@ -220,7 +221,7 @@ func TestSelfCmd(t *testing.T) {
 	t.Run("should use help func when run without args", func(t *testing.T) {
 		rootCmd := CreateRootCommand("v0.0.0-test", "")
 		rootCmd.SetArgs([]string{"self"})
-		initSelfCmd(rootCmd, "v0.0.0-test", func(string) error { return nil }, func(string) error { return nil })
+		initSelfCmd(rootCmd, "v0.0.0-test", settings.Default(), func(string) error { return nil }, func(string) error { return nil })
 
 		called := false
 		rootCmd.SetHelpFunc(func(c *cobra.Command, args []string) {
@@ -247,7 +248,7 @@ func TestSelfCmd(t *testing.T) {
 		rootCmd.SetArgs([]string{"self", "config", "path"})
 		rootCmd.SetOut(bufOut)
 		rootCmd.SetErr(bufOut)
-		initSelfCmd(rootCmd, "v0.0.0-test", func(string) error { return nil }, func(string) error { return nil })
+		initSelfCmd(rootCmd, "v0.0.0-test", settings.Default(), func(string) error { return nil }, func(string) error { return nil })
 
 		if err := rootCmd.Execute(); err != nil {
 			t.Fatalf("unexpected error: %v", err)
@@ -270,7 +271,7 @@ func TestSelfCmd(t *testing.T) {
 		rootCmd.SetArgs([]string{"self", "config", "edit"})
 		rootCmd.SetOut(bufOut)
 		rootCmd.SetErr(bufOut)
-		initSelfCmd(rootCmd, "v0.0.0-test", func(string) error { return nil }, func(path string) error {
+		initSelfCmd(rootCmd, "v0.0.0-test", settings.Default(), func(string) error { return nil }, func(path string) error {
 			called = true
 			gotPath = path
 
@@ -316,7 +317,7 @@ func TestSelfCmd(t *testing.T) {
 		rootCmd.SetArgs([]string{"self", "doc"})
 		rootCmd.SetOut(bufOut)
 		rootCmd.SetErr(bufOut)
-		initSelfCmd(rootCmd, "v0.0.0-test", openURL, func(string) error { return nil })
+		initSelfCmd(rootCmd, "v0.0.0-test", settings.Default(), openURL, func(string) error { return nil })
 
 		err := rootCmd.Execute()
 		if err != nil {
@@ -343,7 +344,7 @@ func TestSelfCmd(t *testing.T) {
 		rootCmd.SetArgs([]string{"self", "doc"})
 		rootCmd.SetOut(bufOut)
 		rootCmd.SetErr(bufOut)
-		initSelfCmd(rootCmd, "v0.0.0-test", openURL, func(string) error { return nil })
+		initSelfCmd(rootCmd, "v0.0.0-test", settings.Default(), openURL, func(string) error { return nil })
 
 		err := rootCmd.Execute()
 		if err == nil {
@@ -362,7 +363,7 @@ func TestSelfCmd(t *testing.T) {
 		rootCmd.SetArgs([]string{"self", "ls"})
 		rootCmd.SetOut(bufOut)
 		rootCmd.SetErr(bufOut)
-		InitSelfCmd(rootCmd, "v0.0.0-test")
+		InitSelfCmd(rootCmd, "v0.0.0-test", settings.Default())
 
 		err := rootCmd.Execute()
 		if err == nil {
@@ -395,7 +396,7 @@ func TestSelfCmd(t *testing.T) {
 		rootCmd.SetArgs([]string{"self", "zzzznotacommand"})
 		rootCmd.SetOut(bufOut)
 		rootCmd.SetErr(bufOut)
-		InitSelfCmd(rootCmd, "v0.0.0-test")
+		InitSelfCmd(rootCmd, "v0.0.0-test", settings.Default())
 
 		err := rootCmd.Execute()
 		if err == nil {
@@ -431,7 +432,7 @@ func TestSelfCmd(t *testing.T) {
 		}
 		rootCmd.AddCommand(selfCmd)
 
-		selfCmd.AddCommand(initUpgradeCommandWith(func() (upgrade.Upgrader, error) {
+		selfCmd.AddCommand(initUpgradeCommandWith(func(_ *cobra.Command) (upgrade.Upgrader, error) {
 			return mockUpgraderFunc(func(ctx context.Context) error {
 				called = true
 
@@ -462,7 +463,7 @@ func TestSelfCmd(t *testing.T) {
 		}
 		rootCmd.AddCommand(selfCmd)
 
-		selfCmd.AddCommand(initUpgradeCommandWith(func() (upgrade.Upgrader, error) {
+		selfCmd.AddCommand(initUpgradeCommandWith(func(_ *cobra.Command) (upgrade.Upgrader, error) {
 			return mockUpgraderFunc(func(ctx context.Context) error {
 				return errors.New("upgrade failed")
 			}), nil

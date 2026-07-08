@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/lets-cli/lets/internal/settings"
 	skillpkg "github.com/lets-cli/lets/internal/skills"
 )
 
@@ -17,7 +18,7 @@ func TestSelfSkillsCmd(t *testing.T) {
 		rootCmd.SetArgs([]string{"self", "skills", "show"})
 		rootCmd.SetOut(bufOut)
 		rootCmd.SetErr(new(bytes.Buffer))
-		InitSelfCmd(rootCmd, "v0.0.0-test")
+		InitSelfCmd(rootCmd, "v0.0.0-test", settings.Default())
 
 		if err := rootCmd.Execute(); err != nil {
 			t.Fatalf("unexpected error: %v", err)
@@ -37,7 +38,7 @@ func TestSelfSkillsCmd(t *testing.T) {
 		rootCmd.SetIn(strings.NewReader("local\n"))
 		rootCmd.SetOut(bufOut)
 		rootCmd.SetErr(bufErr)
-		InitSelfCmd(rootCmd, "v0.0.0-test")
+		InitSelfCmd(rootCmd, "v0.0.0-test", settings.Default())
 
 		if err := rootCmd.Execute(); err != nil {
 			t.Fatalf("unexpected error: %v", err)
@@ -65,7 +66,7 @@ func TestSelfSkillsCmd(t *testing.T) {
 		rootCmd.SetIn(strings.NewReader("global\n"))
 		rootCmd.SetOut(bufOut)
 		rootCmd.SetErr(new(bytes.Buffer))
-		InitSelfCmd(rootCmd, "v0.0.0-test")
+		InitSelfCmd(rootCmd, "v0.0.0-test", settings.Default())
 
 		if err := rootCmd.Execute(); err != nil {
 			t.Fatalf("unexpected error: %v", err)
@@ -83,7 +84,7 @@ func TestSelfSkillsCmd(t *testing.T) {
 		rootCmd.SetIn(strings.NewReader("2\n"))
 		rootCmd.SetOut(new(bytes.Buffer))
 		rootCmd.SetErr(new(bytes.Buffer))
-		InitSelfCmd(rootCmd, "v0.0.0-test")
+		InitSelfCmd(rootCmd, "v0.0.0-test", settings.Default())
 
 		if err := rootCmd.Execute(); err != nil {
 			t.Fatalf("unexpected error: %v", err)
@@ -108,7 +109,7 @@ func TestSelfSkillsCmd(t *testing.T) {
 		rootCmd.SetArgs([]string{"self", "skills", "install", "--local"})
 		rootCmd.SetOut(bufOut)
 		rootCmd.SetErr(new(bytes.Buffer))
-		InitSelfCmd(rootCmd, "v0.0.0-test")
+		InitSelfCmd(rootCmd, "v0.0.0-test", settings.Default())
 
 		if err := rootCmd.Execute(); err != nil {
 			t.Fatalf("unexpected error: %v", err)
@@ -142,7 +143,7 @@ func TestSelfSkillsCmd(t *testing.T) {
 		rootCmd.SetArgs([]string{"self", "skills", "update"})
 		rootCmd.SetOut(bufOut)
 		rootCmd.SetErr(new(bytes.Buffer))
-		InitSelfCmd(rootCmd, "v0.0.0-test")
+		InitSelfCmd(rootCmd, "v0.0.0-test", settings.Default())
 
 		if err := rootCmd.Execute(); err != nil {
 			t.Fatalf("unexpected error: %v", err)

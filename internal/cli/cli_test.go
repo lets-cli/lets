@@ -32,7 +32,7 @@ func TestAllowsMissingConfig(t *testing.T) {
 
 	t.Run("self subcommand", func(t *testing.T) {
 		root := cmdpkg.CreateRootCommand("v0.0.0-test", "")
-		cmdpkg.InitSelfCmd(root, "v0.0.0-test")
+		cmdpkg.InitSelfCmd(root, "v0.0.0-test", settings.Default())
 
 		command, _, err := root.Find([]string{"self", "doc"})
 		if err != nil {
@@ -111,7 +111,7 @@ func TestShouldCheckForUpdate(t *testing.T) {
 
 	t.Run("should skip self subcommands", func(t *testing.T) {
 		root := cmdpkg.CreateRootCommand("v0.0.0-test", "")
-		cmdpkg.InitSelfCmd(root, "v0.0.0-test")
+		cmdpkg.InitSelfCmd(root, "v0.0.0-test", settings.Default())
 
 		for _, args := range [][]string{{"self"}, {"self", "doc"}, {"self", "upgrade"}} {
 			command, _, err := root.Find(args)

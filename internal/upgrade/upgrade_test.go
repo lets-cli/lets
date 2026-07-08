@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/lets-cli/lets/internal/fetch"
 	"github.com/lets-cli/lets/internal/upgrade/registry"
 )
 
@@ -24,7 +25,13 @@ func (m MockRegistry) GetLatestReleaseInfo(ctx context.Context) (*registry.Relea
 	return &registry.ReleaseInfo{TagName: m.latestVersion}, nil
 }
 
-func (m MockRegistry) DownloadReleaseBinary(ctx context.Context, packageName string, version string, dstPath string) error {
+func (m MockRegistry) DownloadReleaseBinary(
+	ctx context.Context,
+	packageName string,
+	version string,
+	dstPath string,
+	progress fetch.ProgressObserver,
+) error {
 	file, err := os.Create(dstPath)
 	if err != nil {
 		return err

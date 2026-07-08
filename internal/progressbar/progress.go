@@ -1,4 +1,4 @@
-package downloadprogress
+package progressbar
 
 import (
 	"fmt"
@@ -17,6 +17,7 @@ import (
 	"github.com/charmbracelet/x/term"
 	"github.com/lets-cli/lets/internal/fetch"
 	"github.com/lets-cli/lets/internal/theme"
+	"github.com/lets-cli/lets/internal/util"
 )
 
 const (
@@ -474,8 +475,7 @@ func detectWidth(writer io.Writer) int {
 }
 
 func isTerminal(writer io.Writer) bool {
-	file, ok := writer.(term.File)
-	return ok && term.IsTerminal(file.Fd())
+	return util.IsTerminalWriter(writer)
 }
 
 func applyProgressColors(model *bubblesprogress.Model, fill, empty color.Color) {

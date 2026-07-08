@@ -40,6 +40,7 @@ type SourceKind string
 const (
 	SourceRemoteConfig SourceKind = "remote config"
 	SourceRemoteMixin  SourceKind = "remote mixin"
+	SourceSelfUpdate   SourceKind = "self update"
 )
 
 type ProgressInfo struct {
@@ -165,3 +166,17 @@ func (r progressReader) Read(p []byte) (int, error) {
 
 	return n, err
 }
+
+// NopObserver is a no-op ProgressObserver. Use it instead of nil to avoid
+// nil checks throughout the call chain.
+type NopObserver struct{}
+
+func (NopObserver) Start(ProgressInfo) ProgressTracker { //nolint:ireturn // Implements ProgressObserver.
+	return NopTracker{}
+}
+
+// NopTracker is a no-op ProgressTracker returned by NopObserver.
+type NopTracker struct{}
+
+func (NopTracker) Add(int64)  {}
+func (NopTracker) Done(error) {}

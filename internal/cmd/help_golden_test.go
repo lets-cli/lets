@@ -11,6 +11,7 @@ import (
 	"github.com/lets-cli/fang"
 	"github.com/lets-cli/lets/internal/config"
 	"github.com/lets-cli/lets/internal/executor"
+	"github.com/lets-cli/lets/internal/settings"
 	"github.com/lets-cli/lets/internal/theme"
 	"github.com/spf13/cobra"
 )
@@ -21,7 +22,7 @@ func newGoldenRoot(t *testing.T) *cobra.Command {
 	root := CreateRootCommand("0.0.0-dev", "")
 	root.InitDefaultHelpFlag()
 	root.InitDefaultVersionFlag()
-	InitSelfCmd(root, "0.0.0-dev")
+	InitSelfCmd(root, "0.0.0-dev", settings.Default())
 	InitCompletionCmd(root, nil)
 	root.InitDefaultHelpCmd()
 	return root
