@@ -5,6 +5,7 @@ title: Changelog
 
 ## [Unreleased](https://github.com/lets-cli/lets/releases/tag/v0.0.X)
 
+* `[Fixed]` `source <(lets completion -s zsh)` no longer hangs: skip terminal background-color detection when lets runs outside the terminal's foreground process group (e.g. inside process substitution), where the query would suspend the process with SIGTTIN/SIGTTOU.
 * `[Fixed]` Add spacing between the `EXAMPLES` help title and its examples.
 * `[Fixed]` Align styled error output to the left while preserving the padded error badge.
 * `[Docs]` Convert design specs into ADRs.

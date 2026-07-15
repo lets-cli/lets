@@ -51,3 +51,13 @@ setup() {
     assert_line --index 0 "--debug[Run with debug]"
     assert_line --index 1 "--env[Set env]"
 }
+
+# Regression: querying the terminal background color from a background process
+# group suspends the process with SIGTTOU, so `source <(lets completion -s zsh)`
+# in an interactive (job-control) shell hung forever. `script` allocates a PTY,
+# `set -m` enables job control like an interactive shell.
+@test "completion: source <(lets completion -s zsh) must not hang under job control" {
+    run timeout 10 script -qec "zsh -c 'set -m; source <(lets completion -s zsh); echo SOURCED_OK'" /dev/null
+    assert_success
+    assert_output --partial "SOURCED_OK"
+}

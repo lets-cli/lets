@@ -69,7 +69,7 @@ require (
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 	github.com/lithammer/dedent v1.1.0
 	github.com/spf13/pflag v1.0.9
-	golang.org/x/sys v0.42.0 // indirect
+	golang.org/x/sys v0.42.0
 	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b // indirect
 	gopkg.in/yaml.v3 v3.0.1
 )
