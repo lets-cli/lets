@@ -60,7 +60,7 @@ brews:
     skip_upload: auto
     conflicts:
       - lets-beta
-    repository:
+    repository: &homebrew-tap
       owner: lets-cli
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
@@ -71,13 +71,12 @@ brews:
     description: "CLI task runner for productive developers - a better alternative to make (prerelease channel)"
     homepage: "https://lets-cli.org/"
     license: "MIT"
+    # skip_upload is a string in goreleaser (compared against "true"/"auto"
+    # after template rendering), so the quoted template is intentional
     skip_upload: '{{ if .Prerelease }}false{{ else }}true{{ end }}'
     conflicts:
       - lets
-    repository:
-      owner: lets-cli
-      name: homebrew-tap
-      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    repository: *homebrew-tap
     directory: Formula
 
 aurs:
