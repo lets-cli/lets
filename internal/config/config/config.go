@@ -259,7 +259,7 @@ func (c *Config) readMixin(mixin *Mixin) error {
 				// ensureRemoteConfig's behavior for the top-level remote config.
 				cachedData, readErr := rm.tryRead()
 				if readErr != nil {
-					return fmt.Errorf("download failed (%w); also failed to read cached version: %v", downloadErr, readErr)
+					return fmt.Errorf("download failed (%w); also failed to read cached version: %w", downloadErr, readErr)
 				}
 
 				if cachedData != nil {

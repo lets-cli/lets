@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/x/exp/charmtone"
 	"github.com/charmbracelet/x/term"
 	"github.com/lets-cli/fang"
+	"github.com/lets-cli/lets/internal/util"
 )
 
 // Supported theme names.
@@ -39,10 +40,22 @@ func ColorSchemeByName(name string) fang.ColorSchemeFunc {
 	}
 }
 
+// IsDarkBackground reports whether the terminal behind out has a dark background.
+// Detection queries the terminal (writes OSC 11 to out, reads the reply from stdin),
+// which suspends a background process group with SIGTTIN/SIGTTOU — so when the
+// process is not in the foreground, skip the query and assume dark (lipgloss's
+// own fallback).
+func IsDarkBackground(out term.File) bool {
+	if !util.IsForegroundProcess(out.Fd()) {
+		return true
+	}
+
+	return lipgloss.HasDarkBackground(os.Stdin, out)
+}
+
 // ProgressColorsByName resolves a theme name to fill and empty colors for download progress.
 func ProgressColorsByName(name string, out term.File) (color.Color, color.Color) {
-	isDark := lipgloss.HasDarkBackground(os.Stdin, out)
-	scheme := ColorSchemeByName(name)(lipgloss.LightDark(isDark))
+	scheme := ColorSchemeByName(name)(lipgloss.LightDark(IsDarkBackground(out)))
 
 	return ProgressColors(scheme)
 }
