@@ -56,10 +56,27 @@ brews:
     description: "CLI task runner for productive developers - a better alternative to make"
     homepage: "https://lets-cli.org/"
     license: "MIT"
-    repository:
+    # do not publish prereleases (e.g. v1.0.0-rc1) to the main formula
+    skip_upload: auto
+    conflicts:
+      - lets-beta
+    repository: &homebrew-tap
       owner: lets-cli
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    directory: Formula
+  # prerelease channel: published ONLY for prerelease tags,
+  # installable via `brew install lets-cli/tap/lets-beta`
+  - name: lets-beta
+    description: "CLI task runner for productive developers - a better alternative to make (prerelease channel)"
+    homepage: "https://lets-cli.org/"
+    license: "MIT"
+    # skip_upload is a string in goreleaser (compared against "true"/"auto"
+    # after template rendering), so the quoted template is intentional
+    skip_upload: '{{ if .Prerelease }}false{{ else }}true{{ end }}'
+    conflicts:
+      - lets
+    repository: *homebrew-tap
     directory: Formula
 
 aurs:
@@ -67,6 +84,8 @@ aurs:
     homepage: "https://lets-cli.org/"
     description: "CLI task runner for productive developers - a better alternative to make"
     license: "MIT"
+    # do not publish prereleases to AUR
+    skip_upload: auto
     maintainers:
       - 'Kindritskiy Maksym <kindritskiy.m@gmail.com>'
     contributors:
