@@ -11,20 +11,21 @@ brew tap lets-cli/tap
 brew install lets-cli/tap/lets
 ```
 
-## Arch
+### Prereleases
 
-Install the latest binary release from [AUR lets-bin](https://aur.archlinux.org/packages/lets-bin/).
-
-If you use `yay` as your AUR helper:
+The main `lets` formula only receives stable releases. Prerelease versions (e.g. `v0.0.62-rc1`) are published
+to a separate `lets-beta` formula:
 
 ```bash
-yay -S lets-bin
+brew install lets-cli/tap/lets-beta
 ```
 
-You can also install the bleeding edge version from [AUR lets-git](https://aur.archlinux.org/packages/lets-git/).
+Both formulas install the `lets` binary, so they conflict with each other — uninstall one before installing the
+other. To switch back to stable:
 
 ```bash
-yay -S lets-git
+brew uninstall lets-cli/tap/lets-beta
+brew install lets-cli/tap/lets
 ```
 
 ## Shell Script
@@ -68,6 +69,22 @@ To install into a custom lets home directory, set `LETS_HOME`. The binary will b
 
 ```bash
 curl -fsSL https://lets-cli.org/install.sh | LETS_HOME=$HOME/tools/lets bash
+```
+
+## Arch
+
+Install the latest binary release from [AUR lets-bin](https://aur.archlinux.org/packages/lets-bin/).
+
+If you use `yay` as your AUR helper:
+
+```bash
+yay -S lets-bin
+```
+
+You can also install the bleeding edge version from [AUR lets-git](https://aur.archlinux.org/packages/lets-git/).
+
+```bash
+yay -S lets-git
 ```
 
 ## Binary (Manual)
@@ -128,20 +145,6 @@ If your `lets` version is below `0.0.30`, use the shell script and specify the l
 brew upgrade lets-cli/tap/lets
 ```
 
-### Arch
-
-AUR packages provide the latest version.
-
-```bash
-yay -Syu lets-bin
-```
-
-For the bleeding edge package:
-
-```bash
-yay -Syu lets-git
-```
-
 ### Shell Script
 
 Run the install script again to update `lets` to the latest version.
@@ -154,6 +157,20 @@ To update to a specific version:
 
 ```bash
 curl -fsSL https://lets-cli.org/install.sh | LETS_VERSION=v0.0.21 bash
+```
+
+### Arch
+
+AUR packages provide the latest version.
+
+```bash
+yay -Syu lets-bin
+```
+
+For the bleeding edge package:
+
+```bash
+yay -Syu lets-git
 ```
 
 ### Binary
