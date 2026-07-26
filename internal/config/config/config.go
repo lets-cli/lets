@@ -55,16 +55,16 @@ type Config struct {
 	RemoteSource string
 
 	// cached env after config.SetupEnv, used in config.GetEnv
-	cachedEnv        map[string]string
-	downloadContext  context.Context
-	downloadProgress fetch.ProgressObserver
-	noCache          bool
-	isMixin          bool // if true, we consider config as mixin and apply different parsing and validation
+	cachedEnv       map[string]string
+	downloadContext context.Context
+	progressBar     fetch.ProgressObserver
+	noCache         bool
+	isMixin         bool // if true, we consider config as mixin and apply different parsing and validation
 }
 
 func (c *Config) SetDownloadOptions(ctx context.Context, progress fetch.ProgressObserver, noCache bool) {
 	c.downloadContext = ctx
-	c.downloadProgress = progress
+	c.progressBar = progress
 	c.noCache = noCache
 }
 
@@ -253,21 +253,19 @@ func (c *Config) readMixin(mixin *Mixin) error {
 		}
 
 		if data == nil {
-			downloadedData, downloadErr := rm.download(c.context(), c.downloadProgress)
+			downloadedData, downloadErr := rm.download(c.context(), c.progressBar)
 			if downloadErr != nil {
-				if c.noCache {
-					cachedData, readErr := rm.tryRead()
-					if readErr != nil {
-						return readErr
-					}
+				// Always fall back to cached version on download failure, consistent with
+				// ensureRemoteConfig's behavior for the top-level remote config.
+				cachedData, readErr := rm.tryRead()
+				if readErr != nil {
+					return fmt.Errorf("download failed (%w); also failed to read cached version: %w", downloadErr, readErr)
+				}
 
-					if cachedData != nil {
-						log.Warnf("failed to download remote mixin (%v), falling back to cached version", downloadErr)
+				if cachedData != nil {
+					log.Warnf("failed to download remote mixin (%v), falling back to cached version", downloadErr)
 
-						data = cachedData
-					} else {
-						return downloadErr
-					}
+					data = cachedData
 				} else {
 					return downloadErr
 				}
@@ -404,7 +402,7 @@ func NewConfig(workDir string, configAbsPath string, dotLetsDir string) *Config 
 func NewMixinConfig(cfg *Config, configAbsPath string) *Config {
 	mixin := NewConfig(cfg.WorkDir, configAbsPath, cfg.DotLetsDir)
 	mixin.isMixin = true
-	mixin.SetDownloadOptions(cfg.context(), cfg.downloadProgress, cfg.noCache)
+	mixin.SetDownloadOptions(cfg.context(), cfg.progressBar, cfg.noCache)
 
 	return mixin
 }

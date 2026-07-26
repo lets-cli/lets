@@ -5,6 +5,14 @@ title: Changelog
 
 ## [Unreleased](https://github.com/lets-cli/lets/releases/tag/v0.0.X)
 
+* `[Changed]` Prerelease tags (e.g. `v0.0.62-rc1`) are no longer published to the Homebrew tap `lets` formula or AUR; they are published to a new opt-in `lets-beta` formula instead (`brew install lets-cli/tap/lets-beta`).
+* `[Fixed]` `source <(lets completion -s zsh)` no longer hangs: skip terminal background-color detection when lets runs outside the terminal's foreground process group (e.g. inside process substitution), where the query would suspend the process with SIGTTIN/SIGTTOU.
+* `[Fixed]` Add spacing between the `EXAMPLES` help title and its examples.
+* `[Fixed]` Align styled error output to the left while preserving the padded error badge.
+* `[Docs]` Convert design specs into ADRs.
+* `[Refactoring]` Rename the internal download progress package to progressbar.
+* `[Added]` Show interactive download progress for `lets self upgrade`. Issue [#367](https://github.com/lets-cli/lets/issues/367)
+* `[Changed]` Unify terminal detection across the CLI; Cygwin/MSYS terminals are no longer treated as interactive (drops the direct `mattn/go-isatty` dependency).
 * `[Added]` Add `lets self config path` and `lets self config edit` for user settings. Issue [#370](https://github.com/lets-cli/lets/issues/370)
 * `[Added]` Show interactive download progress for remote configs and remote mixins. Issue [#360](https://github.com/lets-cli/lets/issues/360)
 * `[Fixed]` Make `--no-cache` re-download remote mixins for local and remote configs. Issue [#365](https://github.com/lets-cli/lets/issues/365)

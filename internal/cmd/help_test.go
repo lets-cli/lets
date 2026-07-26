@@ -96,6 +96,12 @@ Example:
 	if !strings.Contains(out, "OPTIONS") {
 		t.Fatalf("expected options title in output: %q", out)
 	}
+	if !strings.Contains(out, "EXAMPLES\n\n") {
+		t.Fatalf("expected blank line after examples title in output: %q", out)
+	}
+	if !strings.Contains(out, `lets release 1.0.0 -m "Release 1.0.0"`) {
+		t.Fatalf("expected example in output: %q", out)
+	}
 	argIdx := strings.Index(out, "<version>")
 	flagIdx := strings.Index(out, "--message=<message>, -m")
 	if argIdx == -1 {
@@ -177,11 +183,11 @@ func TestHelpRendererDoesNotDuplicateDocoptUsageCommandPath(t *testing.T) {
 	}
 }
 
-func TestErrorHandlerRemovesErrorHeaderLeftPadding(t *testing.T) {
+func TestErrorHandlerRemovesErrorTextLeftMargin(t *testing.T) {
 	var stderr bytes.Buffer
 	styles := fang.Styles{
 		ErrorHeader: lipgloss.NewStyle().Padding(0, 1).SetString("ERROR"),
-		ErrorText:   lipgloss.NewStyle(),
+		ErrorText:   lipgloss.NewStyle().MarginLeft(2),
 		Program: fang.Program{
 			Flag: lipgloss.NewStyle(),
 		},
@@ -193,8 +199,17 @@ func TestErrorHandlerRemovesErrorHeaderLeftPadding(t *testing.T) {
 	if !strings.Contains(out, "ERROR") {
 		t.Fatalf("expected error header in output: %q", out)
 	}
+	if !strings.HasPrefix(out, " ERROR") && !strings.Contains(out, "\n ERROR") {
+		t.Fatalf("expected error header padding to start at column zero: %q", out)
+	}
+	if strings.Contains(out, "\n   ERROR") {
+		t.Fatalf("expected error header outer margin to be removed: %q", out)
+	}
 	if !strings.Contains(out, "\nTry --help for usage.") {
 		t.Fatalf("expected usage hint in output: %q", out)
+	}
+	if strings.Contains(out, "\n  unknown command") || strings.Contains(out, "\n  Try --help") {
+		t.Fatalf("expected error text to start at column zero: %q", out)
 	}
 }
 

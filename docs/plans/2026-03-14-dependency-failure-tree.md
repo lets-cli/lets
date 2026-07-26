@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go stdlib `errors`, `fmt`, `io`, `strings`; `github.com/fatih/color` v1.16.0 (already in `go.mod`) for red highlight; `testing` package for unit tests; bats-core + bats-assert for integration tests.
 
-**Spec:** `docs/specs/2026-03-13-dependency-failure-tree-design.md`
+**ADR:** `docs/adr/0002-dependency-failure-tree.md`
 
 ---
 

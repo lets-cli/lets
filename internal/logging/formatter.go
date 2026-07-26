@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"os"
 	"strings"
 	"unicode"
 
@@ -12,6 +11,7 @@ import (
 	"github.com/charmbracelet/x/term"
 	"github.com/fatih/color"
 	"github.com/lets-cli/fang"
+	"github.com/lets-cli/lets/internal/theme"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -44,8 +44,7 @@ func newFormatter(errWriter io.Writer, cs fang.ColorSchemeFunc) *Formatter {
 		return f
 	}
 
-	isDark := lipgloss.HasDarkBackground(os.Stdin, file)
-	scheme := cs(lipgloss.LightDark(isDark))
+	scheme := cs(lipgloss.LightDark(theme.IsDarkBackground(file)))
 
 	w, _, err := term.GetSize(file.Fd())
 	if err != nil || w == 0 {

@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/x/exp/charmtone"
 	"github.com/charmbracelet/x/term"
 	"github.com/lets-cli/fang"
+	"github.com/lets-cli/lets/internal/util"
 )
 
 // Supported theme names.
@@ -39,10 +40,22 @@ func ColorSchemeByName(name string) fang.ColorSchemeFunc {
 	}
 }
 
+// IsDarkBackground reports whether the terminal behind out has a dark background.
+// Detection queries the terminal (writes OSC 11 to out, reads the reply from stdin),
+// which suspends a background process group with SIGTTIN/SIGTTOU — so when the
+// process is not in the foreground, skip the query and assume dark (lipgloss's
+// own fallback).
+func IsDarkBackground(out term.File) bool {
+	if !util.IsForegroundProcess(out.Fd()) {
+		return true
+	}
+
+	return lipgloss.HasDarkBackground(os.Stdin, out)
+}
+
 // ProgressColorsByName resolves a theme name to fill and empty colors for download progress.
 func ProgressColorsByName(name string, out term.File) (color.Color, color.Color) {
-	isDark := lipgloss.HasDarkBackground(os.Stdin, out)
-	scheme := ColorSchemeByName(name)(lipgloss.LightDark(isDark))
+	scheme := ColorSchemeByName(name)(lipgloss.LightDark(IsDarkBackground(out)))
 
 	return ProgressColors(scheme)
 }
@@ -73,14 +86,15 @@ func ProgressColors(scheme fang.ColorScheme) (color.Color, color.Color) {
 // DefaultColorScheme is the default colorscheme.
 func DefaultColorScheme(c lipgloss.LightDarkFunc) fang.ColorScheme {
 	baseCyan := charmtone.Turtle
+	baseCyanLighter := lipgloss.Color("#0BF4F1")
 	baseWhite := charmtone.Ash
 	baseGray := charmtone.Oyster
 
 	return fang.ColorScheme{
-		Base:           c(charmtone.Charcoal, baseCyan),
-		Title:          baseWhite,
+		Base:           c(charmtone.Charcoal, baseCyanLighter),
+		Title:          baseCyanLighter,
 		Codeblock:      c(charmtone.Salt, lipgloss.Color("#2F2E36")),
-		Program:        c(charmtone.Malibu, baseWhite),
+		Program:        c(charmtone.Malibu, baseCyan),
 		Command:        c(charmtone.Pony, baseCyan),
 		DimmedArgument: c(charmtone.Squid, baseGray),
 		Comment:        c(charmtone.Squid, lipgloss.Color("#747282")),
@@ -118,15 +132,17 @@ func AnsiColorScheme(c lipgloss.LightDarkFunc) fang.ColorScheme {
 }
 
 func SynthwaveColorScheme(c lipgloss.LightDarkFunc) fang.ColorScheme {
+	basePink := lipgloss.Color("#f24db8")
+
 	return fang.ColorScheme{
-		Base:           c(charmtone.Charcoal, charmtone.Cheeky),
+		Base:           c(charmtone.Charcoal, basePink),
 		Title:          charmtone.Grape,
 		Codeblock:      c(charmtone.Salt, lipgloss.Color("#2F2E36")),
 		Program:        c(charmtone.Malibu, charmtone.Grape),
-		Command:        c(charmtone.Pony, charmtone.Cheeky),
+		Command:        c(charmtone.Pony, basePink),
 		DimmedArgument: c(charmtone.Squid, charmtone.Oyster),
 		Comment:        c(charmtone.Squid, lipgloss.Color("#747282")),
-		Flag:           c(lipgloss.Color("#0CB37F"), charmtone.Cheeky),
+		Flag:           c(lipgloss.Color("#0CB37F"), basePink),
 		Argument:       c(charmtone.Charcoal, charmtone.Ash),
 		Description:    c(charmtone.Charcoal, charmtone.Ash),
 		FlagDefault:    c(charmtone.Smoke, charmtone.Squid),

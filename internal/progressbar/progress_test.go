@@ -1,4 +1,4 @@
-package downloadprogress
+package progressbar
 
 import (
 	"bytes"
