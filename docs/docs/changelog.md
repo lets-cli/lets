@@ -3,7 +3,7 @@ id: changelog
 title: Changelog
 ---
 
-## [Unreleased](https://github.com/lets-cli/lets/releases/tag/v0.0.X)
+## [0.0.62](https://github.com/lets-cli/lets/releases/tag/v0.0.62)
 
 * `[Changed]` Prerelease tags (e.g. `v0.0.62-rc1`) are no longer published to the Homebrew tap `lets` formula or AUR; they are published to a new opt-in `lets-beta` formula instead (`brew install lets-cli/tap/lets-beta`).
 * `[Fixed]` `source <(lets completion -s zsh)` no longer hangs: skip terminal background-color detection when lets runs outside the terminal's foreground process group (e.g. inside process substitution), where the query would suspend the process with SIGTTIN/SIGTTOU.
