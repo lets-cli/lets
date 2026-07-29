@@ -1,7 +1,10 @@
 package cli
 
 import (
+	"context"
+	"os"
 	"testing"
+	"time"
 
 	cmdpkg "github.com/lets-cli/lets/internal/cmd"
 	"github.com/lets-cli/lets/internal/settings"
@@ -66,6 +69,43 @@ func TestFailOnConfigError(t *testing.T) {
 	if failOnConfigError(root, current, &flags{version: true}) {
 		t.Fatal("expected --version to allow missing config")
 	}
+}
+
+func TestSignalContext(t *testing.T) {
+	t.Run("cancels and stops signal notification after first signal", func(t *testing.T) {
+		signals := make(chan os.Signal, 1)
+		stopped := make(chan struct{})
+		ctx := signalContext(context.Background(), signals, func() {
+			close(stopped)
+		})
+
+		signals <- os.Interrupt
+
+		select {
+		case <-ctx.Done():
+		case <-time.After(time.Second):
+			t.Fatal("expected signal context to be canceled")
+		}
+
+		select {
+		case <-stopped:
+		case <-time.After(time.Second):
+			t.Fatal("expected signal notification to stop")
+		}
+	})
+
+	t.Run("cancels when parent context is canceled", func(t *testing.T) {
+		parent, cancel := context.WithCancel(context.Background())
+		ctx := signalContext(parent, make(chan os.Signal), func() {})
+
+		cancel()
+
+		select {
+		case <-ctx.Done():
+		case <-time.After(time.Second):
+			t.Fatal("expected signal context to be canceled by parent")
+		}
+	})
 }
 
 func TestShouldCheckForUpdate(t *testing.T) {

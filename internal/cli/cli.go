@@ -159,12 +159,24 @@ func getContext() context.Context {
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
 
-	ctx, cancel := context.WithCancel(context.Background())
+	return signalContext(context.Background(), ch, func() {
+		signal.Stop(ch)
+	})
+}
+
+func signalContext(parent context.Context, ch <-chan os.Signal, stop func()) context.Context {
+	ctx, cancel := context.WithCancel(parent)
 
 	go func() {
-		sig := <-ch
-		log.Printf("signal received: %s", sig)
-		cancel()
+		defer stop()
+
+		select {
+		case sig := <-ch:
+			log.Printf("signal received: %s", sig)
+			cancel()
+		case <-parent.Done():
+			cancel()
+		}
 	}()
 
 	return ctx
