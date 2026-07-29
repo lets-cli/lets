@@ -97,7 +97,7 @@ When you add `checksum.files` directive to a command - `lets` will calculate che
 
 We then can store this checksum somewhere in the file and check that stored checksum with a checksum from env.
 
-Fortunately, `lets` have an option for that - `checksum.persist`.
+Fortunately, `lets` has an option for that - `checksum.persist`.
 
 If `checksum.persist` is used with `checksum.files`, `lets` will store new checksum to `.lets` dir and each time you run a command `lets` will check if stored checksum changed from the one from env.
 
