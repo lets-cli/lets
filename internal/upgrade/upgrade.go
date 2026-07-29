@@ -23,6 +23,7 @@ type Upgrader interface {
 type BinaryUpgrader struct {
 	registry       registry.RepoRegistry
 	currentVersion string
+	prerelease     bool
 	binaryPath     string
 	downloadPath   string
 	backupPath     string
@@ -34,6 +35,12 @@ type BinaryUpgraderOption func(*BinaryUpgrader)
 func WithProgress(progress fetch.ProgressObserver) BinaryUpgraderOption {
 	return func(upgrader *BinaryUpgrader) {
 		upgrader.progress = progress
+	}
+}
+
+func WithPrerelease() BinaryUpgraderOption {
+	return func(upgrader *BinaryUpgrader) {
+		upgrader.prerelease = true
 	}
 }
 
@@ -66,9 +73,9 @@ func (up *BinaryUpgrader) Upgrade(ctx context.Context) error {
 		return err
 	}
 
-	latestVersion, err := up.registry.GetLatestRelease(ctx)
+	latestVersion, releaseKind, err := up.latestVersion(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to get latest release version: %w", err)
+		return fmt.Errorf("failed to get %s version: %w", releaseKind, err)
 	}
 
 	if up.currentVersion == latestVersion {
@@ -82,7 +89,7 @@ func (up *BinaryUpgrader) Upgrade(ctx context.Context) error {
 		return fmt.Errorf("failed to get package name: %w", err)
 	}
 
-	log.Printf("Downloading latest release %s...", latestVersion)
+	log.Printf("Downloading %s %s...", releaseKind, latestVersion)
 
 	err = up.registry.DownloadReleaseBinary(
 		ctx,
@@ -108,6 +115,18 @@ func (up *BinaryUpgrader) Upgrade(ctx context.Context) error {
 	log.Printf("Upgraded to version %s", latestVersion)
 
 	return nil
+}
+
+func (up *BinaryUpgrader) latestVersion(ctx context.Context) (string, string, error) {
+	if up.prerelease {
+		version, err := up.registry.GetLatestPrerelease(ctx)
+
+		return version, "latest prerelease", err
+	}
+
+	version, err := up.registry.GetLatestRelease(ctx)
+
+	return version, "latest release", err
 }
 
 func binaryPath() (string, error) {

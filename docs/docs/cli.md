@@ -18,6 +18,6 @@ title: CLI options
 |`-h, --help`|||help for lets|
 |`-v, --version`|||version for lets|
 
-Upgrade the lets binary with `lets self upgrade`.
+Upgrade the lets binary with `lets self upgrade`. Use `lets self upgrade --pre` to opt into the latest prerelease.
 
 Migrate deprecated config syntax with `lets self fix`. Use `lets self fix --dry-run` to print migrated config content before writing files.

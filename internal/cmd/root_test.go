@@ -450,6 +450,42 @@ func TestSelfCmd(t *testing.T) {
 		}
 	})
 
+	t.Run("should pass pre flag to self upgrade factory", func(t *testing.T) {
+		bufOut := new(bytes.Buffer)
+		gotPre := false
+
+		rootCmd := CreateRootCommand("v0.0.0-test", "")
+		rootCmd.SetArgs([]string{"self", "upgrade", "--pre"})
+		rootCmd.SetOut(bufOut)
+		rootCmd.SetErr(bufOut)
+		selfCmd := &cobra.Command{
+			Use:   "self",
+			Short: "Manage lets CLI itself",
+		}
+		rootCmd.AddCommand(selfCmd)
+
+		selfCmd.AddCommand(initUpgradeCommandWith(func(cmd *cobra.Command) (upgrade.Upgrader, error) {
+			var err error
+			gotPre, err = cmd.Flags().GetBool("pre")
+			if err != nil {
+				return nil, err
+			}
+
+			return mockUpgraderFunc(func(ctx context.Context) error {
+				return nil
+			}), nil
+		}))
+
+		err := rootCmd.Execute()
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if !gotPre {
+			t.Fatal("expected pre flag to be set")
+		}
+	})
+
 	t.Run("should return upgrader error for self upgrade command", func(t *testing.T) {
 		bufOut := new(bytes.Buffer)
 
