@@ -72,6 +72,16 @@ func TestFailOnConfigError(t *testing.T) {
 }
 
 func TestSignalContext(t *testing.T) {
+	assertClosed := func(t *testing.T, ch <-chan struct{}, message string) {
+		t.Helper()
+
+		select {
+		case <-ch:
+		case <-time.After(time.Second):
+			t.Fatal(message)
+		}
+	}
+
 	t.Run("cancels and stops signal notification after first signal", func(t *testing.T) {
 		signals := make(chan os.Signal, 1)
 		stopped := make(chan struct{})
@@ -81,30 +91,34 @@ func TestSignalContext(t *testing.T) {
 
 		signals <- os.Interrupt
 
-		select {
-		case <-ctx.Done():
-		case <-time.After(time.Second):
-			t.Fatal("expected signal context to be canceled")
-		}
-
-		select {
-		case <-stopped:
-		case <-time.After(time.Second):
-			t.Fatal("expected signal notification to stop")
-		}
+		assertClosed(t, ctx.Done(), "expected signal context to be canceled")
+		assertClosed(t, stopped, "expected signal notification to stop")
 	})
 
 	t.Run("cancels when parent context is canceled", func(t *testing.T) {
 		parent, cancel := context.WithCancel(context.Background())
-		ctx := signalContext(parent, make(chan os.Signal), func() {})
+		stopped := make(chan struct{})
+		ctx := signalContext(parent, make(chan os.Signal), func() {
+			close(stopped)
+		})
 
 		cancel()
 
-		select {
-		case <-ctx.Done():
-		case <-time.After(time.Second):
-			t.Fatal("expected signal context to be canceled by parent")
-		}
+		assertClosed(t, ctx.Done(), "expected signal context to be canceled by parent")
+		assertClosed(t, stopped, "expected signal notification to stop")
+	})
+
+	t.Run("cancels when parent context is already canceled", func(t *testing.T) {
+		parent, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		stopped := make(chan struct{})
+		ctx := signalContext(parent, make(chan os.Signal), func() {
+			close(stopped)
+		})
+
+		assertClosed(t, ctx.Done(), "expected signal context to be canceled by parent")
+		assertClosed(t, stopped, "expected signal notification to stop")
 	})
 }
 
