@@ -169,7 +169,9 @@ func CalculateChecksumFromConfig(
 }
 
 func CalculateChecksumFromScript(workDir string, shell string, script string, env map[string]string) (string, error) {
-	cmd := exec.Command(shell, "-c", script)
+	// shell and script come from developer-authored Project config. checksum.sh
+	// intentionally shares the same executable trust boundary as command scripts.
+	cmd := exec.Command(shell, "-c", script) //nolint:gosec
 	cmd.Dir = workDir
 
 	envList := os.Environ()

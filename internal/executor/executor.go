@@ -199,7 +199,7 @@ func (e *Executor) initCmd(ctx *Context) error {
 	maps.Copy(checksumEnv, e.cfg.GetEnv())
 
 	// calculate checksum if needed
-	if err := cmd.ChecksumCalculator(e.cfg.WorkDir, checksumShell, checksumEnv); err != nil {
+	if err := cmd.ChecksumCalculator(checksumWorkDir, checksumShell, checksumEnv); err != nil {
 		return fmt.Errorf("failed to calculate checksum for command '%s': %w", cmd.Name, err)
 	}
 

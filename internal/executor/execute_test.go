@@ -397,6 +397,43 @@ func TestChecksumEnvVarsPresentInRunnerInvocation(t *testing.T) {
 	}
 }
 
+func TestChecksumUsesCommandWorkDir(t *testing.T) {
+	cfg := newTestCfg(t)
+	commandDir := filepath.Join(cfg.WorkDir, "command-dir")
+	if err := os.Mkdir(commandDir, 0o755); err != nil {
+		t.Fatalf("create command dir: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(cfg.WorkDir, "input.txt"), []byte("root"), 0o644); err != nil {
+		t.Fatalf("write root input: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(commandDir, "input.txt"), []byte("command"), 0o644); err != nil {
+		t.Fatalf("write command input: %v", err)
+	}
+
+	want, err := checksum.CalculateChecksum(commandDir, []string{"input.txt"})
+	if err != nil {
+		t.Fatalf("calculate expected checksum: %v", err)
+	}
+
+	cmd := newCmd("build", "build-script")
+	cmd.WorkDir = commandDir
+	cmd.ChecksumSources = map[string][]string{
+		checksum.DefaultChecksumKey: {"input.txt"},
+	}
+
+	r := newRecordingRunner()
+	ex := NewExecutor(cfg, r.run)
+
+	if err := ex.Execute(execCtx(cmd)); err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+
+	got := cmd.ChecksumMap[checksum.DefaultChecksumKey]
+	if got != want {
+		t.Fatalf("expected checksum from command work_dir %q, got %q", want, got)
+	}
+}
+
 // TestChecksumPersistedAfterSuccess verifies that a successful Execute() persists
 // the checksum to disk when PersistChecksum is true.
 func TestChecksumPersistedAfterSuccess(t *testing.T) {

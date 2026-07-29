@@ -110,12 +110,15 @@ func (c *Command) UnmarshalYAML(unmarshal func(any) error) error {
 
 	c.Depends = cmd.Depends
 
-	workDir, err := filepath.Abs(cmd.WorkDir)
-	if err != nil {
-		return err
+	if cmd.WorkDir != "" {
+		workDir, err := filepath.Abs(cmd.WorkDir)
+		if err != nil {
+			return err
+		}
+
+		c.WorkDir = workDir
 	}
 
-	c.WorkDir = workDir
 	c.After = cmd.After
 	// TODO: checksum must be refactored
 	if cmd.Checksum != nil {
