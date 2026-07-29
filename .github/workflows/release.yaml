@@ -22,6 +22,8 @@ jobs:
           distribution: goreleaser
           version: '~> v2'  # latest
           args: release --clean --skip=validate --skip=publish
+      - name: Restore checkout after dry run
+        run: git reset --hard
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v7
         with:
