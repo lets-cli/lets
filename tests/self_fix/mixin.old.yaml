@@ -1,0 +1,7 @@
+commands:
+  mixin-build:
+    persist_checksum: true
+    checksum:
+      deps:
+        - go.sum
+    cmd: echo mixin

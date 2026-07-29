@@ -136,3 +136,16 @@ func TestCalculateChecksumFromListOrMap(t *testing.T) {
 		)
 	}
 }
+
+func TestCalculateChecksumFromScript(t *testing.T) {
+	tempDir := t.TempDir()
+
+	got, err := CalculateChecksumFromScript(tempDir, "bash", `printf "checksum-value\n"`, map[string]string{})
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+
+	if got != "checksum-value" {
+		t.Fatalf("unexpected checksum: %s", got)
+	}
+}

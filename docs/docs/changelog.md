@@ -3,6 +3,12 @@ id: changelog
 title: Changelog
 ---
 
+## [Unreleased](https://github.com/lets-cli/lets/releases/tag/v0.0.X)
+
+* `[Added]` Add `checksum.files`, `checksum.sh`, and `checksum.persist` command checksum syntax while keeping the old checksum format compatible.
+* `[Added]` Add `lets self fix` config migration command with `--dry-run` preview output for deprecated checksum syntax.
+* `[Fixed]` Make checksum calculation respect command-level `work_dir` overrides.
+
 ## [0.0.62](https://github.com/lets-cli/lets/releases/tag/v0.0.62)
 
 * `[Changed]` Prerelease tags (e.g. `v0.0.62-rc1`) are no longer published to the Homebrew tap `lets` formula or AUR; they are published to a new opt-in `lets-beta` formula instead (`brew install lets-cli/tap/lets-beta`).
