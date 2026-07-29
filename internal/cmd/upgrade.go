@@ -18,8 +18,18 @@ type upgraderFactory func(cmd *cobra.Command) (upgrade.Upgrader, error)
 func initUpgradeCommand(version string, appSettings settings.Settings) *cobra.Command {
 	return initUpgradeCommandWith(func(cmd *cobra.Command) (upgrade.Upgrader, error) {
 		progress := upgradeProgress(cmd.ErrOrStderr(), appSettings)
+		options := []upgrade.BinaryUpgraderOption{upgrade.WithProgress(progress)}
 
-		return upgrade.NewBinaryUpgrader(registry.NewGithubRegistry(), version, upgrade.WithProgress(progress))
+		pre, err := cmd.Flags().GetBool("pre")
+		if err != nil {
+			return nil, err
+		}
+
+		if pre {
+			options = append(options, upgrade.WithPrerelease())
+		}
+
+		return upgrade.NewBinaryUpgrader(registry.NewGithubRegistry(), version, options...)
 	})
 }
 
@@ -55,6 +65,7 @@ func initUpgradeCommandWith(createUpgrader upgraderFactory) *cobra.Command {
 			return nil
 		},
 	}
+	upgradeCmd.Flags().Bool("pre", false, "upgrade to latest prerelease version")
 
 	return upgradeCmd
 }

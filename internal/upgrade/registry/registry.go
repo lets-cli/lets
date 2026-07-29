@@ -3,6 +3,7 @@ package registry
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -28,6 +29,7 @@ var osMap = map[string]string{
 type RepoRegistry interface {
 	GetLatestReleaseInfo(ctx context.Context) (*ReleaseInfo, error)
 	GetLatestRelease(ctx context.Context) (string, error)
+	GetLatestPrerelease(ctx context.Context) (string, error)
 	DownloadReleaseBinary(
 		ctx context.Context,
 		packageName string,
@@ -179,6 +181,8 @@ func (r progressReadCloser) Read(p []byte) (int, error) {
 type ReleaseInfo struct {
 	TagName     string    `json:"tag_name"`
 	PublishedAt time.Time `json:"published_at"`
+	Prerelease  bool      `json:"prerelease"`
+	Draft       bool      `json:"draft"`
 }
 
 func (reg *GithubRegistry) GetLatestRelease(ctx context.Context) (string, error) {
@@ -231,4 +235,73 @@ func (reg *GithubRegistry) GetLatestReleaseInfo(ctx context.Context) (*ReleaseIn
 	}
 
 	return &release, nil
+}
+
+func (reg *GithubRegistry) GetLatestPrerelease(ctx context.Context) (string, error) {
+	release, err := reg.GetLatestPrereleaseInfo(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	return release.TagName, nil
+}
+
+func (reg *GithubRegistry) GetLatestPrereleaseInfo(ctx context.Context) (*ReleaseInfo, error) {
+	requestCtx, cancel := context.WithTimeout(ctx, reg.latestReleaseTimeout)
+	defer cancel()
+
+	url := reg.apiURI + "/releases?per_page=100"
+
+	req, err := http.NewRequestWithContext(
+		requestCtx,
+		http.MethodGet,
+		url,
+		nil,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Add("Accept", "application/vnd.github+json")
+	req.Header.Add("User-Agent", "lets-cli")
+
+	resp, err := reg.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to make request: %w", err)
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		return nil, fmt.Errorf("failed to fetch releases: %s", resp.Status)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read package body: %w", err)
+	}
+
+	var releases []ReleaseInfo
+	if err := json.Unmarshal(body, &releases); err != nil {
+		return nil, fmt.Errorf("failed to decode package body: %w", err)
+	}
+
+	var latestPrerelease *ReleaseInfo
+
+	for i := range releases {
+		release := &releases[i]
+		if release.Draft || !release.Prerelease {
+			continue
+		}
+
+		if latestPrerelease == nil || release.PublishedAt.After(latestPrerelease.PublishedAt) {
+			latestPrerelease = release
+		}
+	}
+
+	if latestPrerelease == nil {
+		return nil, errors.New("no prerelease found")
+	}
+
+	return latestPrerelease, nil
 }

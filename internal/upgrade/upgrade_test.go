@@ -14,7 +14,8 @@ import (
 )
 
 type MockRegistry struct {
-	latestVersion string
+	latestVersion     string
+	prereleaseVersion string
 }
 
 func (m MockRegistry) GetLatestRelease(ctx context.Context) (string, error) {
@@ -23,6 +24,10 @@ func (m MockRegistry) GetLatestRelease(ctx context.Context) (string, error) {
 
 func (m MockRegistry) GetLatestReleaseInfo(ctx context.Context) (*registry.ReleaseInfo, error) {
 	return &registry.ReleaseInfo{TagName: m.latestVersion}, nil
+}
+
+func (m MockRegistry) GetLatestPrerelease(ctx context.Context) (string, error) {
+	return m.prereleaseVersion, nil
 }
 
 func (m MockRegistry) DownloadReleaseBinary(
@@ -37,7 +42,7 @@ func (m MockRegistry) DownloadReleaseBinary(
 		return err
 	}
 
-	latest, _ := m.GetLatestRelease(ctx)
+	latest := version
 
 	_, err = fmt.Fprint(file, latest)
 	if err != nil {
@@ -150,6 +155,26 @@ func TestSelfUpgrade(t *testing.T) {
 
 		if binaryModTime != binaryUpdatedModTime {
 			t.Errorf("binary must not been updated")
+		}
+	})
+
+	t.Run("should self-upgrade to latest prerelease version", func(t *testing.T) {
+		currentVersion := "v0.0.1"
+		prereleaseVersion := "v0.0.2-rc1"
+
+		upgrader, err := newMockUpgrader(&MockRegistry{prereleaseVersion: prereleaseVersion}, currentVersion)
+		if err != nil {
+			t.Errorf("failed to create upgrader: %s", err)
+		}
+		WithPrerelease()(upgrader)
+
+		err = upgrader.Upgrade(context.Background())
+		if err != nil {
+			t.Errorf("failed to upgrade: %s", err)
+		}
+
+		if !testVersion(upgrader.binaryPath, prereleaseVersion) {
+			t.Errorf("expected version %s", prereleaseVersion)
 		}
 	})
 

@@ -30,6 +30,10 @@ func (m *mockNotifierRegistry) GetLatestRelease(ctx context.Context) (string, er
 	return m.release.TagName, nil
 }
 
+func (m *mockNotifierRegistry) GetLatestPrerelease(ctx context.Context) (string, error) {
+	return "", nil
+}
+
 func (m *mockNotifierRegistry) DownloadReleaseBinary(
 	ctx context.Context,
 	packageName string,
