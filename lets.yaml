@@ -47,10 +47,9 @@ commands:
   test-bats:
     description: Run bats tests
     depends: [build-lets-image]
+    persist_checksum: true
     checksum:
-      files:
-        - go.sum
-      persist: true
+      - go.sum
     options: |
       Usage: lets test-bats [<test>] [--opts=<opts>]
       Example:
