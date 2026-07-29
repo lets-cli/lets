@@ -113,7 +113,12 @@ func fixFile(path string, dryRun bool, migrations []Migration) (bool, []string, 
 	preview := ""
 
 	if !dryRun {
-		if err := os.WriteFile(path, updated, 0o644); err != nil {
+		info, err := os.Stat(path)
+		if err != nil {
+			return false, nil, "", fmt.Errorf("can not stat config %s: %w", path, err)
+		}
+
+		if err := os.WriteFile(path, updated, info.Mode()); err != nil {
 			return false, nil, "", fmt.Errorf("can not write config %s: %w", path, err)
 		}
 	} else {

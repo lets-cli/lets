@@ -2,6 +2,7 @@ package config
 
 import (
 	"bytes"
+	"strings"
 	"testing"
 
 	"github.com/lets-cli/lets/internal/checksum"
@@ -117,6 +118,71 @@ func TestParseCommandChecksum(t *testing.T) {
 
 		if !command.PersistChecksum {
 			t.Fatal("expected persisted checksum")
+		}
+	})
+
+	t.Run("invalid configurations", func(t *testing.T) {
+		tests := []struct {
+			name    string
+			text    string
+			wantErr string
+		}{
+			{
+				name: "both checksum files and sh set",
+				text: dedent.Dedent(`
+				checksum:
+				  files:
+				    - foo.txt
+				  sh: echo 1234
+				cmd: echo ok
+				`),
+				wantErr: "checksum must use only one of 'files' or 'sh'",
+			},
+			{
+				name: "persist checksum without checksum",
+				text: dedent.Dedent(`
+				persist_checksum: true
+				cmd: echo ok
+				`),
+				wantErr: "'persist_checksum' must be used with 'checksum'",
+			},
+			{
+				name: "checksum persist without files or sh",
+				text: dedent.Dedent(`
+				checksum:
+				  persist: true
+				cmd: echo ok
+				`),
+				wantErr: "'persist_checksum' or 'checksum.persist' must be used with 'checksum.files' or 'checksum.sh'",
+			},
+			{
+				name: "conflicting persist settings",
+				text: dedent.Dedent(`
+				persist_checksum: true
+				checksum:
+				  files:
+				    - foo.txt
+				  persist: false
+				cmd: echo ok
+				`),
+				wantErr: "'persist_checksum' conflicts with 'checksum.persist'",
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				buf := bytes.NewBufferString(tt.text)
+				command := &Command{}
+
+				err := yaml.NewDecoder(buf).Decode(&command)
+				if err == nil {
+					t.Fatal("expected command fixture decode error")
+				}
+
+				if !strings.Contains(err.Error(), tt.wantErr) {
+					t.Fatalf("expected error to contain %q, got %q", tt.wantErr, err.Error())
+				}
+			})
 		}
 	})
 }
