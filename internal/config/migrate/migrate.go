@@ -163,6 +163,7 @@ func formatCommandSpacing(data []byte) []byte {
 		if line == "commands:" {
 			inCommands = true
 			commandSeen = false
+
 			formatted = append(formatted, line)
 
 			continue
