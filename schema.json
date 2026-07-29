@@ -132,10 +132,7 @@
           "type": "boolean"
         },
         "checksum": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
+          "$ref": "#/definitions/command_checksum"
         },
         "env": {
           "$ref": "#/definitions/env"
@@ -235,6 +232,61 @@
           "items": {
             "$ref": "#/definitions/env_file_entry"
           }
+        }
+      ]
+    },
+    "checksum_files": {
+      "oneOf": [
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      ]
+    },
+    "command_checksum": {
+      "oneOf": [
+        {
+          "$ref": "#/definitions/checksum_files"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "files": {
+              "$ref": "#/definitions/checksum_files"
+            },
+            "sh": {
+              "type": "string",
+              "description": "Shell command that prints checksum value."
+            },
+            "persist": {
+              "type": "boolean",
+              "description": "Persist checksum and expose LETS_CHECKSUM_CHANGED variables."
+            }
+          },
+          "oneOf": [
+            {
+              "required": [
+                "files"
+              ]
+            },
+            {
+              "required": [
+                "sh"
+              ]
+            }
+          ],
+          "additionalProperties": false
         }
       ]
     }
