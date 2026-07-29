@@ -891,7 +891,7 @@ commands:
 
 This feature is useful when you want to know that something has changed between two executions of a command.
 
-`checksum.persist` can be used only if `checksum.files` or `checksum.sh` declared for command.
+`checksum.persist` can be used only if `checksum.files` or `checksum.sh` is declared for the command.
 
 If set to `true`, each run all calculated checksums will be stored to disk.
 
