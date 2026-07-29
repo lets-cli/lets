@@ -8,11 +8,9 @@ import (
 	"net/url"
 	"path"
 	"strings"
-	"sync"
 	"time"
 
 	bubblesprogress "charm.land/bubbles/v2/progress"
-	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/term"
 	"github.com/lets-cli/lets/internal/fetch"
@@ -30,9 +28,7 @@ type Observer struct {
 	writer     io.Writer
 	width      int
 	noColor    bool
-	animate    bool
 	throttle   time.Duration
-	finalPause time.Duration
 	fillColor  color.Color
 	emptyColor color.Color
 	now        func() time.Time
@@ -73,12 +69,6 @@ func WithThrottle(throttle time.Duration) Option {
 	}
 }
 
-func WithFinalPause(finalPause time.Duration) Option {
-	return func(observer *Observer) {
-		observer.finalPause = finalPause
-	}
-}
-
 func WithNow(now func() time.Time) Option {
 	return func(observer *Observer) {
 		observer.now = now
@@ -87,12 +77,10 @@ func WithNow(now func() time.Time) Option {
 
 func New(writer io.Writer, options ...Option) *Observer {
 	observer := &Observer{
-		writer:     writer,
-		width:      detectWidth(writer),
-		throttle:   100 * time.Millisecond,
-		finalPause: 750 * time.Millisecond,
-		animate:    isTerminal(writer),
-		now:        time.Now,
+		writer:   writer,
+		width:    detectWidth(writer),
+		throttle: 100 * time.Millisecond,
+		now:      time.Now,
 	}
 
 	for _, option := range options {
@@ -111,10 +99,6 @@ func New(writer io.Writer, options ...Option) *Observer {
 }
 
 func (o *Observer) Start(info fetch.ProgressInfo) fetch.ProgressTracker { //nolint:ireturn // Implements fetch.ProgressObserver.
-	if info.TotalBytes > 0 && o.animate {
-		return newAnimatedTracker(o, info)
-	}
-
 	tracker := &manualTracker{
 		observer: o,
 		info:     info,
@@ -243,226 +227,9 @@ func (t *manualTracker) progressModel(width int) bubblesprogress.Model {
 	return model
 }
 
-type animatedTracker struct {
-	observer   *Observer
-	program    *tea.Program
-	done       chan struct{}
-	label      string
-	read       int64
-	total      int64
-	lastUpdate time.Time
-}
-
-func newAnimatedTracker(observer *Observer, info fetch.ProgressInfo) *animatedTracker {
-	ready := make(chan struct{})
-	done := make(chan struct{})
-	label := downloadLabel(info.URL)
-	_, _ = fmt.Fprintln(observer.writer, labelLine("Downloading", label, observer.width))
-	model := newProgressModel(observer, label, info.TotalBytes, ready)
-	program := tea.NewProgram(
-		model,
-		tea.WithInput(nil),
-		tea.WithOutput(observer.writer),
-		tea.WithoutSignals(),
-	)
-
-	tracker := &animatedTracker{
-		observer: observer,
-		program:  program,
-		done:     done,
-		label:    label,
-		total:    info.TotalBytes,
-	}
-
-	go func() {
-		_, _ = program.Run()
-
-		close(done)
-	}()
-
-	<-ready
-
-	return tracker
-}
-
-func (t *animatedTracker) Add(n int64) {
-	t.read += n
-
-	now := t.observer.now()
-	if t.observer.throttle > 0 && !t.lastUpdate.IsZero() && now.Sub(t.lastUpdate) < t.observer.throttle {
-		return
-	}
-
-	t.program.Send(progressMsg{read: t.read, total: t.total})
-	t.lastUpdate = now
-}
-
-func (t *animatedTracker) Done(err error) {
-	if err != nil {
-		t.program.Send(progressErrMsg{})
-	} else {
-		t.program.Send(progressDoneMsg{read: t.read, total: t.total})
-	}
-
-	<-t.done
-
-	if err == nil {
-		_, _ = fmt.Fprintf(t.observer.writer, "%s\n", t.progressLine())
-	}
-}
-
-func (t *animatedTracker) progressLine() string {
-	bar := t.progressModel().ViewAs(1)
-	return fmt.Sprintf("%s 100%% %s/%s", bar, formatBytes(t.total), formatBytes(t.total))
-}
-
-func (t *animatedTracker) progressModel() bubblesprogress.Model {
-	model := bubblesprogress.New(
-		bubblesprogress.WithWidth(barWidthForTerminal(t.observer.width)),
-		bubblesprogress.WithoutPercentage(),
-		bubblesprogress.WithFillCharacters('#', '-'),
-	)
-	if t.observer.noColor {
-		model.FullColor = nil
-		model.EmptyColor = nil
-	} else {
-		applyProgressColors(&model, t.observer.fillColor, t.observer.emptyColor)
-	}
-
-	return model
-}
-
-type progressMsg struct {
-	read  int64
-	total int64
-}
-
-type progressDoneMsg struct {
-	read  int64
-	total int64
-}
-
-type progressErrMsg struct{}
-
-type progressQuitMsg struct{}
-
-type progressModel struct {
-	label      string
-	read       int64
-	total      int64
-	width      int
-	finalPause time.Duration
-	ready      chan struct{}
-	readyOnce  *sync.Once
-	progress   bubblesprogress.Model
-}
-
-func newProgressModel(observer *Observer, label string, total int64, ready chan struct{}) progressModel {
-	model := bubblesprogress.New(
-		bubblesprogress.WithWidth(barWidthForTerminal(observer.width)),
-		bubblesprogress.WithoutPercentage(),
-		bubblesprogress.WithFillCharacters('#', '-'),
-	)
-	if observer.noColor {
-		model.FullColor = nil
-		model.EmptyColor = nil
-	} else {
-		applyProgressColors(&model, observer.fillColor, observer.emptyColor)
-	}
-
-	return progressModel{
-		label:      label,
-		total:      total,
-		width:      observer.width,
-		finalPause: observer.finalPause,
-		ready:      ready,
-		readyOnce:  &sync.Once{},
-		progress:   model,
-	}
-}
-
-func (m progressModel) Init() tea.Cmd {
-	m.readyOnce.Do(func() {
-		close(m.ready)
-	})
-
-	return nil
-}
-
-func (m progressModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) { //nolint:ireturn // Required by Bubble Tea's model interface.
-	switch msg := msg.(type) {
-	case tea.WindowSizeMsg:
-		m.width = msg.Width
-		m.progress.SetWidth(barWidthForTerminal(msg.Width))
-
-		return m, nil
-
-	case progressMsg:
-		m.read = msg.read
-		m.total = msg.total
-
-		return m, m.progress.SetPercent(m.percent())
-
-	case progressDoneMsg:
-		m.read = msg.read
-		m.total = msg.total
-
-		return m, tea.Batch(m.progress.SetPercent(1), m.quitAfterFinalPause())
-
-	case progressErrMsg:
-		return m, tea.Quit
-
-	case progressQuitMsg:
-		return m, tea.Quit
-
-	case bubblesprogress.FrameMsg:
-		var cmd tea.Cmd
-
-		m.progress, cmd = m.progress.Update(msg)
-
-		return m, cmd
-
-	default:
-		return m, nil
-	}
-}
-
-func (m progressModel) View() tea.View {
-	return tea.NewView(m.progressLine())
-}
-
-func (m progressModel) progressLine() string {
-	return fmt.Sprintf("%s %3.0f%% %s/%s", m.progress.View(), m.percent()*100, formatBytes(m.read), formatBytes(m.total))
-}
-
-func (m progressModel) percent() float64 {
-	if m.total <= 0 {
-		return 0
-	}
-
-	return clamp(float64(m.read)/float64(m.total), 0, 1)
-}
-
-func (m progressModel) quitAfterFinalPause() tea.Cmd {
-	return tea.Tick(m.finalPause, func(time.Time) tea.Msg {
-		return progressQuitMsg{}
-	})
-}
-
-func barWidthForTerminal(width int) int {
-	suffixWidth := lipgloss.Width(" 100% 1023.9 KiB/1023.9 KiB")
-
-	spaceForBar := width - 1 - suffixWidth
-	if spaceForBar < minBarWidth {
-		return minBarWidth
-	}
-
-	return min(maxBarWidth, max(minBarWidth, spaceForBar))
-}
-
 func detectWidth(writer io.Writer) int {
 	file, ok := writer.(term.File)
-	if !ok || !isTerminal(writer) {
+	if !ok || !util.IsTerminalWriter(writer) {
 		return defaultWidth
 	}
 
@@ -472,10 +239,6 @@ func detectWidth(writer io.Writer) int {
 	}
 
 	return width
-}
-
-func isTerminal(writer io.Writer) bool {
-	return util.IsTerminalWriter(writer)
 }
 
 func applyProgressColors(model *bubblesprogress.Model, fill, empty color.Color) {
