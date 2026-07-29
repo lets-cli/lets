@@ -1,7 +1,10 @@
 package cli
 
 import (
+	"context"
+	"os"
 	"testing"
+	"time"
 
 	cmdpkg "github.com/lets-cli/lets/internal/cmd"
 	"github.com/lets-cli/lets/internal/settings"
@@ -66,6 +69,57 @@ func TestFailOnConfigError(t *testing.T) {
 	if failOnConfigError(root, current, &flags{version: true}) {
 		t.Fatal("expected --version to allow missing config")
 	}
+}
+
+func TestSignalContext(t *testing.T) {
+	assertClosed := func(t *testing.T, ch <-chan struct{}, message string) {
+		t.Helper()
+
+		select {
+		case <-ch:
+		case <-time.After(time.Second):
+			t.Fatal(message)
+		}
+	}
+
+	t.Run("cancels and stops signal notification after first signal", func(t *testing.T) {
+		signals := make(chan os.Signal, 1)
+		stopped := make(chan struct{})
+		ctx := signalContext(context.Background(), signals, func() {
+			close(stopped)
+		})
+
+		signals <- os.Interrupt
+
+		assertClosed(t, ctx.Done(), "expected signal context to be canceled")
+		assertClosed(t, stopped, "expected signal notification to stop")
+	})
+
+	t.Run("cancels when parent context is canceled", func(t *testing.T) {
+		parent, cancel := context.WithCancel(context.Background())
+		stopped := make(chan struct{})
+		ctx := signalContext(parent, make(chan os.Signal), func() {
+			close(stopped)
+		})
+
+		cancel()
+
+		assertClosed(t, ctx.Done(), "expected signal context to be canceled by parent")
+		assertClosed(t, stopped, "expected signal notification to stop")
+	})
+
+	t.Run("cancels when parent context is already canceled", func(t *testing.T) {
+		parent, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		stopped := make(chan struct{})
+		ctx := signalContext(parent, make(chan os.Signal), func() {
+			close(stopped)
+		})
+
+		assertClosed(t, ctx.Done(), "expected signal context to be canceled by parent")
+		assertClosed(t, stopped, "expected signal notification to stop")
+	})
 }
 
 func TestShouldCheckForUpdate(t *testing.T) {

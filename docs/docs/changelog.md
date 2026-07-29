@@ -8,6 +8,7 @@ title: Changelog
 * `[Added]` Add `checksum.files`, `checksum.sh`, and `checksum.persist` command checksum syntax while keeping the old checksum format compatible.
 * `[Added]` Add `lets self upgrade --pre` to opt into upgrading to the latest prerelease.
 * `[Added]` Add `lets self fix` config migration command with `--dry-run` preview output for deprecated checksum syntax.
+* `[Fixed]` Allow `lets self upgrade` downloads to respond to Ctrl-C.
 * `[Fixed]` Make checksum calculation respect command-level `work_dir` overrides.
 * `[Fixed]` Restore the release checkout after the GoReleaser dry run so prerelease publishing does not fail on a dirty `go.mod`.
 
