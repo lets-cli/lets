@@ -418,37 +418,39 @@ func TestSelfCmd(t *testing.T) {
 		}
 	})
 
-	t.Run("should run self upgrade subcommand", func(t *testing.T) {
-		bufOut := new(bytes.Buffer)
-		called := false
+	for _, command := range []string{"upgrade", "update"} {
+		t.Run("should run self "+command+" subcommand", func(t *testing.T) {
+			bufOut := new(bytes.Buffer)
+			called := false
 
-		rootCmd := CreateRootCommand("v0.0.0-test", "")
-		rootCmd.SetArgs([]string{"self", "upgrade"})
-		rootCmd.SetOut(bufOut)
-		rootCmd.SetErr(bufOut)
-		selfCmd := &cobra.Command{
-			Use:   "self",
-			Short: "Manage lets CLI itself",
-		}
-		rootCmd.AddCommand(selfCmd)
+			rootCmd := CreateRootCommand("v0.0.0-test", "")
+			rootCmd.SetArgs([]string{"self", command})
+			rootCmd.SetOut(bufOut)
+			rootCmd.SetErr(bufOut)
+			selfCmd := &cobra.Command{
+				Use:   "self",
+				Short: "Manage lets CLI itself",
+			}
+			rootCmd.AddCommand(selfCmd)
 
-		selfCmd.AddCommand(initUpgradeCommandWith(func(_ *cobra.Command) (upgrade.Upgrader, error) {
-			return mockUpgraderFunc(func(ctx context.Context) error {
-				called = true
+			selfCmd.AddCommand(initUpgradeCommandWith(func(_ *cobra.Command) (upgrade.Upgrader, error) {
+				return mockUpgraderFunc(func(ctx context.Context) error {
+					called = true
 
-				return nil
-			}), nil
-		}))
+					return nil
+				}), nil
+			}))
 
-		err := rootCmd.Execute()
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
+			err := rootCmd.Execute()
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
 
-		if !called {
-			t.Fatal("expected upgrader to be called")
-		}
-	})
+			if !called {
+				t.Fatal("expected upgrader to be called")
+			}
+		})
+	}
 
 	t.Run("should pass pre flag to self upgrade factory", func(t *testing.T) {
 		bufOut := new(bytes.Buffer)
