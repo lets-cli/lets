@@ -12,7 +12,7 @@ import (
 func TestObserver(t *testing.T) {
 	t.Run("renders unchanged downloading label for known size", func(t *testing.T) {
 		var out bytes.Buffer
-		observer := New(&out, WithWidth(120), WithNoColor(true), WithThrottle(0), WithFinalPause(0))
+		observer := New(&out, WithWidth(120), WithNoColor(true), WithThrottle(0))
 
 		tracker := observer.Start(fetch.ProgressInfo{
 			Kind:       fetch.SourceRemoteConfig,
@@ -87,6 +87,24 @@ func TestObserver(t *testing.T) {
 			t.Fatalf("expected add at throttle boundary to render")
 		}
 	})
+
+	t.Run("does not enable terminal keyboard modes", func(t *testing.T) {
+		var out bytes.Buffer
+		observer := New(&out, WithWidth(120), WithNoColor(true), WithThrottle(0))
+
+		tracker := observer.Start(fetch.ProgressInfo{
+			Kind:       fetch.SourceSelfUpdate,
+			URL:        "https://example.com/lets_Darwin_arm64.tar.gz",
+			TotalBytes: 4,
+		})
+		tracker.Add(4)
+		tracker.Done(nil)
+
+		got := out.String()
+		if strings.Contains(got, "\033[=1;1u") || strings.Contains(got, "\033[>4;2m") {
+			t.Fatalf("progress output must not change terminal keyboard modes, got %q", got)
+		}
+	})
 }
 
 func TestFormatBytes(t *testing.T) {
@@ -108,25 +126,5 @@ func TestDownloadLabel(t *testing.T) {
 	got := downloadLabel("https://user:pass@example.com/path/lets.yaml?token=secret#fragment")
 	if got != "lets.yaml" {
 		t.Fatalf("expected filename label, got %q", got)
-	}
-}
-
-func TestProgressModel(t *testing.T) {
-	observer := New(&bytes.Buffer{}, WithWidth(120), WithNoColor(true), WithFinalPause(0))
-	model := newProgressModel(observer, "lets.yaml", 1107, make(chan struct{}))
-
-	_, cmd := model.Update(progressMsg{read: 512, total: 1107})
-	if cmd == nil {
-		t.Fatal("expected progress update to return animation command")
-	}
-
-	updated, _ := model.Update(progressDoneMsg{read: 1107, total: 1107})
-	finalModel := updated.(progressModel)
-	got := finalModel.View().Content
-	if strings.Contains(got, "Downloaded") {
-		t.Fatalf("did not expect label to change to Downloaded, got %q", got)
-	}
-	if !strings.Contains(got, "100% 1.1 KiB/1.1 KiB") {
-		t.Fatalf("expected final progress status, got %q", got)
 	}
 }

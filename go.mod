@@ -6,7 +6,6 @@ toolchain go1.26.0
 
 require (
 	charm.land/bubbles/v2 v2.1.0
-	charm.land/bubbletea/v2 v2.0.2
 	charm.land/lipgloss/v2 v2.0.2
 	github.com/charmbracelet/colorprofile v0.4.2
 	github.com/charmbracelet/x/ansi v0.11.6
@@ -28,6 +27,7 @@ require (
 )
 
 require (
+	charm.land/bubbletea/v2 v2.0.2 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/aymanbagabas/go-udiff v0.4.1 // indirect
 	github.com/charmbracelet/harmonica v0.2.0 // indirect
@@ -69,7 +69,7 @@ require (
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 	github.com/lithammer/dedent v1.1.0
 	github.com/spf13/pflag v1.0.9
-	golang.org/x/sys v0.45.0 // indirect
+	golang.org/x/sys v0.45.0
 	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b // indirect
 	gopkg.in/yaml.v3 v3.0.1
 )
