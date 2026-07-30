@@ -5,6 +5,7 @@ title: Changelog
 
 ## [Unreleased](https://github.com/lets-cli/lets/releases/tag/v0.0.X)
 
+* `[Added]` Add `update` as an alias for `lets self upgrade`.
 * `[Added]` Add `checksum.files`, `checksum.sh`, and `checksum.persist` command checksum syntax while keeping the old checksum format compatible.
 * `[Added]` Add `lets self upgrade --pre` to opt into upgrading to the latest prerelease.
 * `[Added]` Add `lets self fix` config migration command with `--dry-run` preview output for deprecated checksum syntax.

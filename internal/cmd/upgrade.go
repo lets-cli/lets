@@ -49,9 +49,10 @@ func upgradeProgress(stderr io.Writer, appSettings settings.Settings) fetch.Prog
 
 func initUpgradeCommandWith(createUpgrader upgraderFactory) *cobra.Command {
 	upgradeCmd := &cobra.Command{
-		Use:   "upgrade",
-		Short: "Upgrade lets to latest version",
-		Args:  cobra.NoArgs,
+		Use:     "upgrade",
+		Aliases: []string{"update"},
+		Short:   "Upgrade lets to latest version",
+		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			upgrader, err := createUpgrader(cmd)
 			if err != nil {
