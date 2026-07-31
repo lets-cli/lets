@@ -142,6 +142,6 @@ commands:
     work_dir: docs
     cmd: npm run doc:deploy
 
-  run-docs:
+  docs:
     work_dir: docs
-    cmd: npm start
+    cmd: npm install && npm start
