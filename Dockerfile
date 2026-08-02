@@ -1,4 +1,4 @@
-FROM golang:1.26-bookworm AS builder
+FROM golang:1.26.5-bookworm AS builder
 
 ENV GOPROXY=https://proxy.golang.org
 ENV CGO_ENABLED=0
@@ -17,7 +17,7 @@ RUN cd /tmp && \
     ./install.sh /usr && \
     echo Bats installed
 
-RUN go install gotest.tools/gotestsum@latest
+RUN go install gotest.tools/gotestsum@v1.13.0
 
 COPY go.mod .
 COPY go.sum .

@@ -1,17 +1,134 @@
 version: 2
-updates:
-  - package-ecosystem: gomod
-    directory: /
-    labels:
-      - dependencies
-      - go
+
+multi-ecosystem-groups:
+  examples:
     schedule:
       day: sunday
       interval: weekly
 
-  - package-ecosystem: "npm"
-    directory: "/docs"
+updates:
+  - package-ecosystem: gomod
+    directory: /
+    cooldown:
+      default-days: 7
+      semver-major-days: 30
+      semver-minor-days: 14
+      semver-patch-days: 7
+    groups:
+      go-routine:
+        applies-to: version-updates
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
+      go-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+    labels:
+      - dependencies
+      - go
+    open-pull-requests-limit: 2
     schedule:
+      day: sunday
+      interval: weekly
+
+  - package-ecosystem: npm
+    directory: "/docs"
+    cooldown:
+      default-days: 7
+      semver-major-days: 30
+      semver-minor-days: 14
+      semver-patch-days: 7
+    groups:
+      docs-major:
+        applies-to: version-updates
+        patterns:
+          - "*"
+        update-types:
+          - major
+      docs-routine:
+        applies-to: version-updates
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
+      docs-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+    labels:
+      - dependencies
+      - javascript
+    open-pull-requests-limit: 2
+    schedule:
+      day: sunday
       interval: "weekly"
-    # Disable all pull requests for npm dependencies in docs directory
-    open-pull-requests-limit: 0
+
+  - package-ecosystem: github-actions
+    directory: /
+    cooldown:
+      default-days: 7
+    groups:
+      actions:
+        applies-to: version-updates
+        patterns:
+          - "*"
+      actions-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+    open-pull-requests-limit: 1
+    schedule:
+      interval: monthly
+
+  - package-ecosystem: docker
+    directory: /
+    cooldown:
+      default-days: 7
+    groups:
+      build-images:
+        applies-to: version-updates
+        patterns:
+          - "*"
+      build-images-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+    labels:
+      - dependencies
+      - go
+    open-pull-requests-limit: 1
+    schedule:
+      interval: monthly
+
+  - package-ecosystem: pip
+    directory: "/examples/python"
+    cooldown:
+      default-days: 7
+    groups:
+      python-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+    multi-ecosystem-group: examples
+    patterns:
+      - "*"
+
+  - package-ecosystem: docker
+    directory: "/examples/python"
+    cooldown:
+      default-days: 7
+    multi-ecosystem-group: examples
+    patterns:
+      - "*"
+
+  - package-ecosystem: docker-compose
+    directory: "/examples/python"
+    cooldown:
+      default-days: 7
+    multi-ecosystem-group: examples
+    patterns:
+      - "*"

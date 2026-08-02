@@ -1,3 +1,5 @@
+const {themes} = require('prism-react-renderer');
+
 module.exports = {
   title: 'Lets',
   tagline: 'CLI task runner for developers - a better alternative to make',
@@ -8,7 +10,7 @@ module.exports = {
   projectName: 'lets', // Usually your repo name.
   themeConfig: {
     prism: {
-      theme: require('prism-react-renderer/themes/vsDark'),
+      theme: themes.vsDark,
     },
     navbar: {
       title: 'Lets',
