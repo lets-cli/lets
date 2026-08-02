@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkdocs=self.webpackChunkdocs||[]).push([[2535],{5641:function(e){e.exports=JSON.parse('{"title":"Recent posts","items":[{"title":"Lets 0.0.63","permalink":"/blog/lets-0-0-63"},{"title":"History of lets","permalink":"/blog/2020/05/24/history-of-lets"}]}')}}]);
