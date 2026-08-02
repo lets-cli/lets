@@ -25,7 +25,7 @@ services:
     command: ipython
 
   postgres:
-    image: postgres:11.22-alpine@sha256:33a78858869c44785eee197a60cf281c5c80376bb725992f092ec5e7e072f3de
+    image: postgres:11.22-alpine
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
