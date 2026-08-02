@@ -20,12 +20,12 @@ jobs:
         if: runner.os == 'macOS'
         run: brew install bash
       - name: Setup go
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: 1.26.x
+          go-version: 1.26.5
       - name: Checkout code
-        uses: actions/checkout@v2
-      - run: go install gotest.tools/gotestsum@latest
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - run: go install gotest.tools/gotestsum@v1.13.0
       - name: Test unit
         env:
           LETS_CONFIG_DIR: ..
@@ -35,22 +35,58 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
-      - name: Install Lets
-        uses: lets-cli/lets-action@v1.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Setup go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          version: latest
+          go-version: 1.26.5
       - name: Test bats
-        run: timeout 120 lets test-bats
+        run: timeout 120 go run ./cmd/lets test-bats
 
   lint:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
-      - name: Install Lets
-        uses: lets-cli/lets-action@v1.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Setup go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          version: latest
+          go-version: 1.26.5
       - name: Run lint
-        run: lets lint
+        run: go run ./cmd/lets lint
+
+  docs:
+    name: Docs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          cache: npm
+          cache-dependency-path: docs/package-lock.json
+          node-version: 24.18.0
+      - name: Install dependencies
+        run: npm ci
+        working-directory: docs
+      - name: Copy install script
+        run: cp install.sh docs/static/install.sh
+      - name: Build docs
+        run: npm run build
+        working-directory: docs
+
+  examples:
+    name: Examples
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Validate Python example
+        env:
+          CURRENT_UID: "1000:1000"
+        run: docker compose -f examples/python/docker-compose.yaml config --quiet
+      - name: Build Python example
+        env:
+          CURRENT_UID: "1000:1000"
+        run: docker compose -f examples/python/docker-compose.yaml build

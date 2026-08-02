@@ -3,6 +3,11 @@ id: changelog
 title: Changelog
 ---
 
+## [Unreleased](https://github.com/lets-cli/lets/releases/tag/v0.0.X)
+
+* `[Changed]` Group and delay Dependabot version updates, enable updates for docs and examples, and validate those projects in pull request CI.
+* `[Fixed]` Restore the documentation and Python example builds after dependency updates.
+
 ## [0.0.63](https://github.com/lets-cli/lets/releases/tag/v0.0.63)
 
 * `[Added]` Add `update` as an alias for `lets self upgrade`.
@@ -218,7 +223,7 @@ This tag is not released due to build issues
 
 * `[Added]` Validate if commands declared in `depends` actually exist.
 * `[Refactoring]` Refactored `executor` package, implemented `Executor` struct.
-* `[Added]` Support `NO_COLOR` env variable to disable colored output. See <https://no-color.org/>
+* `[Added]` Support `NO_COLOR` env variable to disable colored output. See [no-color.org](https://no-color.org/)
 * `[Added]` `LETS_COMMAND_ARGS` - will contain command's positional args. [See config](/docs/env#default-environment-variables).
 
   Also, special bash env variables such as `"$@"` and `"$1"` etc. now available inside `cmd` script and work as expected.
