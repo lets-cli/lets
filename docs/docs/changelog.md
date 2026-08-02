@@ -3,7 +3,7 @@ id: changelog
 title: Changelog
 ---
 
-## [Unreleased](https://github.com/lets-cli/lets/releases/tag/v0.0.X)
+## [0.0.63](https://github.com/lets-cli/lets/releases/tag/v0.0.63)
 
 * `[Added]` Add `update` as an alias for `lets self upgrade`.
 * `[Added]` Add `checksum.files`, `checksum.sh`, and `checksum.persist` command checksum syntax while keeping the old checksum format compatible.
