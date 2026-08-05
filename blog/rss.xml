@@ -17,7 +17,7 @@
             <content:encoded><![CDATA[<p>Lets 0.0.63 is available now.</p>
 <p>Important for existing installations: the installer-managed binary now lives at <code>$HOME/.lets/bin/lets</code>, with a symlink from a directory in your <code>PATH</code>. Follow the <a href="https://lets-cli.org/blog/lets-0-0-63#upgrade" class="">Upgrade</a> section once to move an older installation safely.</p>
 <p>If you are coming from 0.0.55, this release is much more than a collection of fixes.</p>
-<p>Lets can now run a config from a URL, load dotenv files, migrate checksum configuration, explain failed dependencies, and teach AI agents to use project tasks.</p>
+<p>Lets can now run a config from a URL, load dotenv files, has new checksum configuration, better explain failed dependencies, and teach AI agents to use project tasks.</p>
 <p>The result is a task runner that is easier to share, easier to understand when something goes wrong, and more pleasant to use every day.</p>
 <h2 class="anchor anchorTargetStickyNavbar_x4mB" id="highlights">Highlights<a href="https://lets-cli.org/blog/lets-0-0-63#highlights" class="hash-link" aria-label="Direct link to Highlights" title="Direct link to Highlights" translate="no">​</a></h2>
 <ul>
@@ -28,21 +28,21 @@
 <li class=""><a href="https://lets-cli.org/blog/lets-0-0-63#help-ai-coding-agents-use-the-tasks-you-already-have" class="">Install a bundled Agent Skill for compatible coding agents</a>.</li>
 </ul>
 <h2 class="anchor anchorTargetStickyNavbar_x4mB" id="safer-installation-and-upgrades">Safer installation and upgrades<a href="https://lets-cli.org/blog/lets-0-0-63#safer-installation-and-upgrades" class="hash-link" aria-label="Direct link to Safer installation and upgrades" title="Direct link to Safer installation and upgrades" translate="no">​</a></h2>
+<p>If you use bash installation script <code>https://lets-cli.org/install.sh</code>, you need to be aware that there is a new filesystem layout.</p>
 <p>The new filesystem layout separates the managed binary from the command exposed through <code>PATH</code>.</p>
-<p>By default, the installer writes the binary to <code>$HOME/.lets/bin/lets</code>. It creates a symlink in the first preferred directory already present in <code>PATH</code>:</p>
+<p>Previously installation script installed <code>lets</code>  to current directory or to <code>-b /path/to/binary</code>.</p>
+<blockquote>
+<p>If you previously installed <code>lets</code> using old installation script, see #Upgrade section.</p>
+</blockquote>
+<p>Now, the installer writes the binary to <code>$HOME/.lets/bin/lets</code>. It creates a symlink in the first preferred directory already present in <code>PATH</code>:</p>
 <ul>
 <li class=""><code>$HOME/.local/bin</code></li>
 <li class=""><code>$HOME/bin</code></li>
 <li class=""><code>$HOME/.bin</code></li>
 </ul>
-<p>If none is available, the installer creates <code>$HOME/.local/bin</code>, places the symlink there, and asks to add that directory to your shell profile.</p>
-<p>If you want to install lets on CI or in Dockerfile, use <code>LETS_INSTALL_NO_PROMPT=1</code> to suppress profile updating prompts.</p>
+<p>If none of those directories are available, the installer creates <code>$HOME/.local/bin</code>, places the symlink there, and asks to add that directory to your shell profile.</p>
+<p>By default installation script will propmt if user whats installator to update user's profile (.bashrc or .zshrc). If you want to install lets using installation script on CI or in Dockerfile, use <code>LETS_INSTALL_NO_PROMPT=1</code> to suppress profile updating prompts.</p>
 <p><code>lets self upgrade</code> follows the symlink and replaces the managed target. It refuses common system-managed locations and redirects Homebrew users to the correct package-manager command.</p>
-<p>Prereleases remain opt-in in 0.0.63. Release candidates do not replace the stable Homebrew formula or AUR package. Testers using an installer-managed copy can opt in with:</p>
-<div class="language-bash codeBlockContainer_aalF theme-code-block" style="--prism-color:#9CDCFE;--prism-background-color:#1E1E1E"><div class="codeBlockContent_N_DF"><pre tabindex="0" class="prism-code language-bash codeBlock_zHgq thin-scrollbar" style="color:#9CDCFE;background-color:#1E1E1E"><code class="codeBlockLines_RjmQ"><div class="token-line" style="color:#9CDCFE"><span class="token plain">lets self upgrade --pre</span><br></div></code></pre></div></div>
-<p>Homebrew users can install the separate formula:</p>
-<div class="language-bash codeBlockContainer_aalF theme-code-block" style="--prism-color:#9CDCFE;--prism-background-color:#1E1E1E"><div class="codeBlockContent_N_DF"><pre tabindex="0" class="prism-code language-bash codeBlock_zHgq thin-scrollbar" style="color:#9CDCFE;background-color:#1E1E1E"><code class="codeBlockLines_RjmQ"><div class="token-line" style="color:#9CDCFE"><span class="token plain">brew install lets-cli/tap/lets-beta</span><br></div></code></pre></div></div>
-<p>The stable and beta formulas both provide the <code>lets</code> binary, so uninstall one before switching to the other.</p>
 <h2 class="anchor anchorTargetStickyNavbar_x4mB" id="upgrade">Upgrade<a href="https://lets-cli.org/blog/lets-0-0-63#upgrade" class="hash-link" aria-label="Direct link to Upgrade" title="Direct link to Upgrade" translate="no">​</a></h2>
 <p>Already have Lets installed? First check the version and the binary currently selected by your <code>PATH</code>:</p>
 <div class="language-bash codeBlockContainer_aalF theme-code-block" style="--prism-color:#9CDCFE;--prism-background-color:#1E1E1E"><div class="codeBlockContent_N_DF"><pre tabindex="0" class="prism-code language-bash codeBlock_zHgq thin-scrollbar" style="color:#9CDCFE;background-color:#1E1E1E"><code class="codeBlockLines_RjmQ"><div class="token-line" style="color:#9CDCFE"><span class="token plain">lets --version</span><br></div><div class="token-line" style="color:#9CDCFE"><span class="token plain">command -v lets</span><br></div></code></pre></div></div>
@@ -69,6 +69,12 @@
 <p>After this one-time migration, future installer-managed updates are:</p>
 <div class="language-bash codeBlockContainer_aalF theme-code-block" style="--prism-color:#9CDCFE;--prism-background-color:#1E1E1E"><div class="codeBlockContent_N_DF"><pre tabindex="0" class="prism-code language-bash codeBlock_zHgq thin-scrollbar" style="color:#9CDCFE;background-color:#1E1E1E"><code class="codeBlockLines_RjmQ"><div class="token-line" style="color:#9CDCFE"><span class="token plain">lets self upgrade</span><br></div><div class="token-line" style="color:#9CDCFE"><span class="token plain">lets self update</span><br></div></code></pre></div></div>
 <p><code>lets self update</code> is a new alias for the same operation.</p>
+<h3 class="anchor anchorTargetStickyNavbar_x4mB" id="prereleases">Prereleases<a href="https://lets-cli.org/blog/lets-0-0-63#prereleases" class="hash-link" aria-label="Direct link to Prereleases" title="Direct link to Prereleases" translate="no">​</a></h3>
+<p>Prereleases remain opt-in in 0.0.63. Release candidates do not replace the stable Homebrew formula or AUR package. Testers using an installer-managed copy can opt in with:</p>
+<div class="language-bash codeBlockContainer_aalF theme-code-block" style="--prism-color:#9CDCFE;--prism-background-color:#1E1E1E"><div class="codeBlockContent_N_DF"><pre tabindex="0" class="prism-code language-bash codeBlock_zHgq thin-scrollbar" style="color:#9CDCFE;background-color:#1E1E1E"><code class="codeBlockLines_RjmQ"><div class="token-line" style="color:#9CDCFE"><span class="token plain">lets self upgrade --pre</span><br></div></code></pre></div></div>
+<p>Homebrew users can install the separate formula:</p>
+<div class="language-bash codeBlockContainer_aalF theme-code-block" style="--prism-color:#9CDCFE;--prism-background-color:#1E1E1E"><div class="codeBlockContent_N_DF"><pre tabindex="0" class="prism-code language-bash codeBlock_zHgq thin-scrollbar" style="color:#9CDCFE;background-color:#1E1E1E"><code class="codeBlockLines_RjmQ"><div class="token-line" style="color:#9CDCFE"><span class="token plain">brew install lets-cli/tap/lets-beta</span><br></div></code></pre></div></div>
+<p>The stable and beta formulas both provide the <code>lets</code> binary, so uninstall one before switching to the other.</p>
 <p>See the <a class="" href="https://lets-cli.org/docs/installation">installation guide</a> for binaries, source builds, CI, and uninstall instructions.</p>
 <h2 class="anchor anchorTargetStickyNavbar_x4mB" id="run-config-from-a-url">Run config from a URL<a href="https://lets-cli.org/blog/lets-0-0-63#run-config-from-a-url" class="hash-link" aria-label="Direct link to Run config from a URL" title="Direct link to Run config from a URL" translate="no">​</a></h2>
 <p>Lets can now use an HTTP or HTTPS URL as its main config:</p>
