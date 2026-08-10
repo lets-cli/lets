@@ -342,7 +342,8 @@ func TestRootDirIsInvocationDir(t *testing.T) {
 		defer srv.Close()
 
 		root := t.TempDir()
-		t.Setenv("HOME", t.TempDir())
+		home := t.TempDir()
+		t.Setenv("HOME", home)
 		t.Chdir(root)
 
 		cfg, err := LoadRemote(ctx, srv.URL, false, "0.0.0-test")
@@ -351,8 +352,14 @@ func TestRootDirIsInvocationDir(t *testing.T) {
 		}
 
 		assertSameDir(t, "RootDir", cfg.RootDir, root)
-		if cfg.ConfigDir == cfg.RootDir {
-			t.Fatal("expected ConfigDir to be the remote cache dir, not the root")
+		assertSameDir(t, "ConfigDir", cfg.ConfigDir, filepath.Join(home, ".config", "lets", "remote-configs"))
+
+		// what a command actually receives, not just the field behind it
+		builtin := cfg.BuiltinEnv(cfg.Shell)
+		assertSameDir(t, "LETS_CONFIG_DIR", builtin["LETS_CONFIG_DIR"], cfg.ConfigDir)
+
+		if builtin["LETS_CONFIG"] != srv.URL {
+			t.Fatalf("expected LETS_CONFIG=%q, got %q", srv.URL, builtin["LETS_CONFIG"])
 		}
 	})
 }
