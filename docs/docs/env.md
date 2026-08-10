@@ -17,9 +17,9 @@ title: Environment
 
 * `LETS_COMMAND_NAME` - string name of launched command
 * `LETS_COMMAND_ARGS` - positional arguments for launched command, e.g. for `lets run --debug --config=test.ini` it will contain `--debug --config=test.ini`
-* `LETS_COMMAND_WORK_DIR` - absolute path to `work_dir` specified in command.
-* `LETS_CONFIG` - absolute path to lets config file.
-* `LETS_CONFIG_DIR` - absolute path to lets config file firectory.
+* `LETS_COMMAND_WORK_DIR` - absolute path to the directory the command runs in: the root dir, or the command's `work_dir` if it sets one.
+* `LETS_CONFIG` - absolute path to lets config file. For a remote config this is the URL it was loaded from.
+* `LETS_CONFIG_DIR` - absolute path to the directory holding the config file. Use it to target the project rather than the directory you ran `lets` from. For a remote config this is the local cache directory.
 * `LETS_OS` - current operating system name from Go runtime, for example `linux`, `darwin`, `windows`
 * `LETS_ARCH` - current architecture name from Go runtime, for example `amd64`, `arm64`, `386`
 * `LETS_SHELL` - shell from config or command.

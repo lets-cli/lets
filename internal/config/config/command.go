@@ -20,7 +20,8 @@ type Command struct {
 	After string
 	// overrides global shell for this particular command
 	Shell string
-	// overrides global workdir (where lets.yaml is located) for this particular command
+	// work_dir as authored: overrides Config.RootDir for this command.
+	// Relative paths resolve against the root — see Config.CommandWorkDir.
 	WorkDir     string
 	Description string
 	// env from command
