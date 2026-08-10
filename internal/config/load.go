@@ -59,8 +59,8 @@ func LoadWithContext(ctx context.Context, configName string, configDir string, v
 	return loadConfigFromFile(ctx, configPath.AbsPath, configPath.RootDir, configPath.DotLetsDir, configPath.Filename, version, opts)
 }
 
-// LoadRemote downloads (or loads from cache) a remote lets.yaml at url and
-// returns a Config with the working directory set to the caller's CWD.
+// LoadRemote downloads (or loads from cache) a remote lets.yaml at url.
+// Its root is the caller's cwd, same as for a local config.
 func LoadRemote(ctx context.Context, url string, noCache bool, version string, options ...LoadOption) (*config.Config, error) {
 	opts := newLoadOptions(options)
 	if noCache {

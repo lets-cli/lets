@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/lets-cli/lets/internal/config/path"
@@ -67,7 +68,16 @@ func FindConfig(configName string, configDirFlag string) (PathInfo, error) {
 
 	configDir := filepath.Dir(configAbsPath)
 
-	dotLetsDir, err := workdir.GetDotLetsDir(configDir)
+	// The root is the cwd, not the config dir: a config describes commands, it does
+	// not relocate them. --config-dir / LETS_CONFIG_DIR only steer discovery.
+	rootDir, err := os.Getwd()
+	if err != nil {
+		return PathInfo{}, fmt.Errorf("failed to get working directory: %w", err)
+	}
+
+	// .lets follows the root, so persisted checksums stay paired with the files
+	// they were computed from.
+	dotLetsDir, err := workdir.GetDotLetsDir(rootDir)
 	if err != nil {
 		return PathInfo{}, fmt.Errorf("can not get .lets absolute path: %w", err)
 	}
@@ -77,10 +87,9 @@ func FindConfig(configName string, configDirFlag string) (PathInfo, error) {
 	}
 
 	pathInfo := PathInfo{
-		AbsPath:   configAbsPath,
-		ConfigDir: configDir,
-		// preserved as-is here; the root is decoupled from the config dir in a follow-up
-		RootDir:    configDir,
+		AbsPath:    configAbsPath,
+		ConfigDir:  configDir,
+		RootDir:    rootDir,
 		Filename:   configName,
 		DotLetsDir: dotLetsDir,
 	}

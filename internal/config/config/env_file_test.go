@@ -176,7 +176,7 @@ func TestEnvFilesLoad(t *testing.T) {
 			},
 		}
 
-		got, err := envFiles.Load(cfg, nil)
+		got, err := envFiles.Load(cfg.RootDir, nil)
 		if err != nil {
 			t.Fatalf("unexpected load error: %s", err)
 		}
@@ -194,7 +194,7 @@ func TestEnvFilesLoad(t *testing.T) {
 			},
 		}
 
-		got, err := envFiles.Load(cfg, nil)
+		got, err := envFiles.Load(cfg.RootDir, nil)
 		if err != nil {
 			t.Fatalf("unexpected load error: %s", err)
 		}
@@ -209,7 +209,7 @@ func TestEnvFilesLoad(t *testing.T) {
 			Items: []EnvFile{{Name: ".env.missing", Required: true}},
 		}
 
-		_, err := envFiles.Load(cfg, nil)
+		_, err := envFiles.Load(cfg.RootDir, nil)
 		if err == nil {
 			t.Fatal("expected load error")
 		}
@@ -224,7 +224,7 @@ func TestEnvFilesLoad(t *testing.T) {
 			Items: []EnvFile{{Name: ".env.invalid", Required: true}},
 		}
 
-		_, err := envFiles.Load(cfg, nil)
+		_, err := envFiles.Load(cfg.RootDir, nil)
 		if err == nil {
 			t.Fatal("expected load error")
 		}
@@ -302,7 +302,7 @@ func TestCommandGetEnvWithEnvFile(t *testing.T) {
 	}
 
 	cmd := cfg.Commands["echo"]
-	got, err := cmd.GetEnv(*cfg, cfg.CommandBuiltinEnv(cmd, cfg.Shell, cfg.RootDir))
+	got, err := cmd.GetEnv(*cfg, cfg.CommandWorkDir(cmd), cfg.CommandBuiltinEnv(cmd, cfg.Shell, cfg.RootDir))
 	if err != nil {
 		t.Fatalf("unexpected command env error: %s", err)
 	}
@@ -336,13 +336,13 @@ func TestCommandGetEnvDoesNotReuseBuiltinEnvCache(t *testing.T) {
 	cmd := cfg.Commands["echo"]
 
 	cmd.Args = []string{"one"}
-	gotOne, err := cmd.GetEnv(*cfg, cfg.CommandBuiltinEnv(cmd, cfg.Shell, cfg.RootDir))
+	gotOne, err := cmd.GetEnv(*cfg, cfg.CommandWorkDir(cmd), cfg.CommandBuiltinEnv(cmd, cfg.Shell, cfg.RootDir))
 	if err != nil {
 		t.Fatalf("unexpected command env error: %s", err)
 	}
 
 	cmd.Args = []string{"two"}
-	gotTwo, err := cmd.GetEnv(*cfg, cfg.CommandBuiltinEnv(cmd, cfg.Shell, cfg.RootDir))
+	gotTwo, err := cmd.GetEnv(*cfg, cfg.CommandWorkDir(cmd), cfg.CommandBuiltinEnv(cmd, cfg.Shell, cfg.RootDir))
 	if err != nil {
 		t.Fatalf("unexpected command env error: %s", err)
 	}

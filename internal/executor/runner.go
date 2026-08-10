@@ -45,10 +45,7 @@ func (r *shellRunner) run(command *config.Command, cmdScript string) error {
 	osCmd.Stderr = r.out
 	osCmd.Stdin = os.Stdin
 
-	osCmd.Dir = r.cfg.RootDir
-	if command.WorkDir != "" {
-		osCmd.Dir = command.WorkDir
-	}
+	osCmd.Dir = r.cfg.CommandWorkDir(command)
 
 	if err := r.setupEnv(osCmd, command, shell); err != nil {
 		return err
@@ -74,7 +71,7 @@ func (r *shellRunner) setupEnv(osCmd *exec.Cmd, command *config.Command, shell s
 		)
 	}
 
-	cmdEnv, err := command.GetEnv(*r.cfg, defaultEnv)
+	cmdEnv, err := command.GetEnv(*r.cfg, osCmd.Dir, defaultEnv)
 	if err != nil {
 		return err
 	}

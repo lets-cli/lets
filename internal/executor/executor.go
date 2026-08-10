@@ -190,10 +190,7 @@ func (e *Executor) initCmd(ctx *Context) error {
 		checksumShell = cmd.Shell
 	}
 
-	checksumWorkDir := e.cfg.RootDir
-	if cmd.WorkDir != "" {
-		checksumWorkDir = cmd.WorkDir
-	}
+	checksumWorkDir := e.cfg.CommandWorkDir(cmd)
 
 	checksumEnv := e.cfg.CommandBuiltinEnv(cmd, checksumShell, checksumWorkDir)
 	maps.Copy(checksumEnv, e.cfg.GetEnv())

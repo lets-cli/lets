@@ -15,13 +15,15 @@ setup() {
     assert_line --index 0 "foo"
 }
 
-@test "find_config: .lets must be created in the same dir where lets.yaml placed" {
+@test "find_config: .lets must be created in the dir lets was invoked from" {
+    # .lets follows the root dir, so persisted checksums stay paired with the
+    # files they were computed from
     cd a/b
     run lets foo
     assert_success
 
-    [[ ! -d .lets ]]
-    [[ -d ../../.lets ]]
+    [[ -d .lets ]]
+    [[ ! -d ../../.lets ]]
 }
 
 @test "find_config: LETS_CONFIG changes which config file to read" {

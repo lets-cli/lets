@@ -6,8 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
-	"path/filepath"
-	"strings"
+		"strings"
 
 	"github.com/lets-cli/lets/internal/checksum"
 )
@@ -110,14 +109,8 @@ func (c *Command) UnmarshalYAML(unmarshal func(any) error) error {
 
 	c.Depends = cmd.Depends
 
-	if cmd.WorkDir != "" {
-		workDir, err := filepath.Abs(cmd.WorkDir)
-		if err != nil {
-			return err
-		}
-
-		c.WorkDir = workDir
-	}
+	// kept as authored; resolved against the root by Config.CommandWorkDir at use
+	c.WorkDir = cmd.WorkDir
 
 	c.After = cmd.After
 	// TODO: checksum must be refactored
@@ -169,7 +162,9 @@ func (c *Command) UnmarshalYAML(unmarshal func(any) error) error {
 	return nil
 }
 
-func (c *Command) GetEnv(cfg Config, builtinEnv map[string]string) (map[string]string, error) {
+// GetEnv resolves a command's env. workDir is the command's working directory —
+// env.sh runs there and env_file paths resolve against it.
+func (c *Command) GetEnv(cfg Config, workDir string, builtinEnv map[string]string) (map[string]string, error) {
 	baseEnv := cloneMap(builtinEnv)
 	if baseEnv == nil {
 		baseEnv = make(map[string]string)
@@ -177,8 +172,13 @@ func (c *Command) GetEnv(cfg Config, builtinEnv map[string]string) (map[string]s
 
 	maps.Copy(baseEnv, cfg.GetEnv())
 
+	shell := cfg.Shell
+	if c.Shell != "" {
+		shell = c.Shell
+	}
+
 	envs := c.Env.Clone()
-	if err := envs.Execute(cfg, baseEnv); err != nil {
+	if err := envs.Execute(shell, workDir, baseEnv); err != nil {
 		return nil, err
 	}
 
@@ -187,7 +187,7 @@ func (c *Command) GetEnv(cfg Config, builtinEnv map[string]string) (map[string]s
 
 	envFiles := c.EnvFiles.Clone()
 
-	envFileEnv, err := envFiles.Load(cfg, filenameEnv)
+	envFileEnv, err := envFiles.Load(workDir, filenameEnv)
 	if err != nil {
 		return nil, fmt.Errorf("failed to resolve env_file for command '%s': %w", c.Name, err)
 	}
