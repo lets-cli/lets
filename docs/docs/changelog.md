@@ -11,7 +11,7 @@ title: Changelog
 * `[Changed]` A remote config that declares a local `mixins` path now fails with an explicit error instead of silently resolving it against the invocation directory. Remote configs can only mix in URLs.
 * `[Changed]` `LETS_CONFIG_DIR` at command runtime is the config file's real directory for remote configs too (the local cache directory); previously it reported the invocation directory. Use `$PWD` for the root dir.
 * `[Fixed]` `work_dir` no longer resolves inconsistently with the rest of the command: relative paths resolve against the root dir, and `work_dir` now also moves `checksum`, `env_file` and `env.sh` resolution.
-* `[Fixed]` A mixin declaring its own local mixin resolves that path against the mixin file's own directory rather than the root config's.
+* `[Fixed]` A remote config whose `RemoteSource` was only recorded after parsing meant remote-specific mixin handling never applied during load.
 * `[Changed]` Group and delay Dependabot version updates, enable updates for docs and examples, and validate those projects in pull request CI.
 * `[Fixed]` Restore the documentation and Python example builds after dependency updates.
 

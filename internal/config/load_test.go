@@ -310,3 +310,97 @@ func TestLoadRemote(t *testing.T) {
 		}
 	})
 }
+
+// The root dir is where lets was invoked, never where the config file sits.
+func TestRootDirIsInvocationDir(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("local config in a child dir does not move the root", func(t *testing.T) {
+		root := t.TempDir()
+		configDir := filepath.Join(root, "sub")
+		if err := os.MkdirAll(configDir, 0o755); err != nil {
+			t.Fatalf("mkdir: %v", err)
+		}
+		writeFile(t, filepath.Join(configDir, "lets.yaml"), "shell: bash\ncommands:\n  hi:\n    cmd: echo hi\n")
+
+		t.Chdir(root)
+
+		cfg, err := LoadWithContext(ctx, "sub/lets.yaml", "", "0.0.0-test")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		assertSameDir(t, "RootDir", cfg.RootDir, root)
+		assertSameDir(t, "ConfigDir", cfg.ConfigDir, configDir)
+	})
+
+	t.Run("remote config roots at the cwd, not the cache dir", func(t *testing.T) {
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.Header().Set("Content-Type", "application/yaml")
+			_, _ = w.Write([]byte("shell: bash\ncommands:\n  hi:\n    cmd: echo hi\n"))
+		}))
+		defer srv.Close()
+
+		root := t.TempDir()
+		t.Setenv("HOME", t.TempDir())
+		t.Chdir(root)
+
+		cfg, err := LoadRemote(ctx, srv.URL, false, "0.0.0-test")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		assertSameDir(t, "RootDir", cfg.RootDir, root)
+		if cfg.ConfigDir == cfg.RootDir {
+			t.Fatal("expected ConfigDir to be the remote cache dir, not the root")
+		}
+	})
+}
+
+// A remote config's ConfigDir is its cache dir, which only holds the downloaded
+// yaml, so a local mixin path there can never resolve.
+func TestRemoteConfigRejectsLocalMixin(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/yaml")
+		_, _ = w.Write([]byte("shell: bash\nmixins:\n  - local.yaml\ncommands:\n  hi:\n    cmd: echo hi\n"))
+	}))
+	defer srv.Close()
+
+	root := t.TempDir()
+	t.Setenv("HOME", t.TempDir())
+	t.Chdir(root)
+
+	// present next to the cwd, to prove it is not picked up from there either
+	writeFile(t, filepath.Join(root, "local.yaml"), "commands:\n  local:\n    cmd: echo local\n")
+
+	_, err := LoadRemote(context.Background(), srv.URL, false, "0.0.0-test")
+	if err == nil {
+		t.Fatal("expected local mixin in a remote config to fail")
+	}
+	if !strings.Contains(err.Error(), "can only mix in URLs") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func writeFile(t *testing.T, path string, content string) {
+	t.Helper()
+
+	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
+		t.Fatalf("write %s: %v", path, err)
+	}
+}
+
+// macOS resolves t.TempDir() under /var, a symlink to /private/var, while
+// os.Getwd reports the resolved path.
+func assertSameDir(t *testing.T, name string, got string, want string) {
+	t.Helper()
+
+	resolved, err := filepath.EvalSymlinks(want)
+	if err != nil {
+		t.Fatalf("resolve %s: %v", want, err)
+	}
+
+	if got != resolved && got != want {
+		t.Fatalf("expected %s=%q, got %q", name, resolved, got)
+	}
+}

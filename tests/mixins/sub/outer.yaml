@@ -1,0 +1,3 @@
+commands:
+  hello-from-subdir-mixin:
+    cmd: echo "Hello from sub/outer.yaml"
