@@ -5,7 +5,7 @@ title: Changelog
 
 ## [Unreleased](https://github.com/lets-cli/lets/releases/tag/v0.0.X)
 
-* `[Changed]` **Breaking.** Commands run in the directory `lets` was invoked from, whatever config was loaded and wherever that config lives. In `0.0.63` they ran in the config file's directory instead, which changed behaviour for `lets -c some/dir/lets.yaml` and for running `lets` from a subdirectory of a project. See [Where commands run](/docs/config#where-commands-run).
+* `[Changed]` **Breaking.** Commands run in the directory `lets` was invoked from, whatever config was loaded and wherever that config lives. In `0.0.63` they ran in the config file's directory instead, which changed behaviour for `lets -c some/dir/lets.yaml` and for running `lets` from a subdirectory of a project. See [Where commands run](/docs/where_commands_run).
 * `[Changed]` **Breaking.** Everything a command reads or runs now resolves against a single directory — the command's working dir, which is the root dir unless the command sets `work_dir`. This covers `cmd`, `checksum` file paths, `env_file` paths and `env.sh` scripts. Previously these disagreed: `checksum` and `env_file` resolved against the config directory while `env.sh` ran in the invocation directory, so the same filename in one command definition could mean two different directories.
 * `[Changed]` **Breaking.** `.lets/` is created in the root dir rather than next to the config file, so persisted checksums stay paired with the files they were computed from.
 * `[Changed]` A remote config that declares a local `mixins` path now fails with an explicit error instead of silently resolving it against the invocation directory. Remote configs can only mix in URLs.

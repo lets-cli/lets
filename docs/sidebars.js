@@ -37,6 +37,7 @@ module.exports = {
         },
       ],
     },
+    "where_commands_run",
     "config",
     "settings",
     "agent_skills",

@@ -4,7 +4,7 @@ title: Config reference
 ---
 
 - [Agent Skills](#agent-skills)
-- [Where commands run](#where-commands-run)
+- [Where commands run](where_commands_run.md)
 - [Top-level directives:](#top-level-directives)
   - [Version](#version)
   - [Shell](#shell)
@@ -44,48 +44,14 @@ Use [`lets self skills`](agent_skills.md) to show, install, update, or remove th
 
 ## Where commands run
 
-The **root dir** is the directory you ran `lets` from. It is never the directory the
-config file lives in — a config describes commands, it does not relocate them.
+Commands run in the directory you ran `lets` from, not in the directory the config lives
+in. Everything a command reads or runs — `cmd`, [`checksum`](#checksum) paths,
+[`env_file`](#env_file) paths and `env.sh` — resolves against that one directory, or
+against [`work_dir`](#work_dir) if the command sets one. Local [`mixins`](#mixins) paths
+are the exception: they resolve against the config file that declares them.
 
-Everything a command reads or runs resolves against **one** directory: that command's
-working dir, which is the root dir unless the command sets [`work_dir`](#work_dir).
-That covers `cmd`, [`checksum`](#checksum) file paths, [`env_file`](#env_file) paths
-and `env.sh` scripts.
-
-```yaml
-shell: bash
-commands:
-  where:
-    cmd: pwd
-```
-
-| you run | `lets where` prints |
-| --- | --- |
-| `cd myproject && lets where` | `myproject` |
-| `cd myproject && lets -c lets.yaml where` | `myproject` |
-| `cd myproject && lets -c sub/lets.yaml where` | `myproject` |
-| `cd myproject/deep && lets where` (config found up the tree) | `myproject/deep` |
-| `cd myproject/deep && lets -c ../lets.yaml where` | `myproject/deep` |
-| `cd myproject && lets -c https://example.com/lets.yaml where` | `myproject` |
-
-`--config-dir` and `LETS_CONFIG_DIR` only steer *which* config is found. They do not
-move the root dir.
-
-The one exception is [`mixins`](#mixins): a local mixin path resolves against the
-config file that declares it, not against the root dir. A mixin is an include, so it
-has to resolve the same way no matter where you run `lets` from.
-
-If a command needs to act on the project rather than on your current directory, use
-`$LETS_CONFIG_DIR`:
-
-```yaml
-commands:
-  lint-everything:
-    cmd: cd "${LETS_CONFIG_DIR}" && golangci-lint run ./...
-```
-
-`.lets/` is created in the root dir, so persisted checksums stay paired with the files
-they were computed from.
+See **[Where commands run](where_commands_run.md)** for the full rules, every way of
+pointing `lets` at a config, and the reasoning.
 
 ## Top-level directives:
 
@@ -180,7 +146,7 @@ env_file:
 Rules:
 
 - `-filename` is a short form of `required: false`
-- files are resolved relative to the [root dir](#where-commands-run) — the directory you ran `lets` from
+- files are resolved relative to the [root dir](where_commands_run.md) — the directory you ran `lets` from
 - file names are expanded after global `env` is resolved, so `env_file` can depend on global `env`
 - values loaded from `env_file` have higher precedence than values from `env`
 - missing files fail by default
@@ -402,7 +368,7 @@ lets -c https://example.com/lets.yaml build
 Lets will download the config and cache it in `~/.config/lets/remote-configs`.
 Use `--no-cache` to force lets to re-download the remote config instead of using the cached copy.
 
-Commands from a remote config run in the [root dir](#where-commands-run), exactly like commands from a local one.
+Commands from a remote config run in the [root dir](where_commands_run.md), exactly like commands from a local one.
 A remote config can only mix in other URLs — a local `mixins` path is an error, since the config has no local directory to resolve it against.
 When stderr is an interactive terminal, lets shows download progress for remote config downloads. Cache hits do not show progress.
 
@@ -566,7 +532,7 @@ Usage: lets hello <name>
 `type: string`
 
 Specify the directory to run the command in. A relative path resolves against the
-[root dir](#where-commands-run) — the directory you ran `lets` from. Absolute paths are
+[root dir](where_commands_run.md) — the directory you ran `lets` from. Absolute paths are
 used as-is. By default a command runs in the root dir itself.
 
 `work_dir` moves everything the command touches, not just `cmd`: [`checksum`](#checksum)
