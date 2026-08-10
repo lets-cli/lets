@@ -48,7 +48,9 @@ This is a single-context repo.
 | **Init script** | A top-level script run once per lets invocation before the first Project command executes. | Before script |
 | **Before script** | A top-level script prepended to each Project command invocation, including dependencies. | Init script |
 | **After script** | A command-scoped script run after a Project command execution attempt. | Cleanup hook |
-| **Work dir** | The directory where a Project command runs after config and command resolution. | Repo root |
+| **Root dir** | The directory lets was invoked from. Project commands run here unless they set `work_dir`. | Project root, config dir |
+| **Config dir** | The directory holding the Project config file. Only local mixin paths resolve against it. | Root dir, work dir |
+| **Work dir** | The directory where a Project command runs after config and command resolution: the Root dir, or the command's `work_dir`. | Repo root |
 | **Download progress indicator** | A user-visible status shown while lets retrieves a Remote config or Remote mixin. | Progress bar |
 | **Help surface** | The rendered CLI help for root and Project commands. | Docs page |
 | **LSP surface** | The editor-facing language-server features exposed by `lets self lsp`. | CLI help |

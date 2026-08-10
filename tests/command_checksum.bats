@@ -7,6 +7,8 @@ setup() {
 }
 
 ALL_CHECKSUM="be48892c650a32df361202a3662f31e5eac2b83c"
+# same file names, different contents, under ./subdir
+SUBDIR_CHECKSUM="7506688b525201813110ff3598eed02b016b1775"
 FOO_CHECKSUM="833330f14e30e3ce1907f1e126e1ea4db1ec349f"
 BAR_CHECKSUM="7917368d518c031517855672acf2ef82b9cb6836"
 
@@ -60,9 +62,11 @@ CHECKSUM_FROM_FOO_AND_BAR_CHECKSUMS="b778d48759ad4e6e9a755bd595d23eeaa2f7ff65"
 }
 
 
-@test "command_checksum: should calculate checksum from sub-dir" {
+@test "command_checksum: checksum files resolve against the dir lets was invoked from" {
+    # subdir holds its own foo_*/bar_* files, so running there must checksum those,
+    # not the ones next to lets.yaml — checksum follows the command's work dir
     cd ./subdir
     run lets as-list-of-files
     assert_success
-    assert_line --index 0 ${ALL_CHECKSUM}
+    assert_line --index 0 ${SUBDIR_CHECKSUM}
 }

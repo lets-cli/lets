@@ -5,6 +5,13 @@ title: Changelog
 
 ## [Unreleased](https://github.com/lets-cli/lets/releases/tag/v0.0.X)
 
+* `[Changed]` **Breaking.** Commands run in the directory `lets` was invoked from, whatever config was loaded and wherever that config lives. In `0.0.63` they ran in the config file's directory instead, which changed behaviour for `lets -c some/dir/lets.yaml` and for running `lets` from a subdirectory of a project. See [Where commands run](/docs/where_commands_run).
+* `[Changed]` **Breaking.** Everything a command reads or runs now resolves against a single directory — the command's working dir, which is the root dir unless the command sets `work_dir`. This covers `cmd`, `checksum` file paths, `env_file` paths and `env.sh` scripts. Previously these disagreed: `checksum` and `env_file` resolved against the config directory while `env.sh` ran in the invocation directory, so the same filename in one command definition could mean two different directories.
+* `[Changed]` **Breaking.** `.lets/` is created in the root dir rather than next to the config file, so persisted checksums stay paired with the files they were computed from.
+* `[Changed]` A remote config that declares a local `mixins` path now fails with an explicit error instead of silently resolving it against the invocation directory. Remote configs can only mix in URLs.
+* `[Changed]` `LETS_CONFIG_DIR` at command runtime is the config file's real directory for remote configs too (the local cache directory); previously it reported the invocation directory. Use `$PWD` for the root dir.
+* `[Fixed]` `work_dir` no longer resolves inconsistently with the rest of the command: relative paths resolve against the root dir, and `work_dir` now also moves `checksum`, `env_file` and `env.sh` resolution.
+* `[Fixed]` A remote config whose `RemoteSource` was only recorded after parsing meant remote-specific mixin handling never applied during load.
 * `[Changed]` Group and delay Dependabot version updates, enable updates for docs and examples, and validate those projects in pull request CI.
 * `[Fixed]` Restore the documentation and Python example builds after dependency updates.
 

@@ -31,8 +31,12 @@ var keywords = set.NewSet[string](
 
 // Config is a struct for loaded config file.
 type Config struct {
-	// absolute path to work dir - where config is placed
-	WorkDir string
+	// ConfigDir is the absolute path to the directory holding the config file.
+	// Only config assembly (mixin paths) resolves against it.
+	ConfigDir string
+	// RootDir is the absolute path commands run in by default. Everything a
+	// command reads or runs resolves against it, unless the command sets work_dir.
+	RootDir string
 	// absolute path for lets config file
 	FilePath string
 	Commands Commands
@@ -296,7 +300,16 @@ func (c *Config) readMixin(mixin *Mixin) error {
 			}
 		}
 	} else {
-		mixinAbsPath, err := path.GetFullConfigPath(mixin.FileName, c.WorkDir)
+		// A remote config's ConfigDir is its cache dir, which only ever holds the
+		// downloaded yaml — a local mixin path there can never resolve.
+		if c.RemoteSource != "" {
+			return fmt.Errorf(
+				"remote config '%s' declares local mixin '%s': remote configs can only mix in URLs",
+				c.RemoteSource, mixin.FileName,
+			)
+		}
+
+		mixinAbsPath, err := path.GetFullConfigPath(mixin.FileName, c.ConfigDir)
 		if err != nil {
 			if mixin.Ignored && errors.Is(err, path.ErrFileNotExists) {
 				return nil
@@ -311,8 +324,8 @@ func (c *Config) readMixin(mixin *Mixin) error {
 			return fmt.Errorf("failed to read mixin config %s: %w", mixin.FileName, err)
 		}
 
-		// TODO(maybe bug): probably not filename but mixinAbsPath
-		mixinCfg := NewMixinConfig(c, mixin.FileName)
+		// abs path, so a nested mixin resolves against the dir of the file that declares it
+		mixinCfg := NewMixinConfig(c, mixinAbsPath)
 		if err := yaml.NewDecoder(file).Decode(mixinCfg); err != nil {
 			return fmt.Errorf("can not parse mixin config %s:\n%w", mixin.FileName, err)
 		}
@@ -360,14 +373,14 @@ func (c *Config) GetEnv() map[string]string {
 // SetupEnv must be called once. It is not intended to be called
 // multiple times hence does not have mutex.
 func (c *Config) SetupEnv() error {
-	if err := c.Env.Execute(*c, nil); err != nil {
+	if err := c.Env.Execute(c.Shell, c.RootDir, nil); err != nil {
 		return err
 	}
 
 	filenameEnv := c.BuiltinEnv(c.Shell)
 	maps.Copy(filenameEnv, c.Env.Dump())
 
-	envFileEnv, err := c.EnvFiles.Load(*c, filenameEnv)
+	envFileEnv, err := c.EnvFiles.Load(c.RootDir, filenameEnv)
 	if err != nil {
 		return fmt.Errorf("failed to resolve global env_file: %w", err)
 	}
@@ -389,9 +402,24 @@ func (c *Config) SetupEnv() error {
 	return nil
 }
 
-func NewConfig(workDir string, configAbsPath string, dotLetsDir string) *Config {
+// CommandWorkDir returns the absolute directory a command runs in. Everything the
+// command reads or runs — cmd, checksum globs, env_file paths — resolves against it.
+func (c *Config) CommandWorkDir(cmd *Command) string {
+	if cmd == nil || cmd.WorkDir == "" {
+		return c.RootDir
+	}
+
+	if filepath.IsAbs(cmd.WorkDir) {
+		return cmd.WorkDir
+	}
+
+	return filepath.Join(c.RootDir, cmd.WorkDir)
+}
+
+func NewConfig(rootDir string, configAbsPath string, dotLetsDir string) *Config {
 	return &Config{
-		WorkDir:      workDir,
+		RootDir:      rootDir,
+		ConfigDir:    filepath.Dir(configAbsPath),
 		FilePath:     configAbsPath,
 		DotLetsDir:   dotLetsDir,
 		ChecksumsDir: filepath.Join(dotLetsDir, "checksums"),
@@ -400,8 +428,10 @@ func NewConfig(workDir string, configAbsPath string, dotLetsDir string) *Config 
 }
 
 func NewMixinConfig(cfg *Config, configAbsPath string) *Config {
-	mixin := NewConfig(cfg.WorkDir, configAbsPath, cfg.DotLetsDir)
+	mixin := NewConfig(cfg.RootDir, configAbsPath, cfg.DotLetsDir)
 	mixin.isMixin = true
+	// a mixin of a remote config is itself remote — local mixin paths stay rejected down the chain
+	mixin.RemoteSource = cfg.RemoteSource
 	mixin.SetDownloadOptions(cfg.context(), cfg.progressBar, cfg.noCache)
 
 	return mixin

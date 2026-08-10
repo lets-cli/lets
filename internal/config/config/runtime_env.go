@@ -8,11 +8,12 @@ import (
 
 func (c *Config) BuiltinEnv(shell string) map[string]string {
 	letsConfig := filepath.Base(c.FilePath)
-	letsConfigDir := filepath.Dir(c.FilePath)
+	// ConfigDir, not RootDir: for a remote config this is the cache dir holding the
+	// downloaded yaml. The project root is simply the cwd now, so $PWD covers it.
+	letsConfigDir := c.ConfigDir
 
 	if c.RemoteSource != "" {
 		letsConfig = c.RemoteSource
-		letsConfigDir = c.WorkDir
 	}
 
 	return map[string]string{

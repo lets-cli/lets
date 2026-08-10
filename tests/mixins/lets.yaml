@@ -1,5 +1,6 @@
 shell: bash
 
 mixins:
+  - sub/outer.yaml
   - lets.mix.yaml
   - -lets.no.yaml

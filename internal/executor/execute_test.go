@@ -84,7 +84,7 @@ func newTestCfg(t *testing.T) *config.Config {
 		t.Fatalf("newTestCfg: create .lets dir: %v", err)
 	}
 	return &config.Config{
-		WorkDir:      dir,
+		RootDir:      dir,
 		FilePath:     filepath.Join(dir, "lets.yaml"),
 		Shell:        "sh",
 		Commands:     config.Commands{},
@@ -399,11 +399,11 @@ func TestChecksumEnvVarsPresentInRunnerInvocation(t *testing.T) {
 
 func TestChecksumUsesCommandWorkDir(t *testing.T) {
 	cfg := newTestCfg(t)
-	commandDir := filepath.Join(cfg.WorkDir, "command-dir")
+	commandDir := filepath.Join(cfg.RootDir, "command-dir")
 	if err := os.Mkdir(commandDir, 0o755); err != nil {
 		t.Fatalf("create command dir: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(cfg.WorkDir, "input.txt"), []byte("root"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(cfg.RootDir, "input.txt"), []byte("root"), 0o644); err != nil {
 		t.Fatalf("write root input: %v", err)
 	}
 	if err := os.WriteFile(filepath.Join(commandDir, "input.txt"), []byte("command"), 0o644); err != nil {

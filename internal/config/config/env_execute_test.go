@@ -5,7 +5,7 @@ import "testing"
 func TestEnvsExecute(t *testing.T) {
 	cfg := Config{
 		Shell:   "bash",
-		WorkDir: ".",
+		RootDir: ".",
 	}
 
 	t.Run("resolves env entries sequentially", func(t *testing.T) {
@@ -13,7 +13,7 @@ func TestEnvsExecute(t *testing.T) {
 		envs.Set("ENGINE", Env{Name: "ENGINE", Value: "docker"})
 		envs.Set("COMPOSE", Env{Name: "COMPOSE", Sh: `echo "${ENGINE}-compose"`})
 
-		err := envs.Execute(cfg, nil)
+		err := envs.Execute(cfg.Shell, cfg.RootDir, nil)
 		if err != nil {
 			t.Fatalf("unexpected execute error: %s", err)
 		}
@@ -27,7 +27,7 @@ func TestEnvsExecute(t *testing.T) {
 		envs := &Envs{}
 		envs.Set("COMPOSE", Env{Name: "COMPOSE", Sh: `echo "${ENGINE}-compose"`})
 
-		err := envs.Execute(cfg, map[string]string{"ENGINE": "docker"})
+		err := envs.Execute(cfg.Shell, cfg.RootDir, map[string]string{"ENGINE": "docker"})
 		if err != nil {
 			t.Fatalf("unexpected execute error: %s", err)
 		}
@@ -44,7 +44,7 @@ func TestEnvsExecute(t *testing.T) {
 		envs.Set("ENGINE", Env{Name: "ENGINE", Value: "docker"})
 		envs.Set("COMPOSE", Env{Name: "COMPOSE", Sh: `echo "${ENGINE}-compose"`})
 
-		err := envs.Execute(cfg, nil)
+		err := envs.Execute(cfg.Shell, cfg.RootDir, nil)
 		if err != nil {
 			t.Fatalf("unexpected execute error: %s", err)
 		}
@@ -58,12 +58,12 @@ func TestEnvsExecute(t *testing.T) {
 		envs := &Envs{}
 		envs.Set("COMPOSE", Env{Name: "COMPOSE", Sh: `echo "${ENGINE}-compose"`})
 
-		err := envs.Execute(cfg, map[string]string{"ENGINE": "docker"})
+		err := envs.Execute(cfg.Shell, cfg.RootDir, map[string]string{"ENGINE": "docker"})
 		if err != nil {
 			t.Fatalf("unexpected execute error: %s", err)
 		}
 
-		err = envs.Execute(cfg, map[string]string{"ENGINE": "podman"})
+		err = envs.Execute(cfg.Shell, cfg.RootDir, map[string]string{"ENGINE": "podman"})
 		if err != nil {
 			t.Fatalf("unexpected execute error: %s", err)
 		}

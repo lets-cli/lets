@@ -4,6 +4,7 @@ title: Config reference
 ---
 
 - [Agent Skills](#agent-skills)
+- [Where commands run](where_commands_run.md)
 - [Top-level directives:](#top-level-directives)
   - [Version](#version)
   - [Shell](#shell)
@@ -40,6 +41,17 @@ title: Config reference
 Agent Skills are not configured in `lets.yaml`. They are installed and managed with the `lets self skills` command.
 
 Use [`lets self skills`](agent_skills.md) to show, install, update, or remove the bundled `lets` agent skill.
+
+## Where commands run
+
+Commands run in the directory you ran `lets` from, not in the directory the config lives
+in. Everything a command reads or runs — `cmd`, [`checksum`](#checksum) paths,
+[`env_file`](#env_file) paths and `env.sh` — resolves against that one directory, or
+against [`work_dir`](#work_dir) if the command sets one. Local [`mixins`](#mixins) paths
+are the exception: they resolve against the config file that declares them.
+
+See **[Where commands run](where_commands_run.md)** for the full rules, every way of
+pointing `lets` at a config, and the reasoning.
 
 ## Top-level directives:
 
@@ -134,7 +146,7 @@ env_file:
 Rules:
 
 - `-filename` is a short form of `required: false`
-- files are resolved relative to the config directory
+- files are resolved relative to the [root dir](where_commands_run.md) — the directory you ran `lets` from
 - file names are expanded after global `env` is resolved, so `env_file` can depend on global `env`
 - values loaded from `env_file` have higher precedence than values from `env`
 - missing files fail by default
@@ -356,7 +368,8 @@ lets -c https://example.com/lets.yaml build
 Lets will download the config and cache it in `~/.config/lets/remote-configs`.
 Use `--no-cache` to force lets to re-download the remote config instead of using the cached copy.
 
-Commands from a remote config run from the directory where `lets` was invoked unless the command specifies `work_dir`.
+Commands from a remote config run in the [root dir](where_commands_run.md), exactly like commands from a local one.
+A remote config can only mix in other URLs — a local `mixins` path is an error, since the config has no local directory to resolve it against.
 When stderr is an interactive terminal, lets shows download progress for remote config downloads. Cache hits do not show progress.
 
 
@@ -518,7 +531,12 @@ Usage: lets hello <name>
 
 `type: string`
 
-Specify work directory to run in. Path must be relative to project root. Be default command's workdir is project root (where lets.yaml located).
+Specify the directory to run the command in. A relative path resolves against the
+[root dir](where_commands_run.md) — the directory you ran `lets` from. Absolute paths are
+used as-is. By default a command runs in the root dir itself.
+
+`work_dir` moves everything the command touches, not just `cmd`: [`checksum`](#checksum)
+file paths, [`env_file`](#env_file) paths and `env.sh` scripts all resolve against it too.
 
 Example:
 
@@ -528,6 +546,17 @@ commands:
     description: Run docusaurus documentation live
     work_dir: docs
     cmd: npm start
+```
+
+Since the path is relative to where you ran `lets`, `lets run-docs` works from the
+project root and fails from a subdirectory. `work_dir` does not expand env variables,
+so anchor the command itself when it should always target the same place regardless of
+where it is run from:
+
+```yaml
+commands:
+  run-docs:
+    cmd: cd "${LETS_CONFIG_DIR}/docs" && npm start
 ```
 
 ### `shell`
@@ -786,7 +815,7 @@ Rules:
 - command `env` is resolved first
 - command `env_file` file names are expanded using builtin lets vars, merged global env, and resolved command `env`
 - values loaded from command `env_file` override values from command `env`
-- paths are resolved relative to the config directory, not `work_dir`
+- paths are resolved relative to the command's working dir, so they follow `work_dir`
 
 Example:
 

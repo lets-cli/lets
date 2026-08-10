@@ -211,8 +211,9 @@ func convertEnvMapToList(envMap map[string]string) []string {
 }
 
 // eval env value and trim result string.
-func executeScript(shell string, script string, envMap map[string]string) (string, error) {
+func executeScript(shell string, dir string, script string, envMap map[string]string) (string, error) {
 	cmd := exec.Command(shell, "-c", script)
+	cmd.Dir = dir
 	envList := os.Environ()
 	// Append resolved env last so it overrides process env keys (Go 1.21+ cmd.Env dedup: last value wins).
 	envList = append(envList, convertEnvMapToList(envMap)...)
@@ -228,9 +229,10 @@ func executeScript(shell string, script string, envMap map[string]string) (strin
 	return strings.TrimSpace(res), nil
 }
 
-// Execute executes env entries for sh scrips and calculate checksums
+// Execute resolves sh and checksum env entries. baseDir is the directory sh
+// scripts run in and checksum globs resolve against.
 // It is lazy and caches data on first call.
-func (e *Envs) Execute(cfg Config, baseEnv map[string]string) error {
+func (e *Envs) Execute(shell string, baseDir string, baseEnv map[string]string) error {
 	if e == nil {
 		return nil
 	}
@@ -247,7 +249,7 @@ func (e *Envs) Execute(cfg Config, baseEnv map[string]string) error {
 	for _, key := range e.Keys {
 		env := e.Mapping[key]
 		if env.Sh != "" {
-			result, err := executeScript(cfg.Shell, env.Sh, resolvedEnv)
+			result, err := executeScript(shell, baseDir, env.Sh, resolvedEnv)
 			if err != nil {
 				return err
 			}
@@ -255,7 +257,7 @@ func (e *Envs) Execute(cfg Config, baseEnv map[string]string) error {
 			env.Value = result
 			e.Mapping[key] = env
 		} else if len(env.Checksum) > 0 {
-			result, err := checksum.CalculateChecksum(cfg.WorkDir, env.Checksum[checksum.DefaultChecksumKey])
+			result, err := checksum.CalculateChecksum(baseDir, env.Checksum[checksum.DefaultChecksumKey])
 			if err != nil {
 				return err
 			}

@@ -56,11 +56,11 @@ func LoadWithContext(ctx context.Context, configName string, configDir string, v
 		return nil, err
 	}
 
-	return loadConfigFromFile(ctx, configPath.AbsPath, configPath.WorkDir, configPath.DotLetsDir, configPath.Filename, version, opts)
+	return loadConfigFromFile(ctx, configPath.AbsPath, configPath.RootDir, configPath.DotLetsDir, configPath.Filename, "", version, opts)
 }
 
-// LoadRemote downloads (or loads from cache) a remote lets.yaml at url and
-// returns a Config with the working directory set to the caller's CWD.
+// LoadRemote downloads (or loads from cache) a remote lets.yaml at url.
+// Its root is the caller's cwd, same as for a local config.
 func LoadRemote(ctx context.Context, url string, noCache bool, version string, options ...LoadOption) (*config.Config, error) {
 	opts := newLoadOptions(options)
 	if noCache {
@@ -86,21 +86,21 @@ func LoadRemote(ctx context.Context, url string, noCache bool, version string, o
 		return nil, fmt.Errorf("can not create .lets dir: %w", err)
 	}
 
-	c, err := loadConfigFromFile(ctx, cachedPath, cwd, dotLetsDir, url, version, opts)
+	c, err := loadConfigFromFile(ctx, cachedPath, cwd, dotLetsDir, url, url, version, opts)
 	if err != nil {
 		return nil, fmt.Errorf("%w (use --no-cache to re-download)", err)
 	}
-
-	c.RemoteSource = url
 
 	return c, nil
 }
 
 // loadConfigFromFile is shared by Load and LoadRemote: opens the file at absPath,
 // decodes YAML, validates, and sets up env. displayName appears in parse error messages.
+// remoteSource is the URL the config came from, empty for local configs; it must be set
+// before decoding, since mixin resolution during decode depends on it.
 func loadConfigFromFile(
 	ctx context.Context,
-	absPath, workDir, dotLetsDir, displayName, version string,
+	absPath, rootDir, dotLetsDir, displayName, remoteSource, version string,
 	opts loadOptions,
 ) (*config.Config, error) {
 	f, err := os.Open(absPath)
@@ -109,7 +109,8 @@ func loadConfigFromFile(
 	}
 	defer f.Close()
 
-	c := config.NewConfig(workDir, absPath, dotLetsDir)
+	c := config.NewConfig(rootDir, absPath, dotLetsDir)
+	c.RemoteSource = remoteSource
 	c.SetDownloadOptions(ctx, opts.progress, opts.noCache)
 
 	if err := yaml.NewDecoder(f).Decode(c); err != nil {

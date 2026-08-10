@@ -1,0 +1,11 @@
+shell: bash
+
+commands:
+  pwd:
+    description: print the dir the command runs in, relative to the fixture root
+    cmd: pwd | sed "s|.*/tests/root_dir|<root_dir>|"
+
+  pwd-with-work-dir:
+    description: work_dir resolves against the dir lets was invoked from
+    work_dir: wd
+    cmd: pwd | sed "s|.*/tests/root_dir|<root_dir>|"

@@ -4,3 +4,35 @@ commands:
   print-file:
     work_dir: project
     cmd: cat text.txt
+
+  # work_dir moves everything the command touches, not just cmd.
+  # Both dirs hold an input.txt and a .env with different contents, so each
+  # assertion below fails if the directive resolved against the root instead.
+  everything-follows-work-dir:
+    work_dir: project
+    checksum:
+      files: [input.txt]
+    env_file: .env.wd
+    env:
+      ENV_SH_DIR:
+        sh: basename "$(pwd)"
+    cmd: |
+      echo "cmd=$(basename "$(pwd)")"
+      echo "file=$(cat input.txt)"
+      echo "env_file=${WHO}"
+      echo "env_sh=${ENV_SH_DIR}"
+      echo "checksum=${LETS_CHECKSUM}"
+
+  everything-follows-root:
+    checksum:
+      files: [input.txt]
+    env_file: .env.wd
+    env:
+      ENV_SH_DIR:
+        sh: basename "$(pwd)"
+    cmd: |
+      echo "cmd=$(basename "$(pwd)")"
+      echo "file=$(cat input.txt)"
+      echo "env_file=${WHO}"
+      echo "env_sh=${ENV_SH_DIR}"
+      echo "checksum=${LETS_CHECKSUM}"

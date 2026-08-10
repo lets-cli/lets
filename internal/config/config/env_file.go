@@ -116,7 +116,8 @@ func (e *EnvFiles) Append(other *EnvFiles) {
 	e.Items = append(e.Items, other.Items...)
 }
 
-func (e *EnvFiles) Load(cfg Config, envMap map[string]string) (map[string]string, error) {
+// Load reads the env files. baseDir is the directory relative paths resolve against.
+func (e *EnvFiles) Load(baseDir string, envMap map[string]string) (map[string]string, error) {
 	if e == nil {
 		return map[string]string{}, nil
 	}
@@ -134,7 +135,7 @@ func (e *EnvFiles) Load(cfg Config, envMap map[string]string) (map[string]string
 		}
 
 		if !filepath.IsAbs(filename) {
-			filename = filepath.Join(cfg.WorkDir, filename)
+			filename = filepath.Join(baseDir, filename)
 		}
 
 		if !util.FileExists(filename) {
