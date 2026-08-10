@@ -31,8 +31,12 @@ var keywords = set.NewSet[string](
 
 // Config is a struct for loaded config file.
 type Config struct {
-	// absolute path to work dir - where config is placed
-	WorkDir string
+	// ConfigDir is the absolute path to the directory holding the config file.
+	// Only config assembly (mixin paths) resolves against it.
+	ConfigDir string
+	// RootDir is the absolute path commands run in by default. Everything a
+	// command reads or runs resolves against it, unless the command sets work_dir.
+	RootDir string
 	// absolute path for lets config file
 	FilePath string
 	Commands Commands
@@ -296,7 +300,7 @@ func (c *Config) readMixin(mixin *Mixin) error {
 			}
 		}
 	} else {
-		mixinAbsPath, err := path.GetFullConfigPath(mixin.FileName, c.WorkDir)
+		mixinAbsPath, err := path.GetFullConfigPath(mixin.FileName, c.ConfigDir)
 		if err != nil {
 			if mixin.Ignored && errors.Is(err, path.ErrFileNotExists) {
 				return nil
@@ -311,8 +315,8 @@ func (c *Config) readMixin(mixin *Mixin) error {
 			return fmt.Errorf("failed to read mixin config %s: %w", mixin.FileName, err)
 		}
 
-		// TODO(maybe bug): probably not filename but mixinAbsPath
-		mixinCfg := NewMixinConfig(c, mixin.FileName)
+		// abs path, so a nested mixin resolves against the dir of the file that declares it
+		mixinCfg := NewMixinConfig(c, mixinAbsPath)
 		if err := yaml.NewDecoder(file).Decode(mixinCfg); err != nil {
 			return fmt.Errorf("can not parse mixin config %s:\n%w", mixin.FileName, err)
 		}
@@ -389,9 +393,10 @@ func (c *Config) SetupEnv() error {
 	return nil
 }
 
-func NewConfig(workDir string, configAbsPath string, dotLetsDir string) *Config {
+func NewConfig(rootDir string, configAbsPath string, dotLetsDir string) *Config {
 	return &Config{
-		WorkDir:      workDir,
+		RootDir:      rootDir,
+		ConfigDir:    filepath.Dir(configAbsPath),
 		FilePath:     configAbsPath,
 		DotLetsDir:   dotLetsDir,
 		ChecksumsDir: filepath.Join(dotLetsDir, "checksums"),
@@ -400,8 +405,10 @@ func NewConfig(workDir string, configAbsPath string, dotLetsDir string) *Config 
 }
 
 func NewMixinConfig(cfg *Config, configAbsPath string) *Config {
-	mixin := NewConfig(cfg.WorkDir, configAbsPath, cfg.DotLetsDir)
+	mixin := NewConfig(cfg.RootDir, configAbsPath, cfg.DotLetsDir)
 	mixin.isMixin = true
+	// a mixin of a remote config is itself remote — local mixin paths stay rejected down the chain
+	mixin.RemoteSource = cfg.RemoteSource
 	mixin.SetDownloadOptions(cfg.context(), cfg.progressBar, cfg.noCache)
 
 	return mixin

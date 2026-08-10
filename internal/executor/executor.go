@@ -190,7 +190,7 @@ func (e *Executor) initCmd(ctx *Context) error {
 		checksumShell = cmd.Shell
 	}
 
-	checksumWorkDir := e.cfg.WorkDir
+	checksumWorkDir := e.cfg.RootDir
 	if cmd.WorkDir != "" {
 		checksumWorkDir = cmd.WorkDir
 	}

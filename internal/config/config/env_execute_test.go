@@ -5,7 +5,7 @@ import "testing"
 func TestEnvsExecute(t *testing.T) {
 	cfg := Config{
 		Shell:   "bash",
-		WorkDir: ".",
+		RootDir: ".",
 	}
 
 	t.Run("resolves env entries sequentially", func(t *testing.T) {

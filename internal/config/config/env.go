@@ -255,7 +255,7 @@ func (e *Envs) Execute(cfg Config, baseEnv map[string]string) error {
 			env.Value = result
 			e.Mapping[key] = env
 		} else if len(env.Checksum) > 0 {
-			result, err := checksum.CalculateChecksum(cfg.WorkDir, env.Checksum[checksum.DefaultChecksumKey])
+			result, err := checksum.CalculateChecksum(cfg.RootDir, env.Checksum[checksum.DefaultChecksumKey])
 			if err != nil {
 				return err
 			}

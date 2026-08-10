@@ -15,7 +15,12 @@ const defaultConfigFile = "lets.yaml"
 type PathInfo struct {
 	Filename string
 	AbsPath  string
-	WorkDir  string
+	// ConfigDir is the directory holding the config file. Config assembly
+	// (mixin paths) resolves against it.
+	ConfigDir string
+	// RootDir is where commands run by default. Everything a command reads or
+	// runs resolves against it, unless the command sets work_dir.
+	RootDir string
 	// .lets abs path
 	DotLetsDir string
 }
@@ -25,20 +30,20 @@ type PathInfo struct {
 // - if specified configName - try to load only that file
 // - if specified configDir - try to look for a config only in that dir - don't do recursion
 // - if not specified any of params above - try to find config recursively.
-func FindConfig(configName string, configDir string) (PathInfo, error) {
-	configDirSpecifiedByUser := configDir != ""
+func FindConfig(configName string, configDirFlag string) (PathInfo, error) {
+	configDirSpecifiedByUser := configDirFlag != ""
 
 	if configName == "" {
 		configName = defaultConfigFile
 	}
 
-	// work dir is where to start looking for lets.yaml
-	workDir, err := getWorkDir(configName, configDir)
+	// searchDir is where to start looking for lets.yaml
+	searchDir, err := getSearchDir(configName, configDirFlag)
 	if err != nil {
 		return PathInfo{}, err
 	}
 
-	log.Debugf("found %s config file in %s directory", configName, workDir)
+	log.Debugf("found %s config file in %s directory", configName, searchDir)
 
 	configAbsPath := ""
 
@@ -47,23 +52,22 @@ func FindConfig(configName string, configDir string) (PathInfo, error) {
 		configAbsPath = configName
 	} else {
 		if configDirSpecifiedByUser {
-			configAbsPath, err = path.GetFullConfigPath(configName, workDir)
+			configAbsPath, err = path.GetFullConfigPath(configName, searchDir)
 			if err != nil {
 				return PathInfo{}, err
 			}
 		} else {
 			// try to find abs config path up in parent dir tree
-			configAbsPath, err = path.GetFullConfigPathRecursive(configName, workDir)
+			configAbsPath, err = path.GetFullConfigPathRecursive(configName, searchDir)
 			if err != nil {
 				return PathInfo{}, err
 			}
 		}
 	}
 
-	// just to be sure that work dir is correct
-	workDir = filepath.Dir(configAbsPath)
+	configDir := filepath.Dir(configAbsPath)
 
-	dotLetsDir, err := workdir.GetDotLetsDir(workDir)
+	dotLetsDir, err := workdir.GetDotLetsDir(configDir)
 	if err != nil {
 		return PathInfo{}, fmt.Errorf("can not get .lets absolute path: %w", err)
 	}
@@ -73,8 +77,10 @@ func FindConfig(configName string, configDir string) (PathInfo, error) {
 	}
 
 	pathInfo := PathInfo{
-		AbsPath:    configAbsPath,
-		WorkDir:    workDir,
+		AbsPath:   configAbsPath,
+		ConfigDir: configDir,
+		// preserved as-is here; the root is decoupled from the config dir in a follow-up
+		RootDir:    configDir,
 		Filename:   configName,
 		DotLetsDir: dotLetsDir,
 	}

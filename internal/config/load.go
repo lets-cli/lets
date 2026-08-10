@@ -56,7 +56,7 @@ func LoadWithContext(ctx context.Context, configName string, configDir string, v
 		return nil, err
 	}
 
-	return loadConfigFromFile(ctx, configPath.AbsPath, configPath.WorkDir, configPath.DotLetsDir, configPath.Filename, version, opts)
+	return loadConfigFromFile(ctx, configPath.AbsPath, configPath.RootDir, configPath.DotLetsDir, configPath.Filename, version, opts)
 }
 
 // LoadRemote downloads (or loads from cache) a remote lets.yaml at url and
@@ -100,7 +100,7 @@ func LoadRemote(ctx context.Context, url string, noCache bool, version string, o
 // decodes YAML, validates, and sets up env. displayName appears in parse error messages.
 func loadConfigFromFile(
 	ctx context.Context,
-	absPath, workDir, dotLetsDir, displayName, version string,
+	absPath, rootDir, dotLetsDir, displayName, version string,
 	opts loadOptions,
 ) (*config.Config, error) {
 	f, err := os.Open(absPath)
@@ -109,7 +109,7 @@ func loadConfigFromFile(
 	}
 	defer f.Close()
 
-	c := config.NewConfig(workDir, absPath, dotLetsDir)
+	c := config.NewConfig(rootDir, absPath, dotLetsDir)
 	c.SetDownloadOptions(ctx, opts.progress, opts.noCache)
 
 	if err := yaml.NewDecoder(f).Decode(c); err != nil {

@@ -12,7 +12,7 @@ func (c *Config) BuiltinEnv(shell string) map[string]string {
 
 	if c.RemoteSource != "" {
 		letsConfig = c.RemoteSource
-		letsConfigDir = c.WorkDir
+		letsConfigDir = c.RootDir
 	}
 
 	return map[string]string{

@@ -134,7 +134,7 @@ func (e *EnvFiles) Load(cfg Config, envMap map[string]string) (map[string]string
 		}
 
 		if !filepath.IsAbs(filename) {
-			filename = filepath.Join(cfg.WorkDir, filename)
+			filename = filepath.Join(cfg.RootDir, filename)
 		}
 
 		if !util.FileExists(filename) {

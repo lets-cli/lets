@@ -45,7 +45,7 @@ func (r *shellRunner) run(command *config.Command, cmdScript string) error {
 	osCmd.Stderr = r.out
 	osCmd.Stdin = os.Stdin
 
-	osCmd.Dir = r.cfg.WorkDir
+	osCmd.Dir = r.cfg.RootDir
 	if command.WorkDir != "" {
 		osCmd.Dir = command.WorkDir
 	}

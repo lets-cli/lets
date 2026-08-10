@@ -39,7 +39,7 @@ func Fix(configName string, configDir string, dryRun bool, out io.Writer) (Resul
 		return Result{}, err
 	}
 
-	paths, remoteMixins, err := collectConfigPaths(pathInfo.AbsPath, pathInfo.WorkDir)
+	paths, remoteMixins, err := collectConfigPaths(pathInfo.AbsPath, pathInfo.ConfigDir)
 	if err != nil {
 		return Result{}, err
 	}
